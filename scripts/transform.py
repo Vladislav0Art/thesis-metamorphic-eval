@@ -480,7 +480,7 @@ def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: st
         test_files = extract_changed_files(entry.get('test_patch', ''))
         all_files = list(set(fix_files + test_files))
 
-        all_files_joined = ''.join(list(map(lambda file: f"\n   - {file}", all_files)))
+        all_files_joined = ''.join(list(map(lambda file: f"\n     - {file}", all_files)))
         logger.info(f"Extracted {len(all_files)} unique changed files for {instance_id}:{all_files_joined}")
 
         if not all_files:
