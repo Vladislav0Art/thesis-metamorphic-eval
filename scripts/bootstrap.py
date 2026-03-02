@@ -279,10 +279,16 @@ def benchmark_command(args):
         parts = []
         if args.language:
             parts.append(args.language.lower())
+        else:
+            parts.append("all")
+
         if args.difficulty:
             parts.append(args.difficulty.lower())
-        if args.rand is not None:
-            parts.append(str(args.rand))
+
+        parts.append(str(len(filtered_entries)))
+
+        if (args.name is not None) and args.name.endswith('_mini'):
+            parts.append("mini")
 
         filename = '_'.join(parts) + '.jsonl' if parts else 'benchmark.jsonl'
         output_path = DIRS['benchmarks'] / filename
