@@ -7,6 +7,7 @@ import tempfile
 import logging
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
+from default.defaults import DEFAULT_CODE_COCCOON_TRANSFORMATIONS
 
 description="""
 This script accepts jsonl file with benchmarks and applies transformations via Code Codecoccoon.
@@ -203,20 +204,25 @@ def commit_changes(repo_dir: str, branch_name: str, message: str) -> bool:
         return False
 
 
-def generate_codecocoon_config(project_root: str, files: List[str], output_path: str):
-    """Generate a codecocoon.yml configuration file."""
+def generate_codecocoon_config(
+    project_root: str,
+    files: List[str],
+    transformations: List[Dict],
+    output_path: str,
+):
+    """
+    Generate a codecocoon.yml configuration file.
+
+    Arguments:
+        - project_root: The root directory of the project to be transformed (e.g., the cloned repository path).
+        - files: A list of file paths (relative to project_root) that should be considered for transformations.
+        - transformations: A list of transformation configurations to apply (each with an 'id' and 'config'; config should be transformation-specific).
+        - output_path: The file path where the generated codecocoon.yml should be saved.
+    """
     config = {
         'projectRoot': project_root,
         'files': files,
-        # TODO: provide a list of transformations to apply
-        'transformations': [
-            {
-                'id': 'add-comment-transformation',
-                'config': {
-                    'message': 'Hello from `add-comment-transformation`!'
-                }
-            }
-        ]
+        'transformations': transformations
     }
 
     try:
@@ -439,7 +445,14 @@ def check_and_handle_existing_branches(
     return True, base_branch, fix_branch
 
 
-def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: str, override: bool) -> Dict:
+def process_entry(
+    entry: Dict,
+    strategy: str,
+    codecocoon_dir: str,
+    transformations: List[Dict],
+    repos_dir: str,
+    override: bool,
+) -> Dict:
     """Process a single entry through the transformation pipeline."""
     instance_id = entry['instance_id']
     logger.info(f"Processing entry: {instance_id}")
@@ -491,7 +504,12 @@ def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: st
 
         # config_path=repos_dir/instance_id/codecocoon.yml
         config_path = os.path.join(repos_dir, instance_id, "codecocoon.yml")
-        generate_codecocoon_config(repo_dir, all_files, config_path)
+        generate_codecocoon_config(
+            project_root=repo_dir,
+            files=all_files,
+            transformations=transformations,
+            output_path=config_path,
+        )
 
         # ===== PART 1: BASE TRANSFORMATION =====
         logger.info(f"Starting base transformation for {instance_id}")
@@ -600,6 +618,30 @@ def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: st
 
     return entry
 
+def load_codecoccoon_transformations(from_filepath: str | None) -> List[Dict] | None:
+    def is_transformation_schema(transformation) -> bool:
+        # NOTE: if transformation accepts zero config params, its config still needs to be defined
+        #       as an empty dict (i.e., "config": {}) to be valid
+        return isinstance(transformation, dict) and ('id' in transformation) and ('config' in transformation)
+
+    if from_filepath is None:
+        logger.info(
+        f"No file with transformations provided, using default transformations:\n{json.dumps(DEFAULT_CODE_COCCOON_TRANSFORMATIONS, indent=3)}")
+        return DEFAULT_CODE_COCCOON_TRANSFORMATIONS
+
+    try:
+        with open(from_filepath, 'r') as f:
+            transformations = json.load(f)
+        # validate that it is a list of dicts
+        if not isinstance(transformations, list) or not all(is_transformation_schema(t) for t in transformations):
+            raise ValueError(f"Transformations file must contain a JSON list of objects, got {transformations}")
+
+        logger.info(f"Loaded transformations from file: {from_filepath}")
+        return transformations
+    except Exception as e:
+        logger.error(f"Failed to load transformations file: {e}")
+        return None
+
 
 def main():
     # Parse command-line arguments
@@ -614,6 +656,7 @@ def main():
     """)
     parser.add_argument('-c', "--codecoccoon", type=str, help="Filepath to the Code Codecoccoon repository (its headless mode will be executed).")
     parser.add_argument('-r', '--repos', type=str, help="Filepath which the repositories from the input should be cloned into")
+    parser.add_argument('-t', '--transformations', type=str, default=None, help="Filepath to a JSON file with transformations definitions. The file should contain a list of objects with `id` and `config` entries where the config is transformation-specific. Defaults to a config defined inn `default/defaults.py` when missing.")
     parser.add_argument('--override', action='store_true', default=False,
                         help="Override existing transformation results if branches already exist (default: False)")
 
@@ -636,6 +679,7 @@ def main():
       --output: {args.output}
       --strategy: {args.strategy}
       --codecoccoon: {args.codecoccoon}
+      --transformations: {args.transformations}
       --repos: {args.repos}
       --override: {args.override}
     """)
@@ -648,6 +692,12 @@ def main():
 
     if args.strategy is None or len(args.strategy) <= 0:
         raise ValueError(f"Received malformed transformation strategy: '{args.strategy}'. Transformation strategy name must be provided via `--strategy` argument and should be a non-empty string (e.g., 'default')")
+
+
+    transformations = load_codecoccoon_transformations(from_filepath=args.transformations)
+    if transformations is None:
+        logger.error("Failed to load transformations, terminating execution.")
+        return
 
     logger.info(f"Creating repos directory if doesn't exist already at: {args.repos}")
     Path(args.repos).mkdir(parents=True, exist_ok=True)
@@ -662,7 +712,14 @@ def main():
         logger.info("==========================================================================")
         logger.info(f"====== ⌛ Processing entry '{instance_id}' ({i}/{len(entries)}) ======")
 
-        processed_entry = process_entry(entry, args.strategy, args.codecoccoon, args.repos, args.override)
+        processed_entry = process_entry(
+            entry=entry,
+            strategy=args.strategy,
+            codecocoon_dir=args.codecoccoon,
+            transformations=transformations,
+            repos_dir=args.repos,
+            override=args.override,
+        )
         processed_entries.append(processed_entry)
 
         logger.info(f"====== ✅ Completed entry '{instance_id}' ({i}/{len(entries)}) ======")
