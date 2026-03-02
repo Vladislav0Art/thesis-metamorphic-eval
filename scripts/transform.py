@@ -437,6 +437,7 @@ def process_entry(
     codecocoon_dir: str,
     transformations: List[Dict],
     repos_dir: str,
+    transform_test_files: bool,
     override: bool,
 ) -> Dict:
     """Process a single entry through the transformation pipeline."""
@@ -474,15 +475,26 @@ def process_entry(
             return entry
 
         # Step 2: Extract changed files
-        # TODO: should the test files be present in the yaml config for CodeCoccoon?
+        # NOTE: based on `transform_test_files` flag, apply transformations to files from either:
+        #         1) fix patch only (default behavior)
+        #         2) both fix and test patches
         fix_files = extract_changed_files(entry.get('fix_patch', ''))
         test_files = extract_changed_files(entry.get('test_patch', ''))
-        all_files = list(set(fix_files + test_files))
 
-        all_files_joined = ''.join(list(map(lambda file: f"\n     - {file}", all_files)))
-        logger.info(f"Extracted {len(all_files)} unique changed files for {instance_id}:{all_files_joined}")
+        if transform_test_files is True:
+            # transform files from the test patch as well
+            files_to_transform = list(set(fix_files + test_files))
+            logger.info(f"Transforming files FROM BOTH FIX AND TEST PATCHES for {instance_id}")
+        else:
+            # transform only files modified by the fix patch (default behavior)
+            files_to_transform = list(set(fix_files))
+            logger.info(f"Transforming files modified ONLY BY FIX PATCH for {instance_id}")
 
-        if not all_files:
+
+        files_to_transform_joined = ''.join(list(map(lambda file: f"\n     - {file}", files_to_transform)))
+        logger.info(f"Extracted {len(files_to_transform)} unique changed files for {instance_id}:{files_to_transform_joined}")
+
+        if not files_to_transform:
             logger.warning(f"No files found in patches for {instance_id}")
             return entry
 
@@ -492,7 +504,7 @@ def process_entry(
         config_path = os.path.join(repos_dir, instance_id, "codecocoon.yml")
         generate_codecocoon_config(
             project_root=repo_dir,
-            files=all_files,
+            files=files_to_transform,
             transformations=transformations,
             output_path=config_path,
         )
@@ -643,10 +655,16 @@ def main():
     parser.add_argument('-c', "--codecoccoon", type=str, help="Filepath to the Code Codecoccoon repository (its headless mode will be executed).")
     parser.add_argument('-r', '--repos', type=str, help="Filepath which the repositories from the input should be cloned into")
     parser.add_argument('-t', '--transformations', type=str, default=None, help="Filepath to a JSON file with transformations definitions. The file should contain a list of objects with `id` and `config` entries where the config is transformation-specific. Defaults to a config defined inn `default/defaults.py` when missing.")
+    # bool arguments
+    parser.add_argument('--transform_test_files', action='store_true', default=False,
+                        help="Whether to also transform test files changed in the test patch (`test_patch` field in every benchmark) (default: False)")
     parser.add_argument('--override', action='store_true', default=False,
                         help="Override existing transformation results if branches already exist (default: False)")
 
+
+
     args = parser.parse_args()
+
 
     # Validate arguments
     if not os.path.exists(args.input):
@@ -667,6 +685,7 @@ def main():
       --codecoccoon: {args.codecoccoon}
       --transformations: {args.transformations}
       --repos: {args.repos}
+      --transform_test_files: {args.transform_test_files}
       --override: {args.override}
     """)
 
@@ -704,6 +723,7 @@ def main():
             codecocoon_dir=args.codecoccoon,
             transformations=transformations,
             repos_dir=args.repos,
+            transform_test_files=args.transform_test_files,
             override=args.override,
         )
         processed_entries.append(processed_entry)
