@@ -49,6 +49,7 @@ thesis-metamorphic-eval/
     1. Run **multi_swe_bench** repo's evaluation script to get final eval metric.
     1. [**Additionally**] Given the agent's output on non-metamorphic and metamorphic diffs, calculate some other metrics (_not yet implemented_).
 
+---
 
 ### Prerequisites
 
@@ -63,7 +64,7 @@ source ./venv/bin/activate
 pip install -r requirements.txt
 ```
 
-
+---
 
 ### Preparation
 
