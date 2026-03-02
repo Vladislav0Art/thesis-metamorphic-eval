@@ -220,21 +220,24 @@ def generate_codecocoon_config(project_root: str, files: List[str], output_path:
 
     try:
         import yaml
+        logger.info("`yaml` successfully imported. Using PyYAML to generate codecocoon config")
         with open(output_path, 'w') as f:
             yaml.dump(config, f, default_flow_style=False)
-        logger.debug(f"Generated codecocoon config at {output_path}")
+        logger.info(f"Generated codecocoon config at {output_path} with content:\n```\n{yaml.dump(config)}\n```")
     except ImportError:
+        logger.info("Failed to import `yaml`. Fallack back to manual dumping of codecocoon config")
         # Fallback to manual YAML writing if PyYAML not available
         with open(output_path, 'w') as f:
             f.write(f"projectRoot: \"{project_root}\"\n")
             f.write(f"files:\n")
             for file in files:
                 f.write(f"  - \"{file}\"\n")
+            # TODO: provide a list of transformations to apply
             f.write("transformations:\n")
             f.write("  - id: \"add-comment-transformation\"\n")
             f.write("    config:\n")
             f.write("      message: \"Hello from `add-comment-transformation`!\"\n")
-        logger.debug(f"Generated codecocoon config at {output_path} (fallback)")
+        logger.info(f"Generated codecocoon config at {output_path} (fallback)")
 
 
 def execute_codecocoon(codecocoon_dir: str, config_path: str) -> Tuple[str, str, int]:
@@ -248,6 +251,52 @@ def execute_codecocoon(codecocoon_dir: str, config_path: str) -> Tuple[str, str,
     return stdout, stderr, code
 
 
+def insert_metamorphic_log(where: Dict, strategy: str, label: str, applied_to: str, result: Dict):
+    """
+    Inserts a log entry for a metamorphic transformation result.
+
+    The insertion will have the following structure (appended into the "logs" array):
+    ```
+    where["strategy"]["logs"] = [
+        {
+            "applied_to": applied_to,  # e.g., 'base' or 'fix'
+            "label": label,
+            "result": {
+                "stdout": result['stdout'],
+                "stderr": result['stderr'],
+                "return_code": result['return_code']
+            }
+        }
+    ]
+    ```
+    If the "logs" array does not exist for the strategy, it will be created.
+
+    Arguments:
+      - where: The dictionary where the log should be inserted (should be `entry['metamorphic']`).
+      - strategy: The transformation strategy name (any string, given as an input).
+      - label: any string literal meaningful for the log.
+      - applied_to: A string indicating whether this log is for the 'base' (i.e., on the base commit)
+                    or 'fix' (i.e., after applying both test+fix patches) transformation.
+      - result: A dictionary containing the result of the transformation execution, with keys:
+                - "stdout": The standard output from executing CodeCocoon.
+                - "stderr": The standard error from executing CodeCocoon.
+                - "return_code": The return code from executing CodeCocoon.
+    """
+    if strategy not in where:
+        where[strategy] = {}
+
+    if "logs" not in where[strategy]:
+        where[strategy]["logs"] = []
+
+    log_entry = {
+        "applied_to": applied_to,
+        "label": label,
+        "result": result
+    }
+    where[strategy]["logs"].append(log_entry)
+    logger.info("Successfully inserted metamorphic log entry for strategy '%s' applied to '%s'", strategy, applied_to)
+
+
 def build_github_url(org: str, repo: str) -> str:
     """Build GitHub repository URL."""
     return f"https://github.com/{org}/{repo}.git"
@@ -259,13 +308,20 @@ def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: st
     logger.info(f"Processing entry: {instance_id}")
 
     # Initialize strategy dict if not present
-    if strategy not in entry:
-        entry[strategy] = {}
+    if "metamorphic" not in entry:
+        entry["metamorphic"] = {}
+    # Strategy-specific dict for storing transformation results
+    metamorphic = entry["metamorphic"]
+
+    if strategy not in metamorphic:
+        metamorphic[strategy] = {}
 
     try:
         # Step 1: Clone repository
         repo_url = build_github_url(entry['org'], entry['repo'])
-        repo_dir = os.path.join(repos_dir, instance_id)
+
+        # repo_dir=repos_dir/instance_id/repo
+        repo_dir = os.path.join(repos_dir, instance_id, "repo")
         base_sha = entry['base']['sha']
 
         if not clone_repository(repo_url, repo_dir, base_sha):
@@ -273,35 +329,50 @@ def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: st
             return entry
 
         # Step 2: Extract changed files
+        # TODO: should the test files be present in the yaml config for CodeCoccoon?
         fix_files = extract_changed_files(entry.get('fix_patch', ''))
         test_files = extract_changed_files(entry.get('test_patch', ''))
         all_files = list(set(fix_files + test_files))
-        all_files_joined = '\t\n'.join(all_files)
-        logger.info(f"Extracted {len(all_files)} unique changed files for {instance_id}:\n\t{all_files_joined}")
+
+        all_files_joined = ''.join(list(map(lambda file: f"\n   - {file}", all_files)))
+        logger.info(f"Extracted {len(all_files)} unique changed files for {instance_id}:{all_files_joined}")
 
         if not all_files:
             logger.warning(f"No files found in patches for {instance_id}")
             return entry
 
+
         # Step 3: Generate CodeCocoon config
-        config_path = os.path.join(repos_dir, f"{instance_id}_codecocoon.yml")
+
+        # config_path=repos_dir/instance_id/codecocoon.yml
+        config_path = os.path.join(repos_dir, instance_id, "codecocoon.yml")
         generate_codecocoon_config(repo_dir, all_files, config_path)
 
         # Step 4: Execute CodeCocoon on base commit
         logger.info(f"Transforming base commit for {instance_id}")
         stdout, stderr, code = execute_codecocoon(codecocoon_dir, config_path)
-        # TODO: split stdout, stderr, and code into separate fields in the entry
-        entry[strategy]['metamorphic_base_patch_log'] = f"stdout:\n{stdout}\nstderr:\n{stderr}\nreturn_code:{code}"
+        insert_metamorphic_log(
+            where=metamorphic,
+            strategy=strategy,
+            label='metamorphic_base_patch_log',
+            applied_to='base',
+            result={
+                "stdout": stdout,
+                "stderr": stderr,
+                "return_code": code,
+            }
+        )
 
         if code == 0:
             base_diff = create_diff(repo_dir)
             if base_diff:
-                entry[strategy]['metamorphic_base_patch'] = base_diff
+                metamorphic[strategy]['metamorphic_base_patch'] = base_diff
                 logger.info(f"Base transformation successful for {instance_id}")
             else:
                 logger.warning(f"Failed to create base diff for {instance_id}")
         else:
             logger.error(f"CodeCocoon failed on base commit for {instance_id}: {stderr}")
+
 
         # Step 5: Reset and apply fix/test patches
         stdout, stderr, code = run_cli_command('git', ['reset', '--hard', 'HEAD'], cwd=repo_dir)
@@ -325,13 +396,22 @@ def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: st
         # Step 6: Execute CodeCocoon on fixed commit
         logger.info(f"Transforming fix commit for {instance_id}")
         stdout, stderr, code = execute_codecocoon(codecocoon_dir, config_path)
-        # TODO: split stdout, stderr, and code into separate fields in the entry
-        entry[strategy]['metamorphic_fix_patch_log'] = f"stdout:\n{stdout}\nstderr:\n{stderr}\nreturn_code:{code}"
+        insert_metamorphic_log(
+            where=metamorphic,
+            strategy=strategy,
+            label='metamorphic_fix_patch_log',
+            applied_to='fix',
+            result={
+                "stdout": stdout,
+                "stderr": stderr,
+                "return_code": code,
+            }
+        )
 
         if code == 0:
             fix_diff = create_diff(repo_dir)
             if fix_diff:
-                entry[strategy]['metamorphic_fix_patch'] = fix_diff
+                metamorphic[strategy]['metamorphic_fix_patch'] = fix_diff
                 logger.info(f"Fix transformation successful for {instance_id}")
             else:
                 logger.warning(f"Failed to create fix diff for {instance_id}")
@@ -372,8 +452,7 @@ def main():
     # Create repos directory if it doesn't exist
     os.makedirs(args.repos, exist_ok=True)
 
-    logger.info(f"""
-    Given arguments:
+    logger.info(f"""Given arguments:
       --input: {args.input}
       --output: {args.output}
       --strategy: {args.strategy}
@@ -381,15 +460,33 @@ def main():
       --repos: {args.repos}
     """)
 
+    # CodeCocoon existence check (validate that the provided path is a directory and contains expected files)
+    if not os.path.exists(args.codecoccoon):
+        raise ValueError(f"CodeCocoon directory does not exist: {args.codecoccoon}. Directory path to the Code Codecoccoon Plugin repository expected (its headless mode will be executed) and should be provided via `--codecoccoon` argument.")
+    if not os.path.isdir(args.codecoccoon):
+        raise ValueError(f"Provided CodeCocoon path is not a directory: {args.codecoccoon}. Directory path to the Code Codecoccoon Plugin repository expected (its headless mode will be executed) and should be provided via `--codecoccoon` argument.")
+
+    if args.strategy is None or len(args.strategy) <= 0:
+        raise ValueError(f"Received malformed transformation strategy: '{args.strategy}'. Transformation strategy name must be provided via `--strategy` argument and should be a non-empty string (e.g., 'default')")
+
+    logger.info(f"Creating repos directory if doesn't exist already at: {args.repos}")
+    Path(args.repos).mkdir(parents=True, exist_ok=True)
+
     # Read input entries
     entries = read_jsonl(args.input)
 
     # Process each entry
     processed_entries = []
     for i, entry in enumerate(entries, 1):
-        logger.info(f"Processing entry {i}/{len(entries)}")
+        instance_id = entry["instance_id"]
+        logger.info("==========================================================================")
+        logger.info(f"====== ⌛ Processing entry '{instance_id}' ({i}/{len(entries)}) ======")
+
         processed_entry = process_entry(entry, args.strategy, args.codecoccoon, args.repos)
         processed_entries.append(processed_entry)
+
+        logger.info(f"====== ✅ Completed entry '{instance_id}' ({i}/{len(entries)}) ======")
+        logger.info("==========================================================================")
 
     # Write output
     write_jsonl(args.output, processed_entries)
