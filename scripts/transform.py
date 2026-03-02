@@ -3,6 +3,7 @@ import subprocess
 import json
 import os
 import re
+import yaml
 import tempfile
 import logging
 from pathlib import Path
@@ -219,32 +220,17 @@ def generate_codecocoon_config(
         - transformations: A list of transformation configurations to apply (each with an 'id' and 'config'; config should be transformation-specific).
         - output_path: The file path where the generated codecocoon.yml should be saved.
     """
+
     config = {
         'projectRoot': project_root,
         'files': files,
         'transformations': transformations
     }
 
-    try:
-        import yaml
-        logger.info("`yaml` successfully imported. Using PyYAML to generate codecocoon config")
-        with open(output_path, 'w') as f:
-            yaml.dump(config, f, default_flow_style=False)
+    with open(output_path, 'w') as f:
+        yaml.dump(config, f, default_flow_style=False)
         logger.info(f"Generated codecocoon config at {output_path} with content:\n```\n{yaml.dump(config)}\n```")
-    except ImportError:
-        logger.info("Failed to import `yaml`. Fallack back to manual dumping of codecocoon config")
-        # Fallback to manual YAML writing if PyYAML not available
-        with open(output_path, 'w') as f:
-            f.write(f"projectRoot: \"{project_root}\"\n")
-            f.write(f"files:\n")
-            for file in files:
-                f.write(f"  - \"{file}\"\n")
-            # TODO: provide a list of transformations to apply
-            f.write("transformations:\n")
-            f.write("  - id: \"add-comment-transformation\"\n")
-            f.write("    config:\n")
-            f.write("      message: \"Hello from `add-comment-transformation`!\"\n")
-        logger.info(f"Generated codecocoon config at {output_path} (fallback)")
+
 
 
 def execute_codecocoon(codecocoon_dir: str, config_path: str) -> Tuple[str, str, int]:
