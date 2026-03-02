@@ -13,12 +13,12 @@ from common.logger import configure_logging
 from common.fs import read_jsonl, write_jsonl
 
 description="""
-This script accepts jsonl file with benchmarks and applies transformations via Code Codecoccoon.
+This script accepts jsonl file with benchmarks and applies transformations via CodeCocoon-Plugin.
 The result patches after transformation are added into the entries of the given jsonl file and
 save into the output file.
 
 Arguments:
-  -i, --input: Path to the input jsonl file containing benchmarks.
+  -i, --input: Path to the input JSONL file containing benchmarks.
   -o, --output: Path to the output jsonl file where transformed benchmarks will be saved.
   -s, --strategy: The transformation strategy name
                   (the resulting transformations will be saved as entry['strategy']['metamorphic_base_patch'] and
@@ -168,7 +168,11 @@ def generate_codecocoon_config(
 
     with open(output_path, 'w') as f:
         yaml.dump(config, f, default_flow_style=False)
+        # flushing so that the process where we run CodeCocoon sees this file
+        f.flush()
+        os.fsync(f.fileno())
         logger.info(f"Generated codecocoon config at {output_path} with content:\n```\n{yaml.dump(config)}\n```")
+
 
 
 
@@ -579,6 +583,10 @@ def load_codecoccoon_transformations(from_filepath: str | None) -> List[Dict] | 
         logger.error(f"Failed to load transformations file: {e}")
         return None
 
+def make_absolute_path(path: str) -> str:
+    """Convert a relative path to an absolute path."""
+    return os.path.abspath(path)
+
 
 def main():
     # Parse command-line arguments
@@ -601,8 +609,16 @@ def main():
                         help="Override existing transformation results if branches already exist (default: False)")
 
 
-
     args = parser.parse_args()
+
+
+    # Convert paths to absolute if they are relative
+    args.repos = make_absolute_path(args.repos)
+    args.input = make_absolute_path(args.input)
+    args.output = make_absolute_path(args.output)
+    args.codecoccoon = make_absolute_path(args.codecoccoon)
+    if args.transformations:
+        args.transformations = make_absolute_path(args.transformations)
 
 
     # Validate arguments
@@ -617,7 +633,7 @@ def main():
     # Create repos directory if it doesn't exist
     os.makedirs(args.repos, exist_ok=True)
 
-    logger.info(f"""Given arguments:
+    logger.info(f"""Given arguments (converted to absolute paths if needed):
       --input: {args.input}
       --output: {args.output}
       --strategy: {args.strategy}
