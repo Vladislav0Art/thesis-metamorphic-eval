@@ -9,9 +9,9 @@ DEFAULT_CODE_COCCOON_TRANSFORMATIONS = [
 
 # Default repository URLs for bootstrap init command
 DEFAULT_REPO_URLS = {
-    'codecoccoon': 'https://github.com/JetBrains-Research/CodeCocoon-Plugin',
-    'mswe_agent': 'https://github.com/Vladislav0Art/MSWE-agent',
-    'multi_swe_bench': 'https://github.com/Vladislav0Art/multi-swe-bench'
+    'codecoccoon': 'https://github.com/JetBrains-Research/CodeCocoon-Plugin.git',
+    'mswe_agent': 'https://github.com/Vladislav0Art/MSWE-agent.git',
+    'multi_swe_bench': 'https://github.com/Vladislav0Art/multi-swe-bench.git'
 }
 
 # Available benchmark datasets

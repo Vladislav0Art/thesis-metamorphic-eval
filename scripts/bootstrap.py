@@ -57,26 +57,46 @@ def check_git_lfs():
     return True
 
 
-def clone_repository(repo_url: str, target_dir: Path, repo_name: str):
+def extract_repo_name(repo_url: str) -> str:
+    """
+    Extract repository name from Git URL.
+
+    Args:
+        repo_url: URL of the repository
+
+    Returns:
+        Repository name without .git extension
+    """
+    # Extract the last part of the URL
+    repo_name = repo_url.rstrip('/').split('/')[-1]
+    # Remove .git extension if present
+    if repo_name.endswith('.git'):
+        repo_name = repo_name[:-4]
+    return repo_name
+
+
+def clone_repository(repo_url: str, target_dir: Path):
     """
     Clone a git repository into the target directory.
 
     Args:
         repo_url: URL of the repository to clone
         target_dir: Directory where the repository should be cloned
-        repo_name: Name of the repository (for logging)
 
     Returns:
         bool: True if successful, False otherwise
     """
-    if target_dir.exists() and any(target_dir.iterdir()):
-        logger.warning(f"{repo_name} already exists at {target_dir}. Skipping clone.")
+    repo_name = extract_repo_name(repo_url)
+    repo_path = target_dir / repo_name
+
+    if repo_path.exists() and (repo_path / '.git').exists():
+        logger.warning(f"{repo_name} already exists at {repo_path}. Skipping clone.")
         return True
 
     logger.info(f"Cloning {repo_name} from {repo_url} into {target_dir}...")
     stdout, stderr, returncode = run_cli_command(
         'git',
-        ['clone', repo_url, str(target_dir)]
+        ['clone', repo_url, str(repo_path)]
     )
 
     if returncode != 0:
@@ -104,9 +124,9 @@ def init_command(args):
 
     # Clone repositories
     success = True
-    success &= clone_repository(codecoccoon_url, DIRS['code_coccoon'], 'CodeCocoon-Plugin')
-    success &= clone_repository(mswe_agent_url, DIRS['agents'], 'MSWE-agent')
-    success &= clone_repository(multi_swe_bench_url, DIRS['swe_bench'], 'multi-swe-bench')
+    success &= clone_repository(codecoccoon_url, DIRS['code_coccoon'])
+    success &= clone_repository(mswe_agent_url, DIRS['agents'])
+    success &= clone_repository(multi_swe_bench_url, DIRS['swe_bench'])
 
     if success:
         logger.info("Init command completed successfully!")
