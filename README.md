@@ -17,7 +17,7 @@ thesis-metamorphic-eval/
 ├── transformations/
 ```
 
-Folder description:
+### Purpose
 
 1. `agents`: The [bootstrap.py](./scripts/bootstrap.py)'s `init` subcommand downloads the [MSWE-agent](https://github.com/Vladislav0Art/MSWE-agent) into this folder.
 1. `benchmarks`:
