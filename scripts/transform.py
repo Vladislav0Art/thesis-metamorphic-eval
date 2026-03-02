@@ -21,6 +21,7 @@ Arguments:
                    entry['strategy']['metamorphic_fix_patch']).
   -c, --codecoccoon: Filepath to the Code Codecoccoon repository (its headless mode will be executed).
   -r, --repos: Filepath which the repositories from the input should be cloned into.
+  --override: Whether to override existing transformation results if branches already exist (default: False).
 
 Usage:
 python transform.py -i path/to/input.jsonl -o path/to/output.jsonl -s transformation_strategy_name -c path/to/codecoccoon
@@ -302,7 +303,143 @@ def build_github_url(org: str, repo: str) -> str:
     return f"https://github.com/{org}/{repo}.git"
 
 
-def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: str) -> Dict:
+def branch_exists(repo_dir: str, branch_name: str) -> bool:
+    """Check if a branch exists in the repository."""
+    try:
+        stdout, stderr, code = run_cli_command(
+            'git', ['rev-parse', '--verify', branch_name], cwd=repo_dir
+        )
+        exists = code == 0
+        logger.debug(f"Branch '{branch_name}' exists: {exists}")
+        return exists
+    except Exception as e:
+        logger.error(f"Failed to check branch existence: {e}")
+        return False
+
+
+def delete_branch(repo_dir: str, branch_name: str) -> bool:
+    """Delete a branch from the repository."""
+    try:
+        # First checkout to a different branch (base SHA)
+        stdout, stderr, code = run_cli_command('git', ['checkout', 'HEAD~0'], cwd=repo_dir)
+        if code != 0:
+            logger.error(f"Failed to detach HEAD: {stderr}")
+            return False
+
+        # Delete the branch
+        stdout, stderr, code = run_cli_command('git', ['branch', '-D', branch_name], cwd=repo_dir)
+        if code != 0:
+            logger.error(f"Failed to delete branch '{branch_name}': {stderr}")
+            return False
+
+        logger.info(f"Successfully deleted branch '{branch_name}'")
+        return True
+    except Exception as e:
+        logger.error(f"Branch deletion failed: {e}")
+        return False
+
+
+def checkout_branch(repo_dir: str, branch_name: str, create: bool = False, base_ref: str = None) -> bool:
+    """Checkout a branch, optionally creating it from a base reference."""
+    try:
+        if create:
+            if base_ref:
+                # Checkout base reference first
+                stdout, stderr, code = run_cli_command('git', ['checkout', base_ref], cwd=repo_dir)
+                if code != 0:
+                    logger.error(f"Failed to checkout base ref '{base_ref}': {stderr}")
+                    return False
+
+            # Create and checkout new branch
+            stdout, stderr, code = run_cli_command('git', ['checkout', '-b', branch_name], cwd=repo_dir)
+            if code != 0:
+                logger.error(f"Failed to create branch '{branch_name}': {stderr}")
+                return False
+            logger.info(f"Created and checked out branch '{branch_name}'")
+        else:
+            # Just checkout existing branch
+            stdout, stderr, code = run_cli_command('git', ['checkout', branch_name], cwd=repo_dir)
+            if code != 0:
+                logger.error(f"Failed to checkout branch '{branch_name}': {stderr}")
+                return False
+            logger.info(f"Checked out branch '{branch_name}'")
+
+        return True
+    except Exception as e:
+        logger.error(f"Branch checkout failed: {e}")
+        return False
+
+
+def commit_all_changes(repo_dir: str, message: str) -> bool:
+    """Stage and commit all changes in the repository."""
+    try:
+        # Add all changes
+        stdout, stderr, code = run_cli_command('git', ['add', '-A'], cwd=repo_dir)
+        if code != 0:
+            logger.error(f"Failed to stage changes: {stderr}")
+            return False
+
+        # Check if there are changes to commit
+        stdout, stderr, code = run_cli_command('git', ['diff', '--cached', '--exit-code'], cwd=repo_dir)
+        if code == 0:
+            logger.info("No changes to commit")
+            return True
+
+        # Commit changes
+        stdout, stderr, code = run_cli_command('git', ['commit', '-m', message], cwd=repo_dir)
+        if code != 0:
+            logger.error(f"Failed to commit: {stderr}")
+            return False
+
+        logger.info(f"Successfully committed changes: {message}")
+        return True
+    except Exception as e:
+        logger.error(f"Commit failed: {e}")
+        return False
+
+
+def check_and_handle_existing_branches(
+    repo_dir: str,
+    strategy: str,
+    override: bool
+) -> Tuple[bool, str, str]:
+    """
+    Check if strategy branches exist and handle according to override flag.
+    Branches:
+    - Base transformation branch: "{strategy}-base-transformation"
+    - Fix transformation branch: "{strategy}-fix-transformation"
+
+    Returns:
+        Tuple[bool, str, str]: (should_continue, base_branch_name, fix_branch_name)
+    """
+    base_branch = f"{strategy}-base-transformation"
+    fix_branch = f"{strategy}-fix-transformation"
+
+    base_exists = branch_exists(repo_dir, base_branch)
+    fix_exists = branch_exists(repo_dir, fix_branch)
+
+    if base_exists or fix_exists:
+        if not override:
+            logger.info(
+                f"Branches for strategy '{strategy}' already exist. "
+                f"Skipping transformation (use --override to regenerate)."
+            )
+            return False, base_branch, fix_branch
+        else:
+            logger.info(f"IMPORTANT: Override enabled. Deleting existing branches for strategy '{strategy}'")
+            if base_exists:
+                if not delete_branch(repo_dir, base_branch):
+                    logger.error(f"Failed to delete base branch '{base_branch}'")
+                    return False, base_branch, fix_branch
+            if fix_exists:
+                if not delete_branch(repo_dir, fix_branch):
+                    logger.error(f"Failed to delete fix branch '{fix_branch}'")
+                    return False, base_branch, fix_branch
+
+    return True, base_branch, fix_branch
+
+
+def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: str, override: bool) -> Dict:
     """Process a single entry through the transformation pipeline."""
     instance_id = entry['instance_id']
     logger.info(f"Processing entry: {instance_id}")
@@ -328,6 +465,15 @@ def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: st
             logger.error(f"Failed to clone repository for {instance_id}")
             return entry
 
+        # Step 1.5: Check if branches exist and handle override
+        should_continue, base_branch, fix_branch = check_and_handle_existing_branches(
+            repo_dir, strategy, override
+        )
+
+        if not should_continue:
+            logger.info(f"Skipping transformation for {instance_id} - branches already exist")
+            return entry
+
         # Step 2: Extract changed files
         # TODO: should the test files be present in the yaml config for CodeCoccoon?
         fix_files = extract_changed_files(entry.get('fix_patch', ''))
@@ -341,15 +487,22 @@ def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: st
             logger.warning(f"No files found in patches for {instance_id}")
             return entry
 
-
         # Step 3: Generate CodeCocoon config
 
         # config_path=repos_dir/instance_id/codecocoon.yml
         config_path = os.path.join(repos_dir, instance_id, "codecocoon.yml")
         generate_codecocoon_config(repo_dir, all_files, config_path)
 
-        # Step 4: Execute CodeCocoon on base commit
-        logger.info(f"Transforming base commit for {instance_id}")
+        # ===== PART 1: BASE TRANSFORMATION =====
+        logger.info(f"Starting base transformation for {instance_id}")
+
+        # Create base transformation branch from base SHA
+        if not checkout_branch(repo_dir, base_branch, create=True, base_ref=base_sha):
+            logger.error(f"Failed to create base transformation branch for {instance_id}")
+            return entry
+
+        # Execute CodeCocoon on base commit
+        logger.info(f"Executing CodeCocoon on base commit for {instance_id}")
         stdout, stderr, code = execute_codecocoon(codecocoon_dir, config_path)
         insert_metamorphic_log(
             where=metamorphic,
@@ -364,22 +517,33 @@ def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: st
         )
 
         if code == 0:
+            # Get the diff before committing
             base_diff = create_diff(repo_dir)
             if base_diff:
                 metamorphic[strategy]['metamorphic_base_patch'] = base_diff
-                logger.info(f"Base transformation successful for {instance_id}")
+                logger.info(f"Base transformation diff captured for {instance_id}")
             else:
                 logger.warning(f"Failed to create base diff for {instance_id}")
+
+            # Commit the transformation changes
+            if not commit_all_changes(repo_dir, f"(strategy={strategy}): Apply transformations to base commit"):
+                logger.error(f"Failed to commit base transformations for {instance_id}")
+                return entry
+
+            logger.info(f"Base transformation successful and committed for {instance_id}")
         else:
             logger.error(f"CodeCocoon failed on base commit for {instance_id}: {stderr}")
-
-
-        # Step 5: Reset and apply fix/test patches
-        stdout, stderr, code = run_cli_command('git', ['reset', '--hard', 'HEAD'], cwd=repo_dir)
-        if code != 0:
-            logger.error(f"Failed to reset repository for {instance_id}")
             return entry
 
+        # ===== PART 2: FIX TRANSFORMATION =====
+        logger.info(f"Starting fix transformation for {instance_id}")
+
+        # Create fix transformation branch from base SHA
+        if not checkout_branch(repo_dir, fix_branch, create=True, base_ref=base_sha):
+            logger.error(f"Failed to create fix transformation branch for {instance_id}")
+            return entry
+
+        # Apply fix and test patches
         if not apply_patch(repo_dir, entry.get('fix_patch', '')):
             logger.error(f"Failed to apply fix patch for {instance_id}")
             return entry
@@ -388,13 +552,13 @@ def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: st
             logger.error(f"Failed to apply test patch for {instance_id}")
             return entry
 
-        # Commit changes to separate branch
-        if not commit_changes(repo_dir, f"fix-{instance_id}", "Apply fix and test patches"):
-            logger.error(f"Failed to commit changes for {instance_id}")
+        # Commit fix and test patches
+        if not commit_all_changes(repo_dir, "Apply fix and test patches"):
+            logger.error(f"Failed to commit fix and test patches for {instance_id}")
             return entry
 
-        # Step 6: Execute CodeCocoon on fixed commit
-        logger.info(f"Transforming fix commit for {instance_id}")
+        # Execute CodeCocoon on fixed commit
+        logger.info(f"Executing CodeCocoon on fix commit for {instance_id}")
         stdout, stderr, code = execute_codecocoon(codecocoon_dir, config_path)
         insert_metamorphic_log(
             where=metamorphic,
@@ -409,14 +573,27 @@ def process_entry(entry: Dict, strategy: str, codecocoon_dir: str, repos_dir: st
         )
 
         if code == 0:
+            # Get the diff before committing
             fix_diff = create_diff(repo_dir)
             if fix_diff:
                 metamorphic[strategy]['metamorphic_fix_patch'] = fix_diff
-                logger.info(f"Fix transformation successful for {instance_id}")
+                logger.info(f"Fix transformation diff captured for {instance_id}")
             else:
                 logger.warning(f"Failed to create fix diff for {instance_id}")
+
+            # Commit the transformation changes
+            if not commit_all_changes(repo_dir, f"(strategy={strategy}): Apply transformations to fixed commit"):
+                logger.error(f"Failed to commit fix transformations for {instance_id}")
+                return entry
+
+            logger.info(f"Fix transformation successful and committed for {instance_id}")
         else:
             logger.error(f"CodeCocoon failed on fix commit for {instance_id}: {stderr}")
+            return entry
+
+        logger.info(f"Successfully completed all transformations for {instance_id}")
+        logger.info(f"  Base branch: {base_branch}")
+        logger.info(f"  Fix branch: {fix_branch}")
 
     except Exception as e:
         logger.error(f"Failed to process {instance_id}: {e}", exc_info=True)
@@ -437,6 +614,8 @@ def main():
     """)
     parser.add_argument('-c', "--codecoccoon", type=str, help="Filepath to the Code Codecoccoon repository (its headless mode will be executed).")
     parser.add_argument('-r', '--repos', type=str, help="Filepath which the repositories from the input should be cloned into")
+    parser.add_argument('--override', action='store_true', default=False,
+                        help="Override existing transformation results if branches already exist (default: False)")
 
     args = parser.parse_args()
 
@@ -458,6 +637,7 @@ def main():
       --strategy: {args.strategy}
       --codecoccoon: {args.codecoccoon}
       --repos: {args.repos}
+      --override: {args.override}
     """)
 
     # CodeCocoon existence check (validate that the provided path is a directory and contains expected files)
@@ -482,7 +662,7 @@ def main():
         logger.info("==========================================================================")
         logger.info(f"====== ⌛ Processing entry '{instance_id}' ({i}/{len(entries)}) ======")
 
-        processed_entry = process_entry(entry, args.strategy, args.codecoccoon, args.repos)
+        processed_entry = process_entry(entry, args.strategy, args.codecoccoon, args.repos, args.override)
         processed_entries.append(processed_entry)
 
         logger.info(f"====== ✅ Completed entry '{instance_id}' ({i}/{len(entries)}) ======")
