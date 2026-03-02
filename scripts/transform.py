@@ -10,6 +10,7 @@ from typing import Dict, List, Tuple, Optional
 from default.defaults import DEFAULT_CODE_COCCOON_TRANSFORMATIONS
 from common.cli import run_cli_command
 from common.logger import configure_logging
+from common.fs import read_jsonl, write_jsonl
 
 description="""
 This script accepts jsonl file with benchmarks and applies transformations via Code Codecoccoon.
@@ -35,35 +36,6 @@ configure_logging(log_filename="transform.log", level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
-
-
-def read_jsonl(filepath: str) -> List[Dict]:
-    """Read entries from a JSONL file."""
-    entries = []
-    try:
-        with open(filepath, 'r') as f:
-            for line_num, line in enumerate(f, 1):
-                try:
-                    entries.append(json.loads(line.strip()))
-                except json.JSONDecodeError as e:
-                    logger.warning(f"Skipping malformed JSON at line {line_num}: {e}")
-        logger.info(f"Read {len(entries)} entries from {filepath}")
-        return entries
-    except Exception as e:
-        logger.error(f"Failed to read {filepath}: {e}")
-        raise
-
-
-def write_jsonl(filepath: str, entries: List[Dict]):
-    """Write entries to a JSONL file."""
-    try:
-        with open(filepath, 'w') as f:
-            for entry in entries:
-                f.write(json.dumps(entry) + '\n')
-        logger.info(f"Wrote {len(entries)} entries to {filepath}")
-    except Exception as e:
-        logger.error(f"Failed to write to {filepath}: {e}")
-        raise
 
 
 def extract_changed_files(patch: str) -> List[str]:
