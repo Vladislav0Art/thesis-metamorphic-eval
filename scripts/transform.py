@@ -1,5 +1,4 @@
 import argparse
-import subprocess
 import json
 import os
 import re
@@ -9,6 +8,8 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 from default.defaults import DEFAULT_CODE_COCCOON_TRANSFORMATIONS
+from common.cli import run_cli_command
+from common.logger import configure_logging
 
 description="""
 This script accepts jsonl file with benchmarks and applies transformations via Code Codecoccoon.
@@ -30,44 +31,10 @@ python transform.py -i path/to/input.jsonl -o path/to/output.jsonl -s transforma
 """
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('transform.log'),
-        logging.StreamHandler()
-    ]
-)
+configure_logging(log_filename="transform.log", level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
-
-def run_cli_command(command, args, cwd=None):
-    """
-    Runs a given CLI command with arguments and returns its output, error, and return code.
-
-    Args:
-        command (str): The CLI command to execute.
-        args (list): A list of arguments for the command.
-        cwd (str): Working directory for the command.
-
-    Returns:
-        tuple: A tuple containing stdout (str), stderr (str), and return code (int).
-    """
-    try:
-        full_command = [command] + args
-        logger.debug(f"Executing: {' '.join(full_command)}")
-        result = subprocess.run(
-            full_command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False,
-            cwd=cwd
-        )
-        return result.stdout, result.stderr, result.returncode
-    except Exception as e:
-        logger.error(f"Command execution failed: {e}")
-        return "", str(e), -1
 
 
 def read_jsonl(filepath: str) -> List[Dict]:
@@ -239,7 +206,7 @@ def execute_codecocoon(codecocoon_dir: str, config_path: str) -> Tuple[str, str,
     stdout, stderr, code = run_cli_command(
         './gradlew',
         ['headless', f'-Pcodecocoon.config={config_path}'],
-        cwd=codecocoon_dir
+        cwd=codecocoon_dir,
     )
     return stdout, stderr, code
 
@@ -299,7 +266,7 @@ def branch_exists(repo_dir: str, branch_name: str) -> bool:
     """Check if a branch exists in the repository."""
     try:
         stdout, stderr, code = run_cli_command(
-            'git', ['rev-parse', '--verify', branch_name], cwd=repo_dir
+            'git', ['rev-parse', '--verify', branch_name], cwd=repo_dir,
         )
         exists = code == 0
         logger.debug(f"Branch '{branch_name}' exists: {exists}")
