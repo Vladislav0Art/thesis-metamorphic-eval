@@ -336,7 +336,7 @@ def commit_all_changes(repo_dir: str, message: str) -> bool:
             logger.error(f"Failed to commit: {stderr}")
             return False
 
-        logger.info(f"Successfully committed changes: {message}")
+        logger.info(f"Successfully committed changes: `{message}`")
         return True
     except Exception as e:
         logger.error(f"Commit failed: {e}")
