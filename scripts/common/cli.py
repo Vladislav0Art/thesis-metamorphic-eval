@@ -3,7 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def run_cli_command(command, args, cwd=None):
+def run_cli_command(command, args, cwd=None, env=None):
     """
     Runs a given CLI command with arguments and returns its output, error, and return code.
 
@@ -25,7 +25,8 @@ def run_cli_command(command, args, cwd=None):
             stderr=subprocess.PIPE,
             text=True,
             check=False,
-            cwd=cwd
+            cwd=cwd,
+            env=env,
         )
 
         return result.stdout, result.stderr, result.returncode

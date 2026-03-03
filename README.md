@@ -170,12 +170,17 @@ python scripts/transform.py -i ./benchmarks/sample.jsonl \
     -s 'MyStrategy' \
     -c ./code-coccoon/CodeCocoon-Plugin \
     -r ./repos \
+    -e /path/to/env/file \ # filepath to ENV file that will provided to CodeCocoon (optional)
     -t ./transformations/sample.json \
     --override
 ```
 
-After running, navigate to `benchmarks/metamorphic-sample.jsonl` and search for `"metamorphic"` JSON field.
+CodeCocoon needs `GRAZIE_TOKEN` for some transformations. To supply additional ENV variables, create an `.env` file (any name allowed) with a key-value entries, and pass it as `-e/--env_filepath` parameter. CodeCocoon subprocess will be executed with ENV variables of the parent process along with the ENV variables defined in the provided `.env` file:
+```bash
+GRAZIE_TOKEN="your-grazie-token"
+```
 
+After running, navigate to `benchmarks/metamorphic-sample.jsonl` and search for `"metamorphic"` JSON field.
 
 
 ---

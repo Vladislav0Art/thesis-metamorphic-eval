@@ -7,10 +7,12 @@ import tempfile
 import logging
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
+from dotenv import dotenv_values
 from default.defaults import DEFAULT_CODE_COCCOON_TRANSFORMATIONS
 from common.cli import run_cli_command
 from common.logger import configure_logging
 from common.fs import read_jsonl, write_jsonl
+
 
 description="""
 This script accepts jsonl file with benchmarks and applies transformations via CodeCocoon-Plugin.
@@ -24,7 +26,9 @@ Arguments:
                   (the resulting transformations will be saved as entry['strategy']['metamorphic_base_patch'] and
                    entry['strategy']['metamorphic_fix_patch']).
   -c, --codecoccoon: Filepath to the Code Codecoccoon repository (its headless mode will be executed).
+  -e, --env_filepath: Filepath to a file with key-value pairs defining environment variables to be set when executing CodeCocoon (e.g., to provide credentials for private repositories) (default: None).
   -r, --repos: Filepath which the repositories from the input should be cloned into.
+  --transform_test_files: Whether to also transform test files changed in the test patch (`test_patch` field in every benchmark) (default: False).
   --override: Whether to override existing transformation results if branches already exist (default: False).
 
 Usage:
@@ -176,13 +180,19 @@ def generate_codecocoon_config(
 
 
 
-def execute_codecocoon(codecocoon_dir: str, config_path: str) -> Tuple[str, str, int]:
+def execute_codecocoon(
+    codecocoon_dir: str,
+    config_path: str,
+    env_vars: Dict[str, str | None],
+) -> Tuple[str, str, int]:
     """Execute CodeCocoon in headless mode."""
     logger.info(f"Executing CodeCocoon with config {config_path}")
     stdout, stderr, code = run_cli_command(
         './gradlew',
         ['headless', f'-Pcodecocoon.config={config_path}'],
         cwd=codecocoon_dir,
+        # merge current environment with additional env vars
+        env={**os.environ, **env_vars},
     )
     return stdout, stderr, code
 
@@ -361,7 +371,7 @@ def check_and_handle_existing_branches(
             )
             return False, base_branch, fix_branch
         else:
-            logger.info(f"IMPORTANT: Override enabled. Deleting existing branches for strategy '{strategy}'")
+            logger.info(f"[IMPORTANT] Override enabled: Deleting existing branches for strategy '{strategy}'")
             if base_exists:
                 if not delete_branch(repo_dir, base_branch):
                     logger.error(f"Failed to delete base branch '{base_branch}'")
@@ -380,6 +390,7 @@ def process_entry(
     codecocoon_dir: str,
     transformations: List[Dict],
     repos_dir: str,
+    env_vars: Dict[str, str | None],
     transform_test_files: bool,
     override: bool,
 ) -> Dict:
@@ -462,7 +473,7 @@ def process_entry(
 
         # Execute CodeCocoon on base commit
         logger.info(f"Executing CodeCocoon on base commit for {instance_id}")
-        stdout, stderr, code = execute_codecocoon(codecocoon_dir, config_path)
+        stdout, stderr, code = execute_codecocoon(codecocoon_dir, config_path, env_vars)
         insert_metamorphic_log(
             where=metamorphic,
             strategy=strategy,
@@ -518,7 +529,7 @@ def process_entry(
 
         # Execute CodeCocoon on fixed commit
         logger.info(f"Executing CodeCocoon on fix commit for {instance_id}")
-        stdout, stderr, code = execute_codecocoon(codecocoon_dir, config_path)
+        stdout, stderr, code = execute_codecocoon(codecocoon_dir, config_path, env_vars)
         insert_metamorphic_log(
             where=metamorphic,
             strategy=strategy,
@@ -600,6 +611,10 @@ def main():
         entry['strategy']['metamorphic_base_patch'] and entry['strategy']['metamorphic_fix_patch']).
     """)
     parser.add_argument('-c', "--codecoccoon", type=str, help="Filepath to the Code Codecoccoon repository (its headless mode will be executed).")
+
+    parser.add_argument('-e', "--env_filepath", type=str, default=None,
+                        help="Filepath to a file with key-value pairs defining environment variables to be set when executing CodeCocoon (e.g., to provide credentials for private repositories) (default: None)")
+
     parser.add_argument('-r', '--repos', type=str, help="Filepath which the repositories from the input should be cloned into")
     parser.add_argument('-t', '--transformations', type=str, default=None, help="Filepath to a JSON file with transformations definitions. The file should contain a list of objects with `id` and `config` entries where the config is transformation-specific. Defaults to a config defined inn `default/defaults.py` when missing.")
     # bool arguments
@@ -617,6 +632,8 @@ def main():
     args.input = make_absolute_path(args.input)
     args.output = make_absolute_path(args.output)
     args.codecoccoon = make_absolute_path(args.codecoccoon)
+    if args.env_filepath:
+        args.env_filepath = make_absolute_path(args.env_filepath)
     if args.transformations:
         args.transformations = make_absolute_path(args.transformations)
 
@@ -640,6 +657,7 @@ def main():
       --codecoccoon: {args.codecoccoon}
       --transformations: {args.transformations}
       --repos: {args.repos}
+      --env_filepath: {args.env_filepath}
       --transform_test_files: {args.transform_test_files}
       --override: {args.override}
     """)
@@ -653,6 +671,22 @@ def main():
     if args.strategy is None or len(args.strategy) <= 0:
         raise ValueError(f"Received malformed transformation strategy: '{args.strategy}'. Transformation strategy name must be provided via `--strategy` argument and should be a non-empty string (e.g., 'default')")
 
+    # loading additional environment variables from the provided file (if any)
+    # and setting them in the environment for when we execute CodeCocoon later
+    if args.env_filepath is not None:
+        if not os.path.exists(args.env_filepath):
+            logger.error(f"Provided `env_filepath` does not exist: {args.env_filepath}")
+            return
+        if not os.path.isfile(args.env_filepath):
+            logger.error(f"Provided `env_filepath` is not a file: {args.env_filepath}")
+            return
+        env_vars = dotenv_values(args.env_filepath)
+
+        env_keys_str = ', '.join(list(env_vars.keys()))
+        logger.info(f"Successfully loaded {len(env_vars)} environment variables from {args.env_filepath}: {env_keys_str}")
+    else:
+        logger.info("`env_filepath` not provided: No additional ENV variables loaded")
+        env_vars = {}
 
     transformations = load_codecoccoon_transformations(from_filepath=args.transformations)
     if transformations is None:
@@ -678,6 +712,7 @@ def main():
             codecocoon_dir=args.codecoccoon,
             transformations=transformations,
             repos_dir=args.repos,
+            env_vars=env_vars,
             transform_test_files=args.transform_test_files,
             override=args.override,
         )
