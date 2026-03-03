@@ -198,14 +198,15 @@ def find_jsonl_file(dataset_dir: Path, dataset_name: str) -> Path:
     raise FileNotFoundError(f"No JSONL file found in {dataset_dir}")
 
 
-def filter_entries(entries: list, language: str = None, difficulty: str = None) -> list:
+def filter_entries(entries: list, language: str = None, difficulty: str = None, instance_ids: list = None) -> list:
     """
-    Filter benchmark entries by language and difficulty.
+    Filter benchmark entries by language, difficulty, and instance IDs.
 
     Args:
         entries: List of benchmark entries
         language: Language to filter by (case-insensitive), None to skip
         difficulty: Difficulty level to filter by (case-insensitive), None to skip
+        instance_ids: List of instance IDs to filter by, None to skip
 
     Returns:
         Filtered list of entries
@@ -223,6 +224,11 @@ def filter_entries(entries: list, language: str = None, difficulty: str = None) 
             logger.warning(f"Invalid difficulty '{difficulty}'. Valid values: {VALID_DIFFICULTIES}")
         filtered = [e for e in filtered if e.get('difficulty', '').lower() == difficulty_lower]
         logger.info(f"Filtered by difficulty '{difficulty}': {len(filtered)} entries remain")
+
+    if instance_ids:
+        instance_ids_set = set(instance_ids)
+        filtered = [e for e in filtered if e.get('instance_id') in instance_ids_set]
+        logger.info(f"Filtered by instance_ids: {len(filtered)} entries remain")
 
     return filtered
 
@@ -242,6 +248,12 @@ def benchmark_command(args):
         logger.error(f"Invalid difficulty '{args.difficulty}'. Must be one of: {VALID_DIFFICULTIES}")
         sys.exit(1)
 
+    # Parse instance_ids if provided
+    instance_ids = None
+    if args.instance_ids:
+        instance_ids = [id.strip() for id in args.instance_ids.split(',')]
+        logger.info(f"Filtering by {len(instance_ids)} instance IDs: {instance_ids}")
+
     # Download the benchmark dataset
     try:
         dataset_dir = download_benchmark_dataset(args.name)
@@ -255,13 +267,13 @@ def benchmark_command(args):
     entries = read_jsonl(str(jsonl_file))
     logger.info(f"Total entries: {len(entries)}")
 
-    filtered_entries = filter_entries(entries, args.language, args.difficulty)
+    filtered_entries = filter_entries(entries, args.language, args.difficulty, instance_ids)
 
     if not filtered_entries:
         logger.warning("No entries match the specified filters!")
         sys.exit(0)
 
-    # Random sampling if requested
+    # Random sampling if requested (mutually exclusive with instance_ids)
     if args.rand is not None:
         n = args.rand
         if n > len(filtered_entries):
@@ -326,8 +338,14 @@ def main():
     benchmark_parser.add_argument('--language', type=str, default=None, help='Filter by programming language')
     benchmark_parser.add_argument('--difficulty', type=str, default=None, choices=VALID_DIFFICULTIES,
                                   help='Filter by difficulty level')
-    benchmark_parser.add_argument('--rand', type=int, metavar='N',
+
+    # Create mutually exclusive group for rand and instance_ids
+    selection_group = benchmark_parser.add_mutually_exclusive_group()
+    selection_group.add_argument('--rand', type=int, metavar='N',
                                   help='Randomly select N entries')
+    selection_group.add_argument('--instance_ids', type=str,
+                                  help='Comma-separated list of instance IDs to filter (e.g., "id1,id2,id3")')
+
     benchmark_parser.add_argument('--output', help='Output file path')
 
     args = parser.parse_args()
