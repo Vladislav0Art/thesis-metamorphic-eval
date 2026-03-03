@@ -56,6 +56,7 @@ def convert_entry(entry: dict) -> dict:
         "org": org,
         "repo": repo,
         "number": number,
+        "model_name_or_path": entry["model_name_or_path"],
         "fix_patch": entry["model_patch"]
     }
 
@@ -110,7 +111,8 @@ def main():
     Main function of the script.
     """
     parser = argparse.ArgumentParser(
-        description="Convert JSONL format from model predictions to fix patch format."
+        description=
+        "Convert JSONL format from model predictions (all_pred.jsonl from trajectories) to fix patch format expected by multi_swe_bench evaluation."
     )
     parser.add_argument(
         "-i", "--input",
