@@ -116,35 +116,46 @@ The [transform.py](./scripts/transform.py) executes the following algorithm:
 
 1. Accepts the set of benchmarks collected by the [bootstrap.py](./scripts/bootstrap.py)'s `benchmark` subcommand.
 1. For every benchmark, clones its repo into `repos/{benchmark.instance_id}` and runs [CodeCocoon-Plugin](https://github.com/JetBrains-Research/CodeCocoon-Plugin) that applies transformations from the JSON file passed as a filepath via `-t/--transformations` parameter (see [sample.json](./transformations/sample.json)).
-1. The diffs after applying metamorphic transformations will be saved into every benchmark's JSON entry and saved as a new JSONL file under a filepath passed as `-o/--output` parameter. The schema will be:
+1. The diffs after applying metamorphic transformations will be saved into every benchmark's JSON entry and saved as a new JSONL file under a filepath passed as `-o/--output` parameter.
+
+The schema is:
 
 ```json
 {
     // ... other benchmark entries ...
+    "base": {
+        // other fields copied from the input entry
+        "metamorphic_base_patch": "same as `metamorphic_base_patch` below"
+    },
+    "test_patch": "save as `new_morphed_test_patch`",
     "metamorphic": {
         "[strategy-name]": {
+            "metamorphic_base_patch": "diff --git ...",
+            "metamorphic_base_commit": "18a57a3299d1db5338c08991a511b0c4d36a7b2a",
             "logs": [
                 {
                     "applied_to": "base",
-                    "label": "metamorphic_base_patch_log",
+                    "label": "base_metamorphic_transformation_log",
                     "result": {
-                        "stdout": "STDOUT of the CodeCocoon-Plugin executed on this benchmark on BASE commit",
-                        "stderr": "STDERR of the CodeCocoon-Plugin executed on this benchmark on BASE commit",
+                        "stdout": "...",
+                        "stderr": "...",
                         "return_code": 0
                     }
                 },
                 {
-                    "applied_to": "fix",
-                    "label": "metamorphic_fix_patch_log",
+                    "applied_to": "test",
+                    "label": "test_metamorphic_transformation_log",
                     "result": {
-                        "stdout": "STDOUT of the CodeCocoon-Plugin executed on this benchmark AFTER applying BOTH fix and test patches",
-                        "stderr": "STDERR of the CodeCocoon-Plugin executed on this benchmark AFTER applying BOTH fix and test patches",
+                        "stdout": "...",
+                        "stderr": "...",
                         "return_code": 0
                     }
                 }
             ],
-            "metamorphic_base_patch": "diff --git a/path/to/file.java b/path/to/file.java\n ...",
-            "metamorphic_fix_patch": "diff --git a/path/to/file.java b/path/to/file.java\n ..."
+            "_metamorphic_test_patch": "diff --git ...",
+            "metamorphic_test_commit": "1a60af4a8d773bb3e3a0caba938da72545a3f91f",
+            "original_test_patch": "diff --git ...",
+            "new_morphed_test_patch": "diff --git ..."
         }
     }
 }
@@ -153,10 +164,22 @@ The [transform.py](./scripts/transform.py) executes the following algorithm:
 Where `strategy-name` is passed as a `-s/--strategy` parameter of the [transform.py](./scripts/transform.py) script.
 
 
+**IMPORTANT**:
+
+The idea is to morph the input benchmarks and procude a fully new dataset with metamorphic transformations applied, so that MSWE-agent and multi_swe_bench eval can treat the morphed benchmarks in _almost_ the same way they do with unmodified ones (_NOTE: "almost" because the metamorphic patch applied on the base commit should be explicitly applied on the base commit again during image build by both MSWE-agent and multi_swe_bench eval_).
+
+1. `test_patch` entry will be replaced with the new `new_morphed_test_patch` patch, which is a diff between `(base + metamorphic_base_patch)` and `(base + test_patch (original) + _metamorphic_test_patch)`. This is implemented this way to minimize modifications in MSWE-agent and multi_swe_bench repos. The original `test_patch` present in the input is stored under `metamorphic.original_test_patch`.
+1. `base.metamorphic_base_patch` is a metamorphic modification produced by CodeCocoon-Plugin on the `base` commit. This patch is expected to be applied when present by the MSWE-agent and multi_swe_bench during image build to build a new base commit as the original base + metamorphic transformation on top of it.
+
+
 Run the help command to see the list of available parameters and their purpose:
 ```
 python scripts/transform.py --help
 ```
+
+
+_TODO: document how metamorphic patches are created and why in this way + add image drawn on paper with how transformations are applied (see [thread](https://jetbrains.slack.com/archives/C09R291DQGK/p1772623746229109))_
+
 
 **General usage**:
 
@@ -262,6 +285,10 @@ The resulting `fix_patches.jsonl` file will be supplied into multi_swe_bench eva
 
 
 #### MSWE-agent On Metamorphically Changed Benchmarks
+
+The difference will be in the input JSONL file given to the MSWE-agent. Once you morph the initial JSONL with benchmarks via [transform.py](./scripts/transform.py) script, you can pass it directly to the MSWE-agent as a normal input: The updated implementation in the `vartiukhov/metamorphic-testing` branch will **apply and commit** the `base.metamorphic_base_patch` patch during benchmark image build to treat this patched base as a new base commit. Since [transform.py](./scripts/transform.py) script replaces `test_patch` with the morphed test patch, it will be used in the evaluation same as a normal `test_patch`.
+
+Same applies to the multi_swe_bench repo.
 
 _tbd_
 
