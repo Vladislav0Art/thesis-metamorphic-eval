@@ -6,6 +6,7 @@ import yaml
 import tempfile
 import logging
 from pathlib import Path
+from dataclasses import dataclass
 from typing import Dict, List, Tuple, Optional
 from dotenv import dotenv_values
 from default.defaults import DEFAULT_CODE_COCCOON_TRANSFORMATIONS
@@ -343,45 +344,146 @@ def commit_all_changes(repo_dir: str, message: str) -> bool:
         return False
 
 
-def check_and_handle_existing_branches(
-    repo_dir: str,
-    strategy: str,
-    override: bool
-) -> Tuple[bool, str, str]:
+def diff_between_commits(repo_dir: str, base: str, another: str) -> Optional[str]:
     """
-    Check if strategy branches exist and handle according to override flag.
-    Branches:
-    - Base transformation branch: "{strategy}-base-transformation"
-    - Fix transformation branch: "{strategy}-fix-transformation"
+    Generate a git diff between two commits.
+
+    Args:
+        repo_dir: Path to the git repository
+        base: Base commit SHA or reference
+        another: Another commit SHA or reference to compare against base
 
     Returns:
-        Tuple[bool, str, str]: (should_continue, base_branch_name, fix_branch_name)
+        The diff as a string, or None if the operation fails
     """
-    base_branch = f"{strategy}-base-transformation"
-    fix_branch = f"{strategy}-fix-transformation"
+    try:
+        logger.debug(f"Creating diff between '{base}' and '{another}'")
+        stdout, stderr, code = run_cli_command('git', ['diff', base, another], cwd=repo_dir)
+        if code != 0:
+            logger.error(f"Failed to create diff between commits: {stderr}")
+            return None
+        logger.info(f"Successfully created diff between '{base}' and '{another}'")
+        return stdout
+    except Exception as e:
+        logger.error(f"Diff creation failed: {e}")
+        return None
 
-    base_exists = branch_exists(repo_dir, base_branch)
-    fix_exists = branch_exists(repo_dir, fix_branch)
 
-    if base_exists or fix_exists:
-        if not override:
-            logger.info(
-                f"Branches for strategy '{strategy}' already exist. "
-                f"Skipping transformation (use --override to regenerate)."
-            )
-            return False, base_branch, fix_branch
+@dataclass
+class Patch:
+    """
+    Represents a patch to be applied to the repository.
+        - name: str (used for logging purposes to identify the patch)
+        - content: str (the actual patch content in git diff format)
+    """
+    name: str
+    content: str
+
+
+def morph(
+    repo_dir: str,
+    patches: List[Patch], # List of `(patch_name (used for logging only), patch_content)` tuples
+    env_vars: Dict[str, str | None],
+    branch: str,
+    metamorphic_commit_msg: str,
+    codecocoon_dir: str,
+    config_path: str,
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Apply patches, run CodeCocoon transformations, and commit the results.
+
+    This function performs the following steps:
+    1. Checkout the specified branch (create if doesn't exist)
+    2. Apply patches in order (no-op if empty list)
+    3. Commit applied patches separately (if any)
+    4. Run CodeCocoon transformations
+    5. Collect metamorphic changes as a diff patch
+    6. Commit the metamorphic changes
+    7. Return the final commit SHA and metamorphic patch
+
+    The key insight is that patches are committed separately before running CodeCocoon, so they don't pollute the metamorphic diff.
+
+    Args:
+        repo_dir: Path to the git repository
+        patches: List of patches (as strings in git diff format) to apply before transformation
+        env_vars: Environment variables for CodeCocoon execution
+        branch: Branch name to work on
+        metamorphic_commit_msg: Commit message for the metamorphic changes
+        codecocoon_dir: Path to CodeCocoon repository
+        config_path: Path to codecocoon.yml config file
+
+    Returns:
+        Tuple of (last_commit_sha, metamorphic_patch) or (None, None) on failure
+    """
+    try:
+        # Step 1: Checkout branch (create if doesn't exist)
+        logger.info(f"Checking out branch '{branch}'")
+        branch_existed = branch_exists(repo_dir, branch)
+
+        if not branch_existed:
+            # Create new branch from current HEAD
+            if not checkout_branch(repo_dir, branch, create=True):
+                logger.error(f"Failed to create and checkout branch '{branch}'")
+                return None, None
         else:
-            logger.info(f"[IMPORTANT] Override enabled: Deleting existing branches for strategy '{strategy}'")
-            if base_exists:
-                if not delete_branch(repo_dir, base_branch):
-                    logger.error(f"Failed to delete base branch '{base_branch}'")
-                    return False, base_branch, fix_branch
-            if fix_exists:
-                if not delete_branch(repo_dir, fix_branch):
-                    logger.error(f"Failed to delete fix branch '{fix_branch}'")
-                    return False, base_branch, fix_branch
+            # Just checkout existing branch
+            if not checkout_branch(repo_dir, branch, create=False):
+                logger.error(f"Failed to checkout existing branch '{branch}'")
+                return None, None
 
-    return True, base_branch, fix_branch
+        # Step 2 & 3: Apply patches and commit them (if any)
+        if len(patches) > 0:
+            logger.info(f"Applying {len(patches)} patch(es) to branch '{branch}'")
+            for i, patch in enumerate(patches, 1):
+                if not apply_patch(repo_dir, patch.content):
+                    logger.error(f"Failed to apply patch `{patch.name}` ({i}/{len(patches)})")
+                    return None, None
+
+            # Commit the applied patches
+            applied_patches_str = ', '.join([p.name for p in patches])
+            patches_commit_msg = f"[transform.py] Applied patches: {applied_patches_str}"
+            if not commit_all_changes(repo_dir, patches_commit_msg):
+                logger.error("Failed to commit applied patches")
+                return None, None
+            logger.info(f"Successfully applied and committed {len(patches)} patch(es)")
+        else:
+            logger.info("No patches to apply, proceeding to transformations")
+
+        # Step 4: Run CodeCocoon
+        logger.info(f"Executing CodeCocoon transformations on branch '{branch}'")
+        stdout, stderr, code = execute_codecocoon(codecocoon_dir, config_path, env_vars)
+
+        if code != 0:
+            logger.error(f"CodeCocoon execution failed: {stderr}")
+            return None, None
+
+        logger.info(f"CodeCocoon execution successful")
+
+        # Step 5: Collect metamorphic diff
+        metamorphic_patch = create_diff(repo_dir)
+        if not metamorphic_patch:
+            logger.warning("No metamorphic changes detected: The metamorphic patch is empty")
+            metamorphic_patch = ""
+
+        # Step 6: Commit metamorphic changes
+        if not commit_all_changes(repo_dir, metamorphic_commit_msg):
+            logger.error("Failed to commit metamorphic changes")
+            return None, None
+
+        # Step 7: Get the last commit SHA
+        stdout, stderr, code = run_cli_command('git', ['rev-parse', 'HEAD'], cwd=repo_dir)
+        if code != 0:
+            logger.error(f"Failed to get commit SHA: {stderr}")
+            return None, None
+
+        last_commit_sha = stdout.strip()
+        logger.info(f"Metamorphic transformation complete. Last commit: {last_commit_sha}")
+
+        return last_commit_sha, metamorphic_patch
+
+    except Exception as e:
+        logger.error(f"Morph operation failed: {e}", exc_info=True)
+        return None, None
 
 
 def process_entry(
@@ -401,6 +503,7 @@ def process_entry(
     # Initialize strategy dict if not present
     if "metamorphic" not in entry:
         entry["metamorphic"] = {}
+
     # Strategy-specific dict for storing transformation results
     metamorphic = entry["metamorphic"]
 
@@ -420,22 +523,36 @@ def process_entry(
             return entry
 
         # Step 1.5: Check if branches exist and handle override
-        should_continue, base_branch, fix_branch = check_and_handle_existing_branches(
-            repo_dir, strategy, override
-        )
+        base_branch = f"{strategy}-base-transformation"
+        test_branch = f"{strategy}-test-transformation"
 
-        if not should_continue:
-            logger.info(f"Skipping transformation for {instance_id} - branches already exist")
+        base_exists = branch_exists(repo_dir, base_branch)
+        test_exists = branch_exists(repo_dir, test_branch)
+
+        if (base_exists or test_exists) and not override:
+            logger.info(
+                f"Branches for strategy '{strategy}' already exist. "
+                f"Skipping transformation (use --override to regenerate)."
+            )
             return entry
+
+        if override and (base_exists or test_exists):
+            logger.info(f"Override enabled: Deleting existing branches for strategy '{strategy}'")
+            if base_exists and not delete_branch(repo_dir, base_branch):
+                logger.error(f"Failed to delete base branch '{base_branch}'")
+                return entry
+            if test_exists and not delete_branch(repo_dir, test_branch):
+                logger.error(f"Failed to delete test branch '{test_branch}'")
+                return entry
 
         # Step 2: Extract changed files
         # NOTE: based on `transform_test_files` flag, apply transformations to files from either:
         #         1) fix patch only (default behavior)
-        #         2) both fix and test patches
+        #         2) both fix and test patches (if `transform_test_files` is True)
         fix_files = extract_changed_files(entry.get('fix_patch', ''))
         test_files = extract_changed_files(entry.get('test_patch', ''))
 
-        if transform_test_files is True:
+        if transform_test_files:
             # transform files from the test patch as well
             files_to_transform = list(set(fix_files + test_files))
             logger.info(f"Transforming files FROM BOTH FIX AND TEST PATCHES for {instance_id}")
@@ -444,16 +561,14 @@ def process_entry(
             files_to_transform = list(set(fix_files))
             logger.info(f"Transforming files modified ONLY BY FIX PATCH for {instance_id}")
 
-
-        files_to_transform_joined = ''.join(list(map(lambda file: f"\n     - {file}", files_to_transform)))
-        logger.info(f"Extracted {len(files_to_transform)} unique changed files for {instance_id}:{files_to_transform_joined}")
-
         if not files_to_transform:
             logger.warning(f"No files found in patches for {instance_id}")
             return entry
 
-        # Step 3: Generate CodeCocoon config
+        files_to_transform_joined = ''.join([f"\n     - {file}" for file in files_to_transform])
+        logger.info(f"Extracted {len(files_to_transform)} unique changed files:{files_to_transform_joined}")
 
+        # Step 3: Generate CodeCocoon config
         # config_path=repos_dir/instance_id/codecocoon.yml
         config_path = os.path.join(repos_dir, instance_id, "codecocoon.yml")
         generate_codecocoon_config(
@@ -463,112 +578,93 @@ def process_entry(
             output_path=config_path,
         )
 
-        # ===== PART 1: BASE TRANSFORMATION =====
-        logger.info(f"Starting base transformation for {instance_id}")
+        # Step 4: Apply metamorphic modifications to base commit
+        logger.info(f"===== STEP 1: Applying metamorphic modifications to base commit =====")
 
-        # Create base transformation branch from base SHA
-        if not checkout_branch(repo_dir, base_branch, create=True, base_ref=base_sha):
-            logger.error(f"Failed to create base transformation branch for {instance_id}")
+        # Ensure we're on base commit before starting
+        if not checkout_branch(repo_dir, base_sha, create=False):
+            logger.error(f"Failed to checkout base SHA {base_sha}")
             return entry
 
-        # Execute CodeCocoon on base commit
-        logger.info(f"Executing CodeCocoon on base commit for {instance_id}")
-        stdout, stderr, code = execute_codecocoon(codecocoon_dir, config_path, env_vars)
-        insert_metamorphic_log(
-            where=metamorphic,
-            strategy=strategy,
-            label='metamorphic_base_patch_log',
-            applied_to='base',
-            result={
-                "stdout": stdout,
-                "stderr": stderr,
-                "return_code": code,
-            }
+        metamorphic_base_commit, metamorphic_base_patch = morph(
+            repo_dir=repo_dir,
+            patches=[],
+            env_vars=env_vars,
+            branch=base_branch,
+            metamorphic_commit_msg="Apply metamorphic modifications on: base commit",
+            codecocoon_dir=codecocoon_dir,
+            config_path=config_path,
         )
 
-        if code == 0:
-            # Get the diff before committing
-            base_diff = create_diff(repo_dir)
-            if base_diff:
-                metamorphic[strategy]['metamorphic_base_patch'] = base_diff
-                logger.info(f"Base transformation diff captured for {instance_id}")
-            else:
-                logger.warning(f"Failed to create base diff for {instance_id}")
-
-            # Commit the transformation changes
-            if not commit_all_changes(repo_dir, f"(strategy={strategy}): Apply transformations to base commit"):
-                logger.error(f"Failed to commit base transformations for {instance_id}")
-                return entry
-
-            logger.info(f"Base transformation successful and committed for {instance_id}")
-        else:
-            logger.error(f"CodeCocoon failed on base commit for {instance_id}: {stderr}")
+        if not metamorphic_base_commit:
+            logger.error("Failed to apply base metamorphic transformations")
             return entry
 
-        # ===== PART 2: FIX TRANSFORMATION =====
-        logger.info(f"Starting fix transformation for {instance_id}")
+        # Store base transformation results
+        metamorphic[strategy]['metamorphic_base_patch'] = metamorphic_base_patch
+        metamorphic[strategy]['metamorphic_base_commit'] = metamorphic_base_commit
+        logger.info(f"Base metamorphic transformation complete. Commit: {metamorphic_base_commit}")
 
-        # Create fix transformation branch from base SHA
-        if not checkout_branch(repo_dir, fix_branch, create=True, base_ref=base_sha):
-            logger.error(f"Failed to create fix transformation branch for {instance_id}")
+        # Step 5: Apply test_patch and then metamorphic modifications
+        logger.info(f"===== STEP 2: Applying test_patch + metamorphic modifications =====")
+
+        # Checkout base commit again before applying test patch
+        if not checkout_branch(repo_dir, base_sha, create=False):
+            logger.error(f"Failed to checkout base SHA {base_sha}")
             return entry
 
-        # Apply fix and test patches
-        if not apply_patch(repo_dir, entry.get('fix_patch', '')):
-            logger.error(f"Failed to apply fix patch for {instance_id}")
-            return entry
-
-        if not apply_patch(repo_dir, entry.get('test_patch', '')):
-            logger.error(f"Failed to apply test patch for {instance_id}")
-            return entry
-
-        # Commit fix and test patches
-        if not commit_all_changes(repo_dir, "Apply fix and test patches"):
-            logger.error(f"Failed to commit fix and test patches for {instance_id}")
-            return entry
-
-        # Execute CodeCocoon on fixed commit
-        logger.info(f"Executing CodeCocoon on fix commit for {instance_id}")
-        stdout, stderr, code = execute_codecocoon(codecocoon_dir, config_path, env_vars)
-        insert_metamorphic_log(
-            where=metamorphic,
-            strategy=strategy,
-            label='metamorphic_fix_patch_log',
-            applied_to='fix',
-            result={
-                "stdout": stdout,
-                "stderr": stderr,
-                "return_code": code,
-            }
+        test_patch = entry.get('test_patch', '')
+        metamorphic_test_commit, _metamorphic_test_patch = morph(
+            repo_dir=repo_dir,
+            patches=[Patch(name="test_patch", content=test_patch)] if test_patch else [],
+            env_vars=env_vars,
+            branch=test_branch,
+            metamorphic_commit_msg="Apply metamorphic modifications on: base commit + test_patch (pre-committed)",
+            codecocoon_dir=codecocoon_dir,
+            config_path=config_path,
         )
 
-        if code == 0:
-            # Get the diff before committing
-            fix_diff = create_diff(repo_dir)
-            if fix_diff:
-                metamorphic[strategy]['metamorphic_fix_patch'] = fix_diff
-                logger.info(f"Fix transformation diff captured for {instance_id}")
-            else:
-                logger.warning(f"Failed to create fix diff for {instance_id}")
-
-            # Commit the transformation changes
-            if not commit_all_changes(repo_dir, f"(strategy={strategy}): Apply transformations to fixed commit"):
-                logger.error(f"Failed to commit fix transformations for {instance_id}")
-                return entry
-
-            logger.info(f"Fix transformation successful and committed for {instance_id}")
-        else:
-            logger.error(f"CodeCocoon failed on fix commit for {instance_id}: {stderr}")
+        if not metamorphic_test_commit:
+            logger.error("Failed to apply test metamorphic transformations")
             return entry
+
+        logger.info(f"Test metamorphic transformation complete. Commit: {metamorphic_test_commit}")
+
+        # Step 6: Generate new_morphed_test_patch as diff between two metamorphic commits
+        logger.info(f"===== STEP 3: Generating new_morphed_test_patch =====")
+
+        # NOTE: this patch should be applied instead of test_patch when evaluating
+        #       on the metamorphed version of the benchmark.
+        #  This final `new_morphed_test_patch` represents the difference between the base metamorphic state and the test+metamorphic state.
+        new_morphed_test_patch = diff_between_commits(
+            repo_dir=repo_dir,
+            base=metamorphic_base_commit,
+            another=metamorphic_test_commit,
+        )
+
+        if not new_morphed_test_patch:
+            logger.error("Failed to generate new_morphed_test_patch")
+            return entry
+
+        # Store the generated new_morphed_test_patch (replaces test_patch)
+        entry['new_morphed_test_patch'] = new_morphed_test_patch
+
+        # Store metadata in metamorphic dict for reference
+        metamorphic[strategy]['_metamorphic_test_patch'] = _metamorphic_test_patch
+        metamorphic[strategy]['metamorphic_test_commit'] = metamorphic_test_commit
+        # save the original test patch as well for reference
+        metamorphic[strategy]['original_test_patch'] = test_patch
 
         logger.info(f"Successfully completed all transformations for {instance_id}")
         logger.info(f"  Base branch: {base_branch}")
-        logger.info(f"  Fix branch: {fix_branch}")
+        logger.info(f"  Test branch: {test_branch}")
+        logger.info(f"  Generated new_morphed_test_patch (replaces test_patch)")
 
     except Exception as e:
         logger.error(f"Failed to process {instance_id}: {e}", exc_info=True)
 
     return entry
+
 
 def load_codecoccoon_transformations(from_filepath: str | None) -> List[Dict] | None:
     def is_transformation_schema(transformation) -> bool:
@@ -593,6 +689,7 @@ def load_codecoccoon_transformations(from_filepath: str | None) -> List[Dict] | 
     except Exception as e:
         logger.error(f"Failed to load transformations file: {e}")
         return None
+
 
 def make_absolute_path(path: str) -> str:
     """Convert a relative path to an absolute path."""
