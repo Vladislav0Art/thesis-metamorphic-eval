@@ -181,11 +181,38 @@ def generate_codecocoon_config(
 
 
 
+
+@dataclass
+class Patch:
+    """
+    Represents a patch to be applied to the repository.
+        - name: str (used for logging purposes to identify the patch)
+        - content: str (the actual patch content in git diff format)
+    """
+    name: str
+    content: str
+
+@dataclass
+class CodeCocoonResult:
+    stdout: str
+    stderr: str
+    return_code: int
+
+@dataclass
+class MorphResult:
+    succeeded: bool
+    last_commit_sha: Optional[str] = None
+    metamorphic_patch: Optional[str] = None
+    codecocoon_result: Optional[CodeCocoonResult] = None
+
+
+
+
 def execute_codecocoon(
     codecocoon_dir: str,
     config_path: str,
     env_vars: Dict[str, str | None],
-) -> Tuple[str, str, int]:
+) -> CodeCocoonResult:
     """Execute CodeCocoon in headless mode."""
     logger.info(f"Executing CodeCocoon with config {config_path}")
     stdout, stderr, code = run_cli_command(
@@ -195,10 +222,20 @@ def execute_codecocoon(
         # merge current environment with additional env vars
         env={**os.environ, **env_vars},
     )
-    return stdout, stderr, code
+    return CodeCocoonResult(
+        stdout=stdout,
+        stderr=stderr,
+        return_code=code,
+    )
 
 
-def insert_metamorphic_log(where: Dict, strategy: str, label: str, applied_to: str, result: Dict):
+def insert_metamorphic_log(
+    where: Dict,
+    strategy: str,
+    label: str,
+    applied_to: str,
+    result: CodeCocoonResult | None,
+):
     """
     Inserts a log entry for a metamorphic transformation result.
 
@@ -224,7 +261,7 @@ def insert_metamorphic_log(where: Dict, strategy: str, label: str, applied_to: s
       - label: any string literal meaningful for the log.
       - applied_to: A string indicating whether this log is for the 'base' (i.e., on the base commit)
                     or 'fix' (i.e., after applying both test+fix patches) transformation.
-      - result: A dictionary containing the result of the transformation execution, with keys:
+      - result: A `CodeCocoonResult` containing the result of the transformation execution, with keys:
                 - "stdout": The standard output from executing CodeCocoon.
                 - "stderr": The standard error from executing CodeCocoon.
                 - "return_code": The return code from executing CodeCocoon.
@@ -238,7 +275,7 @@ def insert_metamorphic_log(where: Dict, strategy: str, label: str, applied_to: s
     log_entry = {
         "applied_to": applied_to,
         "label": label,
-        "result": result
+        "result": result.__dict__ if result is not None else None,
     }
     where[strategy]["logs"].append(log_entry)
     logger.info("Successfully inserted metamorphic log entry for strategy '%s' applied to '%s'", strategy, applied_to)
@@ -369,16 +406,6 @@ def diff_between_commits(repo_dir: str, base: str, another: str) -> Optional[str
         return None
 
 
-@dataclass
-class Patch:
-    """
-    Represents a patch to be applied to the repository.
-        - name: str (used for logging purposes to identify the patch)
-        - content: str (the actual patch content in git diff format)
-    """
-    name: str
-    content: str
-
 
 def morph(
     repo_dir: str,
@@ -388,7 +415,7 @@ def morph(
     metamorphic_commit_msg: str,
     codecocoon_dir: str,
     config_path: str,
-) -> Tuple[Optional[str], Optional[str]]:
+) -> MorphResult:
     """
     Apply patches, run CodeCocoon transformations, and commit the results.
 
@@ -413,7 +440,7 @@ def morph(
         config_path: Path to codecocoon.yml config file
 
     Returns:
-        Tuple of (last_commit_sha, metamorphic_patch) or (None, None) on failure
+        `MorphResult` with all values set on success, otherwise `MorphResult(succeeded=False)` with error details in logs.
     """
     try:
         # Step 1: Checkout branch (create if doesn't exist)
@@ -424,12 +451,12 @@ def morph(
             # Create new branch from current HEAD
             if not checkout_branch(repo_dir, branch, create=True):
                 logger.error(f"Failed to create and checkout branch '{branch}'")
-                return None, None
+                return MorphResult(succeeded=False)
         else:
             # Just checkout existing branch
             if not checkout_branch(repo_dir, branch, create=False):
                 logger.error(f"Failed to checkout existing branch '{branch}'")
-                return None, None
+                return MorphResult(succeeded=False)
 
         # Step 2 & 3: Apply patches and commit them (if any)
         if len(patches) > 0:
@@ -437,25 +464,25 @@ def morph(
             for i, patch in enumerate(patches, 1):
                 if not apply_patch(repo_dir, patch.content):
                     logger.error(f"Failed to apply patch `{patch.name}` ({i}/{len(patches)})")
-                    return None, None
+                    return MorphResult(succeeded=False)
 
             # Commit the applied patches
             applied_patches_str = ', '.join([p.name for p in patches])
             patches_commit_msg = f"[transform.py] Applied patches: {applied_patches_str}"
             if not commit_all_changes(repo_dir, patches_commit_msg):
                 logger.error("Failed to commit applied patches")
-                return None, None
+                return MorphResult(succeeded=False)
             logger.info(f"Successfully applied and committed {len(patches)} patch(es)")
         else:
             logger.info("No patches to apply, proceeding to transformations")
 
         # Step 4: Run CodeCocoon
         logger.info(f"Executing CodeCocoon transformations on branch '{branch}'")
-        stdout, stderr, code = execute_codecocoon(codecocoon_dir, config_path, env_vars)
+        codecocoon_result: CodeCocoonResult = execute_codecocoon(codecocoon_dir, config_path, env_vars)
 
-        if code != 0:
+        if codecocoon_result.return_code != 0:
             logger.error(f"CodeCocoon execution failed: {stderr}")
-            return None, None
+            return MorphResult(succeeded=False, codecocoon_result=codecocoon_result)
 
         logger.info(f"CodeCocoon execution successful")
 
@@ -468,22 +495,26 @@ def morph(
         # Step 6: Commit metamorphic changes
         if not commit_all_changes(repo_dir, metamorphic_commit_msg):
             logger.error("Failed to commit metamorphic changes")
-            return None, None
+            return MorphResult(succeeded=False, codecocoon_result=codecocoon_result)
 
         # Step 7: Get the last commit SHA
         stdout, stderr, code = run_cli_command('git', ['rev-parse', 'HEAD'], cwd=repo_dir)
         if code != 0:
             logger.error(f"Failed to get commit SHA: {stderr}")
-            return None, None
+            return MorphResult(succeeded=False, codecocoon_result=codecocoon_result)
 
         last_commit_sha = stdout.strip()
         logger.info(f"Metamorphic transformation complete. Last commit: {last_commit_sha}")
 
-        return last_commit_sha, metamorphic_patch
-
+        return MorphResult(
+            succeeded=True,
+            last_commit_sha=last_commit_sha,
+            metamorphic_patch=metamorphic_patch,
+            codecocoon_result=codecocoon_result,
+        )
     except Exception as e:
         logger.error(f"Morph operation failed: {e}", exc_info=True)
-        return None, None
+        return MorphResult(succeeded=False)
 
 
 def process_entry(
@@ -586,7 +617,7 @@ def process_entry(
             logger.error(f"Failed to checkout base SHA {base_sha}")
             return entry
 
-        metamorphic_base_commit, metamorphic_base_patch = morph(
+        base_morph_result: MorphResult = morph(
             repo_dir=repo_dir,
             patches=[],
             env_vars=env_vars,
@@ -596,13 +627,26 @@ def process_entry(
             config_path=config_path,
         )
 
-        if not metamorphic_base_commit:
+        if base_morph_result.succeeded is False:
             logger.error("Failed to apply base metamorphic transformations")
             return entry
+
+        # assing variables
+        metamorphic_base_commit: str = base_morph_result.last_commit_sha
+        metamorphic_base_patch: str = base_morph_result.metamorphic_patch
 
         # Store base transformation results
         metamorphic[strategy]['metamorphic_base_patch'] = metamorphic_base_patch
         metamorphic[strategy]['metamorphic_base_commit'] = metamorphic_base_commit
+        # saving CodeCocoon logs for base transformation
+        insert_metamorphic_log(
+            where=metamorphic,
+            strategy=strategy,
+            label="base_metamorphic_transformation_log",
+            applied_to="base",
+            result=base_morph_result.codecocoon_result,
+        )
+
         logger.info(f"Base metamorphic transformation complete. Commit: {metamorphic_base_commit}")
 
         # Step 5: Apply test_patch and then metamorphic modifications
@@ -614,7 +658,8 @@ def process_entry(
             return entry
 
         test_patch = entry.get('test_patch', '')
-        metamorphic_test_commit, _metamorphic_test_patch = morph(
+
+        test_morph_result: MorphResult = morph(
             repo_dir=repo_dir,
             patches=[Patch(name="test_patch", content=test_patch)] if test_patch else [],
             env_vars=env_vars,
@@ -624,18 +669,34 @@ def process_entry(
             config_path=config_path,
         )
 
-        if not metamorphic_test_commit:
+        if test_morph_result.succeeded is False:
             logger.error("Failed to apply test metamorphic transformations")
             return entry
 
+        metamorphic_test_commit = test_morph_result.last_commit_sha
+        _metamorphic_test_patch = test_morph_result.metamorphic_patch
+
         logger.info(f"Test metamorphic transformation complete. Commit: {metamorphic_test_commit}")
+
+        # Store metadata in metamorphic dict for reference
+        metamorphic[strategy]['_metamorphic_test_patch'] = _metamorphic_test_patch
+        metamorphic[strategy]['metamorphic_test_commit'] = metamorphic_test_commit
+        # save CodeCocoon logs for test transformation
+        insert_metamorphic_log(
+            where=metamorphic,
+            strategy=strategy,
+            label="test_metamorphic_transformation_log",
+            applied_to="test",
+            result=test_morph_result.codecocoon_result,
+        )
 
         # Step 6: Generate new_morphed_test_patch as diff between two metamorphic commits
         logger.info(f"===== STEP 3: Generating new_morphed_test_patch =====")
 
         # NOTE: this patch should be applied instead of test_patch when evaluating
         #       on the metamorphed version of the benchmark.
-        #  This final `new_morphed_test_patch` represents the difference between the base metamorphic state and the test+metamorphic state.
+        # This final `new_morphed_test_patch` represents the difference between
+        # the base metamorphic state and the test + metamorphic state.
         new_morphed_test_patch = diff_between_commits(
             repo_dir=repo_dir,
             base=metamorphic_base_commit,
@@ -646,14 +707,19 @@ def process_entry(
             logger.error("Failed to generate new_morphed_test_patch")
             return entry
 
-        # Store the generated new_morphed_test_patch (replaces test_patch)
-        entry['new_morphed_test_patch'] = new_morphed_test_patch
-
-        # Store metadata in metamorphic dict for reference
-        metamorphic[strategy]['_metamorphic_test_patch'] = _metamorphic_test_patch
-        metamorphic[strategy]['metamorphic_test_commit'] = metamorphic_test_commit
         # save the original test patch as well for reference
         metamorphic[strategy]['original_test_patch'] = test_patch
+        # store the generated new_morphed_test_patch (replaces test_patch)
+        metamorphic[strategy]['new_morphed_test_patch'] = new_morphed_test_patch
+
+
+        logger.info(f"===== STEP 4: Replacing test_patch with new_morphed_test_patch and save metamorphic_base_patch into 'base' =====")
+
+        # base: sha -> sha + metamorphic_base_patch (MSWE-agent and multi_swe_bench should applied the patch manually)
+        # test: test_patch -> new_morphed_test_patch
+        entry['base']['metamorphic_base_patch'] = metamorphic_base_patch
+        entry['test_patch'] = new_morphed_test_patch
+
 
         logger.info(f"Successfully completed all transformations for {instance_id}")
         logger.info(f"  Base branch: {base_branch}")
@@ -664,6 +730,7 @@ def process_entry(
         logger.error(f"Failed to process {instance_id}: {e}", exc_info=True)
 
     return entry
+
 
 
 def load_codecoccoon_transformations(from_filepath: str | None) -> List[Dict] | None:
