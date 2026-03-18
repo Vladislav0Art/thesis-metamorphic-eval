@@ -63,7 +63,7 @@ class Setup:
     """
     Manages idempotent environment setup for a sub-project.
 
-    Usage::
+    Usage:
 
         setup = Setup(config, working_dir=Path("/path/to/repo"))
         setup.ensure()  # creates venv if absent, then installs deps

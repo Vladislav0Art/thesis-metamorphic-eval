@@ -6,7 +6,7 @@ Substeps executed in order
 1. Checkout the configured git branch in the MSWE-agent repo.
 2. Ensure the Python environment is set up (venv + dependencies).
 3. Write ``keys.cfg`` with API tokens if not already present.
-4. [PLACEHOLDER] Run MSWE-agent (run.py or multirun.py).
+4. TODO [PLACEHOLDER] Run MSWE-agent (run.py or multirun.py).
 5. Discover the trajectory folder produced by the agent.
 6. Copy the trajectory folder into run_dir (if ``copy_trajectories=True``).
 7. Convert ``all_preds.jsonl`` → ``fix_patches.jsonl`` (multi_swe_bench format).
@@ -233,7 +233,7 @@ class AgentStep(Step):
         TODO: Replace the placeholder body with an actual ``run_cli_command``
               call once the setup/config pipeline has been validated end-to-end.
 
-        When implemented, the command will be::
+        When implemented, the command will be:
 
             cd {agent_dir}
             {venv}/bin/python {script} \\

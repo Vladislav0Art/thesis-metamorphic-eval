@@ -246,7 +246,7 @@ class EvaluationStep(Step):
         TODO: Replace the placeholder body with an actual ``run_cli_command``
               call once the rest of the pipeline has been validated end-to-end.
 
-        When implemented, the command will be::
+        When implemented, the command will be:
 
             cd {multi_swe_bench_dir}
             {venv}/bin/python -m multi_swe_bench.harness.run_evaluation \\
