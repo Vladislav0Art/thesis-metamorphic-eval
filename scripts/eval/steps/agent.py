@@ -99,11 +99,16 @@ class AgentStepResult(StepResult):
                             None if copy_trajectories=False or agent didn't run.
         fix_patches_path:   Path to the converted fix_patches.jsonl inside
                             run_dir/predictions/.  None if agent didn't run.
+        artifacts:          Per-instance artifact paths collected from the
+                            trajectory folder.  Each entry has keys:
+                            ``instance_id``, ``trajectory`` (abs path or null),
+                            ``patch`` (abs path or null).
     """
     trajectory_source: Optional[Path] = None
     copy_trajectories: bool = True
     trajectory_dest: Optional[Path] = None
     fix_patches_path: Optional[Path] = None
+    artifacts: list = None  # list[dict]
 
     def to_dict(self) -> dict:
         return {
@@ -112,6 +117,7 @@ class AgentStepResult(StepResult):
             "copy_trajectories": self.copy_trajectories,
             "trajectory_dest": str(self.trajectory_dest) if self.trajectory_dest else None,
             "fix_patches": str(self.fix_patches_path) if self.fix_patches_path else None,
+            "artifacts": self.artifacts if self.artifacts is not None else [],
         }
 
 
@@ -172,12 +178,19 @@ class AgentStep(Step):
             fix_patches_path = self._convert(trajectory_source, run_dir)
             logger.info(f"Converted predictions written to: {fix_patches_path}")
 
+            # Step 8: collect per-instance artifact paths from the trajectory folder
+            # Use the copied destination when available so paths point inside run_dir.
+            artifacts_folder = trajectory_dest if trajectory_dest else trajectory_source
+            artifacts = self._collect_artifacts(artifacts_folder)
+            logger.info(f"Collected artifacts for {len(artifacts)} instance(s).")
+
             return AgentStepResult(
                 success=True,
                 trajectory_source=trajectory_source.resolve(),
                 copy_trajectories=self.config.copy_trajectories,
                 trajectory_dest=trajectory_dest.resolve() if trajectory_dest else None,
                 fix_patches_path=fix_patches_path.resolve(),
+                artifacts=artifacts,
             )
 
         except Exception as e:
@@ -280,6 +293,48 @@ class AgentStep(Step):
             )
 
         return True
+
+    def _collect_artifacts(self, trajectory_folder: Path) -> list:
+        """
+        Scan *trajectory_folder* for per-instance ``.traj`` and ``.patch`` files
+        and return a list of artifact dicts.
+
+        Expected layout inside the trajectory folder::
+
+            {instance_id}.traj
+            patches/
+                {instance_id}.patch
+
+        For each unique ``instance_id`` found (derived from either file type),
+        the entry has the form::
+
+            {
+                "instance_id": "mockito__mockito-3129",
+                "trajectory":  "/abs/path/mockito__mockito-3129.traj",   # or null
+                "patch":       "/abs/path/patches/mockito__mockito-3129.patch"  # or null
+            }
+
+        Missing files are represented as ``null``.
+        """
+        patches_dir = trajectory_folder / "patches"
+
+        # Collect all instance_ids seen in either location
+        traj_files  = {p.stem: p for p in trajectory_folder.glob("*.traj")}
+        patch_files = {p.stem: p for p in patches_dir.glob("*.patch")} if patches_dir.is_dir() else {}
+
+        instance_ids = sorted(traj_files.keys() | patch_files.keys())
+
+        artifacts = []
+        for iid in instance_ids:
+            traj  = traj_files.get(iid)
+            patch = patch_files.get(iid)
+            artifacts.append({
+                "instance_id": iid,
+                "trajectory":  str(traj.resolve())  if traj  else None,
+                "patch":       str(patch.resolve()) if patch else None,
+            })
+
+        return artifacts
 
     def _discover_trajectory(self) -> Path:
         """

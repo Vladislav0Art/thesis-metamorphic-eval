@@ -111,7 +111,10 @@ steps:
       cache_task_images: true
       pre_build_all_images: true
       remove_image: false
-      skip_existing: false # should be false for multi-runs (otherwise only the first run will do anything, the rest will skip everything as "existing")
+      # should be false for multi-runs
+      # (otherwise only the first run will do anything,
+      #  the rest will skip everything as "existing")
+      skip_existing: false
       print_config: false
       max_workers_build_image: 16
 
