@@ -10,7 +10,7 @@ Substeps executed in order
      • Otherwise use the explicit ``evaluation.config.patch_files`` from config.
 4. Auto-generate ``config.json`` for the multi_swe_bench harness and write it
    to ``{run_dir}/eval/config.json``.
-5. [PLACEHOLDER] Run the multi_swe_bench harness.
+5. Run the multi_swe_bench harness.
 
 Generated config.json layout
 -----------------------------
@@ -25,12 +25,6 @@ every run's output is self-contained:
         repos/               ← repos cloned by harness
         logs/                ← harness log files
 
-Placeholder behaviour
----------------------
-``_run_harness()`` returns ``False`` and logs a message with the exact
-command that *would* be executed.  Replace the body with an actual
-``run_cli_command`` call when the full pipeline is ready.
-
 Standalone evaluation
 ---------------------
 Run only the evaluation step (no agent step) by setting ``run.steps`` to
@@ -40,6 +34,7 @@ result in context.
 """
 
 import json
+import os
 import sys
 import logging
 from dataclasses import dataclass
@@ -241,27 +236,40 @@ class EvaluationStep(Step):
 
     def _run_harness(self, eval_config_path: Path) -> bool:
         """
-        [PLACEHOLDER] Run the multi_swe_bench evaluation harness.
+        Run the multi_swe_bench evaluation harness.
 
-        TODO: Replace the placeholder body with an actual ``run_cli_command``
-              call once the rest of the pipeline has been validated end-to-end.
-
-        When implemented, the command will be:
-
-            cd {multi_swe_bench_dir}
-            {venv}/bin/python -m multi_swe_bench.harness.run_evaluation \\
-                --config {eval_config_path}
+        Invokes ``multi_swe_bench.harness.run_evaluation`` as a module
+        (``python -m``) using the venv Python so that the installed package
+        is on sys.path.
 
         Returns:
-            True  — harness ran and produced final_report.json.
-            False — placeholder; no actual harness execution.
-        """
-        venv_python = self.dir / self.config.setup.venv / "bin" / "python"
-        logger.info("[PLACEHOLDER] multi_swe_bench harness would be run with:")
-        logger.info(
-            f"    {venv_python} -m multi_swe_bench.harness.run_evaluation \\\n"
-            f"        --config {eval_config_path}"
-        )
-        logger.info("[PLACEHOLDER] Skipping actual harness execution.")
+            True  — harness ran successfully.
 
-        return False  # TODO: return True after implementing actual execution
+        Raises:
+            RuntimeError — harness process exited with a non-zero code.
+        """
+        venv_python = str(self.dir / self.config.setup.venv / "bin" / "python")
+        args = [
+            "-m", "multi_swe_bench.harness.run_evaluation",
+            "--config", str(eval_config_path),
+        ]
+
+        env = self.setup.venv_env()
+
+        logger.info(f"Running multi_swe_bench harness: {venv_python} {' '.join(args)}")
+        stdout, stderr, code = run_cli_command(
+            venv_python, args, cwd=str(self.dir), env=env
+        )
+
+        if stdout:
+            logger.info(f"[harness stdout]\n{stdout.strip()}")
+        if stderr:
+            logger.info(f"[harness stderr]\n{stderr.strip()}")
+
+        if code != 0:
+            raise RuntimeError(
+                f"multi_swe_bench harness exited with code {code}.\n"
+                f"stderr: {stderr.strip()}"
+            )
+
+        return True

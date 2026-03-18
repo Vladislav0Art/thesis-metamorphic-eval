@@ -6,18 +6,17 @@ Substeps executed in order
 1. Checkout the configured git branch in the MSWE-agent repo.
 2. Ensure the Python environment is set up (venv + dependencies).
 3. Write ``keys.cfg`` with API tokens if not already present.
-4. TODO [PLACEHOLDER] Run MSWE-agent (run.py or multirun.py).
+4. Run MSWE-agent (run.py or multirun.py).
 5. Discover the trajectory folder produced by the agent.
 6. Copy the trajectory folder into run_dir (if ``copy_trajectories=True``).
 7. Convert ``all_preds.jsonl`` → ``fix_patches.jsonl`` (multi_swe_bench format).
 
-Placeholder behaviour
----------------------
-Steps 4-7 depend on actual agent output.  While the agent execution is a
-placeholder, ``_run_agent()`` returns ``False`` and steps 5-7 are skipped.
-``AgentStepResult.fix_patches_path`` will be ``None`` in that case, which
-EvaluationStep handles gracefully by requiring an explicit ``patch_files``
-entry in its config section.
+Early-exit behaviour
+--------------------
+If ``_run_agent()`` raises, the step fails immediately and steps 5-7 are
+skipped.  ``AgentStepResult.fix_patches_path`` will be ``None`` in that case,
+which EvaluationStep handles gracefully by requiring an explicit
+``patch_files`` entry in its config section.
 
 Trajectory discovery
 --------------------
@@ -47,6 +46,7 @@ convert_model_predictions.py) so that the step is fully self-contained and
 reuses the read_jsonl / write_jsonl helpers from common/fs.py.
 """
 
+import os
 import re
 import shutil
 import sys
@@ -228,51 +228,57 @@ class AgentStep(Step):
 
     def _run_agent(self) -> bool:
         """
-        [PLACEHOLDER] Run MSWE-agent on the configured benchmark.
+        Run MSWE-agent on the configured benchmark.
 
-        TODO: Replace the placeholder body with an actual ``run_cli_command``
-              call once the setup/config pipeline has been validated end-to-end.
-
-        When implemented, the command will be:
-
-            cd {agent_dir}
-            {venv}/bin/python {script} \\
-                --model_name      <model_name> \\
-                --pr_file         <benchmark_file> \\
-                --config_file     <config_file> \\
-                ... (other flags)
-
-        For ``multirun.py``, ``RUNNING_THREADS={threads}`` must be set in env.
+        Uses ``run.py`` for serial execution or ``multirun.py`` for parallel
+        execution (controlled by ``runner.parallel`` in the config).
+        For ``multirun.py``, ``RUNNING_THREADS`` is set in the environment.
 
         Returns:
-            True  — agent ran and produced trajectory output.
-            False — placeholder; no actual agent execution.
+            True  — agent ran successfully and produced trajectory output.
+
+        Raises:
+            RuntimeError — agent process exited with a non-zero code.
         """
         c = self.config.config
         script = "multirun.py" if self.config.runner.parallel else "run.py"
+        venv_python = str(self.dir / self.config.setup.venv / "bin" / "python")
 
-        cmd_lines = [
-            f"python {script}",
-            f"  --model_name {c.model_name}",
-            f"  --pr_file {c.benchmark_file}",
-            f"  --config_file {c.config_file}",
-            f"  --per_instance_cost_limit {c.per_instance_cost_limit}",
-            f"  --cache_task_images {c.cache_task_images}",
-            f"  --pre_build_all_images {c.pre_build_all_images}",
-            f"  --remove_image {c.remove_image}",
-            f"  --skip_existing {c.skip_existing}",
-            f"  --print_config {c.print_config}",
-            f"  --max_workers_build_image {c.max_workers_build_image}",
-        ]
+        env = self.setup.venv_env()
         if self.config.runner.parallel:
-            cmd_lines.insert(0, f"RUNNING_THREADS={self.config.runner.threads} \\")
+            env["RUNNING_THREADS"] = str(self.config.runner.threads)
 
-        logger.info("[PLACEHOLDER] MSWE-agent would be run with:")
-        for line in cmd_lines:
-            logger.info(f"    {line} \\")
-        logger.info("[PLACEHOLDER] Skipping actual agent execution.")
+        args = [
+            script,
+            "--model_name",            c.model_name,
+            "--pr_file",               c.benchmark_file,
+            "--config_file",           c.config_file,
+            "--per_instance_cost_limit", str(c.per_instance_cost_limit),
+            "--cache_task_images",     str(c.cache_task_images),
+            "--pre_build_all_images",  str(c.pre_build_all_images),
+            "--remove_image",          str(c.remove_image),
+            "--skip_existing",         str(c.skip_existing),
+            "--print_config",          str(c.print_config),
+            "--max_workers_build_image", str(c.max_workers_build_image),
+        ]
 
-        return False  # TODO: return True after implementing actual execution
+        logger.info(f"Running MSWE-agent: {venv_python} {' '.join(args)}")
+        stdout, stderr, code = run_cli_command(
+            venv_python, args, cwd=str(self.dir), env=env
+        )
+
+        if stdout:
+            logger.info(f"[agent stdout]\n{stdout.strip()}")
+        if stderr:
+            logger.info(f"[agent stderr]\n{stderr.strip()}")
+
+        if code != 0:
+            raise RuntimeError(
+                f"MSWE-agent exited with code {code}.\n"
+                f"stderr: {stderr.strip()}"
+            )
+
+        return True
 
     def _discover_trajectory(self) -> Path:
         """

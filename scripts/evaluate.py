@@ -21,7 +21,7 @@ They run in the order listed.
       1. Checkout the configured git branch in the MSWE-agent repo.
       2. Ensure the Python environment (venv + deps).
       3. Write ``keys.cfg`` with API tokens.
-      4. TODO [PLACEHOLDER] Run MSWE-agent (run.py or multirun.py).
+      4. Run MSWE-agent (run.py or multirun.py).
       5. Discover the generated trajectory folder.
       6. Copy the trajectory folder into the run archive (if enabled).
       7. Convert ``all_preds.jsonl`` → ``fix_patches.jsonl`` (multi_swe_bench format).
@@ -31,7 +31,7 @@ They run in the order listed.
       2. Ensure the Python environment (venv + deps).
       3. Resolve ``fix_patches.jsonl`` (from agent step or explicit config).
       4. Auto-generate ``config.json`` for the multi_swe_bench harness.
-      5. TODO [PLACEHOLDER] Run the multi_swe_bench evaluation harness.
+      5. Run the multi_swe_bench evaluation harness.
 
 Steps can be run together or independently:
   - Full run:          ``run.steps: [agent, evaluation]``
@@ -49,8 +49,8 @@ tree and paths like ``./agents/MSWE-agent`` will resolve correctly.
 Workdir and run-N structure
 ---------------------------
 All artefacts for a run are isolated under ``{workdir}/run-{N}/``.
-Currently only ``run-1`` is created (N > 1 reserved for future multi-run
-support).  The exact layout:
+When ``run.N > 1``, run-1 through run-N are created sequentially.
+The exact layout per run:
 
     {workdir}/
         evaluate.log                    ← script-level log (all runs)
@@ -169,39 +169,16 @@ def run_evaluation(config: EvalConfig, config_filepath: str):
     # log output from all N runs.
     configure_logging(log_filename=str(workdir / "evaluate.log"))
 
-    # ── Note on N (multi-run) ─────────────────────────────────────────────────
-    # config.run.N is parsed and stored but currently ignored.
-    # Only run-1 is executed.  Multi-run support (averaging pass rates across
-    # N independent runs) will be added in a future iteration.
-    if config.run.N > 1:
-        logger.warning(
-            f"run.N={config.run.N} is set but multi-run support is not yet "
-            "implemented.  Only run-1 will be executed."
-        )
-
-    run_number = 1
-    run_dir = workdir / f"run-{run_number}"
-    run_dir.mkdir(parents=True, exist_ok=True)
-
     logger.info("=" * 70)
     logger.info("  Metamorphic Evaluation Pipeline")
     logger.info("=" * 70)
     logger.info(f"  Config file : {Path(config_filepath).resolve()}")
     logger.info(f"  Workdir     : {workdir.resolve()}")
-    logger.info(f"  Run dir     : {run_dir.resolve()}")
     logger.info(f"  Steps       : {config.run.steps}")
+    logger.info(f"  Runs        : {config.run.N}")
     logger.info("=" * 70)
 
-    # ── Initialise result manifest ────────────────────────────────────────────
-    result_data: dict = {
-        "run_number":     run_number,
-        "timestamp":      datetime.now().isoformat(),
-        "config_file":    str(Path(config_filepath).resolve()),
-        "workdir":        str(workdir.resolve()),
-        "steps_executed": [],
-    }
-
-    # ── Validate step list before starting ───────────────────────────────────
+    # ── Validate step list before starting any run ────────────────────────────
     for step_name in config.run.steps:
         if step_name not in _STEP_REGISTRY:
             logger.error(
@@ -213,48 +190,79 @@ def run_evaluation(config: EvalConfig, config_filepath: str):
         if step_config is None:
             logger.error(
                 f"Step '{step_name}' is listed in run.steps but has no "
-                f"configuration block under `steps.{step_name}` in the YAML config file '{config_filepath}'."
+                f"configuration block under `steps.{step_name}` in the YAML "
+                f"config file '{config_filepath}'."
             )
             sys.exit(1)
 
-    # ── Execute steps ─────────────────────────────────────────────────────────
-    context: dict[str, StepResult] = {}
+    # Warn when skip_existing=True would cause runs 2..N to skip all instances
+    if config.run.N > 1:
+        agent_cfg = getattr(config.steps, "agent", None)
+        if agent_cfg is not None and getattr(agent_cfg.config, "skip_existing", False):
+            logger.warning(
+                f"run.N={config.run.N} with agent.config.skip_existing=true: "
+                "runs 2..N will skip instances already processed in run-1. "
+                "Set skip_existing=false if each run must process all instances."
+            )
 
-    for step_name in config.run.steps:
+    # ── N-run loop ────────────────────────────────────────────────────────────
+    for run_number in range(1, config.run.N + 1):
+        run_dir = workdir / f"run-{run_number}"
+        run_dir.mkdir(parents=True, exist_ok=True)
+
         logger.info("")
-        logger.info(f"{'─' * 70}")
-        logger.info(f"  Step: {step_name.upper()}")
-        logger.info(f"{'─' * 70}")
+        logger.info("=" * 70)
+        logger.info(f"  Run {run_number} of {config.run.N}")
+        logger.info(f"  Run dir : {run_dir.resolve()}")
+        logger.info("=" * 70)
 
-        step_config = getattr(config.steps, step_name)
-        step_class  = _STEP_REGISTRY[step_name]
-        step        = step_class(step_config)
+        result_data: dict = {
+            "run_number":     run_number,
+            "timestamp":      datetime.now().isoformat(),
+            "config_file":    str(Path(config_filepath).resolve()),
+            "workdir":        str(workdir.resolve()),
+            "steps_executed": [],
+        }
 
-        result: StepResult = step.run(run_dir, context)
+        context: dict[str, StepResult] = {}
 
-        context[step_name] = result
-        result_data["steps_executed"].append(step_name)
-        result_data[step_name] = result.to_dict()
+        for step_name in config.run.steps:
+            logger.info("")
+            logger.info(f"{'─' * 70}")
+            logger.info(f"  Step: {step_name.upper()}  (run {run_number}/{config.run.N})")
+            logger.info(f"{'─' * 70}")
 
-        # Persist result.json after every step (partial results survive failures)
-        _write_result_json(run_dir, result_data)
+            step_config = getattr(config.steps, step_name)
+            step_class  = _STEP_REGISTRY[step_name]
+            step        = step_class(step_config)
 
-        if not result.success:
-            logger.error(f"Step '{step_name}' failed: {result.error}")
-            logger.error(
-                f"Aborting pipeline.  Partial results saved to: "
-                f"{run_dir / 'result.json'}"
-            )
-            sys.exit(1)
+            result: StepResult = step.run(run_dir, context)
 
-        logger.info(f"  Step '{step_name}' completed successfully.")
+            context[step_name] = result
+            result_data["steps_executed"].append(step_name)
+            result_data[step_name] = result.to_dict()
+
+            # Persist result.json after every step (partial results survive failures)
+            _write_result_json(run_dir, result_data)
+
+            if not result.success:
+                logger.error(f"Step '{step_name}' failed: {result.error}")
+                logger.error(
+                    f"Aborting pipeline.  Partial results saved to: "
+                    f"{run_dir / 'result.json'}"
+                )
+                sys.exit(1)
+
+            logger.info(f"  Step '{step_name}' completed successfully.")
+
+        logger.info("")
+        logger.info(f"  Run {run_number} complete.  Manifest: {run_dir / 'result.json'}")
 
     # ── Summary ───────────────────────────────────────────────────────────────
     logger.info("")
     logger.info("=" * 70)
-    logger.info("  All steps completed successfully.")
-    logger.info(f"  Run manifest : {run_dir / 'result.json'}")
-    logger.info(f"  Log          : {workdir / 'evaluate.log'}")
+    logger.info(f"  All {config.run.N} run(s) completed successfully.")
+    logger.info(f"  Log : {workdir / 'evaluate.log'}")
     logger.info("=" * 70)
 
 

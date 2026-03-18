@@ -90,11 +90,11 @@ class Setup:
             logger.info(f"Venv already exists at {self.venv_path}; skipping prepare.")
 
         logger.info("Running install commands inside venv...")
-        self._run_commands(self.config.install, env=self._venv_env(), label="install")
+        self._run_commands(self.config.install, env=self.venv_env(), label="install")
 
     # ─── Helpers ──────────────────────────────────────────────────────────────
 
-    def _venv_env(self) -> dict:
+    def venv_env(self) -> dict:
         """Return a copy of the environment with venv's bin/ first on PATH."""
         env = os.environ.copy()
         env["PATH"] = f"{self.venv_bin}:{env.get('PATH', '')}"
