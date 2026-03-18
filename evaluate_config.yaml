@@ -36,7 +36,7 @@ run:
   # Number of independent evaluation runs.
   # Currently ignored: only run-1 is executed.
   # Reserved for future multi-run support (averaging pass rates over N runs).
-  N: 1
+  N: 2
 
 
 # ── Per-step configuration ────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ steps:
       cache_task_images: true
       pre_build_all_images: true
       remove_image: false
-      skip_existing: true
+      skip_existing: false # should be false for multi-runs (otherwise only the first run will do anything, the rest will skip everything as "existing")
       print_config: false
       max_workers_build_image: 16
 
