@@ -46,7 +46,7 @@ _SCRIPTS_DIR = Path(__file__).resolve().parent.parent.parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from common.cli import run_cli_command
+from common.cli import run_cli_command, run_cli_command_streaming
 from eval.steps.base import Step, StepResult
 from eval.steps.setup import Setup
 from eval.config import EvaluationStepConfig
@@ -257,14 +257,9 @@ class EvaluationStep(Step):
         env = self.setup.venv_env()
 
         logger.info(f"Running multi_swe_bench harness: {venv_python} {' '.join(args)}")
-        stdout, stderr, code = run_cli_command(
+        stdout, stderr, code = run_cli_command_streaming(
             venv_python, args, cwd=str(self.dir), env=env
         )
-
-        if stdout:
-            logger.info(f"[harness stdout]\n{stdout.strip()}")
-        if stderr:
-            logger.info(f"[harness stderr]\n{stderr.strip()}")
 
         if code != 0:
             raise RuntimeError(

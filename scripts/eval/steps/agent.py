@@ -60,7 +60,7 @@ _SCRIPTS_DIR = Path(__file__).resolve().parent.parent.parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from common.cli import run_cli_command
+from common.cli import run_cli_command, run_cli_command_streaming
 from common.fs import read_jsonl, write_jsonl
 from eval.steps.base import Step, StepResult
 from eval.steps.setup import Setup
@@ -263,14 +263,9 @@ class AgentStep(Step):
         ]
 
         logger.info(f"Running MSWE-agent: {venv_python} {' '.join(args)}")
-        stdout, stderr, code = run_cli_command(
+        stdout, stderr, code = run_cli_command_streaming(
             venv_python, args, cwd=str(self.dir), env=env
         )
-
-        if stdout:
-            logger.info(f"[agent stdout]\n{stdout.strip()}")
-        if stderr:
-            logger.info(f"[agent stderr]\n{stderr.strip()}")
 
         if code != 0:
             raise RuntimeError(
