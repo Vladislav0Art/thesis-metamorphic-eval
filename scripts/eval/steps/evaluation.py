@@ -107,7 +107,7 @@ class EvaluationStep(Step):
             logger.info(f"Generated eval config: {eval_config_path}")
 
             # Step 5: run the harness (currently a placeholder)
-            harness_ran = self._run_harness(eval_config_path)
+            harness_ran = self._run_harness(eval_config_path, run_dir)
 
             report_path = run_dir / "eval" / "output" / "final_report.json"
             if harness_ran and not report_path.exists():
@@ -234,13 +234,13 @@ class EvaluationStep(Step):
         logger.info(f"Harness config written to {eval_config_path}")
         return eval_config_path
 
-    def _run_harness(self, eval_config_path: Path) -> bool:
+    def _run_harness(self, eval_config_path: Path, run_dir: Path) -> bool:
         """
         Run the multi_swe_bench evaluation harness.
 
-        Invokes ``multi_swe_bench.harness.run_evaluation`` as a module
-        (``python -m``) using the venv Python so that the installed package
-        is on sys.path.
+        stdout is written to ``{run_dir}/harness.log`` only (not evaluate.log).
+        stderr is written to the same file and, when ``stream_output=True``,
+        also forwarded to the evaluate.py logger so it appears in evaluate.log.
 
         Returns:
             True  — harness ran successfully.
@@ -255,10 +255,16 @@ class EvaluationStep(Step):
         ]
 
         env = self.setup.venv_env()
+        harness_log = run_dir / "harness.log"
 
         logger.info(f"Running multi_swe_bench harness: {venv_python} {' '.join(args)}")
+        logger.info(f"Harness output → {harness_log}")
         stdout, stderr, code = run_cli_command_streaming(
-            venv_python, args, cwd=str(self.dir), env=env
+            venv_python, args,
+            cwd=str(self.dir),
+            env=env,
+            log_file=harness_log,
+            stream_stderr=self.config.stream_output,
         )
 
         if code != 0:

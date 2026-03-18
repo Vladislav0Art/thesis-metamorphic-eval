@@ -125,7 +125,8 @@ class AgentStepConfig:
     keys: KeysConfig
     runner: RunnerConfig
     config: AgentRunConfig
-    copy_trajectories: bool = True  # copy trajectory folder into run_dir
+    copy_trajectories: bool = True   # copy trajectory folder into run_dir
+    stream_output: bool = False      # forward agent stderr to evaluate.log
 
 
 # ─── Evaluation step config ───────────────────────────────────────────────────
@@ -161,6 +162,7 @@ class EvaluationStepConfig:
     branch: str                   # git branch to checkout before running
     setup: SetupConfig
     config: EvalHarnessConfig
+    stream_output: bool = False      # forward harness stderr to evaluate.log
 
 
 # ─── Top-level config ─────────────────────────────────────────────────────────
@@ -272,6 +274,7 @@ def load_config(config_filepath: str) -> EvalConfig:
                 max_workers_build_image=c.get("max_workers_build_image", 16),
             ),
             copy_trajectories=a.get("copy_trajectories", True),
+            stream_output=a.get("stream_output", False),
         )
 
     # ── EvaluationStepConfig ──────────────────────────────────────────────────
@@ -293,6 +296,7 @@ def load_config(config_filepath: str) -> EvalConfig:
                 prepare=s.get("prepare", []),
                 install=s.get("install", []),
             ),
+            stream_output=e.get("stream_output", False),
             config=EvalHarnessConfig(
                 dataset_files=_resolve_list(c["dataset_files"], base),
                 patch_files=_resolve_list(patch_files_raw, base) if patch_files_raw else None,

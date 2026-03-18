@@ -138,8 +138,8 @@ class AgentStep(Step):
             # Step 3: write API keys to keys.cfg
             self._write_keys_cfg()
 
-            # Step 4: run the agent (currently a placeholder)
-            agent_ran = self._run_agent()
+            # Step 4: run the agent
+            agent_ran = self._run_agent(run_dir)
 
             if not agent_ran:
                 # Placeholder path: setup is done, but no trajectories exist yet.
@@ -226,13 +226,13 @@ class AgentStep(Step):
         keys_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         logger.info(f"Written keys.cfg ({len(lines)} token(s)) → {keys_path}")
 
-    def _run_agent(self) -> bool:
+    def _run_agent(self, run_dir: Path) -> bool:
         """
         Run MSWE-agent on the configured benchmark.
 
-        Uses ``run.py`` for serial execution or ``multirun.py`` for parallel
-        execution (controlled by ``runner.parallel`` in the config).
-        For ``multirun.py``, ``RUNNING_THREADS`` is set in the environment.
+        stdout is written to ``{run_dir}/agent.log`` only (not evaluate.log).
+        stderr is written to the same file and, when ``stream_output=True``,
+        also forwarded to the evaluate.py logger so it appears in evaluate.log.
 
         Returns:
             True  — agent ran successfully and produced trajectory output.
@@ -262,9 +262,15 @@ class AgentStep(Step):
             "--max_workers_build_image", str(c.max_workers_build_image),
         ]
 
+        agent_log = run_dir / "agent.log"
         logger.info(f"Running MSWE-agent: {venv_python} {' '.join(args)}")
+        logger.info(f"Agent output → {agent_log}")
         stdout, stderr, code = run_cli_command_streaming(
-            venv_python, args, cwd=str(self.dir), env=env
+            venv_python, args,
+            cwd=str(self.dir),
+            env=env,
+            log_file=agent_log,
+            stream_stderr=self.config.stream_output,
         )
 
         if code != 0:

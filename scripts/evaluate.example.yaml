@@ -94,6 +94,13 @@ steps:
     #         the source path is still recorded in result.json
     copy_trajectories: true
 
+    # Output routing for the MSWE-agent subprocess.
+    # stdout is always written to {workdir}/run-N/agent.log (never pollutes evaluate.log).
+    # stderr is always written to agent.log too.
+    # stream_output: false (default) → stderr is silent in evaluate.log (recommended for long runs)
+    # stream_output: true            → stderr is also forwarded to evaluate.log in real time
+    stream_output: false
+
     # MSWE-agent CLI parameters (map 1-to-1 to run.py / multirun.py flags).
     config:
       model_name: gpt4o
@@ -136,6 +143,13 @@ steps:
         - "python3 -m venv ./venv"
       install:
         - "make install"
+
+    # Output routing for the multi_swe_bench harness subprocess.
+    # stdout is always written to {workdir}/run-N/harness.log (never pollutes evaluate.log).
+    # stderr is always written to harness.log too.
+    # stream_output: false (default) → stderr is silent in evaluate.log (recommended for long runs)
+    # stream_output: true            → stderr is also forwarded to evaluate.log in real time
+    stream_output: false
 
     # Harness configuration.
     # patch_files is intentionally omitted here because it is auto-resolved
