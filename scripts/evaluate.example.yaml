@@ -154,6 +154,14 @@ steps:
       install:
         - "make install"
 
+    # Whether to share a single repos/ folder across all N runs.
+    # true  (default) → {workdir}/repos/ is used by every run; repos are cloned
+    #         once and reused, saving time on multi-run evaluations.
+    #         Safe because the harness leaves repos on their main branch with no
+    #         modifications after each evaluation run.
+    # false → each run gets its own {workdir}/run-N/eval/repos/ folder.
+    share_repos: true
+
     # Output routing for the multi_swe_bench harness subprocess.
     # stdout is always written to {workdir}/run-N/harness.log (never pollutes evaluate.log).
     # stderr is always written to harness.log too.

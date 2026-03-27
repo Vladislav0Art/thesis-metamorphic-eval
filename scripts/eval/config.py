@@ -164,7 +164,8 @@ class EvaluationStepConfig:
     branch: str                   # git branch to checkout before running
     setup: SetupConfig
     config: EvalHarnessConfig
-    stream_output: bool = False      # forward harness stderr to evaluate.log
+    stream_output: bool = False   # forward harness stderr to evaluate.log
+    share_repos: bool = True      # reuse {workdir}/repos/ across all runs
 
 
 # ─── Top-level config ─────────────────────────────────────────────────────────
@@ -302,6 +303,7 @@ def load_config(config_filepath: str) -> EvalConfig:
                 install=s.get("install", []),
             ),
             stream_output=e.get("stream_output", False),
+            share_repos=e.get("share_repos", True),
             config=EvalHarnessConfig(
                 dataset_files=_resolve_list(c["dataset_files"], base),
                 patch_files=_resolve_list(patch_files_raw, base) if patch_files_raw else None,

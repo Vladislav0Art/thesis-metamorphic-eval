@@ -34,7 +34,7 @@ run:
   # Number of independent evaluation runs.
   # Currently ignored: only run-1 is executed.
   # Reserved for future multi-run support (averaging pass rates over N runs).
-  N: 1
+  N: 2
 
 
 # ── Per-step configuration ────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ steps:
 
       # Input benchmark JSONL file (normal or metamorphic).
       # --pr_file in MSWE-agent's CLI.
-      benchmark_file: /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java_easy_1_mini.jsonl
+      benchmark_file: /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java_easy_2_mini.jsonl
 
       # MSWE-agent config YAML (usually the default is fine).
       config_file: /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/agents/MSWE-agent/config/default.yaml
@@ -141,6 +141,9 @@ steps:
       install:
         - "make install"
 
+    # Reuse a single repos folder across all runs (saves re-cloning time).
+    share_repos: true
+
     # Harness configuration.
     # patch_files is intentionally omitted here because it is auto-resolved
     # from the agent step's fix_patches.jsonl when both steps run together.
@@ -154,7 +157,7 @@ steps:
       # so that multi_swe_bench selects the correct evaluation environment.
       # NOTE: same as `agent.config.benchmark_file` when both steps run together.
       dataset_files:
-        - /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java_easy_1_mini.jsonl
+        - /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java_easy_2_mini.jsonl
 
       # patch_files: auto-resolved from agent step output when both steps run.
       # Uncomment and set explicitly only for standalone evaluation runs:

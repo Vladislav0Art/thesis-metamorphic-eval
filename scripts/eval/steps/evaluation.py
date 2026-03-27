@@ -199,10 +199,19 @@ class EvaluationStep(Step):
         """
         eval_dir = run_dir / "eval"
 
+        # Repos directory: shared across all runs (run_dir.parent == workdir)
+        # or isolated inside this run's eval/ folder.
+        # Sharing avoids re-cloning on every run; the harness leaves repos on
+        # their main branch with no modifications after evaluation (see
+        # multi-swe-bench README), so reuse is safe.
+        if self.config.share_repos:
+            harness_repos = run_dir.parent / "repos"
+        else:
+            harness_repos = eval_dir / "repos"
+
         # Create all subdirectories upfront so the harness finds them ready
         harness_workdir = eval_dir / "workdir"
         harness_output  = eval_dir / "output"
-        harness_repos   = eval_dir / "repos"
         harness_logs    = eval_dir / "logs"
         for d in (harness_workdir, harness_output, harness_repos, harness_logs):
             d.mkdir(parents=True, exist_ok=True)
