@@ -115,6 +115,16 @@ steps:
       # Maximum API spend per benchmark instance (USD).
       per_instance_cost_limit: 5.0
 
+      # Sampling parameters.
+      # temperature=0.0 → greedy/deterministic output (recommended for benchmarks).
+      # top_p (nucleus sampling): only tokens whose cumulative probability ≤ top_p
+      #   are considered at each step. 0.95 is the MSWE-agent default.
+      # total_cost_limit: hard cap on total API spend across all instances (USD).
+      #   0.0 means no cap.
+      temperature: 0.0
+      top_p: 0.95
+      total_cost_limit: 0.0
+
       # --- Options with sensible defaults (override as needed) ---
       cache_task_images: true
       pre_build_all_images: true

@@ -263,15 +263,18 @@ class AgentStep(Step):
 
         args = [
             script,
-            "--model_name",            c.model_name,
-            "--pr_file",               c.benchmark_file,
-            "--config_file",           c.config_file,
+            "--model_name",              c.model_name,
+            "--temperature",             str(c.temperature),
+            "--top_p",                   str(c.top_p),
+            "--total_cost_limit",        str(c.total_cost_limit),
+            "--pr_file",                 c.benchmark_file,
+            "--config_file",             c.config_file,
             "--per_instance_cost_limit", str(c.per_instance_cost_limit),
-            "--cache_task_images",     str(c.cache_task_images),
-            "--pre_build_all_images",  str(c.pre_build_all_images),
-            "--remove_image",          str(c.remove_image),
-            "--skip_existing",         str(c.skip_existing),
-            "--print_config",          str(c.print_config),
+            "--cache_task_images",       str(c.cache_task_images),
+            "--pre_build_all_images",    str(c.pre_build_all_images),
+            "--remove_image",            str(c.remove_image),
+            "--skip_existing",           str(c.skip_existing),
+            "--print_config",            str(c.print_config),
             "--max_workers_build_image", str(c.max_workers_build_image),
         ]
 

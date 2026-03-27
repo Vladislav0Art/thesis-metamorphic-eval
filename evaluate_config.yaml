@@ -34,7 +34,7 @@ run:
   # Number of independent evaluation runs.
   # Currently ignored: only run-1 is executed.
   # Reserved for future multi-run support (averaging pass rates over N runs).
-  N: 2
+  N: 1
 
 
 # ── Per-step configuration ────────────────────────────────────────────────────
@@ -97,13 +97,17 @@ steps:
 
       # Input benchmark JSONL file (normal or metamorphic).
       # --pr_file in MSWE-agent's CLI.
-      benchmark_file: /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java-mockito.jsonl
+      benchmark_file: /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java_easy_1_mini.jsonl
 
       # MSWE-agent config YAML (usually the default is fine).
       config_file: /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/agents/MSWE-agent/config/default.yaml
 
       # Maximum API spend per benchmark instance (USD).
       per_instance_cost_limit: 5.0
+
+      temperature: 0.5
+      top_p: 0.88
+      total_cost_limit: 0.0
 
       # --- Options with sensible defaults (override as needed) ---
       cache_task_images: true
@@ -113,7 +117,7 @@ steps:
       # (otherwise only the first run will do anything,
       #  the rest will skip everything as "existing")
       skip_existing: false
-      print_config: true
+      print_config: false
       max_workers_build_image: 16
 
 
@@ -150,7 +154,7 @@ steps:
       # so that multi_swe_bench selects the correct evaluation environment.
       # NOTE: same as `agent.config.benchmark_file` when both steps run together.
       dataset_files:
-        - /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java-mockito.jsonl
+        - /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java_easy_1_mini.jsonl
 
       # patch_files: auto-resolved from agent step output when both steps run.
       # Uncomment and set explicitly only for standalone evaluation runs:
