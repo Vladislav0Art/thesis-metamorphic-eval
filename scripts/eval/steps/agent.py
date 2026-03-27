@@ -65,12 +65,40 @@ from common.fs import read_jsonl, write_jsonl
 from eval.steps.base import Step, StepResult
 from eval.steps.setup import Setup
 # Config dataclasses come from eval.config (single source of truth for schema)
-from eval.config import AgentStepConfig
+from eval.config import AgentStepConfig, AgentRunConfig
 
 logger = logging.getLogger(__name__)
 
 # Matches MSWE-agent instance_id: "org__repo-number"
 _INSTANCE_ID_RE = re.compile(r"^(.+?)__(.+?)-(\d+)$")
+
+
+def build_run_name(config: AgentRunConfig) -> str:
+    """
+    Reproduce the ``run_name`` property from MSWE-agent ``run.py``.
+
+    The name encodes all parameters that affect the trajectory so that two
+    runs with the same settings always land in the same folder::
+
+        {model_name}__{data_stem}__{config_stem}
+            __t-{temp:.2f}__p-{top_p:.2f}
+            __c-{per_instance_cost_limit:.2f}__install-1
+
+    ``data_stem`` is the file stem of ``benchmark_file`` (MSWE-agent's
+    ``get_data_path_name`` reduces to ``Path(path).stem`` for local files).
+    ``install-1`` is always 1 because ``install_environment`` defaults to True.
+
+    Used both for targeted discovery and for pre-run cleanup.
+    """
+    model_name   = config.model_name.replace(":", "-")
+    data_stem    = Path(config.benchmark_file).stem
+    config_stem  = Path(config.config_file).stem
+
+    return (
+        f"{model_name}__{data_stem}__{config_stem}"
+        f"__t-{config.temperature:.2f}__p-{config.top_p:.2f}"
+        f"__c-{config.per_instance_cost_limit:.2f}__install-1"
+    )
 
 
 def _parse_instance_id(instance_id: str) -> tuple[str, str, int]:
@@ -341,14 +369,23 @@ class AgentStep(Step):
 
     def _discover_trajectory(self) -> Path:
         """
-        Find the trajectory folder most recently written by MSWE-agent.
+        Find the trajectory folder produced by the current MSWE-agent run.
 
         MSWE-agent writes trajectories to::
 
-            {agent_dir}/trajectories/{username}/{model}__{benchmark}__...
+            {agent_dir}/trajectories/{username}/{run_name}/
 
-        We glob for all ``all_preds.jsonl`` files under ``trajectories/`` and
-        return the parent directory of the most recently modified one.
+        where ``run_name`` encodes model, benchmark, temperature, top_p, cost
+        limit, and install flag (see :func:`build_run_name`).
+
+        **Primary strategy**: construct the expected folder name deterministically
+        and glob for ``*/{run_name}`` inside the trajectories root.  This is
+        robust regardless of which other runs exist.
+
+        **Fallback**: if the expected folder is absent (e.g. the config diverged
+        from what the agent actually produced), scan for the most recently
+        modified ``all_preds.jsonl`` and return its parent directory — the
+        original behaviour.
         """
         trajectories_root = self.dir / "trajectories"
         if not trajectories_root.exists():
@@ -357,6 +394,23 @@ class AgentStep(Step):
                 "Ensure MSWE-agent has been run at least once."
             )
 
+        # ── Primary: deterministic folder name ────────────────────────────────
+        expected_name = build_run_name(self.config.config)
+        logger.info(f"Looking for generated/modified trajectory folder with expected name: {expected_name}")
+
+        matches = [p for p in trajectories_root.glob(f"*/{expected_name}") if p.is_dir()]
+        if matches:
+            # Normally there is exactly one; pick newest if somehow duplicated.
+            folder = max(matches, key=lambda p: p.stat().st_mtime)
+            logger.info(f"Trajectory folder matched by name: {folder.name}")
+            return folder
+
+        logger.warning(
+            f"Expected trajectory folder '{expected_name}' not found under "
+            f"{trajectories_root}; falling back to most-recently-modified search."
+        )
+
+        # ── Fallback: newest all_preds.jsonl ──────────────────────────────────
         all_preds_files = list(trajectories_root.rglob("all_preds.jsonl"))
         if not all_preds_files:
             raise RuntimeError(

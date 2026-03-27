@@ -119,9 +119,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from common.logger import configure_logging
-from eval.config import load_config, EvalConfig
+from eval.config import load_config, EvalConfig, AgentStepConfig
 from eval.steps.base import StepResult
-from eval.steps.agent import AgentStep
+from eval.steps.agent import AgentStep, build_run_name
 from eval.steps.evaluation import EvaluationStep
 
 logger = logging.getLogger(__name__)
@@ -132,6 +132,41 @@ _STEP_REGISTRY = {
     "agent":      AgentStep,
     "evaluation": EvaluationStep,
 }
+
+
+# ─── Trajectory cleanup ───────────────────────────────────────────────────────
+
+def _cleanup_agent_preds(agent_cfg: AgentStepConfig):
+    """
+    Delete ``all_preds.jsonl`` from the expected MSWE-agent trajectory folder.
+
+    Called before each run so that multi-run loops start with a clean slate.
+    Without this, MSWE-agent appends to the existing file and subsequent runs
+    pick up predictions from previous runs, making it impossible to tell which
+    version of a patch was evaluated.
+
+    Only the ``all_preds.jsonl`` file is deleted; individual ``*.traj`` and
+    ``patches/*.patch`` files are left intact (they are named by instance_id
+    and are overwritten in-place by the agent anyway).
+    """
+    trajectories_root = Path(agent_cfg.dir) / "trajectories"
+    if not trajectories_root.exists():
+        logger.warning(
+            f"Trajectories root does not exist, skipping cleanup (possibly, the first run on a fresh agent repo): {trajectories_root}"
+        )
+        return
+
+    expected_name = build_run_name(agent_cfg.config)
+    logger.info(f"Cleaning up stale all_preds.jsonl files for expected trajectory name: {expected_name}")
+
+    matches = [p for p in trajectories_root.glob(f"*/{expected_name}") if p.is_dir()]
+    for folder in matches:
+        preds_file = folder / "all_preds.jsonl"
+        if preds_file.exists():
+            preds_file.unlink()
+            logger.info(f"Deleted stale all_preds.jsonl from: {folder}")
+        else:
+            logger.debug(f"No all_preds.jsonl to clean in: {folder}")
 
 
 # ─── result.json helpers ──────────────────────────────────────────────────────
@@ -215,6 +250,11 @@ def run_evaluation(config: EvalConfig, config_filepath: str):
         logger.info(f"  Run {run_number} of {config.run.N}")
         logger.info(f"  Run dir : {run_dir.resolve()}")
         logger.info("=" * 70)
+
+        # Clean stale all_preds.jsonl so this run starts with a fresh file.
+        # Without this, MSWE-agent appends to the previous run's predictions.
+        if "agent" in config.run.steps and config.steps.agent is not None:
+            _cleanup_agent_preds(config.steps.agent)
 
         result_data: dict = {
             "run_number":     run_number,
