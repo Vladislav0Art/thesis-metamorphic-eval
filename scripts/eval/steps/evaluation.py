@@ -173,6 +173,7 @@ class EvaluationStep(Step):
 
         # Fallback: explicit config
         if self.config.config.patch_files:
+            # TODO: why only the 1st patch extracted?
             patch_file = Path(self.config.config.patch_files[0])
             if not patch_file.exists():
                 raise RuntimeError(

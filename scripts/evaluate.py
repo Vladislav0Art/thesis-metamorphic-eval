@@ -3,8 +3,8 @@
 evaluate.py — Metamorphic Evaluation Orchestrator
 ==================================================
 
-Ties together all phases of the metamorphic evaluation pipeline into a single
-command so that a full end-to-end run requires no manual intermediate steps.
+Ties together all phases of the metamorphic evaluation pipeline (MSWE-agent and multi_swe_bench harness)
+into a single command so that a full end-to-end run requires no manual intermediate steps.
 
 Usage
 -----

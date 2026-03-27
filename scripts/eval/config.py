@@ -55,8 +55,7 @@ class RunConfig:
                  created here automatically.
         steps:   Ordered list of step names to execute.
                  Valid values: ``"agent"``, ``"evaluation"``.
-        N:       Number of evaluation runs.  Currently ignored (only run-1
-                 is executed); reserved for future multi-run support.
+        N:       Number of evaluation runs.
     """
     workdir: str
     steps: List[str]
