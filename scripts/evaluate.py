@@ -71,6 +71,7 @@ The exact layout per run:
                     final_report.json   ← primary result metric
                 repos/
                 logs/
+        metrics_summary.json        ← cross-run metrics (written once after all runs)
 
 result.json
 -----------
@@ -94,7 +95,13 @@ Schema:
             "trajectory_source":  "/abs/path/.../trajectories/gpt4o__...",
             "copy_trajectories":  true,
             "trajectory_dest":    "/abs/path/.../run-1/trajectories/gpt4o__...",
-            "fix_patches":        "/abs/path/.../run-1/predictions/fix_patches.jsonl"
+            "fix_patches":        "/abs/path/.../run-1/predictions/fix_patches.jsonl",
+            "artifacts":          [{"instance_id": "...", "trajectory": "...", "patch": "..."}],
+            "metrics": {
+                "execution": [{"instance_id": "...", "total_cost": 5.07, "...": "..."}],
+                "summary":   {"n_instances": 11, "n_missing": 0,
+                              "total_cost": {"avg": 3.14, "median": 2.88}, "...": "..."}
+            }
         },
         "evaluation": {
             "success":     true,
@@ -104,6 +111,50 @@ Schema:
         }
     }
 ```
+
+metrics_summary.json
+--------------------
+Written once to ``{workdir}/metrics_summary.json`` after all N runs finish.
+Contains two complementary cross-run views:
+
+  pooled
+      All N×M per-instance observations merged into one flat dataset.
+      Avg and median over this pool answer: "What is the expected cost /
+      token count per agent invocation on this benchmark?"
+      This is the headline metric for the thesis.
+
+  run_variability
+      Statistics *about* the N per-run averages (mean, std dev, min, max).
+      Answers: "How consistent is the agent across independent runs?"
+      ``std_of_run_avgs`` is the ± value for thesis error bars.
+
+Schema::
+
+    {
+        "n_runs": 3,
+        "n_instances_per_run": 11,
+        "pooled": {
+            "n_observations": 33,
+            "total_cost":  {"avg": 3.14, "median": 2.88},
+            "tokens_sent": {"avg": 500000, "median": 450000},
+            ...
+        },
+        "run_variability": {
+            "total_cost": {
+                "avg_of_run_avgs": 3.14,  "std_of_run_avgs": 0.02,
+                "min_run_avg":     3.12,  "max_run_avg":     3.16
+            },
+            ...
+        },
+        "per_run": [
+            {"run_number": 1, "summary": {"n_instances": 11, "n_missing": 0,
+                                          "total_cost": {"avg": 3.14, ...}, ...}},
+            ...
+        ]
+    }
+
+See ``scripts/eval/metrics.py`` for the pure math functions used here;
+they are also directly importable in Jupyter notebooks.
 """
 
 import argparse
@@ -120,6 +171,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from common.logger import configure_logging
 from eval.config import load_config, EvalConfig, AgentStepConfig
+from eval.metrics import aggregate_runs
 from eval.steps.base import StepResult
 from eval.steps.agent import AgentStep, build_run_name
 from eval.steps.evaluation import EvaluationStep
@@ -167,6 +219,59 @@ def _cleanup_agent_preds(agent_cfg: AgentStepConfig):
             logger.info(f"Deleted stale all_preds.jsonl from: {folder}")
         else:
             logger.debug(f"No all_preds.jsonl to clean in: {folder}")
+
+
+# ─── Cross-run metrics ────────────────────────────────────────────────────────
+
+def _write_metrics_summary(workdir: Path, n_runs: int):
+    """
+    Aggregate per-run execution metrics across all N completed runs and write
+    ``{workdir}/metrics_summary.json``.
+
+    Called once after the N-run loop.  Reads the ``agent.metrics`` section of
+    each ``run-i/result.json`` that was produced by AgentStep, then delegates
+    all math to ``eval.metrics.aggregate_runs`` (stdlib only, no side effects).
+
+    Skips runs whose ``result.json`` is missing or has no agent metrics (e.g.
+    when only the evaluation step ran).  If no run has metrics, the file is not
+    written and a warning is logged.
+
+    Output file: ``{workdir}/metrics_summary.json``
+    See :func:`eval.metrics.aggregate_runs` for the full schema.
+    """
+    run_numbers: list   = []
+    run_summaries: list = []
+    all_executions: list = []
+
+    for run_number in range(1, n_runs + 1):
+        result_path = workdir / f"run-{run_number}" / "result.json"
+        if not result_path.exists():
+            logger.warning(f"result.json missing for run-{run_number}; skipping its metrics.")
+            continue
+        with open(result_path, "r", encoding="utf-8") as f:
+            result_data = json.load(f)
+
+        metrics = result_data.get("agent", {}).get("metrics", {})
+        summary   = metrics.get("summary")
+        execution = metrics.get("execution", [])
+
+        if not summary:
+            logger.warning(f"No agent metrics in run-{run_number}/result.json; skipping.")
+            continue
+
+        run_numbers.append(run_number)
+        run_summaries.append(summary)
+        all_executions.append(execution)
+
+    if not run_summaries:
+        logger.warning("No per-run agent metrics found; metrics_summary.json will not be written.")
+        return
+
+    summary = aggregate_runs(run_numbers, run_summaries, all_executions)
+    metrics_path = workdir / "metrics_summary.json"
+    with open(metrics_path, "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2)
+    logger.info(f"Cross-run metrics summary → {metrics_path}")
 
 
 # ─── result.json helpers ──────────────────────────────────────────────────────
@@ -298,11 +403,18 @@ def run_evaluation(config: EvalConfig, config_filepath: str):
         logger.info("")
         logger.info(f"  Run {run_number} complete.  Manifest: {run_dir / 'result.json'}")
 
+    # ── Cross-run metrics summary ─────────────────────────────────────────────
+    if "agent" in config.run.steps and config.steps.agent is not None:
+        logger.info("")
+        logger.info("Computing cross-run metrics summary ...")
+        _write_metrics_summary(workdir, config.run.N)
+
     # ── Summary ───────────────────────────────────────────────────────────────
     logger.info("")
     logger.info("=" * 70)
     logger.info(f"  All {config.run.N} run(s) completed successfully.")
-    logger.info(f"  Log : {workdir / 'evaluate.log'}")
+    logger.info(f"  Log     : {workdir / 'evaluate.log'}")
+    logger.info(f"  Metrics : {workdir / 'metrics_summary.json'}")
     logger.info("=" * 70)
 
 

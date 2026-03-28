@@ -384,3 +384,112 @@ From the `final_report.json` you may derive some metrics.
 
 _tbd_
 
+
+---
+
+
+### Evaluation Metrics
+
+When running the pipeline via [scripts/evaluate.py](./scripts/evaluate.py), two metric artifacts are
+produced automatically.
+
+#### Per-run metrics (`run-i/result.json → agent.metrics`)
+
+After each run the agent step reads every `.traj` file it produced and extracts
+`info.model_stats` from it.  The data is stored inside `run-i/result.json`
+under `agent.metrics`:
+
+```
+agent.metrics.execution   — array, one entry per instance
+agent.metrics.summary     — avg / median over all instances in this run
+```
+
+Each execution entry:
+```json
+{
+  "instance_id":    "mockito__mockito-3129",
+  "total_cost":     5.07,
+  "instance_cost":  5.07,
+  "tokens_sent":    1002772,
+  "tokens_received": 3666,
+  "api_calls":      61
+}
+```
+
+The summary entry:
+```json
+{
+  "n_instances": 11,
+  "n_missing":   0,
+  "total_cost":  {"avg": 3.14, "median": 2.88},
+  "tokens_sent": {"avg": 500000, "median": 450000},
+  "tokens_received": {"avg": 3500, "median": 3200},
+  "api_calls":   {"avg": 55.0, "median": 50.0}
+}
+```
+
+`n_missing` counts instances whose `.traj` file was absent or malformed;
+those instances are excluded from the numeric aggregations.
+
+
+#### Cross-run metrics (`workdir/metrics_summary.json`)
+
+After all N runs complete, the orchestrator aggregates the per-run summaries
+into a single file at `{workdir}/metrics_summary.json`.  It contains two
+complementary views of the data.
+
+**`pooled`** — the headline metric
+
+All N × M per-instance observations are merged into one flat list and
+avg / median are computed over the whole pool.  This answers: *"On average,
+how much does a single agent invocation cost on this benchmark?"*
+
+```json
+"pooled": {
+  "n_observations": 33,
+  "total_cost":  {"avg": 3.14, "median": 2.88},
+  "tokens_sent": {"avg": 500000, "median": 450000}
+}
+```
+
+`n_observations` = N × M minus entries with missing traj files.
+
+**`run_variability`** — the stability metric
+
+Instead of pooling raw data, the per-run averages are treated as N data
+points and described with mean, standard deviation, min, and max.  This
+answers: *"How consistent is the agent across independent runs?"*
+
+```json
+"run_variability": {
+  "total_cost": {
+    "avg_of_run_avgs": 3.14,
+    "std_of_run_avgs": 0.02,
+    "min_run_avg":     3.12,
+    "max_run_avg":     3.16
+  }
+}
+```
+
+`std_of_run_avgs` is the ± value for thesis error bars: *"cost was
+$3.14 ± $0.02 per instance"*.  A high standard deviation relative to the
+mean suggests the agent behaves non-deterministically — this is an important
+signal when comparing normal vs. metamorphic benchmarks, where you might
+expect higher variability on morphed code.
+
+**`per_run`** — individual run summaries
+
+An array of per-run summary objects (same shape as `agent.metrics.summary`)
+for traceability and notebook plotting.
+
+**Why both views?**
+
+| View | Question answered | Thesis use |
+|---|---|---|
+| `pooled` | What is the expected cost / token count? | Headline metric |
+| `run_variability` | Does the agent behave consistently? | Error bars, stability analysis |
+
+The math functions are in [`scripts/eval/metrics.py`](./scripts/eval/metrics.py)
+and can be imported directly into Jupyter notebooks without loading the rest
+of the pipeline.
+

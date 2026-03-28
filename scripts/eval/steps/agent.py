@@ -62,6 +62,7 @@ if str(_SCRIPTS_DIR) not in sys.path:
 
 from common.cli import run_cli_command, run_cli_command_streaming
 from common.fs import read_jsonl, write_jsonl
+from eval.metrics import read_traj_metrics, summarize_executions
 from eval.steps.base import Step, StepResult
 from eval.steps.setup import Setup
 # Config dataclasses come from eval.config (single source of truth for schema)
@@ -131,12 +132,19 @@ class AgentStepResult(StepResult):
                             trajectory folder.  Each entry has keys:
                             ``instance_id``, ``trajectory`` (abs path or null),
                             ``patch`` (abs path or null).
+        metrics_execution:  Per-instance model_stats extracted from each
+                            ``.traj`` file.  Entries where the traj file was
+                            absent contain only ``instance_id``.
+        metrics_summary:    Avg / median summary over ``metrics_execution``
+                            for this run (see ``eval.metrics.summarize_executions``).
     """
     trajectory_source: Optional[Path] = None
     copy_trajectories: bool = True
     trajectory_dest: Optional[Path] = None
     fix_patches_path: Optional[Path] = None
-    artifacts: list = None  # list[dict]
+    artifacts: list = None          # list[dict]
+    metrics_execution: list = None  # list[dict]
+    metrics_summary: dict = None    # avg/median per metric field
 
     def to_dict(self) -> dict:
         return {
@@ -146,6 +154,10 @@ class AgentStepResult(StepResult):
             "trajectory_dest": str(self.trajectory_dest) if self.trajectory_dest else None,
             "fix_patches": str(self.fix_patches_path) if self.fix_patches_path else None,
             "artifacts": self.artifacts if self.artifacts is not None else [],
+            "metrics": {
+                "execution": self.metrics_execution if self.metrics_execution is not None else [],
+                "summary":   self.metrics_summary   if self.metrics_summary   is not None else {},
+            },
         }
 
 
@@ -212,6 +224,15 @@ class AgentStep(Step):
             artifacts = self._collect_artifacts(artifacts_folder)
             logger.info(f"Collected artifacts for {len(artifacts)} instance(s).")
 
+            # Step 9: extract model_stats from each .traj file and summarise.
+            metrics_execution = self._collect_metrics(artifacts)
+            metrics_summary   = summarize_executions(metrics_execution)
+            n_missing = metrics_summary.get("n_missing", 0)
+            logger.info(
+                f"Collected execution metrics for {len(metrics_execution)} instance(s) "
+                f"({n_missing} missing traj file(s))."
+            )
+
             return AgentStepResult(
                 success=True,
                 trajectory_source=trajectory_source.resolve(),
@@ -219,6 +240,8 @@ class AgentStep(Step):
                 trajectory_dest=trajectory_dest.resolve() if trajectory_dest else None,
                 fix_patches_path=fix_patches_path.resolve(),
                 artifacts=artifacts,
+                metrics_execution=metrics_execution,
+                metrics_summary=metrics_summary,
             )
 
         except Exception as e:
@@ -366,6 +389,38 @@ class AgentStep(Step):
             })
 
         return artifacts
+
+    def _collect_metrics(self, artifacts: list) -> list:
+        """
+        Read ``info.model_stats`` from each ``.traj`` file listed in *artifacts*
+        and return a flat list of per-instance execution metric dicts.
+
+        Each returned entry always contains ``instance_id``.  When the traj
+        file exists and is valid, the numeric metric fields are included too::
+
+            {
+                "instance_id":    "mockito__mockito-3129",
+                "total_cost":     5.07,
+                "instance_cost":  5.07,
+                "tokens_sent":    1002772,
+                "tokens_received": 3666,
+                "api_calls":      61
+            }
+
+        When the traj file is absent or malformed the entry only has
+        ``instance_id`` (no numeric fields), which ``summarize_executions``
+        counts as a missing entry.
+        """
+        execution = []
+        for artifact in artifacts:
+            entry: dict = {"instance_id": artifact["instance_id"]}
+            traj_path = artifact.get("trajectory")
+            if traj_path:
+                stats = read_traj_metrics(Path(traj_path))
+                if stats:
+                    entry.update(stats)
+            execution.append(entry)
+        return execution
 
     def _discover_trajectory(self) -> Path:
         """
