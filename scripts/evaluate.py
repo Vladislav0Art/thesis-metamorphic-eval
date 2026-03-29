@@ -146,9 +146,19 @@ Schema::
             },
             ...
         },
+        "pass_rate": {                  ← only present when evaluation step ran
+            "avg": 45.5, "std": 3.2, "min": 40.0, "max": 50.0,
+            "per_run": [{"run_number": 1, "resolved": 5, "total": 11,
+                         "pass_rate": 45.5}, ...]
+        },
         "per_run": [
-            {"run_number": 1, "summary": {"n_instances": 11, "n_missing": 0,
-                                          "total_cost": {"avg": 3.14, ...}, ...}},
+            {
+                "run_number": 1,
+                "agent":      {"n_instances": 11, "n_missing": 0,
+                               "total_cost": {"avg": 3.14, ...}, ...},
+                "evaluation": {"total_instances": 11, "resolved_instances": 5,
+                               "unresolved_instances": 6, "pass_rate": 45.5}
+            },
             ...
         ]
     }
@@ -225,23 +235,25 @@ def _cleanup_agent_preds(agent_cfg: AgentStepConfig):
 
 def _write_metrics_summary(workdir: Path, n_runs: int):
     """
-    Aggregate per-run execution metrics across all N completed runs and write
+    Aggregate per-run metrics across all N completed runs and write
     ``{workdir}/metrics_summary.json``.
 
-    Called once after the N-run loop.  Reads the ``agent.metrics`` section of
-    each ``run-i/result.json`` that was produced by AgentStep, then delegates
+    Called once after the N-run loop.  Reads both ``agent.metrics`` and
+    ``evaluation.metrics`` from each ``run-i/result.json``, then delegates
     all math to ``eval.metrics.aggregate_runs`` (stdlib only, no side effects).
 
-    Skips runs whose ``result.json`` is missing or has no agent metrics (e.g.
-    when only the evaluation step ran).  If no run has metrics, the file is not
-    written and a warning is logged.
+    Skips runs whose ``result.json`` is missing or has no agent metrics.
+    Evaluation metrics are optional: if the evaluation step did not run,
+    ``pass_rate`` is omitted from the output.
 
     Output file: ``{workdir}/metrics_summary.json``
     See :func:`eval.metrics.aggregate_runs` for the full schema.
     """
-    run_numbers: list   = []
-    run_summaries: list = []
+    run_numbers: list    = []
+    run_summaries: list  = []
     all_executions: list = []
+    eval_summaries: list = []
+    any_eval_metrics     = False
 
     for run_number in range(1, n_runs + 1):
         result_path = workdir / f"run-{run_number}" / "result.json"
@@ -251,9 +263,9 @@ def _write_metrics_summary(workdir: Path, n_runs: int):
         with open(result_path, "r", encoding="utf-8") as f:
             result_data = json.load(f)
 
-        metrics = result_data.get("agent", {}).get("metrics", {})
-        summary   = metrics.get("summary")
-        execution = metrics.get("execution", [])
+        agent_metrics = result_data.get("agent", {}).get("metrics", {})
+        summary   = agent_metrics.get("summary")
+        execution = agent_metrics.get("execution", [])
 
         if not summary:
             logger.warning(f"No agent metrics in run-{run_number}/result.json; skipping.")
@@ -263,11 +275,21 @@ def _write_metrics_summary(workdir: Path, n_runs: int):
         run_summaries.append(summary)
         all_executions.append(execution)
 
+        eval_summary = result_data.get("evaluation", {}).get("metrics", {}).get("summary")
+        eval_summaries.append(eval_summary)
+        if eval_summary:
+            any_eval_metrics = True
+
     if not run_summaries:
         logger.warning("No per-run agent metrics found; metrics_summary.json will not be written.")
         return
 
-    summary = aggregate_runs(run_numbers, run_summaries, all_executions)
+    summary = aggregate_runs(
+        run_numbers,
+        run_summaries,
+        all_executions,
+        eval_summaries=eval_summaries if any_eval_metrics else None,
+    )
     metrics_path = workdir / "metrics_summary.json"
     with open(metrics_path, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)

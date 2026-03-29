@@ -240,24 +240,115 @@ def run_variability_stats(run_summaries: list) -> dict:
     return result
 
 
+# ─── Evaluation (pass rate) metrics ──────────────────────────────────────────
+
+def summarize_eval_report(report: dict) -> dict:
+    """
+    Extract the three primary fields from a ``final_report.json`` dict and
+    compute the pass rate for a single evaluation run.
+
+    Args:
+        report: Parsed content of ``final_report.json`` produced by
+                the multi_swe_bench harness.
+
+    Returns::
+
+        {
+            "total_instances":      10,
+            "resolved_instances":   5,
+            "unresolved_instances": 5,
+            "pass_rate":            50.0   ← resolved / total × 100
+        }
+
+    ``pass_rate`` is expressed as a percentage (0–100).  Returns 0.0 when
+    ``total_instances`` is 0 to avoid division by zero.
+    """
+    total      = report.get("total_instances", 0)
+    resolved   = report.get("resolved_instances", 0)
+    unresolved = report.get("unresolved_instances", 0)
+    pass_rate  = (resolved / total * 100.0) if total > 0 else 0.0
+    return {
+        "total_instances":      total,
+        "resolved_instances":   resolved,
+        "unresolved_instances": unresolved,
+        "pass_rate":            pass_rate,
+    }
+
+
+def pass_rate_stats(eval_summaries: list, run_numbers: list) -> dict:
+    """
+    Compute cross-run pass rate statistics from N per-run evaluation summaries.
+
+    Args:
+        eval_summaries: List of N dicts as returned by ``summarize_eval_report``.
+        run_numbers:    Corresponding list of run indices (same length).
+
+    Returns::
+
+        {
+            "avg":  45.5,    ← mean pass rate across N runs (headline metric)
+            "std":   3.2,    ← std dev of pass rates (use as ± in thesis)
+            "min":  40.0,    ← worst run
+            "max":  50.0,    ← best run
+            "per_run": [
+                {"run_number": 1, "resolved": 5, "total": 10, "pass_rate": 50.0},
+                {"run_number": 2, "resolved": 4, "total": 10, "pass_rate": 40.0}
+            ]
+        }
+
+    ``std`` is ``None`` when fewer than 2 runs are available.
+
+    Because ``total_instances`` is the same for every run (same benchmark),
+    ``avg`` equals the pooled pass rate (sum of all resolved / N × M),
+    so no separate "pooled" computation is needed.
+    """
+    rates = [s["pass_rate"] for s in eval_summaries if s.get("pass_rate") is not None]
+    return {
+        "avg": mean(rates)   if rates          else None,
+        "std": stdev(rates)  if len(rates) >= 2 else None,
+        "min": min(rates)    if rates          else None,
+        "max": max(rates)    if rates          else None,
+        "per_run": [
+            {
+                "run_number": run_numbers[i],
+                "resolved":   eval_summaries[i]["resolved_instances"],
+                "total":      eval_summaries[i]["total_instances"],
+                "pass_rate":  eval_summaries[i]["pass_rate"],
+            }
+            for i in range(len(eval_summaries))
+        ],
+    }
+
+
+# ─── Full cross-run aggregation ───────────────────────────────────────────────
+
 def aggregate_runs(
     run_numbers: list,
     run_summaries: list,
     all_executions: list,
+    eval_summaries: Optional[list] = None,
 ) -> dict:
     """
     Build the full ``metrics_summary.json`` structure.
 
     Args:
         run_numbers:    Ordered list of run indices, e.g. ``[1, 2, 3]``.
-        run_summaries:  One summary dict per run (from ``summarize_executions``).
+        run_summaries:  One agent-metrics summary dict per run
+                        (from ``summarize_executions``).
         all_executions: One execution list per run (raw per-instance dicts).
+        eval_summaries: One eval summary dict per run
+                        (from ``summarize_eval_report``), or ``None`` when
+                        the evaluation step did not run.
 
     Returns::
 
         {
             "n_runs": 3,
             "n_instances_per_run": 11,
+            "pass_rate": {                  ← only present when eval_summaries given
+                "avg": 45.5, "std": 3.2, "min": 40.0, "max": 50.0,
+                "per_run": [...]
+            },
             "pooled": {
                 "n_observations": 33,
                 "total_cost": {"avg": 3.14, "median": 2.88},
@@ -271,20 +362,39 @@ def aggregate_runs(
                 ...
             },
             "per_run": [
-                {"run_number": 1, "summary": {...}},
-                {"run_number": 2, "summary": {...}},
-                {"run_number": 3, "summary": {...}}
+                {
+                    "run_number": 1,
+                    "agent":      {"n_instances": 11, "total_cost": {...}, ...},
+                    "evaluation": {"total_instances": 11, "resolved_instances": 5,
+                                   "unresolved_instances": 6, "pass_rate": 45.5}
+                },
+                ...
             ]
         }
+
+    ``per_run[i]["evaluation"]`` is ``null`` when *eval_summaries* is not
+    provided.
     """
     n_instances = run_summaries[0]["n_instances"] if run_summaries else 0
-    return {
-        "n_runs": len(run_summaries),
-        "n_instances_per_run": n_instances,
-        "pooled": pooled_stats(all_executions),
-        "run_variability": run_variability_stats(run_summaries),
-        "per_run": [
-            {"run_number": run_numbers[i], "summary": run_summaries[i]}
-            for i in range(len(run_numbers))
-        ],
+
+    per_run = [
+        {
+            "run_number": run_numbers[i],
+            "agent":      run_summaries[i],
+            "evaluation": eval_summaries[i] if eval_summaries else None,
+        }
+        for i in range(len(run_numbers))
+    ]
+
+    result: dict = {
+        "n_runs":               len(run_summaries),
+        "n_instances_per_run":  n_instances,
+        "pooled":               pooled_stats(all_executions),
+        "run_variability":      run_variability_stats(run_summaries),
+        "per_run":              per_run,
     }
+
+    if eval_summaries:
+        result["pass_rate"] = pass_rate_stats(eval_summaries, run_numbers)
+
+    return result

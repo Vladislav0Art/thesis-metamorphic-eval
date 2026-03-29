@@ -391,13 +391,14 @@ _tbd_
 ### Evaluation Metrics
 
 When running the pipeline via [scripts/evaluate.py](./scripts/evaluate.py), two metric artifacts are
-produced automatically.
+produced automatically after each completed run.
 
-#### Per-run metrics (`run-i/result.json → agent.metrics`)
+#### Per-run metrics (`run-i/result.json`)
+
+**Agent execution metrics** — `agent.metrics`
 
 After each run the agent step reads every `.traj` file it produced and extracts
-`info.model_stats` from it.  The data is stored inside `run-i/result.json`
-under `agent.metrics`:
+`info.model_stats` from it:
 
 ```
 agent.metrics.execution   — array, one entry per instance
@@ -407,16 +408,16 @@ agent.metrics.summary     — avg / median over all instances in this run
 Each execution entry:
 ```json
 {
-  "instance_id":    "mockito__mockito-3129",
-  "total_cost":     5.07,
-  "instance_cost":  5.07,
-  "tokens_sent":    1002772,
+  "instance_id":     "mockito__mockito-3129",
+  "total_cost":      5.07,
+  "instance_cost":   5.07,
+  "tokens_sent":     1002772,
   "tokens_received": 3666,
-  "api_calls":      61
+  "api_calls":       61
 }
 ```
 
-The summary entry:
+The per-run summary:
 ```json
 {
   "n_instances": 11,
@@ -429,36 +430,75 @@ The summary entry:
 ```
 
 `n_missing` counts instances whose `.traj` file was absent or malformed;
-those instances are excluded from the numeric aggregations.
+those are excluded from the numeric aggregations.
+
+**Evaluation (pass rate) metrics** — `evaluation.metrics`
+
+After the harness finishes, `final_report.json` is read and the three
+primary fields are extracted along with the computed pass rate:
+
+```json
+"evaluation": {
+  "metrics": {
+    "summary": {
+      "total_instances":      11,
+      "resolved_instances":   5,
+      "unresolved_instances": 6,
+      "pass_rate":            45.5
+    }
+  }
+}
+```
+
+`pass_rate = resolved / total × 100` (expressed as a percentage 0–100).
 
 
 #### Cross-run metrics (`workdir/metrics_summary.json`)
 
-After all N runs complete, the orchestrator aggregates the per-run summaries
-into a single file at `{workdir}/metrics_summary.json`.  It contains two
-complementary views of the data.
+After all N runs complete, the orchestrator aggregates all per-run data
+into a single file at `{workdir}/metrics_summary.json`.
 
-**`pooled`** — the headline metric
+**`pass_rate`** — the primary benchmark metric
 
-All N × M per-instance observations are merged into one flat list and
-avg / median are computed over the whole pool.  This answers: *"On average,
+The pass rate for each run is averaged across N runs.  Because `total_instances`
+is the same in every run (same benchmark), the average pass rate equals the
+pooled pass rate, so no separate "pooled" computation is needed.
+
+```json
+"pass_rate": {
+  "avg":  45.5,
+  "std":   3.2,
+  "min":  40.0,
+  "max":  50.0,
+  "per_run": [
+    {"run_number": 1, "resolved": 5, "total": 11, "pass_rate": 50.0},
+    {"run_number": 2, "resolved": 4, "total": 11, "pass_rate": 40.0}
+  ]
+}
+```
+
+`std` is the standard deviation of per-run pass rates.  Use it as the ±
+value in thesis tables: *"pass rate was 45.5 ± 3.2 %"*.  `pass_rate` is only
+present in the file when the evaluation step actually ran.
+
+**`pooled`** — agent cost / token headline metric
+
+All N × M per-instance cost/token observations are merged into one flat list
+and avg / median are computed over the whole pool.  Answers: *"On average,
 how much does a single agent invocation cost on this benchmark?"*
 
 ```json
 "pooled": {
-  "n_observations": 33,
+  "n_observations": 22,
   "total_cost":  {"avg": 3.14, "median": 2.88},
   "tokens_sent": {"avg": 500000, "median": 450000}
 }
 ```
 
-`n_observations` = N × M minus entries with missing traj files.
+**`run_variability`** — agent cost / token stability metric
 
-**`run_variability`** — the stability metric
-
-Instead of pooling raw data, the per-run averages are treated as N data
-points and described with mean, standard deviation, min, and max.  This
-answers: *"How consistent is the agent across independent runs?"*
+The per-run averages of cost/token fields are described with mean, std dev,
+min, and max.  Answers: *"How consistent is the agent across runs?"*
 
 ```json
 "run_variability": {
@@ -471,23 +511,31 @@ answers: *"How consistent is the agent across independent runs?"*
 }
 ```
 
-`std_of_run_avgs` is the ± value for thesis error bars: *"cost was
-$3.14 ± $0.02 per instance"*.  A high standard deviation relative to the
-mean suggests the agent behaves non-deterministically — this is an important
-signal when comparing normal vs. metamorphic benchmarks, where you might
-expect higher variability on morphed code.
+**`per_run`** — per-run breakdown (for notebook plotting)
 
-**`per_run`** — individual run summaries
+Each entry holds both agent and evaluation summaries for that run:
 
-An array of per-run summary objects (same shape as `agent.metrics.summary`)
-for traceability and notebook plotting.
+```json
+"per_run": [
+  {
+    "run_number": 1,
+    "agent":      {"n_instances": 11, "total_cost": {"avg": 3.14, ...}, ...},
+    "evaluation": {"total_instances": 11, "resolved_instances": 5,
+                   "unresolved_instances": 6, "pass_rate": 50.0}
+  }
+]
+```
 
-**Why both views?**
+`evaluation` is `null` for runs where the evaluation step did not execute.
 
-| View | Question answered | Thesis use |
-|---|---|---|
-| `pooled` | What is the expected cost / token count? | Headline metric |
-| `run_variability` | Does the agent behave consistently? | Error bars, stability analysis |
+**Summary of views**
+
+| Key | Source | Question answered | Thesis use |
+|---|---|---|---|
+| `pass_rate` | `final_report.json` | Did the agent fix the bugs? | Primary benchmark metric |
+| `pooled` | `.traj` model_stats | How much did it cost / how many tokens? | Headline cost metric |
+| `run_variability` | Per-run averages | Is the agent consistent across runs? | Error bars, stability |
+| `per_run` | Both | Per-run detail | Notebook plots, traceability |
 
 The math functions are in [`scripts/eval/metrics.py`](./scripts/eval/metrics.py)
 and can be imported directly into Jupyter notebooks without loading the rest

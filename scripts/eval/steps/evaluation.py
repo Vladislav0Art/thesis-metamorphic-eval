@@ -47,6 +47,7 @@ if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
 from common.cli import run_cli_command, run_cli_command_streaming
+from eval.metrics import summarize_eval_report
 from eval.steps.base import Step, StepResult
 from eval.steps.setup import Setup
 from eval.config import EvaluationStepConfig
@@ -69,12 +70,16 @@ class EvaluationStepResult(StepResult):
     """
     eval_config_path: Optional[Path] = None
     report_path: Optional[Path] = None
+    metrics_summary: Optional[dict] = None  # from final_report.json
 
     def to_dict(self) -> dict:
         return {
             **super().to_dict(),
             "eval_config": str(self.eval_config_path) if self.eval_config_path else None,
             "report": str(self.report_path) if self.report_path else None,
+            "metrics": {
+                "summary": self.metrics_summary if self.metrics_summary is not None else {}
+            },
         }
 
 
@@ -116,11 +121,23 @@ class EvaluationStep(Step):
                     "Check harness logs for errors."
                 )
 
+            # Read final_report.json and extract pass rate metrics.
+            metrics_summary = None
+            if report_path.exists():
+                with open(report_path, "r", encoding="utf-8") as f:
+                    report_data = json.load(f)
+                metrics_summary = summarize_eval_report(report_data)
+                logger.info(
+                    f"Pass rate: {metrics_summary['resolved_instances']}/"
+                    f"{metrics_summary['total_instances']} resolved "
+                    f"({metrics_summary['pass_rate']:.1f}%)"
+                )
+
             return EvaluationStepResult(
                 success=True,
                 eval_config_path=eval_config_path.resolve(),
-                # Resolve even if the file doesn't exist yet (placeholder case)
                 report_path=report_path.resolve(),
+                metrics_summary=metrics_summary,
             )
 
         except Exception as e:
