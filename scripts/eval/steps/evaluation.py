@@ -112,7 +112,7 @@ class EvaluationStep(Step):
             logger.info(f"Generated eval config: {eval_config_path}")
 
             # Step 5: run the harness (currently a placeholder)
-            harness_ran = self._run_harness(eval_config_path, run_dir)
+            harness_ran: bool = self._run_harness(eval_config_path, run_dir)
 
             report_path = run_dir / "eval" / "output" / "final_report.json"
             if harness_ran and not report_path.exists():

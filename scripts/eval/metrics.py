@@ -244,20 +244,49 @@ def run_variability_stats(run_summaries: list) -> dict:
 
 def summarize_eval_report(report: dict) -> dict:
     """
-    Extract the three primary fields from a ``final_report.json`` dict and
-    compute the pass rate for a single evaluation run.
+    Extract ALL fields from a ``final_report.json`` dict (`report`).
+    The three primary fields are the most important; these are
+    1) `total_instances`, 2) `resolved_instances`, 3) `unresolved_instances`,
+    which compute the pass rate for a single evaluation run.
 
     Args:
         report: Parsed content of ``final_report.json`` produced by
-                the multi_swe_bench harness.
+                the `multi_swe_bench` harness.
+
+    Formula: pass_rate = resolved_instances / total_instances × 100
 
     Returns::
 
         {
-            "total_instances":      10,
-            "resolved_instances":   5,
-            "unresolved_instances": 5,
             "pass_rate":            50.0   ← resolved / total × 100
+            "total_instances": 10,
+            "submitted_instances": 3,
+            "completed_instances": 3,
+            "incomplete_instances": 0,
+            "resolved_instances": 5,
+            "unresolved_instances": 5,
+            "empty_patch_instances": 0,
+            "error_instances": 0,
+            "submitted_ids": [
+                "mockito/mockito:pr-3129",
+                "elastic/logstash:pr-15964",
+                "alibaba/fastjson2:pr-82"
+            ],
+            "completed_ids": [
+                "mockito/mockito:pr-3129",
+                "elastic/logstash:pr-15964",
+                "alibaba/fastjson2:pr-82"
+            ],
+            "incomplete_ids": [],
+            "resolved_ids": [
+                "mockito/mockito:pr-3129"
+            ],
+            "unresolved_ids": [
+                "elastic/logstash:pr-15964",
+                "alibaba/fastjson2:pr-82"
+            ],
+            "empty_patch_ids": [],
+            "error_ids": []
         }
 
     ``pass_rate`` is expressed as a percentage (0–100).  Returns 0.0 when
@@ -265,13 +294,12 @@ def summarize_eval_report(report: dict) -> dict:
     """
     total      = report.get("total_instances", 0)
     resolved   = report.get("resolved_instances", 0)
-    unresolved = report.get("unresolved_instances", 0)
     pass_rate  = (resolved / total * 100.0) if total > 0 else 0.0
+
+    # install `pass_rate` as long as all the other fields from the report
     return {
-        "total_instances":      total,
-        "resolved_instances":   resolved,
-        "unresolved_instances": unresolved,
-        "pass_rate":            pass_rate,
+        "pass_rate": pass_rate,
+        **report,
     }
 
 
