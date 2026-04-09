@@ -247,6 +247,24 @@ uv pip install -r requirements.txt
 docker --version
 ```
 
+#### MSWE-agent Keys
+
+These are the custom keys for `keys.cfg` (added in the MSWE-agent's branch `vartiukhov/metamorphic-testing`):
+
+1. **LiteLLM Support**:
+   1. `USE_LITELLM_PROXY=True` - whether to call LiteLLM.
+   1. `LITELLM_OPENAI_BASE_URL=url` - LiteLLM base url for OpenAI model.
+   1. `LITELLM_API_KEY` - LiteLLM API key.
+1. **Langfuse Support**:
+   1. `TRACE_TO_LANGFUSE=True` - whether to enable Langfuse tracing.
+   1. `LANGFUSE_HOST=url` - Langfuse host.
+   1. `LANGFUSE_SECRET_KEY=skey` - secret key.
+   1. `LANGFUSE_PUBLIC_KEY=pkey` - public key (_a pair of both keys defines the project which the traces will be exported to_).
+1. **Grazie Support**:
+   1. `USE_GRAZIE_PROXY=True` - whether to call Grazie (**call LiteLLM instead!**)
+   1. `GRAZIE_OPENAI_BASE_URL=url` - Grazie base url for OpenAI model.
+   1. `GRAZIE_ANTHROPIC_BASE_URL=url` - Grazie base url for Anthropic model
+   1. `GRAZIE_API_KEY=key` - Grazie API key.
 
 
 #### MSWE-agent On Normal Benchmarks
