@@ -110,6 +110,7 @@ class AgentRunConfig:
     temperature: float = 0.0
     top_p: float = 0.95
     total_cost_limit: float = 0.0
+    reasoning_effort: str | None = None
     cache_task_images: bool = True
     pre_build_all_images: bool = True
     remove_image: bool = False
@@ -272,6 +273,7 @@ def load_config(config_filepath: str) -> EvalConfig:
                 temperature=float(c.get("temperature", 0.0)),
                 top_p=float(c.get("top_p", 0.95)),
                 total_cost_limit=float(c.get("total_cost_limit", 0.0)),
+                reasoning_effort=str(c.get("reasoning_effort", None)),
                 cache_task_images=c.get("cache_task_images", True),
                 pre_build_all_images=c.get("pre_build_all_images", True),
                 remove_image=c.get("remove_image", False),

@@ -318,6 +318,7 @@ class AgentStep(Step):
             "--temperature",             str(c.temperature),
             "--top_p",                   str(c.top_p),
             "--total_cost_limit",        str(c.total_cost_limit),
+            "--reasoning_effort",        str(c.reasoning_effort),
             "--pr_file",                 c.benchmark_file,
             "--config_file",             c.config_file,
             "--per_instance_cost_limit", str(c.per_instance_cost_limit),
@@ -404,6 +405,7 @@ class AgentStep(Step):
                 "instance_cost":  5.07,
                 "tokens_sent":    1002772,
                 "tokens_received": 3666,
+                "reasoning_tokens_total": 7380,
                 "api_calls":      61
             }
 
