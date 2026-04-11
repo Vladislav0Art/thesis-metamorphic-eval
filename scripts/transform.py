@@ -230,20 +230,19 @@ def execute_codecocoon(
 
 
 def insert_metamorphic_log(
-    where: Dict,
-    strategy: str,
+    strategy_entry: Dict,
     label: str,
     applied_to: str,
     result: CodeCocoonResult | None,
 ):
     """
-    Inserts a log entry for a metamorphic transformation result.
+    Inserts a log entry for a metamorphic transformation result into the strategy entry dict.
 
     The insertion will have the following structure (appended into the "logs" array):
     ```
-    where["strategy"]["logs"] = [
+    strategy_entry["logs"] = [
         {
-            "applied_to": applied_to,  # e.g., 'base' or 'fix'
+            "applied_to": applied_to,  # e.g., 'base' or 'test'
             "label": label,
             "result": {
                 "stdout": result['stdout'],
@@ -253,32 +252,28 @@ def insert_metamorphic_log(
         }
     ]
     ```
-    If the "logs" array does not exist for the strategy, it will be created.
+    If the "logs" array does not exist in strategy_entry, it will be created.
 
     Arguments:
-      - where: The dictionary where the log should be inserted (should be `entry['metamorphic']`).
-      - strategy: The transformation strategy name (any string, given as an input).
+      - strategy_entry: The strategy dict to append the log into (one element of `entry['metamorphic']`).
       - label: any string literal meaningful for the log.
       - applied_to: A string indicating whether this log is for the 'base' (i.e., on the base commit)
-                    or 'fix' (i.e., after applying both test+fix patches) transformation.
+                    or 'test' (i.e., after applying the test patch) transformation.
       - result: A `CodeCocoonResult` containing the result of the transformation execution, with keys:
                 - "stdout": The standard output from executing CodeCocoon.
                 - "stderr": The standard error from executing CodeCocoon.
                 - "return_code": The return code from executing CodeCocoon.
     """
-    if strategy not in where:
-        where[strategy] = {}
-
-    if "logs" not in where[strategy]:
-        where[strategy]["logs"] = []
+    if "logs" not in strategy_entry:
+        strategy_entry["logs"] = []
 
     log_entry = {
         "applied_to": applied_to,
         "label": label,
         "result": result.__dict__ if result is not None else None,
     }
-    where[strategy]["logs"].append(log_entry)
-    logger.info("Successfully inserted metamorphic log entry for strategy '%s' applied to '%s'", strategy, applied_to)
+    strategy_entry["logs"].append(log_entry)
+    logger.info("Successfully inserted metamorphic log entry applied to '%s'", applied_to)
 
 
 def build_github_url(org: str, repo: str) -> str:
@@ -531,22 +526,20 @@ def process_entry(
     instance_id = entry['instance_id']
     logger.info(f"Processing entry: {instance_id}")
 
-    # Initialize strategy dict if not present
+    # Initialize metamorphic array if not present
     if "metamorphic" not in entry:
-        entry["metamorphic"] = {}
+        entry["metamorphic"] = []
 
-    # Strategy-specific dict for storing transformation results
-    metamorphic = entry["metamorphic"]
-
-    if strategy not in metamorphic:
-        metamorphic[strategy] = {}
+    # Strategy entry dict — built up locally and appended to entry["metamorphic"] once
+    # we know base morphing succeeded (to avoid partial empty entries on early failures).
+    strategy_entry = {"strategy": strategy}
 
     try:
         # Step 1: Clone repository
         repo_url = build_github_url(entry['org'], entry['repo'])
 
-        # repo_dir=repos_dir/instance_id/repo
-        repo_dir = os.path.join(repos_dir, instance_id, "repo")
+        # repo_dir=repos_dir/strategy/instance_id/repo
+        repo_dir = os.path.join(repos_dir, strategy, instance_id, "repo")
         base_sha = entry['base']['sha']
 
         if not clone_repository(repo_url, repo_dir, base_sha):
@@ -600,8 +593,9 @@ def process_entry(
         logger.info(f"Extracted {len(files_to_transform)} unique changed files:{files_to_transform_joined}")
 
         # Step 3: Generate CodeCocoon config
-        # config_path=repos_dir/instance_id/codecocoon.yml
-        config_path = os.path.join(repos_dir, instance_id, "codecocoon.yml")
+        # config_path=repos_dir/strategy/instance_id/codecocoon.yml
+        config_path = os.path.join(repos_dir, strategy, instance_id, "codecocoon.yml")
+        os.makedirs(os.path.dirname(config_path), exist_ok=True)
         generate_codecocoon_config(
             project_root=repo_dir,
             files=files_to_transform,
@@ -635,13 +629,26 @@ def process_entry(
         metamorphic_base_commit: str = base_morph_result.last_commit_sha
         metamorphic_base_patch: str = base_morph_result.metamorphic_patch
 
+        # Base morph succeeded — commit strategy_entry to the metamorphic array.
+        # From this point on any early return still preserves partially-stored fields.
+        entry["metamorphic"].append(strategy_entry)
+
+        # Store repo reference (path + branch names) for external tooling / debugging
+        strategy_entry["repo"] = {
+            "instance_id": instance_id,
+            "path": repo_dir,
+            "branches": {
+                "base": base_branch,
+                "test": test_branch,
+            },
+        }
+
         # Store base transformation results
-        metamorphic[strategy]['metamorphic_base_patch'] = metamorphic_base_patch
-        metamorphic[strategy]['metamorphic_base_commit'] = metamorphic_base_commit
+        strategy_entry['metamorphic_base_patch'] = metamorphic_base_patch
+        strategy_entry['metamorphic_base_commit'] = metamorphic_base_commit
         # saving CodeCocoon logs for base transformation
         insert_metamorphic_log(
-            where=metamorphic,
-            strategy=strategy,
+            strategy_entry=strategy_entry,
             label="base_metamorphic_transformation_log",
             applied_to="base",
             result=base_morph_result.codecocoon_result,
@@ -678,13 +685,12 @@ def process_entry(
 
         logger.info(f"Test metamorphic transformation complete. Commit: {metamorphic_test_commit}")
 
-        # Store metadata in metamorphic dict for reference
-        metamorphic[strategy]['_metamorphic_test_patch'] = _metamorphic_test_patch
-        metamorphic[strategy]['metamorphic_test_commit'] = metamorphic_test_commit
+        # Store metadata in strategy entry for reference
+        strategy_entry['_metamorphic_test_patch'] = _metamorphic_test_patch
+        strategy_entry['metamorphic_test_commit'] = metamorphic_test_commit
         # save CodeCocoon logs for test transformation
         insert_metamorphic_log(
-            where=metamorphic,
-            strategy=strategy,
+            strategy_entry=strategy_entry,
             label="test_metamorphic_transformation_log",
             applied_to="test",
             result=test_morph_result.codecocoon_result,
@@ -708,9 +714,9 @@ def process_entry(
             return entry
 
         # save the original test patch as well for reference
-        metamorphic[strategy]['original_test_patch'] = test_patch
+        strategy_entry['original_test_patch'] = test_patch
         # store the generated new_morphed_test_patch (replaces test_patch)
-        metamorphic[strategy]['new_morphed_test_patch'] = new_morphed_test_patch
+        strategy_entry['new_morphed_test_patch'] = new_morphed_test_patch
 
 
         logger.info(f"===== STEP 4: Replacing test_patch with new_morphed_test_patch and save metamorphic_base_patch into 'base' =====")
