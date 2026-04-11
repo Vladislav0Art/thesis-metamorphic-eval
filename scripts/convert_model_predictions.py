@@ -40,17 +40,27 @@ def parse_instance_id(instance_id: str) -> tuple[str, str, int]:
     return org, repo, int(number)
 
 
-def convert_entry(entry: dict) -> dict:
+def convert_entry(entry: dict, input_type: str = "model") -> dict:
     """
     Convert a single entry from input schema to output schema.
 
     Args:
-        entry: Dict with keys: model_name_or_path, instance_id, model_patch
+        entry: Dict with keys: model_name_or_path, instance_id, model_patch (model)
+               or org, repo, number, fix_patch (benchmark)
+        input_type: "model" (default) or "benchmark"
 
     Returns:
-        Dict with keys: org, repo, number, fix_patch
+        Dict with keys: org, repo, number, fix_patch (and model_name_or_path for model type)
     """
     org, repo, number = parse_instance_id(entry["instance_id"])
+
+    if input_type == "benchmark":
+        return {
+            "org": org,
+            "repo": repo,
+            "number": number,
+            "fix_patch": entry["fix_patch"]
+        }
 
     return {
         "org": org,
@@ -61,13 +71,14 @@ def convert_entry(entry: dict) -> dict:
     }
 
 
-def convert_jsonl(input_path: str, output_path: str) -> None:
+def convert_jsonl(input_path: str, output_path: str, input_type: str = "model") -> None:
     """
     Convert JSONL file from input schema to output schema.
 
     Args:
         input_path: Path to input JSONL file
         output_path: Path to output JSONL file
+        input_type: "model" (default) or "benchmark"
     """
     input_file = Path(input_path)
     output_file = Path(output_path)
@@ -91,7 +102,7 @@ def convert_jsonl(input_path: str, output_path: str) -> None:
 
             try:
                 entry = json.loads(line)
-                converted_entry = convert_entry(entry)
+                converted_entry = convert_entry(entry, input_type)
                 outfile.write(json.dumps(converted_entry) + '\n')
                 converted_count += 1
 
@@ -124,11 +135,17 @@ def main():
         required=True,
         help="Path to output JSONL file"
     )
+    parser.add_argument(
+        "-t", "--input-type",
+        choices=["model", "benchmark"],
+        default="model",
+        help="Input format: 'model' (all_preds.jsonl from MSWE-agent, default) or 'benchmark' (benchmark JSONL with fix_patch)"
+    )
 
     args = parser.parse_args()
 
     try:
-        convert_jsonl(args.input, args.output)
+        convert_jsonl(args.input, args.output, args.input_type)
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
