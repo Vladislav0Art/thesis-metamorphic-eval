@@ -1,0 +1,200 @@
+[2026-04-11 04:46:50,430] [docker_util.py] [INFO]: Start building image `mswebench/fasterxml_m_jackson-databind:pr-4189`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/fasterxml/jackson-databind/images/pr-4189`
+[2026-04-11 04:46:51,284] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/fasterxml_m_jackson-databind:base
+[2026-04-11 04:46:51,284] [docker_util.py] [INFO]: 
+[2026-04-11 04:46:51,292] [docker_util.py] [INFO]: ---> d3d4b151e0a1
+[2026-04-11 04:46:51,292] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-04-11 04:46:51,292] [docker_util.py] [INFO]: 
+[2026-04-11 04:46:56,308] [docker_util.py] [INFO]: ---> 5a125bf741cf
+[2026-04-11 04:46:56,308] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-04-11 04:46:56,308] [docker_util.py] [INFO]: 
+[2026-04-11 04:46:57,564] [docker_util.py] [INFO]: ---> ca454551b692
+[2026-04-11 04:46:57,564] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-04-11 04:46:57,564] [docker_util.py] [INFO]: 
+[2026-04-11 04:46:58,923] [docker_util.py] [INFO]: ---> 38a06e72a397
+[2026-04-11 04:46:58,923] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-04-11 04:46:58,923] [docker_util.py] [INFO]: 
+[2026-04-11 04:47:00,128] [docker_util.py] [INFO]: ---> 2d841dab91f8
+[2026-04-11 04:47:00,128] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-04-11 04:47:00,128] [docker_util.py] [INFO]: 
+[2026-04-11 04:47:01,246] [docker_util.py] [INFO]: ---> dfe756b392c7
+[2026-04-11 04:47:01,246] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-04-11 04:47:01,246] [docker_util.py] [INFO]: 
+[2026-04-11 04:47:02,265] [docker_util.py] [INFO]: ---> b0ca2cf8e722
+[2026-04-11 04:47:02,265] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-04-11 04:47:02,266] [docker_util.py] [INFO]: 
+[2026-04-11 04:47:03,248] [docker_util.py] [INFO]: ---> 083a064dbe3a
+[2026-04-11 04:47:03,248] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-04-11 04:47:03,248] [docker_util.py] [INFO]: 
+[2026-04-11 04:47:03,287] [docker_util.py] [INFO]: ---> Running in 92076e170588
+[2026-04-11 04:47:03,687] [docker_util.py] [INFO]: HEAD is now at 7faddc8d2 Test refactoring,  batch/12 (#5880)
+[2026-04-11 04:47:03,724] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-04-11 04:47:03,856] [docker_util.py] [INFO]: [91mNote: switching to '866f95fc0198a5b8beb4f25976125697b115e236'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 866f95fc0 Add test for #4715 in 2.15 (passing)
+[0m
+[2026-04-11 04:47:03,884] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-04-11 04:47:04,350] [docker_util.py] [INFO]: [[1;34mINFO[m] Scanning
+[2026-04-11 04:47:04,351] [docker_util.py] [INFO]: for project
+[2026-04-11 04:47:04,351] [docker_util.py] [INFO]: s
+[2026-04-11 04:47:04,351] [docker_util.py] [INFO]: ...
+[2026-04-11 04:47:04,462] [docker_util.py] [INFO]: Downloading from sonatype-nexus-sn
+[2026-04-11 04:47:04,463] [docker_util.py] [INFO]: apshots: https://oss.sonatype.org/content/repositor
+[2026-04-11 04:47:04,463] [docker_util.py] [INFO]: ies/snapshots/co
+[2026-04-11 04:47:04,463] [docker_util.py] [INFO]: m/fasterxm
+[2026-04-11 04:47:04,463] [docker_util.py] [INFO]: l/ja
+[2026-04-11 04:47:04,463] [docker_util.py] [INFO]: ckson/jackson-base/2.15.5-SNAPSHOT/maven-metadata.xml
+[2026-04-11 04:47:04,463] [docker_util.py] [INFO]: 
+[2026-04-11 04:47:06,785] [docker_util.py] [INFO]: Downloading from sonatype-nexus-sna
+[2026-04-11 04:47:06,785] [docker_util.py] [INFO]: pshots
+[2026-04-11 04:47:06,785] [docker_util.py] [INFO]: : https:/
+[2026-04-11 04:47:06,785] [docker_util.py] [INFO]: /oss.sonatype.org/conte
+[2026-04-11 04:47:06,785] [docker_util.py] [INFO]: nt/re
+[2026-04-11 04:47:06,785] [docker_util.py] [INFO]: positories/snapshots/
+[2026-04-11 04:47:06,786] [docker_util.py] [INFO]: c
+[2026-04-11 04:47:06,786] [docker_util.py] [INFO]: om/fasterxml/jack
+[2026-04-11 04:47:06,786] [docker_util.py] [INFO]: son/jackson-bas
+[2026-04-11 04:47:06,786] [docker_util.py] [INFO]: e/
+[2026-04-11 04:47:06,786] [docker_util.py] [INFO]: 2.
+[2026-04-11 04:47:06,786] [docker_util.py] [INFO]: 15
+[2026-04-11 04:47:06,786] [docker_util.py] [INFO]: .5
+[2026-04-11 04:47:06,786] [docker_util.py] [INFO]: -S
+[2026-04-11 04:47:06,786] [docker_util.py] [INFO]: NA
+[2026-04-11 04:47:06,786] [docker_util.py] [INFO]: P
+[2026-04-11 04:47:06,786] [docker_util.py] [INFO]: S
+[2026-04-11 04:47:06,786] [docker_util.py] [INFO]: HOT/jackson-base-2.15.5-SN
+[2026-04-11 04:47:06,786] [docker_util.py] [INFO]: APSHOT.pom
+[2026-04-11 04:47:07,054] [docker_util.py] [INFO]: [[1;31mERROR[m] [ERROR] Some problems were encounter
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: ed while processing t
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: he
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: POM
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: s:
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: 
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: [FATAL] Non-resolvable parent POM for com.faste
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: rxml.jack
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: son
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: .c
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: ore
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: :j
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: ac
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: ks
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: on
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: -d
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: at
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: ab
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: in
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: d:
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: 2.
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: 15
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: .5-SNAPSHOT:
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: Coul
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: d
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: not
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: fin
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: d a
+[2026-04-11 04:47:07,055] [docker_util.py] [INFO]: rt
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: if
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: ac
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: t
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: co
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: m.
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: fa
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: sterxml.jackson:jackson-base:pom:2.15.5-S
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: NAPS
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: HOT
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: i
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: n
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: so
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: na
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: ty
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: pe
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: -n
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: e
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: xus-snapshots (https://oss.sonatype.org/con
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: ten
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: t/
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: re
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: po
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: si
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: tori
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: es/snapshots) and 'parent.relativePath' points at wrong local PO
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: M @ li
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: ne
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: 9
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: , column 11
+ @
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: 
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: [[1;31mERROR[m] The build could not read 1 project -> [1m[Help 1][m
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: [[1;31mERROR[m]   
+[[1;31mERROR[m]   The project com.fasterxml.jackson.core:jackson-da
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: tabind:2.15.5-SNAPSHOT (/home/jac
+[2026-04-11 04:47:07,056] [docker_util.py] [INFO]: kson-databind/p
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: om.xml) has
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: 1 err
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: or
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: [[1;31mERROR[m]     Non-resolvable parent POM for com.fasterxml.jackson.core
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: :jackson-databind:2.
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: 15.5-S
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: NAPS
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: HOT:
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: Coul
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: d not
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: fi
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: nd a
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: rtif
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: act c
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: om.fas
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: terxm
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: l.jac
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: kson:jac
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: kson-
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: base
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: :pom
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: :2.1
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: 5.5-S
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: NAPSH
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: OT in sonaty
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: pe-nexu
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: s
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: -
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: snapshots (https://oss.sonatype.org/content/repositories/snapshots) and 'parent.relativePath' points
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: at wrong local POM @ l
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: ine 9
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: , col
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: umn 1
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: 1 ->
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: [1m[
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: Help
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: 2][
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: m
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: 
+[2026-04-11 04:47:07,057] [docker_util.py] [INFO]: [[1;31mERROR[m]
+[2026-04-11 04:47:07,058] [docker_util.py] [INFO]: [[1;31mERROR[m] To see the full stack trace of the errors, re-run Maven with the [1m-e[
+[2026-04-11 04:47:07,058] [docker_util.py] [INFO]: m switch.
+[2026-04-11 04:47:07,058] [docker_util.py] [INFO]: [[1;31mERROR[m] Re-run Maven using the [1m-X[m switch to enable full debug lo
+[2026-04-11 04:47:07,058] [docker_util.py] [INFO]: gging.
+[[1;31mERROR[m] 
+[[1;31mERROR[m] For more information about the errors and possible solutions, please read the following articles:
+[[1;31mERROR[m] [1m[Help 1][m http://cwiki.apache.org/confluence/display/MAVEN/ProjectBuildingException
+[[1;31mERROR[m] [1m[Help 2][m http
+[2026-04-11 04:47:07,058] [docker_util.py] [INFO]: ://cwiki.apache.org/confluence/display/MAVEN/UnresolvableModelException
+[2026-04-11 04:47:08,401] [docker_util.py] [INFO]: ---> Removed intermediate container 92076e170588
+[2026-04-11 04:47:08,401] [docker_util.py] [INFO]: ---> e000149ead5b
+[2026-04-11 04:47:08,401] [docker_util.py] [INFO]: sha256:e000149ead5bb11f957eb85e907abbdbf7913fcb252a3ca91f49169f112efde1
+[2026-04-11 04:47:08,407] [docker_util.py] [INFO]: Successfully built e000149ead5b
+[2026-04-11 04:47:08,416] [docker_util.py] [INFO]: Successfully tagged mswebench/fasterxml_m_jackson-databind:pr-4189
+[2026-04-11 04:47:08,416] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/fasterxml/jackson-databind/images/pr-4189) build success: mswebench/fasterxml_m_jackson-databind:pr-4189

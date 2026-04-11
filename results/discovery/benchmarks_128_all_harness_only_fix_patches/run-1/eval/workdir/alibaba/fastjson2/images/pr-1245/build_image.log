@@ -1,0 +1,2083 @@
+[2026-04-11 05:20:34,907] [docker_util.py] [INFO]: Start building image `mswebench/alibaba_m_fastjson2:pr-1245`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/alibaba/fastjson2/images/pr-1245`
+[2026-04-11 05:20:36,152] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/alibaba_m_fastjson2:base
+[2026-04-11 05:20:36,152] [docker_util.py] [INFO]: 
+[2026-04-11 05:20:36,269] [docker_util.py] [INFO]: ---> 571417522e5b
+[2026-04-11 05:20:36,270] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-04-11 05:20:36,270] [docker_util.py] [INFO]: 
+[2026-04-11 05:21:10,835] [docker_util.py] [INFO]: ---> 67a0c1e61367
+[2026-04-11 05:21:10,835] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-04-11 05:21:10,835] [docker_util.py] [INFO]: 
+[2026-04-11 05:21:21,387] [docker_util.py] [INFO]: ---> a5e2961ed593
+[2026-04-11 05:21:21,387] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-04-11 05:21:21,387] [docker_util.py] [INFO]: 
+[2026-04-11 05:21:24,369] [docker_util.py] [INFO]: ---> fb7a493e95be
+[2026-04-11 05:21:24,369] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-04-11 05:21:24,369] [docker_util.py] [INFO]: 
+[2026-04-11 05:21:29,383] [docker_util.py] [INFO]: ---> 04ddb67605c6
+[2026-04-11 05:21:29,383] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-04-11 05:21:29,383] [docker_util.py] [INFO]: 
+[2026-04-11 05:21:32,723] [docker_util.py] [INFO]: ---> c09e208d8332
+[2026-04-11 05:21:32,723] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-04-11 05:21:32,723] [docker_util.py] [INFO]: 
+[2026-04-11 05:21:35,609] [docker_util.py] [INFO]: ---> d0b85dfb36d2
+[2026-04-11 05:21:35,610] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-04-11 05:21:35,610] [docker_util.py] [INFO]: 
+[2026-04-11 05:21:39,949] [docker_util.py] [INFO]: ---> cc58b598918a
+[2026-04-11 05:21:39,949] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-04-11 05:21:39,949] [docker_util.py] [INFO]: 
+[2026-04-11 05:21:40,819] [docker_util.py] [INFO]: ---> Running in 40be81274783
+[2026-04-11 05:21:51,313] [docker_util.py] [INFO]: HEAD is now at 5a050751f fix: JSONPath syntax error when 'in'/'rlike' filter follows other filters (#3997) (#4030)
+[2026-04-11 05:21:51,459] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-04-11 05:22:03,736] [docker_util.py] [INFO]: [91mNote: switching to '6648b96c0162c222467eb44bac30a9d59392c7ff'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 6648b96c0 support JSONPath.Feature.KeepNullValue, for issue #1159
+[0m
+[2026-04-11 05:22:04,339] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-04-11 05:22:04,365] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-11 05:22:07,190] [docker_util.py] [INFO]: Apache Maven 3.9.0 (9b58d2bad23a66be161c4664ef21ce219c2c8584)
+Maven home: /root/.m2/wrapper/dists/apache-maven-3.9.0-bin/31cc4014/apache-maven-3.9.0
+Java version: 1.8.0_482, vendor: Azul Systems, Inc., runtime: /usr/lib/jvm/zulu8-ca-arm64/jre
+Default locale: en, platform encoding: UTF-8
+OS name: "linux", version: "6.12.5-linuxkit", arch: "aarch64", family: "unix"
+[2026-04-11 05:22:07,190] [docker_util.py] [INFO]: 
+[2026-04-11 05:22:10,388] [docker_util.py] [INFO]: [INFO] Scanning for projects...
+[2026-04-11 05:22:11,945] [docker_util.py] [INFO]: [INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] fastjson2-parent                                                   [pom]
+[INFO] fastjson2                                                          [jar]
+[INFO] fastjson2-extension                                                [jar]
+[INFO] fastjson2-adapter                                                  [jar]
+[INFO] fastjson2-benchmark                                                [jar]
+[INFO] fastjson2-extension-spring5                                        [jar]
+[INFO] example-spring-test                                                [jar]
+[INFO] fastjson1-compatible                                               [jar]
+[INFO] fastjson2-kotlin                                                   [jar]
+[2026-04-11 05:22:11,955] [docker_util.py] [INFO]: [INFO] 
+[INFO] ---------------< com.alibaba.fastjson2:fastjson2-parent >---------------
+[INFO] Building fastjson2-parent 2.0.26-SNAPSHOT                          [1/9]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[2026-04-11 05:22:21,152] [docker_util.py] [INFO]: [INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ fastjson2-parent ---
+[2026-04-11 05:22:21,788] [docker_util.py] [INFO]: [INFO] 
+[INFO] --- checkstyle:3.2.1:check (checkstyle) @ fastjson2-parent ---
+[2026-04-11 05:22:34,361] [docker_util.py] [INFO]: [INFO] You have 0 Checkstyle violations.
+[2026-04-11 05:22:34,363] [docker_util.py] [INFO]: [INFO] 
+[INFO] --- enforcer:3.2.1:enforce (enforce-maven) @ fastjson2-parent ---
+[2026-04-11 05:22:37,634] [docker_util.py] [INFO]: [INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[2026-04-11 05:22:37,663] [docker_util.py] [INFO]: [INFO] Rule 1: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[2026-04-11 05:22:38,185] [docker_util.py] [INFO]: [INFO] Rule 2: com.github.ferstl.maven.pomenforcers.CompoundPedanticEnforcer(compound) passed
+[INFO]
+[2026-04-11 05:22:38,188] [docker_util.py] [INFO]: [INFO] --- kotlin:1.8.10:compile (compile) @ fastjson2-parent ---
+[2026-04-11 05:22:53,647] [docker_util.py] [INFO]: [WARNING] No sources found skipping Kotlin compile
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (java-compile) @ fastjson2-parent ---
+[2026-04-11 05:22:54,709] [docker_util.py] [INFO]: [INFO] No sources to compile
+[INFO] 
+[INFO] --- kotlin:1.8.10:test-compile (test-compile) @ fastjson2-parent ---
+[2026-04-11 05:22:54,719] [docker_util.py] [INFO]: [WARNING] No sources found skipping Kotlin compile
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (java-test-compile) @ fastjson2-parent ---
+[2026-04-11 05:22:54,725] [docker_util.py] [INFO]: [INFO] No sources to compile
+[2026-04-11 05:22:54,725] [docker_util.py] [INFO]: [INFO] 
+[INFO] --- javadoc:3.5.0:jar (attach-javadoc) @ fastjson2-parent ---
+[2026-04-11 05:22:58,448] [docker_util.py] [INFO]: [INFO] Not executing Javadoc as the project is not a Java classpath-capable package
+[INFO] 
+[INFO] ------------------< com.alibaba.fastjson2:fastjson2 >-------------------
+[INFO] Building fastjson2 2.0.26-SNAPSHOT                                 [2/9]
+[INFO]   from core/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[2026-04-11 05:23:14,540] [docker_util.py] [INFO]: [INFO] 
+[INFO] --- clean:3.2.0:clean (default-clean) @ fastjson2 ---
+[2026-04-11 05:23:14,547] [docker_util.py] [INFO]: [INFO] 
+[INFO] --- checkstyle:3.2.1:check (checkstyle) @ fastjson2 ---
+[2026-04-11 05:24:40,495] [docker_util.py] [INFO]: [INFO] You have 0 Checkstyle violations.
+[2026-04-11 05:24:40,523] [docker_util.py] [INFO]: [INFO]
+[2026-04-11 05:24:40,523] [docker_util.py] [INFO]: [INFO] --- enforcer:3.2.1:enforce (enforce-maven) @ fastjson2 ---
+[2026-04-11 05:24:40,602] [docker_util.py] [INFO]: [INFO] Rule 2: com.github.ferstl.maven.pomenforcers.CompoundPedanticEnforcer(compound) passed
+[2026-04-11 05:24:40,603] [docker_util.py] [INFO]: [INFO] 
+[INFO] --- resources:3.3.0:resources (default-resources) @ fastjson2 ---
+[2026-04-11 05:24:41,251] [docker_util.py] [INFO]: [INFO] Copying 2 resources
+[2026-04-11 05:24:41,281] [docker_util.py] [INFO]: [INFO] 
+[INFO] --- kotlin:1.8.10:compile (compile) @ fastjson2 ---
+[2026-04-11 05:24:41,980] [docker_util.py] [INFO]: [WARNING] No sources found skipping Kotlin compile
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (java-compile) @ fastjson2 ---
+[2026-04-11 05:24:42,249] [docker_util.py] [INFO]: [INFO] Changes detected - recompiling the module! :source
+[2026-04-11 05:24:42,249] [docker_util.py] [INFO]: [INFO] Compiling 516 source files with javac [debug target 8] to target/classes
+[2026-04-11 05:25:03,069] [docker_util.py] [INFO]: [WARNING] /home/fastjson2/core/src/main/java/com/alibaba/fastjson2/util/UnsafeUtils.java:[3,16] sun.misc.Unsafe is internal proprietary API and may be removed in a future release
+[WARNING] /home/fastjson2/core/src/main/java/com/alibaba/fastjson2/util/UnsafeUtils.java:[8,25] sun.misc.Unsafe is internal proprietary API and may be removed in a future release
+[WARNING] /home/fastjson2/core/src/main/java/com/alibaba/fastjson2/util/UnsafeUtils.java:[10,9] sun.misc.Unsafe is internal proprietary API and may be removed in a future release
+[WARNING] /home/fastjson2/core/src/main/java/com/alibaba/fastjson2/util/UnsafeUtils.java:[12,36] sun.misc.Unsafe is internal proprietary API and may be removed in a future release
+[WARNING] /home/fastjson2/core/src/main/java/com/alibaba/fastjson2/util/UnsafeUtils.java:[14,23] sun.misc.Unsafe is internal proprietary API and may be removed in a future release
+[INFO] /home/fastjson2/core/src/main/java/com/alibaba/fastjson2/schema/JSONSchema.java: Some input files use or override a deprecated API.
+[INFO] /home/fastjson2/core/src/main/java/com/alibaba/fastjson2/schema/JSONSchema.java: Recompile with -Xlint:deprecation for details.
+[INFO] /home/fastjson2/core/src/main/java/com/alibaba/fastjson2/reader/FieldReader.java: Some input files use unchecked or unsafe operations.
+[INFO] /home/fastjson2/core/src/main/java/com/alibaba/fastjson2/reader/FieldReader.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- resources:3.3.0:testResources (default-testResources) @ fastjson2 ---
+[2026-04-11 05:25:03,114] [docker_util.py] [INFO]: [INFO] Copying 125 resources
+[2026-04-11 05:25:04,442] [docker_util.py] [INFO]: [INFO] 
+[INFO] --- kotlin:1.8.10:test-compile (test-compile) @ fastjson2 ---
+[2026-04-11 05:25:34,891] [docker_util.py] [INFO]: [WARNING] /home/fastjson2/core/src/test/java/com/alibaba/fastjson2/issues/Issue440.kt: (12, 13) Variable 'bytes' is never used
+[WARNING] /home/fastjson2/core/src/test/java/com/alibaba/fastjson2/issues_1000/Issue1038.kt: (11, 13) Variable 'user' is never used
+[2026-04-11 05:25:34,893] [docker_util.py] [INFO]: [INFO] 
+[INFO] --- compiler:3.11.0:testCompile (java-test-compile) @ fastjson2 ---
+[2026-04-11 05:25:34,985] [docker_util.py] [INFO]: [INFO] Changes detected - recompiling the module! :dependency
+[2026-04-11 05:25:34,994] [docker_util.py] [INFO]: [INFO] Compiling 1600 source files with javac [debug target 8] to target/test-classes
+[2026-04-11 05:26:11,493] [docker_util.py] [INFO]: [WARNING] /home/fastjson2/core/src/test/java/com/alibaba/fastjson2/util/XxHash64.java:[13,23] sun.misc.Unsafe is internal proprietary API and may be removed in a future release
+[WARNING] /home/fastjson2/core/src/test/java/com/alibaba/fastjson2/issues/Issue474.java:[50,5] Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+[WARNING] /home/fastjson2/core/src/test/java/com/alibaba/fastjson2/issues/Issue251.java:[30,5] Generating equals/hashCode implementation but without a call to superclass, even though this class does not extend java.lang.Object. If this is intentional, add '@EqualsAndHashCode(callSuper=false)' to your type.
+[WARNING] /home/fastjson2/core/src/test/java/com/alibaba/fastjson2/util/XxHash64.java:[13,23] sun.misc.Unsafe is internal proprietary API and may be removed in a future release
+[2026-04-11 05:26:11,494] [docker_util.py] [INFO]: [WARNING] /home/fastjson2/core/src/test/java/com/alibaba/fastjson2/util/XxHash64.java:[13,23] sun.misc.Unsafe is internal proprietary API and may be removed in a future release
+[WARNING] /home/fastjson2/core/src/test/java/com/alibaba/fastjson2/util/XxHash64.java:[13,23] sun.misc.Unsafe is internal proprietary API and may be removed in a future release
+[WARNING] /home/fastjson2/core/src/test/java/com/alibaba/fastjson2/util/XxHash64.java:[13,23] sun.misc.Unsafe is internal proprietary API and may be removed in a future release
+[INFO] /home/fastjson2/core/src/test/java/com/alibaba/fastjson2/JSONPathTypedMultiTest3.java: Some input files use or override a deprecated API.
+[INFO] /home/fastjson2/core/src/test/java/com/alibaba/fastjson2/JSONPathTypedMultiTest3.java: Recompile with -Xlint:deprecation for details.
+[INFO] /home/fastjson2/core/src/test/java/com/alibaba/fastjson2/jsonb/basic/SymbolTest.java: Some input files use unchecked or unsafe operations.
+[INFO] /home/fastjson2/core/src/test/java/com/alibaba/fastjson2/jsonb/basic/SymbolTest.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- surefire:3.0.0:test (default-test) @ fastjson2 ---
+[2026-04-11 05:26:14,332] [docker_util.py] [INFO]: [INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[2026-04-11 05:26:15,312] [docker_util.py] [INFO]: [INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[2026-04-11 05:26:15,991] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-11 05:26:31,791] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.TypeReferenceTest
+[2026-04-11 05:26:32,444] [docker_util.py] [INFO]: [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.59 s - in com.alibaba.fastjson2.TypeReferenceTest
+[2026-04-11 05:26:32,446] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.JSONPathCompilerReflectTest
+[2026-04-11 05:26:32,564] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.177 s - in com.alibaba.fastjson2.JSONPathCompilerReflectTest
+[INFO] Running com.alibaba.fastjson2.joda.LocalDateTest
+[2026-04-11 05:26:32,742] [docker_util.py] [INFO]: {
+	"@type":"org.joda.time.LocalDate#0",
+	"@value":"2026-04-11"
+}
+{
+	"@type":"org.joda.time.LocalDate#0",
+	"@value":"2026-04-11"
+}
+[2026-04-11 05:26:32,749] [docker_util.py] [INFO]: {
+	"@type":"org.joda.time.LocalDate#0",
+	"@value":{
+		"year":2026,
+		"month":4,
+		"day":11,
+		"chronology":{
+			"zoneId":"UTC"
+		}
+	}
+}
+[2026-04-11 05:26:32,813] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.2 s - in com.alibaba.fastjson2.joda.LocalDateTest
+[INFO] Running com.alibaba.fastjson2.joda.LocalDateTimeTest
+{
+	"@type":"org.joda.time.LocalDateTime#0",
+	"@value":"2026-04-11 11:26:32.744"
+}
+{
+	"@type":"org.joda.time.LocalDateTime#0",
+	"@value":"2026-04-11 11:26:32.767"
+}
+{
+	"@type":"org.joda.time.LocalDateTime#0",
+	"@value":{
+		"year":2026,
+		"month":4,
+		"day":11,
+		"hour":3,
+		"minute":26,
+		"second":32,
+		"millis":768,
+		"chronology":{
+			"zoneId":"UTC"
+		}
+	}
+}
+[2026-04-11 05:26:32,872] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.028 s - in com.alibaba.fastjson2.joda.LocalDateTimeTest
+[INFO] Running com.alibaba.fastjson2.JSONPathTest5
+[
+	{
+		"id":101,
+		"name":"DataWorks"
+	},
+	{
+		"id":102,
+		"name":"MaxCompute"
+	},
+	{
+		"id":103,
+		"name":"Flink"
+	}
+]
+[2026-04-11 05:26:32,890] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s - in com.alibaba.fastjson2.JSONPathTest5
+[INFO] Running com.alibaba.fastjson2.JSONObjectTest_get_2
+[2026-04-11 05:26:32,897] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.027 s - in com.alibaba.fastjson2.JSONObjectTest_get_2
+[INFO] Running com.alibaba.fastjson2.JSONPathSegmentIndexTest
+[2026-04-11 05:26:33,078] [docker_util.py] [INFO]: [INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.209 s - in com.alibaba.fastjson2.JSONPathSegmentIndexTest
+[INFO] Running com.alibaba.fastjson2.JSONBTest3
+[2026-04-11 05:26:33,110] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.028 s - in com.alibaba.fastjson2.JSONBTest3
+[INFO] Running com.alibaba.fastjson2.JSONBTest5
+[2026-04-11 05:26:33,225] [docker_util.py] [INFO]: [INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.117 s - in com.alibaba.fastjson2.JSONBTest5
+[2026-04-11 05:26:33,227] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.JSONPathTypedMultiTest4
+[2026-04-11 05:26:33,278] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.047 s - in com.alibaba.fastjson2.JSONPathTypedMultiTest4
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest42_guava
+[2026-04-11 05:26:33,421] [docker_util.py] [INFO]: {
+	"@type":"com.google.common.collect.AbstractMapBasedMultimap$RandomAccessWrappedList#0",
+	"@value":{
+		"delegate":[
+			101,
+			102,
+			101
+		],
+		"key":"a",
+		"this$0":{
+			"@type":"com.google.common.collect.ArrayListMultimap#1",
+			"@value":{}
+		}
+	}
+}
+[2026-04-11 05:26:33,501] [docker_util.py] [INFO]: {
+	"@type":"com.google.common.collect.AbstractMapBasedMultimap$WrappedSet#0",
+	"@value":{
+		"delegate":{
+			"@type":"HashSet#1",
+			"@value":[
+				101,
+				102
+			]
+		},
+		"key":"a",
+		"this$0":{
+			"@type":"com.google.common.collect.HashMultimap#2",
+			"@value":{}
+		}
+	}
+}
+[2026-04-11 05:26:33,521] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.249 s - in com.alibaba.fastjson2.autoType.AutoTypeTest42_guava
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest2
+[2026-04-11 05:26:33,553] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.027 s - in com.alibaba.fastjson2.autoType.AutoTypeTest2
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest18
+[2026-04-11 05:26:33,559] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest18$Bean1#0",
+	"@value":{
+		"values":{
+			"@type":"LinkedList#1",
+			"@value":[
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest18$XItem#2",
+					"@value":{}
+				},
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest18$YItem#3",
+					"@value":{}
+				}
+			]
+		}
+	}
+}
+[2026-04-11 05:26:33,567] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest18$Bean2#0",
+	"@value":{
+		"values":{
+			"@type":"LinkedHashSet#1",
+			"@value":[
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest18$XItem#2",
+					"@value":{}
+				},
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest18$YItem#3",
+					"@value":{}
+				},
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest18$ZEnum#4",
+					"@value":"A"
+				}
+			]
+		}
+	}
+}
+[2026-04-11 05:26:33,574] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.036 s - in com.alibaba.fastjson2.autoType.AutoTypeTest18
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest12
+[2026-04-11 05:26:33,645] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s - in com.alibaba.fastjson2.autoType.AutoTypeTest12
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest9
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest9$Bean4#0",
+	"@value":{
+		"values":[
+			{
+				"@type":"LM#1",
+				"@value":{}
+			}
+		]
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest9$Bean#0",
+	"@value":{
+		"values":[]
+	}
+}
+[2026-04-11 05:26:33,657] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest9$Bean2#0",
+	"@value":{
+		"values":[1]
+	}
+}
+[2026-04-11 05:26:33,715] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest9$Bean3#0",
+	"@value":{
+		"values":{
+			"@type":"JO1#1",
+			"@value":{
+				"set":{
+					"@type":"HashSet#2",
+					"@value":[]
+				}
+			}
+		}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest9$Bean4#0",
+	"@value":{
+		"values":[
+			{
+				"@type":"JO1#1",
+				"@value":{}
+			}
+		]
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest9$Bean5#0",
+	"@value":{
+		"values":{
+			"data":{
+				"@type":"A#1",
+				"@value":[
+					{
+						"@type":"JO1#2",
+						"@value":{}
+					}
+				]
+			}
+		}
+	}
+}
+[2026-04-11 05:26:33,725] [docker_util.py] [INFO]: [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.098 s - in com.alibaba.fastjson2.autoType.AutoTypeTest9
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest24
+[2026-04-11 05:26:33,754] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest24$Bean1#0",
+	"@value":{
+		"items":[
+			"1",
+			"2"
+		]
+	}
+}
+[2026-04-11 05:26:33,754] [docker_util.py] [INFO]: 
+[2026-04-11 05:26:33,758] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.049 s - in com.alibaba.fastjson2.autoType.AutoTypeTest24
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest36_MapLong
+[2026-04-11 05:26:33,844] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest36_MapLong$Bean#0",
+	"@value":{
+		"values":{
+			"abc":100
+		}
+	}
+}
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.074 s - in com.alibaba.fastjson2.autoType.AutoTypeTest36_MapLong
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest44_customList
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest44_customList$1#0",
+	"@value":[101]
+}
+[2026-04-11 05:26:33,848] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest44_customList$2#0",
+	"@value":[101]
+}
+[2026-04-11 05:26:33,863] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest44_customList$3#0",
+	"@value":{
+		"a":101
+	}
+}
+[2026-04-11 05:26:33,873] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.042 s - in com.alibaba.fastjson2.autoType.AutoTypeTest44_customList
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest4
+[2026-04-11 05:26:33,882] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.018 s - in com.alibaba.fastjson2.autoType.AutoTypeTest4
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest0
+[2026-04-11 05:26:33,971] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2_vo.IntField1",
+	"v0000":123
+}
+[2026-04-11 05:26:33,974] [docker_util.py] [INFO]: [INFO] Tests run: 17, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.084 s - in com.alibaba.fastjson2.autoType.AutoTypeTest0
+[2026-04-11 05:26:33,976] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest19
+[2026-04-11 05:26:33,986] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest19$Bean2#0",
+	"@value":{
+		"values":{
+			"@type":"LinkedList#1",
+			"@value":[
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest19$XItem2#2",
+					"@value":{
+						"id":0,
+						"value":0
+					}
+				},
+				{
+					"@type":"#2",
+					"@value":{
+						"id":0,
+						"value":0
+					}
+				},
+				{
+					"@type":"#2",
+					"@value":{
+						"id":0,
+						"value":0
+					}
+				}
+			]
+		}
+	}
+}
+[2026-04-11 05:26:34,046] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest19$Bean1#0",
+	"@value":{
+		"f1":false,
+		"id":123,
+		"v1":0,
+		"values":{
+			"@type":"LinkedList#1",
+			"@value":[
+				{
+					"key":"101",
+					"value":1
+				},
+				{
+					"gmtCreate":17758779939831775877993983,
+					"key":"102",
+					"value":2
+				},
+				{
+					"gmtCreate":17758779939831775877993983,
+					"key":"103",
+					"value":"3"
+				}
+			]
+		}
+	}
+}
+[2026-04-11 05:26:34,051] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest19$Bean2#0",
+	"@value":{
+		"values":{
+			"@type":"LinkedList#1",
+			"@value":[
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest19$XItem2#2",
+					"@value":{
+						"id":0,
+						"value":0
+					}
+				}
+			]
+		}
+	}
+}
+[2026-04-11 05:26:34,066] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.083 s - in com.alibaba.fastjson2.autoType.AutoTypeTest19
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest32
+[2026-04-11 05:26:34,078] [docker_util.py] [INFO]: {
+	"@type":"LinkedList#0",
+	"@value":[
+		{
+			"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest32$Bean#1",
+			"@value":{
+				"items":{
+					"@type":"#0",
+					"@value":[
+						{},
+						{},
+						{}
+					]
+				}
+			}
+		},
+		{
+			"@type":"#1",
+			"@value":{}
+		},
+		{
+			"@type":"#1",
+			"@value":{}
+		}
+	]
+}
+[2026-04-11 05:26:34,084] [docker_util.py] [INFO]: {
+	"@type":"LinkedList#0",
+	"@value":[
+		{
+			"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest32$Bean#1",
+			"@value":{
+				"items":{
+					"@type":"#0",
+					"@value":[
+						{},
+						{},
+						{}
+					]
+				}
+			}
+		},
+		{
+			"@type":"#1",
+			"@value":{
+				"items":{
+					"@type":"java.util.Collections$SingletonList#2",
+					"@value":[
+						{}
+					]
+				}
+			}
+		},
+		{
+			"@type":"#1",
+			"@value":{}
+		}
+	]
+}
+[2026-04-11 05:26:34,086] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.032 s - in com.alibaba.fastjson2.autoType.AutoTypeTest32
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest29_Byte
+[2026-04-11 05:26:34,141] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest29_Byte$Bean1#0",
+	"@value":{
+		"value":1
+	}
+}
+[2026-04-11 05:26:34,157] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest29_Byte$Bean2#0",
+	"@value":{
+		"value":1
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest29_Byte$Bean3#0",
+	"@value":{
+		"value":1
+	}
+}
+[2026-04-11 05:26:34,163] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.064 s - in com.alibaba.fastjson2.autoType.AutoTypeTest29_Byte
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest23
+[2026-04-11 05:26:34,166] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest23$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"[com.alibaba.fastjson2.autoType.AutoTypeTest23$XItem#1",
+			"@value":[]
+		},
+		"items1":{"$ref":"$.items"}
+	}
+}
+[2026-04-11 05:26:34,171] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest23$Bean2#0",
+	"@value":{
+		"items":[
+			"a",
+			"b"
+		],
+		"items1":{"$ref":"$.items"}
+	}
+}
+[2026-04-11 05:26:34,191] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.024 s - in com.alibaba.fastjson2.autoType.AutoTypeTest23
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest16_enums
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest16_enums$Bean1#0",
+	"@value":{
+		"values":{
+			"@type":"LinkedList#1",
+			"@value":[
+				{
+					"@type":"TimeUnit#2",
+					"@value":"DAYS"
+				},
+				{
+					"@type":"#2",
+					"@value":"SECONDS"
+				},
+				{
+					"@type":"#2",
+					"@value":"DAYS"
+				}
+			]
+		}
+	}
+}
+[2026-04-11 05:26:34,203] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest16_enums$Bean2#0",
+	"@value":{
+		"values":{
+			"@type":"LinkedList#1",
+			"@value":[
+				{
+					"children":{
+						"@type":"A#2",
+						"@value":[
+							{
+								"id":11
+							},
+							{
+								"id":12
+							}
+						]
+					}
+				},
+				{
+					"children":{
+						"@type":"#2",
+						"@value":[
+							{
+								"id":21
+							},
+							{
+								"id":22
+							}
+						]
+					}
+				}
+			]
+		}
+	}
+}
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.024 s - in com.alibaba.fastjson2.autoType.AutoTypeTest16_enums
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest20
+[2026-04-11 05:26:34,206] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest20$Bean2#0",
+	"@value":{
+		"values":{
+			"@type":"LinkedHashSet#1",
+			"@value":[
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest20$XItem#2",
+					"@value":"A"
+				},
+				{
+					"@type":"#2",
+					"@value":"B"
+				},
+				{
+					"@type":"#2",
+					"@value":"C"
+				},
+				{
+					"@type":"#2",
+					"@value":"D"
+				}
+			]
+		}
+	}
+}
+[2026-04-11 05:26:34,224] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest20$Bean1#0",
+	"@value":{
+		"values":{
+			"@type":"LinkedList#1",
+			"@value":[
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest20$XItem#2",
+					"@value":"A"
+				},
+				{
+					"@type":"#2",
+					"@value":"B"
+				},
+				{
+					"@type":"#2",
+					"@value":"C"
+				},
+				{
+					"@type":"#2",
+					"@value":"D"
+				}
+			]
+		}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest20$Bean2#0",
+	"@value":{
+		"values":{
+			"@type":"LinkedHashSet#1",
+			"@value":[
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest20$XItem#2",
+					"@value":"A"
+				},
+				{
+					"@type":"#2",
+					"@value":"B"
+				},
+				{
+					"@type":"#2",
+					"@value":"C"
+				},
+				{
+					"@type":"#2",
+					"@value":"D"
+				}
+			]
+		}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest20$Bean3#0",
+	"@value":{
+		"values":[
+			{
+				"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest20$XItem#1",
+				"@value":"C"
+			},
+			{
+				"@type":"#1",
+				"@value":"A"
+			},
+			{
+				"@type":"#1",
+				"@value":"D"
+			},
+			{
+				"@type":"#1",
+				"@value":"B"
+			}
+		]
+	}
+}
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.018 s - in com.alibaba.fastjson2.autoType.AutoTypeTest20
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest50
+[2026-04-11 05:26:34,225] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s - in com.alibaba.fastjson2.autoType.AutoTypeTest50
+[2026-04-11 05:26:34,231] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.autoType.SetTest
+[2026-04-11 05:26:34,257] [docker_util.py] [INFO]: [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s - in com.alibaba.fastjson2.autoType.SetTest
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest35_Exception
+[2026-04-11 05:26:34,293] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.043 s - in com.alibaba.fastjson2.autoType.AutoTypeTest35_Exception
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest8
+[2026-04-11 05:26:34,308] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest8$Bean#0",
+	"@value":{
+		"values":{
+			"@type":"[com.alibaba.fastjson2.autoType.AutoTypeTest8$A1#1",
+			"@value":[
+				{}
+			]
+		}
+	}
+}
+[2026-04-11 05:26:34,310] [docker_util.py] [INFO]: 
+[2026-04-11 05:26:34,311] [docker_util.py] [INFO]: [{}]
+[2026-04-11 05:26:34,315] [docker_util.py] [INFO]: [{}]
+[2026-04-11 05:26:34,317] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest8$ListBean#0",
+	"@value":{
+		"values":{
+			"@type":"LinkedList#1",
+			"@value":[
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest8$A#2",
+					"@value":{}
+				}
+			]
+		}
+	}
+}
+[2026-04-11 05:26:34,334] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest8$ListBean2#0",
+	"@value":{
+		"values":[
+			{
+				"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest8$A#1",
+				"@value":{}
+			}
+		]
+	}
+}
+[2026-04-11 05:26:34,341] [docker_util.py] [INFO]: [INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.047 s - in com.alibaba.fastjson2.autoType.AutoTypeTest8
+[2026-04-11 05:26:34,348] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest34_ListStr
+[2026-04-11 05:26:34,356] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest34_ListStr$Bean#0",
+	"@value":{
+		"items":{
+			"@type":"LinkedList#1",
+			"@value":[
+				"abcde",
+				"abcde"
+			]
+		}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest34_ListStr$Bean#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$SingletonList#1",
+			"@value":["abc"]
+		}
+	}
+}
+[2026-04-11 05:26:34,361] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest34_ListStr$Bean#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$SingletonSet#1",
+			"@value":["abc"]
+		}
+	}
+}
+[2026-04-11 05:26:34,372] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest34_ListStr$Bean#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Arrays$ArrayList#1",
+			"@value":["abc"]
+		}
+	}
+}
+[2026-04-11 05:26:34,372] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest34_ListStr$Bean#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$UnmodifiableCollection#1",
+			"@value":["abc"]
+		}
+	}
+}
+[2026-04-11 05:26:34,373] [docker_util.py] [INFO]: [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s - in com.alibaba.fastjson2.autoType.AutoTypeTest34_ListStr
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest33
+[2026-04-11 05:26:34,385] [docker_util.py] [INFO]: {
+	"@type":"LinkedList#0",
+	"@value":[
+		{
+			"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest33$Bean#1",
+			"@value":{
+				"items":{
+					"@type":"#0",
+					"@value":[
+						{
+							"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest33$Item#2",
+							"@value":{}
+						},
+						{
+							"@type":"#2",
+							"@value":{}
+						},
+						{
+							"@type":"#2",
+							"@value":{}
+						}
+					]
+				}
+			}
+		},
+		{
+			"@type":"#1",
+			"@value":{}
+		},
+		{
+			"@type":"#1",
+			"@value":{}
+		}
+	]
+}
+{
+	"@type":"LinkedList#0",
+	"@value":[
+		{
+			"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest33$Bean#1",
+			"@value":{
+				"items":{
+					"@type":"#0",
+					"@value":[
+						{
+							"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest33$Item#2",
+							"@value":{}
+						},
+						{
+							"@type":"#2",
+							"@value":{}
+						},
+						{
+							"@type":"#2",
+							"@value":{}
+						}
+					]
+				}
+			}
+		},
+		{
+			"@type":"#1",
+			"@value":{
+				"items":{
+					"@type":"java.util.Collections$SingletonList#3",
+					"@value":[
+						{
+							"@type":"#2",
+							"@value":{}
+						}
+					]
+				}
+			}
+		},
+		{
+			"@type":"#1",
+			"@value":{}
+		}
+	]
+}
+[2026-04-11 05:26:34,389] [docker_util.py] [INFO]: {
+	"@type":"LinkedList#0",
+	"@value":[
+		{
+			"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest33$Bean#1",
+			"@value":{
+				"items":{
+					"@type":"#0",
+					"@value":[
+						{
+							"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest33$Item#2",
+							"@value":{}
+						},
+						{
+							"@type":"#2",
+							"@value":{}
+						},
+						{
+							"@type":"#2",
+							"@value":{}
+						}
+					]
+				}
+			}
+		},
+		{
+			"@type":"#1",
+			"@value":{
+				"items":{
+					"@type":"java.util.Collections$SingletonSet#3",
+					"@value":[
+						{}
+					]
+				}
+			}
+		},
+		{
+			"@type":"#1",
+			"@value":{}
+		}
+	]
+}
+[2026-04-11 05:26:34,392] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.015 s - in com.alibaba.fastjson2.autoType.AutoTypeTest33
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeFilterTest2
+[2026-04-11 05:26:34,621] [docker_util.py] [INFO]: [INFO] Tests run: 20, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.222 s - in com.alibaba.fastjson2.autoType.AutoTypeFilterTest2
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest28_Short
+[2026-04-11 05:26:34,628] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest28_Short$Bean1#0",
+	"@value":{
+		"value":1
+	}
+}
+[2026-04-11 05:26:34,632] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest28_Short$Bean2#0",
+	"@value":{
+		"value":1
+	}
+}
+[2026-04-11 05:26:34,633] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest28_Short$Bean3#0",
+	"@value":{
+		"value":1
+	}
+}
+[2026-04-11 05:26:34,651] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.022 s - in com.alibaba.fastjson2.autoType.AutoTypeTest28_Short
+[2026-04-11 05:26:34,651] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest25
+[2026-04-11 05:26:34,666] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest25$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"TreeMap#1",
+			"@value":{
+				"a":{
+					"value1":null,
+					"value2":null
+				}
+			}
+		}
+	}
+}
+[2026-04-11 05:26:34,674] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.027 s - in com.alibaba.fastjson2.autoType.AutoTypeTest25
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest27
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest27$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Arrays$ArrayList#1",
+			"@value":[
+				0,
+				1,
+				2,
+				3
+			]
+		}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest27$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$EmptySet#1",
+			"@value":[]
+		}
+	}
+}
+[2026-04-11 05:26:34,674] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest27$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$UnmodifiableCollection#1",
+			"@value":[]
+		}
+	}
+}
+[2026-04-11 05:26:34,674] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest27$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"A#1",
+			"@value":[0]
+		}
+	}
+}
+[2026-04-11 05:26:34,678] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest27$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$UnmodifiableSortedSet#1",
+			"@value":["A"]
+		}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest27$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$UnmodifiableNavigableSet#1",
+			"@value":["A"]
+		}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest27$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$SingletonSet#1",
+			"@value":["1"]
+		}
+	}
+}
+[2026-04-11 05:26:34,680] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest27$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$UnmodifiableSet#1",
+			"@value":[]
+		}
+	}
+}
+[2026-04-11 05:26:34,685] [docker_util.py] [INFO]: [INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s - in com.alibaba.fastjson2.autoType.AutoTypeTest27
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest6
+[2026-04-11 05:26:34,704] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.012 s - in com.alibaba.fastjson2.autoType.AutoTypeTest6
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest17
+[2026-04-11 05:26:34,706] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$Bean2#0",
+	"@value":{
+		"values":[
+			{
+				"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$XItem#1",
+				"@value":{}
+			},
+			{
+				"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$Item#2",
+				"@value":{}
+			}
+		]
+	}
+}
+[2026-04-11 05:26:34,711] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$Bean3#0",
+	"@value":{
+		"values":[
+			{
+				"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$XItem#1",
+				"@value":{}
+			},
+			{}
+		]
+	}
+}
+[2026-04-11 05:26:34,717] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$Bean4#0",
+	"@value":{
+		"values":{
+			"@type":"LM#1",
+			"@value":{
+				"0":{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$XItem#2",
+					"@value":{}
+				},
+				"1":{}
+			}
+		}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$Bean5#0",
+	"@value":{
+		"item":{}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$Bean5#0",
+	"@value":{
+		"item":{
+			"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$XItem#1",
+			"@value":{}
+		}
+	}
+}
+[2026-04-11 05:26:34,722] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$Bean6#0",
+	"@value":{
+		"values":{
+			"0":{
+				"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$XItem#1",
+				"@value":{}
+			},
+			"1":{}
+		}
+	}
+}
+[2026-04-11 05:26:34,763] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$Bean8#0",
+	"@value":{
+		"values":{
+			"@type":"LM#1",
+			"@value":{
+				0:{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest17$XItem#2",
+					"@value":{}
+				},
+				1:{}
+			}
+		}
+	}
+}
+[2026-04-11 05:26:34,769] [docker_util.py] [INFO]: [INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.071 s - in com.alibaba.fastjson2.autoType.AutoTypeTest17
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest37_MapBean
+[2026-04-11 05:26:34,771] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest37_MapBean$Bean#0",
+	"@value":{
+		"items":{
+			"a":{
+				"id":101
+			},
+			"b":{
+				"id":102
+			},
+			"c":{
+				"id":103
+			},
+			"d":{
+				"id":104
+			},
+			"e":{
+				"id":105
+			},
+			"f":{
+				"id":107
+			},
+			"z":{
+				"child":{},
+				"id":110
+			}
+		}
+	}
+}
+[2026-04-11 05:26:34,774] [docker_util.py] [INFO]: {
+	"a":{
+		"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest37_MapBean$Item#0",
+		"@value":{
+			"id":101
+		}
+	},
+	"b":{
+		"@type":"#0",
+		"@value":{
+			"id":102
+		}
+	},
+	"c":{
+		"@type":"#0",
+		"@value":{
+			"child":{},
+			"id":103
+		}
+	}
+}
+[2026-04-11 05:26:34,776] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s - in com.alibaba.fastjson2.autoType.AutoTypeTest37_MapBean
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest11
+[2026-04-11 05:26:34,995] [docker_util.py] [INFO]: {
+	"@type":"[O#0",
+	"@value":[
+		{
+			"@type":"TimeUnit#1",
+			"@value":"DAYS"
+		}
+	]
+}
+[2026-04-11 05:26:35,007] [docker_util.py] [INFO]: [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.22 s - in com.alibaba.fastjson2.autoType.AutoTypeTest11
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest5
+[2026-04-11 05:26:35,028] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s - in com.alibaba.fastjson2.autoType.AutoTypeTest5
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest46_Pair
+[2026-04-11 05:26:35,074] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest46_Pair$Bean#0",
+	"@value":{
+		"pair1#1":{
+			"@type":"org.apache.commons.lang3.tuple.ImmutablePair#2",
+			"@value":{
+				"left#3":"101",
+				"right#4":true
+			}
+		},
+		"pair2#5":{
+			"@type":"#2",
+			"@value":{
+				"#3":"102",
+				"#4":true
+			}
+		}
+	}
+}
+[2026-04-11 05:26:35,078] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.06 s - in com.alibaba.fastjson2.autoType.AutoTypeTest46_Pair
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeFilterTest1
+[2026-04-11 05:26:35,083] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeFilterTest1$RpcException#0",
+	"@value":{
+		"stackTrace#1":[],
+		"suppressedExceptions#2":{
+			"@type":"java.util.Collections$UnmodifiableRandomAccessList#3",
+			"@value":[]
+		}
+	}
+}
+[2026-04-11 05:26:35,086] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s - in com.alibaba.fastjson2.autoType.AutoTypeFilterTest1
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest26
+[2026-04-11 05:26:35,107] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest26$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$UnmodifiableMap#1",
+			"@value":{}
+		}
+	}
+}
+[2026-04-11 05:26:35,107] [docker_util.py] [INFO]: 
+[2026-04-11 05:26:35,109] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest26$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$UnmodifiableSortedMap#1",
+			"@value":{}
+		}
+	}
+}
+[2026-04-11 05:26:35,113] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest26$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$UnmodifiableNavigableMap#1",
+			"@value":{}
+		}
+	}
+}
+[2026-04-11 05:26:35,157] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest26$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"com.google.common.collect.RegularImmutableMap#1",
+			"@value":{}
+		}
+	}
+}
+[2026-04-11 05:26:35,157] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest26$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$UnmodifiableNavigableMap$EmptyNavigableMap#1",
+			"@value":{}
+		}
+	}
+}
+[2026-04-11 05:26:35,161] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest26$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"EmptyMap#1",
+			"@value":{}
+		}
+	}
+}
+[2026-04-11 05:26:35,162] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest26$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$UnmodifiableNavigableMap$EmptyNavigableMap#1",
+			"@value":{}
+		}
+	}
+}
+[2026-04-11 05:26:35,165] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest26$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"com.google.common.collect.SingletonImmutableBiMap#1",
+			"@value":{
+				"a":0
+			}
+		}
+	}
+}
+[2026-04-11 05:26:35,169] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest26$Bean1#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$SingletonMap#1",
+			"@value":{
+				"a":1
+			}
+		}
+	}
+}
+[2026-04-11 05:26:35,178] [docker_util.py] [INFO]: [INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.083 s - in com.alibaba.fastjson2.autoType.AutoTypeTest26
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest14
+[2026-04-11 05:26:35,255] [docker_util.py] [INFO]: [INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.083 s - in com.alibaba.fastjson2.autoType.AutoTypeTest14
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeFilterTest
+[2026-04-11 05:26:35,257] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s - in com.alibaba.fastjson2.autoType.AutoTypeFilterTest
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest47
+[2026-04-11 05:26:35,273] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.014 s - in com.alibaba.fastjson2.autoType.AutoTypeTest47
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest45_ListNullItem
+[2026-04-11 05:26:35,283] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest45_ListNullItem$Bean#0",
+	"@value":{
+		"items":[
+			null,
+			{}
+		]
+	}
+}
+[2026-04-11 05:26:35,287] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s - in com.alibaba.fastjson2.autoType.AutoTypeTest45_ListNullItem
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest16_pairKey
+[2026-04-11 05:26:35,294] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest16_pairKey$Bean#0",
+	"@value":{
+		"map":{
+			"@type":"M#1",
+			"@value":{
+				{
+					"@type":"org.apache.commons.lang3.tuple.MutablePair#2",
+					"@value":{
+						"left":1,
+						"right":2
+					}
+				}:"12"
+			}
+		}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest16_pairKey$Bean#0",
+	"@value":{
+		"map":{
+			"@type":"M#1",
+			"@value":{
+				{
+					"@type":"org.apache.commons.lang3.tuple.ImmutablePair#2",
+					"@value":{
+						"left":1,
+						"right":2
+					}
+				}:"12"
+			}
+		}
+	}
+}
+[2026-04-11 05:26:35,294] [docker_util.py] [INFO]: [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s - in com.alibaba.fastjson2.autoType.AutoTypeTest16_pairKey
+[2026-04-11 05:26:35,294] [docker_util.py] [INFO]: 
+[2026-04-11 05:26:35,294] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest38_DupType
+[2026-04-11 05:26:35,294] [docker_util.py] [INFO]: 
+[2026-04-11 05:26:35,305] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest38_DupType$Bean#0",
+	"@value":{
+		"first":{
+			"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest38_DupType$Item#1",
+			"@value":{
+				"id":101,
+				"name":"DataWorks"
+			}
+		},
+		"second":{
+			"@type":"#1",
+			"@value":{
+				"id":102,
+				"name":"MaxCompute"
+			}
+		},
+		"third":{
+			"@type":"#1",
+			"@value":{
+				"id":102,
+				"name":"EMR"
+			}
+		}
+	}
+}
+[2026-04-11 05:26:35,306] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s - in com.alibaba.fastjson2.autoType.AutoTypeTest38_DupType
+[2026-04-11 05:26:35,309] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest36_SetLong
+[2026-04-11 05:26:35,315] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest36_SetLong$Bean#0",
+	"@value":{
+		"values":[100],
+		"values1":[100]
+	}
+}
+[2026-04-11 05:26:35,317] [docker_util.py] [INFO]: [
+	{
+		"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest36_SetLong$Bean2#0",
+		"@value":{
+			"values":[100]
+		}
+	},
+	{
+		"@type":"#0",
+		"@value":{
+			"values":[200]
+		}
+	},
+	{
+		"@type":"#0",
+		"@value":{
+			"values":[300]
+		}
+	}
+]
+[2026-04-11 05:26:35,318] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest36_SetLong$Bean2#0",
+	"@value":{
+		"values":[100]
+	}
+}
+[2026-04-11 05:26:35,320] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s - in com.alibaba.fastjson2.autoType.AutoTypeTest36_SetLong
+[2026-04-11 05:26:35,324] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest13
+[2026-04-11 05:26:35,333] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s - in com.alibaba.fastjson2.autoType.AutoTypeTest13
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest15_noneStringKey
+[2026-04-11 05:26:35,343] [docker_util.py] [INFO]: {
+	"@type":"LM#0",
+	"@value":{
+		{
+			"@type":"java.lang.Class#1",
+			"@value":"java.lang.String"
+		}:"S"
+	}
+}
+[2026-04-11 05:26:35,344] [docker_util.py] [INFO]: {
+	{
+		"@type":"HashSet#0",
+		"@value":[]
+	}:"A",
+	{
+		"@type":"EmptyMap#1",
+		"@value":{}
+	}:"C",
+	{
+		{}:"D"
+	}:"E"
+}
+[2026-04-11 05:26:35,345] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s - in com.alibaba.fastjson2.autoType.AutoTypeTest15_noneStringKey
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest31_array
+{
+	"@type":"[Long#0",
+	"@value":[101]
+}
+{
+	"@type":"[UUID#0",
+	"@value":[
+		[
+			63,
+			-7,
+			93,
+			-30,
+			-96,
+			-125,
+			73,
+			126,
+			-86,
+			-117,
+			109,
+			-2,
+			116,
+			102,
+			79,
+			25
+		]
+	]
+}
+{
+	"@type":"[String#0",
+	"@value":["101"]
+}
+[2026-04-11 05:26:35,350] [docker_util.py] [INFO]: {
+	"@type":"[BigDecimal#0",
+	"@value":[
+		101
+	]
+}
+[2026-04-11 05:26:35,352] [docker_util.py] [INFO]: {
+	"@type":"[BigInteger#0",
+	"@value":[101]
+}
+[2026-04-11 05:26:35,356] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest31_array$BeanLong64Array#0",
+	"@value":{
+		"values":[101]
+	}
+}
+[2026-04-11 05:26:35,357] [docker_util.py] [INFO]: {
+	"@type":"[J#0",
+	"@value":[101]
+}
+[2026-04-11 05:26:35,369] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest31_array$BeanInteger64Array#0",
+	"@value":{
+		"values":[101]
+	}
+}
+[2026-04-11 05:26:35,371] [docker_util.py] [INFO]: [INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.023 s - in com.alibaba.fastjson2.autoType.AutoTypeTest31_array
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest22
+[2026-04-11 05:26:35,371] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest22$Bean1#0",
+	"@value":{
+		"item":{
+			"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest22$XItem#1",
+			"@value":{
+				"id":101
+			}
+		},
+		"item1":{"$ref":"$.item"}
+	}
+}
+[2026-04-11 05:26:35,374] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s - in com.alibaba.fastjson2.autoType.AutoTypeTest22
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest39_ListStr
+[2026-04-11 05:26:35,374] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest39_ListStr$Bean#0",
+	"@value":{
+		"items":{
+			"@type":"LinkedList#1",
+			"@value":[
+				"abcde",
+				"abcde"
+			]
+		}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest39_ListStr$Bean#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$SingletonList#1",
+			"@value":["abc"]
+		}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest39_ListStr$Bean#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Collections$SingletonList#1",
+			"@value":["abc"]
+		}
+	}
+}
+[2026-04-11 05:26:35,377] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest39_ListStr$Bean#0",
+	"@value":{
+		"items":{
+			"@type":"java.util.Arrays$ArrayList#1",
+			"@value":["abc"]
+		}
+	}
+}
+[2026-04-11 05:26:35,395] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest39_ListStr$Bean#0",
+	"@value":{
+		"items":{
+			"@type":"LinkedList#1",
+			"@value":["abc"]
+		}
+	}
+}
+[2026-04-11 05:26:35,398] [docker_util.py] [INFO]: [INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.026 s - in com.alibaba.fastjson2.autoType.AutoTypeTest39_ListStr
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest7
+[2026-04-11 05:26:35,446] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.041 s - in com.alibaba.fastjson2.autoType.AutoTypeTest7
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest36_MapAtomicLong
+[2026-04-11 05:26:35,461] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest36_MapAtomicLong$Bean#0",
+	"@value":{
+		"map":{
+			"123":{
+				"@type":"AtomicLong#1",
+				"@value":123
+			}
+		}
+	}
+}
+[2026-04-11 05:26:35,478] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest36_MapAtomicLong$Bean#0",
+	"@value":{
+		"map":{
+			"123":{
+				"@type":"AtomicInteger#1",
+				"@value":123
+			}
+		}
+	}
+}
+[2026-04-11 05:26:35,482] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.026 s - in com.alibaba.fastjson2.autoType.AutoTypeTest36_MapAtomicLong
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest40_listBeanMap
+[2026-04-11 05:26:35,485] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest40_listBeanMap$Bean#0",
+	"@value":{
+		"items":[
+			{
+				"@type":"M#1",
+				"@value":{}
+			}
+		]
+	}
+}
+[2026-04-11 05:26:35,487] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest40_listBeanMap$Bean2#0",
+	"@value":{
+		"items":{
+			"a":{
+				"@type":"M#1",
+				"@value":{}
+			}
+		}
+	}
+}
+[2026-04-11 05:26:35,496] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.015 s - in com.alibaba.fastjson2.autoType.AutoTypeTest40_listBeanMap
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest30
+[2026-04-11 05:26:35,496] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest30$Bean1#0",
+	"@value":{
+		"items":["101"]
+	}
+}
+[2026-04-11 05:26:35,497] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest30$Bean2#0",
+	"@value":{
+		"value":"1001"
+	}
+}
+[
+	{
+		"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest30$Bean1#0",
+		"@value":{
+			"items":["101"]
+		}
+	},
+	{
+		"@type":"#0",
+		"@value":{
+			"items":["102"]
+		}
+	},
+	{
+		"@type":"#0",
+		"@value":{
+			"items":["103"]
+		}
+	}
+]
+[2026-04-11 05:26:35,502] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s - in com.alibaba.fastjson2.autoType.AutoTypeTest30
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest1
+[2026-04-11 05:26:35,510] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.01 s - in com.alibaba.fastjson2.autoType.AutoTypeTest1
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest3
+[2026-04-11 05:26:35,537] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s - in com.alibaba.fastjson2.autoType.AutoTypeTest3
+[2026-04-11 05:26:35,540] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest43_dynamic
+[2026-04-11 05:26:35,545] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest43_dynamic$Model#0",
+	"@value":{
+		"id":102
+	}
+}
+[2026-04-11 05:26:35,545] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s - in com.alibaba.fastjson2.autoType.AutoTypeTest43_dynamic
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest41_dupRef
+[2026-04-11 05:26:35,573] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.032 s - in com.alibaba.fastjson2.autoType.AutoTypeTest41_dupRef
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest21
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest21$Bean1#0",
+	"@value":{
+		"item#1":{
+			"id#2":101
+		},
+		"values#3":{
+			"@type":"M#4",
+			"@value":{
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest21$Item#5",
+					"@value":{
+						"#2":101
+					}
+				}:"101"
+			}
+		},
+		"values2#6":{
+			"@type":"#4",
+			"@value":{
+				{"$ref":"$.item"}:null
+			}
+		}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest21$Bean1#0",
+	"@value":{
+		"item":{
+			"id":101
+		},
+		"values":{
+			"@type":"LM#1",
+			"@value":{
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest21$Item#2",
+					"@value":{
+						"id":101
+					}
+				}:"101"
+			}
+		},
+		"values2":{
+			"@type":"#1",
+			"@value":{
+				{
+					"@type":"#2",
+					"@value":{
+						"id":101
+					}
+				}:"101"
+			}
+		}
+	}
+}
+{
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest21$Bean2#0",
+	"@value":{
+		"item":{
+			"id":101
+		},
+		"values":{
+			"@type":"M#1",
+			"@value":{
+				{
+					"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest21$Item#2",
+					"@value":{
+						"id":101
+					}
+				}:"101"
+			}
+		},
+		"values2":{
+			"@type":"#1",
+			"@value":{
+				{"$ref":"$.item"}:null
+			}
+		}
+	}
+}
+[2026-04-11 05:26:35,573] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.01 s - in com.alibaba.fastjson2.autoType.AutoTypeTest21
+[2026-04-11 05:26:35,580] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest10
+{
+	"@type":"A#0",
+	"@value":[
+		{
+			"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest10$Bean4#1",
+			"@value":{
+				"params":{
+					"@type":"LinkedList#2",
+					"@value":[
+						{}
+					]
+				}
+			}
+		},
+		{
+			"@type":"#1",
+			"@value":{}
+		}
+	]
+}
+{}
+{
+	"@type":"JO1#0",
+	"@value":{
+		"data":{
+			"@type":"A#1",
+			"@value":[
+				{
+					"@type":"#0",
+					"@value":{}
+				}
+			]
+		}
+	}
+}
+[2026-04-11 05:26:35,644] [docker_util.py] [INFO]: {
+	"@type":"com.alibaba.fastjson2.autoType.AutoTypeTest10$Bean3#0",
+	"@value":{
+		"params":{
+			"@type":"JO10#1",
+			"@value":{}
+		}
+	}
+}
+{}
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.021 s - in com.alibaba.fastjson2.autoType.AutoTypeTest10
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest44_keyset
+{
+	"@type":"List#0",
+	"@value":[101]
+}
+{
+	"@type":"Set#0",
+	"@value":["a"]
+}
+{
+	"@type":"List#0",
+	"@value":[101]
+}
+[2026-04-11 05:26:35,657] [docker_util.py] [INFO]: {
+	"@type":"Set#0",
+	"@value":["a"]
+}
+{
+	"@type":"Set#0",
+	"@value":["a"]
+}
+{
+	"@type":"List#0",
+	"@value":[101]
+}
+{
+	"@type":"List#0",
+	"@value":[101]
+}
+{
+	"@type":"List#0",
+	"@value":[101]
+}
+[2026-04-11 05:26:35,661] [docker_util.py] [INFO]: {
+	"@type":"Set#0",
+	"@value":["a"]
+}
+{
+	"@type":"Set#0",
+	"@value":["a"]
+}
+[2026-04-11 05:26:35,667] [docker_util.py] [INFO]: [INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.015 s - in com.alibaba.fastjson2.autoType.AutoTypeTest44_keyset
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest49
+[2026-04-11 05:26:35,674] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s - in com.alibaba.fastjson2.autoType.AutoTypeTest49
+[INFO] Running com.alibaba.fastjson2.autoType.AutoTypeTest48
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s - in com.alibaba.fastjson2.autoType.AutoTypeTest48
+[INFO] Running com.alibaba.fastjson2.time.EnglishDateTest
+[2026-04-11 05:26:35,684] [docker_util.py] [INFO]: [INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.027 s - in com.alibaba.fastjson2.time.EnglishDateTest
+[INFO] Running com.alibaba.fastjson2.time.DateTest
+[2026-04-11 05:26:35,712] [docker_util.py] [INFO]: {
+	"date":1642003200
+}
+[2026-04-11 05:26:35,746] [docker_util.py] [INFO]: [INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.069 s - in com.alibaba.fastjson2.time.DateTest
+[INFO] Running com.alibaba.fastjson2.time.RFC1123Test
+[2026-04-11 05:26:35,771] [docker_util.py] [INFO]: Sat, 11 Apr 2026 11:26:35 GMT
+[2026-04-11 05:26:35,774] [docker_util.py] [INFO]: [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.04 s - in com.alibaba.fastjson2.time.RFC1123Test
+[INFO] Running com.alibaba.fastjson2.time.CalendarTest
+[2026-04-11 05:26:35,810] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.018 s - in com.alibaba.fastjson2.time.CalendarTest
+[INFO] Running com.alibaba.fastjson2.time.DateTest3
+[2026-04-11 05:26:35,853] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.045 s - in com.alibaba.fastjson2.time.DateTest3
+[INFO] Running com.alibaba.fastjson2.time.DateTest2
+[2026-04-11 05:26:35,902] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s - in com.alibaba.fastjson2.time.DateTest2
+[INFO] Running com.alibaba.fastjson2.JSONPath_17
+[2026-04-11 05:26:35,936] [docker_util.py] [INFO]: [INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.019 s - in com.alibaba.fastjson2.JSONPath_17
+[INFO] Running com.alibaba.fastjson2.JSONReaderInfoTest
+[2026-04-11 05:26:35,936] [docker_util.py] [INFO]: [91mcom.alibaba.fastjson2.JSONException: offset 33, character {, line 3, column 19, fastjson-version 2.0.26
+{
+    "id":123,
+    "name":"abc"{}
+}
+	at com.alibaba.fastjson2.JSONReader.read(JSONReader.java:1481)
+	at com.alibaba.fastjson2.JSONReaderInfoTest.testStr(JSONReaderInfoTest.java:63)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:727)
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147)
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45)
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92)
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:217)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:213)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:138)
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:68)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.util.ArrayList.forEach(ArrayList.java:1259)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at java.util.ArrayList.forEach(ArrayList.java:1259)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141)
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137)[0m
+[2026-04-11 05:26:35,937] [docker_util.py] [INFO]: [91m
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139)
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138)
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57)
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:147)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:127)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:90)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:55)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:102)
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:54)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:114)
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:86)
+	at org.junit.platform.launcher.core.DefaultLauncherSession$DelegatingLauncher.execute(DefaultLauncherSession.java:86)
+	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:50)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148)
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122)
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385)
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+[0m
+[2026-04-11 05:26:35,940] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s - in com.alibaba.fastjson2.JSONReaderInfoTest
+[2026-04-11 05:26:35,984] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.TypeReferenceTest3
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.038 s - in com.alibaba.fastjson2.TypeReferenceTest3
+[INFO] Running com.alibaba.fastjson2.IgnoreNoneSerializableTest
+[2026-04-11 05:26:35,985] [docker_util.py] [INFO]: [INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.025 s - in com.alibaba.fastjson2.IgnoreNoneSerializableTest
+[INFO] Running com.alibaba.fastjson2.builder.BuilderTest
+[2026-04-11 05:26:36,034] [docker_util.py] [INFO]: [INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.048 s - in com.alibaba.fastjson2.builder.BuilderTest
+[INFO] Running com.alibaba.fastjson2.WriterFeatureTest
+{"v0000":[0],"v0001":[],"v0002":[0,0]}
+[2026-04-11 05:26:36,034] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.012 s - in com.alibaba.fastjson2.WriterFeatureTest
+[INFO] Running com.alibaba.fastjson2.MultiTypeTest
+[2026-04-11 05:26:36,034] [docker_util.py] [INFO]: [INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.014 s - in com.alibaba.fastjson2.MultiTypeTest
+[INFO] Running com.alibaba.fastjson2.EscapeNoneAsciiTest
+[2026-04-11 05:26:36,036] [docker_util.py] [INFO]: [INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s - in com.alibaba.fastjson2.EscapeNoneAsciiTest
+[INFO] Running com.alibaba.fastjson2.JSONPathTest7
+[2026-04-11 05:26:36,089] [docker_util.py] [INFO]: [INFO] Tests run: 17, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.069 s - in com.alibaba.fastjson2.JSONPathTest7
+[INFO] Running com.alibaba.fastjson2.aliyun.StreamXTest0
+[2026-04-11 05:26:36,090] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.001 s - in com.alibaba.fastjson2.aliyun.StreamXTest0
+[INFO] Running com.alibaba.fastjson2.aliyun.TimeSortTest
+[2026-04-11 05:26:36,107] [docker_util.py] [INFO]: [INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.008 s - in com.alibaba.fastjson2.aliyun.TimeSortTest
+[INFO] Running com.alibaba.fastjson2.filter.ValueFilterTest
+[2026-04-11 05:26:36,111] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.009 s - in com.alibaba.fastjson2.filter.ValueFilterTest
+[INFO] Running com.alibaba.fastjson2.filter.FilterTest
+[2026-04-11 05:26:36,141] [docker_util.py] [INFO]: [INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.026 s - in com.alibaba.fastjson2.filter.FilterTest
+[INFO] Running com.alibaba.fastjson2.filter.ValueFilterTest2
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s - in com.alibaba.fastjson2.filter.ValueFilterTest2
+[INFO] Running com.alibaba.fastjson2.filter.LabelsTest
+[2026-04-11 05:26:36,144] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.005 s - in com.alibaba.fastjson2.filter.LabelsTest
+[INFO] Running com.alibaba.fastjson2.filter.ValueFilterTest5
+[2026-04-11 05:26:36,145] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s - in com.alibaba.fastjson2.filter.ValueFilterTest5
+[INFO] Running com.alibaba.fastjson2.filter.ContextValueFilterTest
+[2026-04-11 05:26:36,148] [docker_util.py] [INFO]: [INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s - in com.alibaba.fastjson2.filter.ContextValueFilterTest
+[INFO] Running com.alibaba.fastjson2.filter.ValueFilterTest3
+[2026-04-11 05:26:36,208] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.042 s - in com.alibaba.fastjson2.filter.ValueFilterTest3
+[INFO] Running com.alibaba.fastjson2.filter.ContextVNameFilterTest
+[2026-04-11 05:26:36,231] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s - in com.alibaba.fastjson2.filter.ContextVNameFilterTest
+[INFO] Running com.alibaba.fastjson2.filter.ValueFilterTest4
+[2026-04-11 05:26:36,244] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s - in com.alibaba.fastjson2.filter.ValueFilterTest4
+[INFO] Running com.alibaba.fastjson2.filter.NameFilterTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s - in com.alibaba.fastjson2.filter.NameFilterTest
+[INFO] Running com.alibaba.fastjson2.filter.ContextAutoTypeBeforeHandlerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s - in com.alibaba.fastjson2.filter.ContextAutoTypeBeforeHandlerTest
+[INFO] Running com.alibaba.fastjson2.filter.ValueFilterTest1
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.007 s - in com.alibaba.fastjson2.filter.ValueFilterTest1
+[INFO] Running com.alibaba.fastjson2.JSON_copyTo
+[2026-04-11 05:26:36,249] [docker_util.py] [INFO]: [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s - in com.alibaba.fastjson2.JSON_copyTo
+[2026-04-11 05:26:36,250] [docker_util.py] [INFO]: [INFO] Running com.alibaba.fastjson2.JSONPathExtractTest
+[2026-04-11 05:26:36,273] [docker_util.py] [INFO]: [INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.013 s - in com.alibaba.fastjson2.JSONPathExtractTest
+[INFO] Running com.alibaba.fastjson2.JSONReaderTest1
+[2026-04-11 05:26:43,070] [docker_util.py] [INFO]: [91m/home/prepare.sh: line 17:    61 Killed                  ./mvnw -V --no-transfer-progress -Pgen-javadoc -Pgen-dokka clean package -Dsurefire.useFile=false -Dmaven.test.skip=false -DfailIfNoTests=false
+[0m
+[2026-04-11 05:28:39,506] [docker_util.py] [INFO]: ---> Removed intermediate container 40be81274783
+[2026-04-11 05:28:39,507] [docker_util.py] [INFO]: ---> c3620359c79e
+[2026-04-11 05:28:39,507] [docker_util.py] [INFO]: sha256:c3620359c79e8a1c2d473e982955bff7aa193bc23782ccad3cc17cbc7b2e08e1
+[2026-04-11 05:28:39,702] [docker_util.py] [INFO]: Successfully built c3620359c79e
+[2026-04-11 05:28:39,824] [docker_util.py] [INFO]: Successfully tagged mswebench/alibaba_m_fastjson2:pr-1245
+[2026-04-11 05:28:39,824] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/alibaba/fastjson2/images/pr-1245) build success: mswebench/alibaba_m_fastjson2:pr-1245

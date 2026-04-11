@@ -1,0 +1,1769 @@
+[2026-04-11 08:36:11,839] [docker_util.py] [INFO]: Start building image `mswebench/google_m_gson:pr-1391`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/google/gson/images/pr-1391`
+[2026-04-11 08:36:12,694] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/google_m_gson:base
+[2026-04-11 08:36:12,694] [docker_util.py] [INFO]: 
+[2026-04-11 08:36:12,722] [docker_util.py] [INFO]: ---> ed511b4bf7d8
+[2026-04-11 08:36:12,722] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-04-11 08:36:12,722] [docker_util.py] [INFO]: 
+[2026-04-11 08:52:22,088] [docker_util.py] [INFO]: ---> e27337a41ce2
+[2026-04-11 08:52:22,088] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-04-11 08:52:22,088] [docker_util.py] [INFO]: 
+[2026-04-11 08:52:23,377] [docker_util.py] [INFO]: ---> 145d4c0ce228
+[2026-04-11 08:52:23,377] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-04-11 08:52:23,377] [docker_util.py] [INFO]: 
+[2026-04-11 08:52:24,628] [docker_util.py] [INFO]: ---> 7340bf0e262c
+[2026-04-11 08:52:24,628] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-04-11 08:52:24,628] [docker_util.py] [INFO]: 
+[2026-04-11 08:52:25,963] [docker_util.py] [INFO]: ---> 1f672c04e7e0
+[2026-04-11 08:52:25,964] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-04-11 08:52:25,964] [docker_util.py] [INFO]: 
+[2026-04-11 09:08:01,090] [docker_util.py] [INFO]: ---> 5ff14f27451b
+[2026-04-11 09:08:01,090] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-04-11 09:08:01,090] [docker_util.py] [INFO]: 
+[2026-04-11 09:08:02,850] [docker_util.py] [INFO]: ---> 28f09311814f
+[2026-04-11 09:08:02,851] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-04-11 09:08:02,851] [docker_util.py] [INFO]: 
+[2026-04-11 09:08:04,444] [docker_util.py] [INFO]: ---> fb526ae67648
+[2026-04-11 09:08:04,444] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-04-11 09:08:04,444] [docker_util.py] [INFO]: 
+[2026-04-11 09:08:04,724] [docker_util.py] [INFO]: ---> Running in cebba4b2fe35
+[2026-04-11 09:19:32,334] [docker_util.py] [INFO]: HEAD is now at 27d9ba1e Fix typo in README (JPMS dependencies section) (#3005)
+[2026-04-11 09:19:32,349] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-04-11 09:19:32,407] [docker_util.py] [INFO]: [91mNote: switching to '3f4ac29f9112799a7374a99b18acabd0232ff075'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 3f4ac29f Clean up the README a bit (#1376)
+[0m
+[2026-04-11 09:19:32,422] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-04-11 09:19:33,280] [docker_util.py] [INFO]: [[1;34mINFO[m] Scanning for projects...
+[2026-04-11 09:19:33,565] [docker_util.py] [INFO]: Downloading from central: https://r
+[2026-04-11 09:19:33,565] [docker_util.py] [INFO]: e
+[2026-04-11 09:19:33,567] [docker_util.py] [INFO]: po.maven.apache.org/maven2/org/sonatype/oss/oss-parent/7/oss-parent-7.pom
+[2026-04-11 09:19:33,845] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:33,847] [docker_util.py] [INFO]: Progress (1): 4.8 kB
+[2026-04-11 09:19:33,894] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/sonatype/oss/oss-parent/7/oss-parent-7.pom (4.8 kB at 15 kB/s)
+[2026-04-11 09:19:33,929] [docker_util.py] [INFO]: [[1;33mWAR
+[2026-04-11 09:19:33,929] [docker_util.py] [INFO]: NING
+[2026-04-11 09:19:33,929] [docker_util.py] [INFO]: [m]
+[2026-04-11 09:19:33,929] [docker_util.py] [INFO]: [[1;33mWARNING[m] Some problems were encountered while
+[2026-04-11 09:19:33,930] [docker_util.py] [INFO]: building the effective model fo
+[2026-04-11 09:19:33,930] [docker_util.py] [INFO]: r com.
+[2026-04-11 09:19:33,930] [docker_util.py] [INFO]: g
+[2026-04-11 09:19:33,930] [docker_util.py] [INFO]: oogle.code.gson:gson:jar:2.8.6-SNAPSH
+[2026-04-11 09:19:33,931] [docker_util.py] [INFO]: OT
+[2026-04-11 09:19:33,931] [docker_util.py] [INFO]: [[1;33
+[2026-04-11 09:19:33,932] [docker_util.py] [INFO]: mWARNING[m] 'build.plugins.plugin.version' for org.apache.maven.plugins:maven-jar-plugin is missing. @ line 46, column 15
+[[1;33mWARNING[m] 
+[[1;33mWARNING[m] It is highly recommended to fix these problems beca
+[2026-04-11 09:19:33,932] [docker_util.py] [INFO]: use they threaten the stability of your build.
+[2026-04-11 09:19:33,932] [docker_util.py] [INFO]: [[1;33mWARNING[m] 
+[[1;33mWARNING[m] For this reason, future Maven versions mi
+[2026-04-11 09:19:33,932] [docker_util.py] [INFO]: ght no longer support build
+[2026-04-11 09:19:33,932] [docker_util.py] [INFO]: ing such malforme
+[2026-04-11 09:19:33,932] [docker_util.py] [INFO]: d projects.
+[2026-04-11 09:19:33,932] [docker_util.py] [INFO]: [[1;33m
+[2026-04-11 09:19:33,932] [docker_util.py] [INFO]: WA
+[2026-04-11 09:19:33,932] [docker_util.py] [INFO]: RNING[m]
+[2026-04-11 09:19:33,941] [docker_util.py] [INFO]: [[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[2026-04-11 09:19:33,942] [docker_util.py] [INFO]: [[1;34mINFO[m] [1mReactor Build Order:[m
+[[1;34mINFO[m]
+[2026-04-11 09:19:33,942] [docker_util.py] [INFO]: [[1;34mINFO[m] Gson Parent                                                        [pom]
+[2026-04-11 09:19:33,942] [docker_util.py] [INFO]: [[1;34mINFO[m] Gson                                                               [jar]
+[2026-04-11 09:19:33,946] [docker_util.py] [INFO]: [[1;34mINFO[m] 
+[[1;34mINFO[m] [1m------------------< [0;36mcom.google.code.gson:gson-parent[0;1m >------------------[m
+[[1;34mINFO[m] [1mBuilding Gson Parent 2.8.6-SNAPSHOT                                [1/2][m
+[[1;34mINFO[m] [1m-------------------
+[2026-04-11 09:19:33,946] [docker_util.py] [INFO]: -------------[ pom ]---------------------------------[m
+[2026-04-11 09:19:33,949] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/mav
+[2026-04-11 09:19:33,949] [docker_util.py] [INFO]: en/plugins/maven-jar-plugin
+[2026-04-11 09:19:33,949] [docker_util.py] [INFO]: /maven
+[2026-04-11 09:19:33,949] [docker_util.py] [INFO]: -meta
+[2026-04-11 09:19:33,949] [docker_util.py] [INFO]: data.
+[2026-04-11 09:19:33,949] [docker_util.py] [INFO]: xml
+[2026-04-11 09:19:33,949] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:33,988] [docker_util.py] [INFO]: Progress (1): 1.1 kB
+[2026-04-11 09:19:34,022] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-jar-plugin/maven-metadata.xml (1.1 kB at 16 kB/s)
+[2026-04-11 09:19:34,022] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-jar-plugin/4.0.0-beta-1/maven-jar-plugin-4.0.0-beta-1.pom
+[2026-04-11 09:19:34,063] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 8.2 kBProgress (1): 12 kB Progress (1): 16 kBProgres
+[2026-04-11 09:19:34,064] [docker_util.py] [INFO]: s (1): 20 kBProgress (1): 25 kB
+[2026-04-11 09:19:34,064] [docker_util.py] [INFO]: Progress (1): 29 kB
+[2026-04-11 09:19:34,064] [docker_util.py] [INFO]: Progress (1): 33 kB
+[2026-04-11 09:19:34,064] [docker_util.py] [INFO]: Progress (1): 33 kB
+[2026-04-11 09:19:34,093] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apac
+[2026-04-11 09:19:34,093] [docker_util.py] [INFO]: he.org/maven2/org/apache/m
+[2026-04-11 09:19:34,093] [docker_util.py] [INFO]: aven/plugins/maven-jar-plugin/4.0.0-beta-1/maven-jar-plugin-4.0.0-beta-1.pom (33 kB at 476 kB/s)
+[2026-04-11 09:19:34,100] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-jar-plugin/4.0.0-beta-1/maven-jar-plugin-4.0.0-beta-1.jar
+[2026-04-11 09:19:34,138] [docker_util.py] [INFO]: Progress (1): 2.3/30 kB
+[2026-04-11 09:19:34,139] [docker_util.py] [INFO]: Progress (1): 5.0/30 kBProgress (1): 7.7/30 kBProgress (1): 10/30 kB Progress (1): 13/30 kBProgress (1): 16/30 kBProgress (1): 19/30 kB
+[2026-04-11 09:19:34,141] [docker_util.py] [INFO]: Progress (1): 21/30 kBProgress (1): 24/30 kB
+[2026-04-11 09:19:34,141] [docker_util.py] [INFO]: Progress (1)
+[2026-04-11 09:19:34,141] [docker_util.py] [INFO]: : 2
+[2026-04-11 09:19:34,141] [docker_util.py] [INFO]: 7
+[2026-04-11 09:19:34,141] [docker_util.py] [INFO]: /30
+[2026-04-11 09:19:34,141] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:34,141] [docker_util.py] [INFO]: k
+[2026-04-11 09:19:34,141] [docker_util.py] [INFO]: B
+[2026-04-11 09:19:34,141] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:34,141] [docker_util.py] [INFO]: Progress (1)
+[2026-04-11 09:19:34,141] [docker_util.py] [INFO]: : 3
+[2026-04-11 09:19:34,142] [docker_util.py] [INFO]: 0
+[2026-04-11 09:19:34,142] [docker_util.py] [INFO]: /30 kB
+[2026-04-11 09:19:34,142] [docker_util.py] [INFO]: P
+[2026-04-11 09:19:34,142] [docker_util.py] [INFO]: rogress (1): 30 kB
+[2026-04-11 09:19:34,180] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-jar-plugin/4.0.0-beta-1/maven-jar-p
+[2026-04-11 09:19:34,180] [docker_util.py] [INFO]: lugin-4.0.0-b
+[2026-04-11 09:19:34,180] [docker_util.py] [INFO]: e
+[2026-04-11 09:19:34,180] [docker_util.py] [INFO]: t
+[2026-04-11 09:19:34,180] [docker_util.py] [INFO]: a
+[2026-04-11 09:19:34,180] [docker_util.py] [INFO]: -
+[2026-04-11 09:19:34,180] [docker_util.py] [INFO]: 1
+[2026-04-11 09:19:34,180] [docker_util.py] [INFO]: .
+[2026-04-11 09:19:34,180] [docker_util.py] [INFO]: j
+[2026-04-11 09:19:34,180] [docker_util.py] [INFO]: ar (30 kB at 412 kB/s)
+[2026-04-11 09:19:34,186] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.o
+[2026-04-11 09:19:34,186] [docker_util.py] [INFO]: rg/maven2/org/apache/maven/plugins/maven-jar-plugin/3.5.0/maven-jar-plugin-3.5.0.pom
+[2026-04-11 09:19:34,217] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 7.6 kB
+[2026-04-11 09:19:34,247] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-jar-plugin/3.5.0/maven-jar-plugin-3.5.0.pom (7.6 kB at 130 kB/s)
+[2026-04-11 09:19:34,252] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-plugins/45/maven-plugins-45.pom
+[2026-04-11 09:19:34,286] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 8.2 kBProgress (1): 8.4 kB
+[2026-04-11 09:19:34,319] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apa
+[2026-04-11 09:19:34,319] [docker_util.py] [INFO]: che.org/maven2/org/apache/mav
+[2026-04-11 09:19:34,319] [docker_util.py] [INFO]: en
+[2026-04-11 09:19:34,319] [docker_util.py] [INFO]: /plugins/maven-plugins/45/maven-plugins-45.pom (8.4 kB at 127 kB/s)
+[2026-04-11 09:19:34,320] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/45/maven-parent-45.pom
+[2026-04-11 09:19:34,369] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:34,371] [docker_util.py] [INFO]: Progress (1): 8.2 kBProgress (1): 12 kB Progress (1): 16 kBProgress (1): 20 kBProgress (1): 25 kBProgress (1): 29 kBProgress (1): 33 kB
+[2026-04-11 09:19:34,371] [docker_util.py] [INFO]: Progress (1): 37 kBProgress (1): 41 kBProgress (1): 45 kBProgress (1): 49 kB
+[2026-04-11 09:19:34,371] [docker_util.py] [INFO]: Progress (1): 53 kB
+[2026-04-11 09:19:34,409] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/45/maven-parent-45.pom (53 kB at 608 kB/s)
+[2026-04-11 09:19:34,426] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/apache/35/apache-35.pom
+[2026-04-11 09:19:34,459] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 8.2 kBProgress (1): 12 kB Progress (1): 16 kBProgress (1): 20 kB
+[2026-04-11 09:19:34,459] [docker_util.py] [INFO]: Progress (1): 24 kB
+[2026-04-11 09:19:34,506] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/apache/35/apache-35.pom (24 kB at 299 kB/s)
+[2026-04-11 09:19:34,507] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/junit/junit-bom/5.13.1/junit-bom-5.13.1.pom
+[2026-04-11 09:19:34,570] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:34,571] [docker_util.py] [INFO]: Progress (1): 5.6 kB
+[2026-04-11 09:19:34,594] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:34,594] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/junit/junit-bom/5.13.1/junit-bom-5.13.1.pom (5.6 kB at 59 kB/s)
+[2026-04-11 09:19:34,597] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-jar-plugin/3.5.0/maven-jar-plugin-3.5.0.jar
+[2026-04-11 09:19:34,628] [docker_util.py] [INFO]: Progress (
+[2026-04-11 09:19:34,628] [docker_util.py] [INFO]: 1): 3.8/35 kBProgress (1): 7.8/35 kBProgress (1): 12/35 kB Progress (1): 16/35 kBProgress (1): 20/35 kBProgress (1): 24/35 kBProgress (1
+[2026-04-11 09:19:34,636] [docker_util.py] [INFO]: ): 28/35 kB
+[2026-04-11 09:19:34,637] [docker_util.py] [INFO]: Progress (1): 32/35 kBProgress (1): 35 kB
+[2026-04-11 09:19:34,681] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-jar-plugin/3.5.0/maven-jar-plugin-3.5.0.jar (35 kB at 433 kB/s)
+[2026-04-11 09:19:34,685] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-enforcer-plugin/1.0/maven-enforcer-plugin-1.0.pom
+[2026-04-11 09:19:34,729] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 6.7 kB
+[2026-04-11 09:19:34,763] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:34,763] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-enforcer-plugin/1.0/maven-enforcer-plugin-1.0.pom
+[2026-04-11 09:19:34,763] [docker_util.py] [INFO]: (6.7 kB at 84 kB/s)
+[2026-04-11 09:19:34,765] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/enforcer/enforcer/1.0/enforcer-1.0.pom
+[2026-04-11 09:19:34,801] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:34,801] [docker_util.py] [INFO]: Progress (1): 8.2 kBProgress (1): 12 kB
+[2026-04-11 09:19:34,860] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/enforcer/enforcer/1.0/enforcer-1.0.pom (12 kB at 124 kB/s)
+[2026-04-11 09:19:34,861] [docker_util.py] [INFO]: Do
+[2026-04-11 09:19:34,861] [docker_util.py] [INFO]: wnloading from cen
+[2026-04-11 09:19:34,861] [docker_util.py] [INFO]: tral
+[2026-04-11 09:19:34,861] [docker_util.py] [INFO]: : h
+[2026-04-11 09:19:34,861] [docker_util.py] [INFO]: ttps
+[2026-04-11 09:19:34,861] [docker_util.py] [INFO]: ://
+[2026-04-11 09:19:34,861] [docker_util.py] [INFO]: rep
+[2026-04-11 09:19:34,861] [docker_util.py] [INFO]: o.m
+[2026-04-11 09:19:34,861] [docker_util.py] [INFO]: av
+[2026-04-11 09:19:34,863] [docker_util.py] [INFO]: en
+[2026-04-11 09:19:34,863] [docker_util.py] [INFO]: .apache.org/maven2/org/apache/maven/maven-parent/17/maven-parent-17.pom
+[2026-04-11 09:19:34,897] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 8.2 kBProgress (1): 12 kB Progress (1): 16 kBProgress (1): 20 kBProgress (1): 25 kBProgress (1): 25 kB
+[2026-04-11 09:19:34,948] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/17/maven-parent-17.pom (25 kB at 280 kB/s)
+[2026-04-11 09:19:34,950] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/apache/7/apache-7.pom
+[2026-04-11 09:19:34,982] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:34,982] [docker_util.py] [INFO]: Progress (1): 8.2 kB
+[2026-04-11 09:19:34,983] [docker_util.py] [INFO]: Progress (1): 12 kB
+[2026-04-11 09:19:34,983] [docker_util.py] [INFO]: Progress (1): 14 kB
+[2026-04-11 09:19:35,018] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:35,018] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/apache/7/apache-7.pom (14 k
+[2026-04-11 09:19:35,018] [docker_util.py] [INFO]: B at 209 kB/s)
+[2026-04-11 09:19:35,018] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:35,024] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-enforcer-plugin/1.0/maven-enforcer-plugin-1.0.jar
+[2026-04-11 09:19:35,062] [docker_util.py] [INFO]: Progress (1): 3.8/22 kBProgress (1): 7.8/22 kBProgress (1): 12/22 kB Progress (1): 16/22 kBProgress (1): 20/22 kBProgress (1): 22 kB
+[2026-04-11 09:19:35,096] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:35,096] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/ma
+[2026-04-11 09:19:35,096] [docker_util.py] [INFO]: ven2/org/apache/maven/plugins/maven-enforcer-plugin/1.0/maven-enforcer-plugin-1.0.j
+[2026-04-11 09:19:35,096] [docker_util.py] [INFO]: ar (22 k
+[2026-04-11 09:19:35,096] [docker_util.py] [INFO]: B at 300 kB/s)
+[2026-04-11 09:19:35,100] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/m
+[2026-04-11 09:19:35,100] [docker_util.py] [INFO]: aven-clean-plugin/2.5/mav
+[2026-04-11 09:19:35,100] [docker_util.py] [INFO]: en-clean-p
+[2026-04-11 09:19:35,100] [docker_util.py] [INFO]: lugin-2
+[2026-04-11 09:19:35,100] [docker_util.py] [INFO]: .5.po
+[2026-04-11 09:19:35,100] [docker_util.py] [INFO]: m
+[2026-04-11 09:19:35,100] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:35,167] [docker_util.py] [INFO]: Progress (1): 3.9 kB
+[2026-04-11 09:19:35,197] [docker_util.py] [INFO]: D
+[2026-04-11 09:19:35,197] [docker_util.py] [INFO]: ownloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-clean-plugin/2.5/maven-clean-plugin-2.5.pom (3.9 kB at 41 kB/s)
+[2026-04-11 09:19:35,199] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-plugins/22/maven
+[2026-04-11 09:19:35,200] [docker_util.py] [INFO]: -plugins-22.pom
+[2026-04-11 09:19:35,232] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:35,232] [docker_util.py] [INFO]: Progress (1): 8.2 kB
+[2026-04-11 09:19:35,232] [docker_util.py] [INFO]: P
+[2026-04-11 09:19:35,232] [docker_util.py] [INFO]: rogress (1): 12 kB
+[2026-04-11 09:19:35,233] [docker_util.py] [INFO]: Progress (1): 13 kB
+[2026-04-11 09:19:35,296] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-plugins/22/maven-plugins-22.pom (13 kB at 143 kB/s)
+[2026-04-11 09:19:35,299] [docker_util.py] [INFO]: Downloading
+[2026-04-11 09:19:35,299] [docker_util.py] [INFO]: f
+[2026-04-11 09:19:35,299] [docker_util.py] [INFO]: rom central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/21/maven-parent-21.pom
+[2026-04-11 09:19:35,355] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 8.2 kBProgress (1): 12 kB Progress (1): 16 kB
+[2026-04-11 09:19:35,355] [docker_util.py] [INFO]: Progress (1): 20 kB
+[2026-04-11 09:19:35,355] [docker_util.py] [INFO]: Progress (1): 25 kBProgress (1): 26 kB
+[2026-04-11 09:19:35,391] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/21/maven-parent-21.pom (26 kB at 286 kB/s)
+[2026-04-11 09:19:35,393] [docker_util.py] [INFO]: Downloading
+[2026-04-11 09:19:35,393] [docker_util.py] [INFO]: from centra
+[2026-04-11 09:19:35,393] [docker_util.py] [INFO]: l:
+[2026-04-11 09:19:35,393] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:35,393] [docker_util.py] [INFO]: h
+[2026-04-11 09:19:35,393] [docker_util.py] [INFO]: tt
+[2026-04-11 09:19:35,393] [docker_util.py] [INFO]: p
+[2026-04-11 09:19:35,393] [docker_util.py] [INFO]: s
+[2026-04-11 09:19:35,393] [docker_util.py] [INFO]: :/
+[2026-04-11 09:19:35,393] [docker_util.py] [INFO]: /repo.maven.apache.org/maven2/org/apache/apache/10/apache-10.pom
+[2026-04-11 09:19:35,430] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 8.2 kBProgress (1): 12 kB
+[2026-04-11 09:19:35,431] [docker_util.py] [INFO]: Progress (1): 15 kB
+[2026-04-11 09:19:35,470] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/apache/10/apache-10.pom (15 kB at 192 kB/s)
+[2026-04-11 09:19:35,475] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-clean-plugin/2.5/maven-clean-plugin-2.5.jar
+[2026-04-11 09:19:35,516] [docker_util.py] [INFO]: Progress (1): 4.1/25 kBProgress (1): 7.7/25 kBProgress (1): 12/25 kB Progress (1): 16/25 kBProgress (1): 20/25 kBProgress (1): 24/25 kBProgress (1): 25 kB
+[2026-04-11 09:19:35,553] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-clean-plugin/2.5/maven-clean-plugin-2.5.jar (25 kB at 328 kB/s)
+[2026-04-11 09:19:35,563] [docker_util.py] [INFO]: [[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-clean-plugin:2.5:clean[m [1m(default-clean)[m @ [36mgson-parent[0;1m ---[m
+[2026-04-11 09:19:35,579] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-api/2.0.6/maven-plugin-api-2.0.6.pom
+[2026-04-11 09:19:35,629] [docker_util.py] [INFO]: Progress (1): 1.5 kB
+[2026-04-11 09:19:35,705] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-api/2.0.6/maven-plugin-api-2.0.6.pom (1.5 kB at 14 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven/2.0.6/maven-2.0.6.pom
+[2026-04-11 09:19:36,551] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 8.2 kBProgress (1): 9.0 kB
+[2026-04-11 09:19:37,041] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven/2.0.6/maven-2.0.6.pom (9.0 kB at 10 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/5/maven-parent-5.pom
+[2026-04-11 09:19:37,129] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:37,238] [docker_util.py] [INFO]: Progress (1): 8.2 kBProgress (1): 12 kB Progress (1): 15 kB
+[2026-04-11 09:19:37,251] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/5/maven-parent-5.pom (15 kB at 66 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/apache/3/apache-3.pom
+[2026-04-11 09:19:37,298] [docker_util.py] [INFO]: Progress (1): 3.4 kB
+[2026-04-11 09:19:37,345] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/apache/3/apache-3.pom (3.4 kB at 32 kB/s)
+[2026-04-11 09:19:37,363] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/3.0/plexus-utils-3.0.pom
+[2026-04-11 09:19:37,526] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:37,562] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/3.0/plexus-utils-3.0.pom (4.1 kB at 21 kB/s)
+[2026-04-11 09:19:37,562] [docker_util.py] [INFO]: Do
+[2026-04-11 09:19:37,562] [docker_util.py] [INFO]: wnloading
+[2026-04-11 09:19:37,563] [docker_util.py] [INFO]: from
+[2026-04-11 09:19:37,563] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:37,563] [docker_util.py] [INFO]: c
+[2026-04-11 09:19:37,563] [docker_util.py] [INFO]: e
+[2026-04-11 09:19:37,563] [docker_util.py] [INFO]: n
+[2026-04-11 09:19:37,563] [docker_util.py] [INFO]: t
+[2026-04-11 09:19:37,563] [docker_util.py] [INFO]: ral: https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/16/spice-parent-16.pom
+[2026-04-11 09:19:37,622] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 8.2 kBProgress (1): 8.4 kB
+[2026-04-11 09:19:37,661] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:37,661] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/sonatype/spice/spice-parent/16/spice-parent-16.pom (8.4 kB at 91 kB/s)
+[2026-04-11 09:19:37,666] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/5/forge-parent-5.pom
+[2026-04-11 09:19:37,745] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:37,747] [docker_util.py] [INFO]: Progress (1): 8.2 kBProgress (1): 8.4 kB
+[2026-04-11 09:19:37,903] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/sonatype/forge/forge-parent/5/forge-parent-5.pom (8.4 kB at 69 kB/s)
+[2026-04-11 09:19:38,012] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-api/2.0.6/maven-plugin-api-2.0.6.jar
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/3.0/plexus-utils-3.0.jar
+[2026-04-11 09:19:38,067] [docker_util.py] [INFO]: Progress (1): 4.1/13 kB
+[2026-04-11 09:19:38,071] [docker_util.py] [INFO]: Progress (1): 7.7/13 kBProgress (1): 12/13 kB Progress (1): 13 kB
+[2026-04-11 09:19:38,108] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:38,108] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-api/2.0.6/maven-plugin-api-2.0.6.jar (13 kB at 49 kB/s)
+[2026-04-11 09:19:38,129] [docker_util.py] [INFO]: Progress (1): 2.3/226 kB
+[2026-04-11 09:19:38,130] [docker_util.py] [INFO]: Progress (1): 5.0/226 kBProgress (1): 7.7/226 kBPr
+[2026-04-11 09:19:38,133] [docker_util.py] [INFO]: ogress (1): 10/226 kB Progress (1): 13/226 kBProgress (1): 16/226 kBProgress (1): 19/226 kBProgress (1): 21/226 kBProgress (1): 24/226 kBProgress (1): 27/226 kBProgress (1): 30/226 kBProgress (1): 33/226 kBProgress (1): 36/226 kBProgre
+[2026-04-11 09:19:38,133] [docker_util.py] [INFO]: ss (1): 38/226
+[2026-04-11 09:19:38,133] [docker_util.py] [INFO]: kBProgress
+[2026-04-11 09:19:38,133] [docker_util.py] [INFO]: (1):
+[2026-04-11 09:19:38,133] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:38,133] [docker_util.py] [INFO]: 4
+[2026-04-11 09:19:38,133] [docker_util.py] [INFO]: 1
+[2026-04-11 09:19:38,133] [docker_util.py] [INFO]: /2
+[2026-04-11 09:19:38,133] [docker_util.py] [INFO]: 26
+[2026-04-11 09:19:38,133] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:38,133] [docker_util.py] [INFO]: k
+[2026-04-11 09:19:38,133] [docker_util.py] [INFO]: B
+[2026-04-11 09:19:38,133] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:38,134] [docker_util.py] [INFO]: P
+[2026-04-11 09:19:38,134] [docker_util.py] [INFO]: rog
+[2026-04-11 09:19:38,134] [docker_util.py] [INFO]: re
+[2026-04-11 09:19:38,134] [docker_util.py] [INFO]: s
+[2026-04-11 09:19:38,134] [docker_util.py] [INFO]: s
+[2026-04-11 09:19:38,134] [docker_util.py] [INFO]: (
+[2026-04-11 09:19:38,134] [docker_util.py] [INFO]: 1
+[2026-04-11 09:19:38,134] [docker_util.py] [INFO]: )
+[2026-04-11 09:19:38,134] [docker_util.py] [INFO]: :
+[2026-04-11 09:19:38,134] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:38,134] [docker_util.py] [INFO]: 4
+[2026-04-11 09:19:38,135] [docker_util.py] [INFO]: 4
+[2026-04-11 09:19:38,135] [docker_util.py] [INFO]: /226 kBProgress (1): 46/226 kBProgress (1): 49/226 kB
+[2026-04-11 09:19:38,135] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:38,135] [docker_util.py] [INFO]: P
+[2026-04-11 09:19:38,135] [docker_util.py] [INFO]: r
+[2026-04-11 09:19:38,135] [docker_util.py] [INFO]: o
+[2026-04-11 09:19:38,135] [docker_util.py] [INFO]: g
+[2026-04-11 09:19:38,136] [docker_util.py] [INFO]: ress (1): 52/226 kBProgress (1): 55/226 kB
+[2026-04-11 09:19:38,137] [docker_util.py] [INFO]: Progress (1): 59/226 kBProgress (1): 63/226 kBProgress (1): 67/226 kB
+[2026-04-11 09:19:38,140] [docker_util.py] [INFO]: Progress (1): 71/226 kB
+[2026-04-11 09:19:38,143] [docker_util.py] [INFO]: Progress (1): 75/226 kBProgress (1): 79/226 kB
+[2026-04-11 09:19:38,143] [docker_util.py] [INFO]: Progress (1): 83/226 kBProgress (1): 87/226 kBProgress (1): 92/226 kBProgress (1): 96/226 kBProgress (1): 100/226 kB
+[2026-04-11 09:19:38,143] [docker_util.py] [INFO]: Progress (1): 104/226 kB
+[2026-04-11 09:19:38,153] [docker_util.py] [INFO]: Progress (1): 108/226 kB
+[2026-04-11 09:19:38,153] [docker_util.py] [INFO]: Progress (1): 112/226 kB
+[2026-04-11 09:19:38,153] [docker_util.py] [INFO]: Progress (1): 116/
+[2026-04-11 09:19:38,153] [docker_util.py] [INFO]: 226 kB
+[2026-04-11 09:19:38,154] [docker_util.py] [INFO]: Progress (1): 120/226 kB
+[2026-04-11 09:19:38,154] [docker_util.py] [INFO]: P
+[2026-04-11 09:19:38,158] [docker_util.py] [INFO]: rogress (1): 122/226 kB
+[2026-04-11 09:19:38,159] [docker_util.py] [INFO]: Progress (1): 126/226 kBProgress (1): 131/226 kBProgress (1): 135/226 kBProgress (1): 139/226 kB
+[2026-04-11 09:19:38,164] [docker_util.py] [INFO]: Progress (1): 143/226 kBProgress (1): 147/226 kBProgress (1): 151/226 kBProgress (1): 155/226 kBProgress (1): 159/226 kBProgress (1): 163/226 kB
+[2026-04-11 09:19:38,164] [docker_util.py] [INFO]: Progress (1): 167/226 kB
+[2026-04-11 09:19:38,165] [docker_util.py] [INFO]: Progress (1): 171/226 kB
+[2026-04-11 09:19:38,166] [docker_util.py] [INFO]: Progress (1): 176/226 kBProgress (1): 180/226 kB
+[2026-04-11 09:19:38,166] [docker_util.py] [INFO]: Progress (
+[2026-04-11 09:19:38,167] [docker_util.py] [INFO]: 1):
+[2026-04-11 09:19:38,167] [docker_util.py] [INFO]: 1
+[2026-04-11 09:19:38,167] [docker_util.py] [INFO]: 8
+[2026-04-11 09:19:38,168] [docker_util.py] [INFO]: 4/226 kB
+[2026-04-11 09:19:38,169] [docker_util.py] [INFO]: Progress (1): 188/226 kBProgress (1): 192/226 kBProgress (1): 196/226 kBProgress (1): 200/226 kB
+[2026-04-11 09:19:38,171] [docker_util.py] [INFO]: Progress (1): 204/226 kB
+[2026-04-11 09:19:38,171] [docker_util.py] [INFO]: Progress (1): 208/226 kBProgress (1): 210/226 kB
+[2026-04-11 09:19:38,171] [docker_util.py] [INFO]: Progress (1): 215/226 kBProgress (1): 219/226 kBProgress (1): 223/226 kB
+[2026-04-11 09:19:38,173] [docker_util.py] [INFO]: Progress (1): 226 kB
+[2026-04-11 09:19:38,195] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/3.0/plexus-utils-3.0.jar (226 kB at 837 kB/s)
+[2026-04-11 09:19:38,223] [docker_util.py] [INFO]: [[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-enforcer-plugin:1.0:enforce[m [1m(enforce-maven)[m @ [36mgson-parent[0;1m ---[m
+[2026-04-11 09:19:38,235] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact/2.0.9/maven-artifact-2.0.9.pom
+[2026-04-11 09:19:38,286] [docker_util.py] [INFO]: Progress (1): 1.6 kB
+[2026-04-11 09:19:38,312] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:38,312] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact/2.0.9/maven-artifact-2.0.9.pom (1.6 kB at 21 kB/s)
+[2026-04-11 09:19:38,316] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven/2.0.9/maven-2.0.9.pom
+[2026-04-11 09:19:38,343] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 8.2 kB
+[2026-04-11 09:19:38,343] [docker_util.py] [INFO]: Progress (1): 12 kB
+[2026-04-11 09:19:38,343] [docker_util.py] [INFO]: Prog
+[2026-04-11 09:19:38,344] [docker_util.py] [INFO]: ress (1): 16 kB
+[2026-04-11 09:19:38,344] [docker_util.py] [INFO]: Progress (1): 19 kB
+[2026-04-11 09:19:38,374] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven/2.0.9/maven-2.0.9.pom (19 kB at 357 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/8/maven-parent-8.pom
+[2026-04-11 09:19:38,412] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:38,412] [docker_util.py] [INFO]: Progress (1): 8.2 kBProgress (1): 12 kB
+[2026-04-11 09:19:38,412] [docker_util.py] [INFO]: Progress (1): 16 kB
+[2026-04-11 09:19:38,415] [docker_util.py] [INFO]: Progress (1): 20 kBProgress (1): 24 kB
+[2026-04-11 09:19:38,438] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:38,438] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven
+[2026-04-11 09:19:38,438] [docker_util.py] [INFO]: -parent/8/maven-parent-
+[2026-04-11 09:19:38,438] [docker_util.py] [INFO]: 8.pom
+[2026-04-11 09:19:38,438] [docker_util.py] [INFO]: (24 kB
+[2026-04-11 09:19:38,438] [docker_util.py] [INFO]: at 371
+[2026-04-11 09:19:38,438] [docker_util.py] [INFO]: kB/s)
+[2026-04-11 09:19:38,447] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/apache/4/apache-4.pom
+[2026-04-11 09:19:38,488] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:38,488] [docker_util.py] [INFO]: Progress (1): 4.5 kB
+[2026-04-11 09:19:38,514] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:38,514] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/mav
+[2026-04-11 09:19:38,514] [docker_util.py] [INFO]: en2/org/apache/apache
+[2026-04-11 09:19:38,514] [docker_util.py] [INFO]: /4/apach
+[2026-04-11 09:19:38,514] [docker_util.py] [INFO]: e-4.pom (4
+[2026-04-11 09:19:38,514] [docker_util.py] [INFO]: .5 kB at
+[2026-04-11 09:19:38,514] [docker_util.py] [INFO]: 67 kB/s
+[2026-04-11 09:19:38,514] [docker_util.py] [INFO]: )
+[2026-04-11 09:19:38,517] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/1.5.8/plexus-utils-1.5.8.pom
+[2026-04-11 09:19:38,544] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:38,544] [docker_util.py] [INFO]: Progress (1): 8.1 kB
+[2026-04-11 09:19:38,582] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven
+[2026-04-11 09:19:38,583] [docker_util.py] [INFO]: 2/org/codehaus/plexus/plexus-utils/1.5.8/plexus-utils-1.5.8.pom (8.1 kB at 126 kB/s)
+[2026-04-11 09:19:38,588] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/
+[2026-04-11 09:19:38,588] [docker_util.py] [INFO]: plexus/plexus/2.0.2/pl
+[2026-04-11 09:19:38,588] [docker_util.py] [INFO]: exus-2.0.2.pom
+[2026-04-11 09:19:38,615] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:38,615] [docker_util.py] [INFO]: Progress (1): 8.2 kB
+[2026-04-11 09:19:38,615] [docker_util.py] [INFO]: Progress (1): 12 kB
+[2026-04-11 09:19:38,657] [docker_util.py] [INFO]: Downloaded from
+[2026-04-11 09:19:38,658] [docker_util.py] [INFO]: central: https://rep
+[2026-04-11 09:19:38,658] [docker_util.py] [INFO]: o.maven.apache.org
+[2026-04-11 09:19:38,658] [docker_util.py] [INFO]: /maven2/org/codeha
+[2026-04-11 09:19:38,658] [docker_util.py] [INFO]: us/plexus/p
+[2026-04-11 09:19:38,658] [docker_util.py] [INFO]: l
+[2026-04-11 09:19:38,658] [docker_util.py] [INFO]: exus/2.0.2/plexus-2.0.2.po
+[2026-04-11 09:19:38,658] [docker_util.py] [INFO]: m (12
+[2026-04-11 09:19:38,658] [docker_util.py] [INFO]: kB
+[2026-04-11 09:19:38,658] [docker_util.py] [INFO]: at 1
+[2026-04-11 09:19:38,658] [docker_util.py] [INFO]: 66 k
+[2026-04-11 09:19:38,658] [docker_util.py] [INFO]: B/s
+[2026-04-11 09:19:38,658] [docker_util.py] [INFO]: )
+[2026-04-11 09:19:38,658] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:38,667] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-api/2.0.9/maven-plugin-api-2.0.9.pom
+[2026-04-11 09:19:38,705] [docker_util.py] [INFO]: Progress (1): 1.5 kB
+[2026-04-11 09:19:38,730] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/
+[2026-04-11 09:19:38,730] [docker_util.py] [INFO]: org/apache/maven/maven-plugin-api/2.0.9/maven-plugin-api-2.0.9.pom (1.5 kB at 22 kB/s)
+[2026-04-11 09:19:38,735] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-project/2.0.9/maven-project-2.0.9.pom
+[2026-04-11 09:19:38,777] [docker_util.py] [INFO]: Progress (1): 2.7 kB
+[2026-04-11 09:19:38,803] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-project/2.0.9/maven-project-2.0.9.pom (2.7 kB at 39 kB/s)
+[2026-04-11 09:19:38,806] [docker_util.py] [INFO]: D
+[2026-04-11 09:19:38,807] [docker_util.py] [INFO]: ownloading fro
+[2026-04-11 09:19:38,808] [docker_util.py] [INFO]: m central: https://repo.maven.apach
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: e.or
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: g
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: /maven2/o
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: rg
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: /apac
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: he/mav
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: en/mave
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: n
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: -s
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: e
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: tt
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: in
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: gs/
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: 2.0.9/maven-settings-2.0.9.pom
+[2026-04-11 09:19:38,809] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:38,835] [docker_util.py] [INFO]: Progress (1): 2.1 kB
+[2026-04-11 09:19:38,869] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-settings/2.0.9/maven-settings-2.0.9.pom (2.1 kB at 33 kB/s)
+[2026-04-11 09:19:38,871] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-model/2.0.9/maven-model-2.0.9.pom
+[2026-04-11 09:19:38,899] [docker_util.py] [INFO]: Progress (1): 3.1 kB
+[2026-04-11 09:19:38,926] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-model/2.0.9/maven-model-2.0.9.pom (3.1 kB at 59 kB/s)
+[2026-04-11 09:19:38,928] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-container-default/1.0-alpha-9-stable-1/plexus-container-default-1.0-alpha-9-stable-1.pom
+[2026-04-11 09:19:38,964] [docker_util.py] [INFO]: Progress (1): 3.9 kB
+[2026-04-11 09:19:39,021] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-container-default/1.0-alpha-9-stable-1/plexus-container-default-1.0-alpha-9-stable-1.pom (3.9 kB at 44 kB/s)
+[2026-04-11 09:19:39,021] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-containers/1.0.3/plexus-containers-1.0.3.pom
+[2026-04-11 09:19:39,057] [docker_util.py] [INFO]: Progress (1): 492 B
+[2026-04-11 09:19:39,087] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:39,088] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/o
+[2026-04-11 09:19:39,088] [docker_util.py] [INFO]: rg/codehaus/plexus/plexus-containers/1.0.
+[2026-04-11 09:19:39,088] [docker_util.py] [INFO]: 3/plexus-containers-1.0.3.pom (492
+[2026-04-11 09:19:39,088] [docker_util.py] [INFO]: B at 7.3
+[2026-04-11 09:19:39,088] [docker_util.py] [INFO]: kB/s)
+[2026-04-11 09:19:39,089] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/1.0.4/plexus-1.0.4.pom
+[2026-04-11 09:19:39,114] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 5.7 kB
+[2026-04-11 09:19:39,140] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:39,140] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:39,142] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/1.0.4/plexus-1.0.4.pom (5.7 kB at 110 kB/s)
+[2026-04-11 09:19:39,146] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/junit/junit/3.8.2/junit-3.8.2.pom
+[2026-04-11 09:19:39,180] [docker_util.py] [INFO]: Progress (1): 747 B
+[2026-04-11 09:19:39,203] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/junit/junit/3.8.2/junit-3.8.2.pom (747 B at 13 kB/s)
+[2026-04-11 09:19:39,206] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/classworlds/classwo
+[2026-04-11 09:19:39,206] [docker_util.py] [INFO]: rlds/1.1-alpha-2/classworlds-1.1-alpha-2.pom
+[2026-04-11 09:19:39,206] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:39,236] [docker_util.py] [INFO]: Progress (1): 3.1 kB
+[2026-04-11 09:19:39,271] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:39,272] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1-alpha-2/classworlds-1.1-alpha-2.pom (3.1 kB at 47 kB/s)
+[2026-04-11 09:19:39,273] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-profile/2.0.9/maven-profile-2.0.9.pom
+[2026-04-11 09:19:39,310] [docker_util.py] [INFO]: Progress (1): 2.0 kB
+[2026-04-11 09:19:39,339] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-profile/2.0.9/maven-profile-2.0.9.pom (2.0 kB at 32 kB/s)
+[2026-04-11 09:19:39,342] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact-manager/2.0.9/maven-artifact-manager-2.0.9.pom
+[2026-04-11 09:19:39,372] [docker_util.py] [INFO]: Progress (1): 2.7 kB
+[2026-04-11 09:19:39,411] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact-manager/2.0.9/maven-artifact-manager-2.0.9.pom (2.7 kB at 39 kB/s)
+[2026-04-11 09:19:39,419] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-repository-metadata/2.0.9/maven-repository-metadata-2.0.9.pom
+[2026-04-11 09:19:39,446] [docker_util.py] [INFO]: Progress (1): 1.9 kB
+[2026-04-11 09:19:39,475] [docker_util.py] [INFO]: 
+[2026-04-11 09:19:39,475] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-repository-metadata/2.0.9/maven-repository-metadata-2.0.9.pom (1.9 kB at 32 kB/s)
+[2026-04-11 09:19:39,480] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-registry/2.0.9/maven-plugin-registry-2.0.9.pom
+[2026-04-11 09:19:39,513] [docker_util.py] [INFO]: Progress (1): 2.0 kB
+[2026-04-11 09:19:39,538] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-registry/2.0.9/maven-plugin-registry-2.0.9.pom (2.0 kB at 34 kB/s)
+[2026-04-11 09:19:39,542] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-core/2.0.9/maven-core-2.0.9.pom
+[2026-04-11 09:19:39,585] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:19:39,585] [docker_util.py] [INFO]: Progress (1): 7.8 kB
+[2026-04-11 09:35:22,739] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,740] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-core/2.0.9/maven-core-2.0.9.pom (7.8 kB at 7.9 kB/s)
+[2026-04-11 09:35:22,744] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-parameter-documenter/2.0.9/maven-plugin-parameter-documenter-2.0.9.pom
+[2026-04-11 09:35:22,785] [docker_util.py] [INFO]: Progress (1): 2.0 kB
+[2026-04-11 09:35:22,811] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-parameter-documenter/2.0.9/maven-plugin-parameter-documenter-2.0.9.pom (2.0 kB at 30 kB/s)
+[2026-04-11 09:35:22,816] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/reporting/maven-reporting-api/2.0.9/maven-reporting-api-2.0.9.pom
+[2026-04-11 09:35:22,855] [docker_util.py] [INFO]: Progress (1): 1.8 kB
+[2026-04-11 09:35:22,883] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,883] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,883] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,883] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: Downlo
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: aded
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: f
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: r
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: o
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: m
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: c
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: e
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: n
+[2026-04-11 09:35:22,884] [docker_util.py] [INFO]: tral: https://repo.maven.apache.org/maven2/org/apache/maven/reporting/maven-reporting-api/2.0.9/maven-reporting-api-2.0.9.pom (1.8 kB at 26 kB/s)
+[2026-04-11 09:35:22,885] [docker_util.py] [INFO]: Downloading fr
+[2026-04-11 09:35:22,886] [docker_util.py] [INFO]: om central: https://repo.maven.apache.org/maven2/org/apache/maven/reporting/maven-reporting/2.0.9/maven-reporting-2.0.9.pom
+[2026-04-11 09:35:22,919] [docker_util.py] [INFO]: Progress (1): 1.5 kB
+[2026-04-11 09:35:22,944] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven
+[2026-04-11 09:35:22,944] [docker_util.py] [INFO]: .apache.org/maven2/org/ap
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: ache/maven/
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: repo
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: rtin
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: g/mav
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: en-repor
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: ting/
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: 2.0.9/
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: maven-re
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: portin
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: g-2.
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: 0.9.
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: pom
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: (1.5 kB at 25 kB
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: /s)
+[2026-04-11 09:35:22,945] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:22,949] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/doxia/doxia-sink-api/1.0-alpha-10/doxia-sink-api-1.
+[2026-04-11 09:35:22,949] [docker_util.py] [INFO]: 0-alpha-10.pom
+[2026-04-11 09:35:22,987] [docker_util.py] [INFO]: Progress (1): 1.3 kB
+[2026-04-11 09:35:23,017] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:23,017] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/doxia/dox
+[2026-04-11 09:35:23,017] [docker_util.py] [INFO]: ia-sink-api/1.0-alpha-10/doxia-sink-api-1.0-alpha-10.pom (1.3 kB at 20 kB/s)
+[2026-04-11 09:35:23,021] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/doxia/doxia/1.0-alpha-10/doxia-1.0-alpha-10.pom
+[2026-04-11 09:35:23,052] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:35:23,052] [docker_util.py] [INFO]: Progress (1): 8.2 kBProgress (1): 9.2 kB
+[2026-04-11 09:35:23,090] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:23,091] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/doxia/doxia/1.0-alpha-10/doxia-1.0-alpha-10.pom (9.2 kB at 133 kB/s)
+[2026-04-11 09:35:23,091] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/6/maven-parent-6.pom
+[2026-04-11 09:35:23,131] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:35:23,131] [docker_util.py] [INFO]: Progress (1): 8.2 kB
+[2026-04-11 09:35:23,132] [docker_util.py] [INFO]: Progress (1): 12 kB Progress (1): 16 kB
+[2026-04-11 09:35:23,132] [docker_util.py] [INFO]: Progress (1): 20 kB
+[2026-04-11 09:35:23,164] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/6/maven-parent-6.pom (20 kB at 275 kB/s)
+[2026-04-11 09:35:23,167] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-error-diagnostics/2.0.9/maven-error-diagnostics
+[2026-04-11 09:35:23,167] [docker_util.py] [INFO]: -2.0.9.pom
+[2026-04-11 09:35:23,197] [docker_util.py] [INFO]: Progress (1): 1.7 kB
+[2026-04-11 09:35:23,267] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-error-diagnostics/2.0.9/maven-error-diagnostics-2.0.9.pom (1.7 kB at 17 kB/s)
+[2026-04-11 09:35:23,276] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/commons-cli/commons-cli/1.0/commons-cli-1.
+[2026-04-11 09:35:23,276] [docker_util.py] [INFO]: 0.pom
+[2026-04-11 09:35:23,303] [docker_util.py] [INFO]: Progress (1): 2.1 kB
+[2026-04-11 09:35:23,349] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/commons-cli/commons-cli/1.0/commons-cli-1.0.pom (2.1 kB at 28 kB/s)
+[2026-04-11 09:35:23,350] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven
+[2026-04-11 09:35:23,350] [docker_util.py] [INFO]: 2/org/apache/maven/maven-plugin-descriptor/2.0.9/maven-plugin-descriptor-2.0.9.
+[2026-04-11 09:35:23,350] [docker_util.py] [INFO]: p
+[2026-04-11 09:35:23,350] [docker_util.py] [INFO]: om
+[2026-04-11 09:35:23,378] [docker_util.py] [INFO]: Progress (1): 2.1 kB
+[2026-04-11 09:35:23,441] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:23,441] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-descriptor/2.0.9/maven-plugin-descriptor-2.0.9.pom (2.1 kB at 37 kB/s)
+[2026-04-11 09:35:23,601] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interactivity-api/1.0-alpha-4/plexus-interactivity-api-1.0-alpha-4.pom
+[2026-04-11 09:35:23,678] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 7.1 kB
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: Downloaded from centr
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: al: https://repo.maven.apac
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: he.org
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: /maven2
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: /org/c
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: odeh
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: aus/plexu
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: s/plexus-i
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: nterac
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: tivity
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: -api/1.0
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: -alpha-4
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: /plexu
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: s-inte
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: ractivity-api-1.0-alpha-4.pom (7.1 kB at 67
+[2026-04-11 09:35:23,707] [docker_util.py] [INFO]: kB/s)
+[2026-04-11 09:35:23,710] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-monitor/2.0.9/maven-monitor-2.0.9.pom
+[2026-04-11 09:35:23,746] [docker_util.py] [INFO]: Progress (1): 1.3 kB
+[2026-04-11 09:35:23,783] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.o
+[2026-04-11 09:35:23,783] [docker_util.py] [INFO]: rg/maven2/org/apache/maven/maven-monitor/2.0.9/maven-monitor-2.0.9.pom (1.3 kB at 17 kB/s)
+[2026-04-11 09:35:23,786] [docker_util.py] [INFO]: Downloading from
+[2026-04-11 09:35:23,786] [docker_util.py] [INFO]: central: https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-
+[2026-04-11 09:35:23,786] [docker_util.py] [INFO]: 1.1.pom
+[2026-04-11 09:35:23,839] [docker_util.py] [INFO]: Progress (1): 3.3 kB
+[2026-04-11 09:35:23,868] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:23,869] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:23,869] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:23,871] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1
+[2026-04-11 09:35:23,871] [docker_util.py] [INFO]: /classworlds-1.1.pom (3.3 kB at 40 kB/s)
+[2026-04-11 09:35:23,876] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/commons-lang/commons-lang/2.3/commons-lang-2.3.pom
+[2026-04-11 09:35:23,917] [docker_util.py] [INFO]: P
+[2026-04-11 09:35:23,917] [docker_util.py] [INFO]: ro
+[2026-04-11 09:35:23,917] [docker_util.py] [INFO]: g
+[2026-04-11 09:35:23,917] [docker_util.py] [INFO]: ress (1): 4.1 kBProgr
+[2026-04-11 09:35:23,917] [docker_util.py] [INFO]: ess (1
+[2026-04-11 09:35:23,917] [docker_util.py] [INFO]: )
+[2026-04-11 09:35:23,917] [docker_util.py] [INFO]: :
+[2026-04-11 09:35:23,917] [docker_util.py] [INFO]: 8.2
+[2026-04-11 09:35:23,917] [docker_util.py] [INFO]: kBProgress (1): 11 kB
+[2026-04-11 09:35:23,950] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/commons-lang/commons-lang/2.3/commons-lang-2.3.pom (11 kB at 148 kB/s)
+[2026-04-11 09:35:23,953] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/enforcer/enforcer-api/1.0/enforcer-api-1.0.pom
+[2026-04-11 09:35:23,992] [docker_util.py] [INFO]: Progress (1): 3.3 kB
+[2026-04-11 09:35:24,020] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/enforcer/enforcer-api/1.0/enforcer-api-1.0.pom (3.3 kB at 48 kB/s)
+[2026-04-11 09:35:24,023] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-container-default/1.0-alpha-9/plexus-container-default-1.0-alpha-9.pom
+[2026-04-11 09:35:24,053] [docker_util.py] [INFO]: Progress (1): 1.2 kB
+[2026-04-11 09:35:24,093] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-container-default/1.0-alpha-9/plexus-container-default-1.0-alpha-9.pom (1.2 kB at 18 kB/s)
+[2026-04-11 09:35:24,097] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/enforcer/enforcer-rules/1.0/enforcer-rules-1.0.pom
+[2026-04-11 09:35:24,126] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:35:24,126] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: Downloaded from central: https://repo.mav
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: en.apache.org/maven2/org/apache/mav
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: en/enforce
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: r/enf
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: orcer
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: -rules
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: /1.0/
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: enfor
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: cer-
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: rules
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: -1.0.p
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: om (4.1
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: kB a
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: t 74 k
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: B/s)
+[2026-04-11 09:35:24,153] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:24,158] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-common-artifact-filters/1.2/maven-common-artifact-filters-1.2.pom
+[2026-04-11 09:35:24,197] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:35:24,197] [docker_util.py] [INFO]: Progress (1): 4.5 kB
+[2026-04-11 09:35:24,250] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:24,250] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-common-artifact-filters/1.2/maven
+[2026-04-11 09:35:24,250] [docker_util.py] [INFO]: -common-artifact-filters-1.2.pom (4.5 kB at 50 kB/s)
+[2026-04-11 09:35:24,255] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-shared-components/11/maven-shared-components-11.pom
+[2026-04-11 09:35:24,287] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:35:24,287] [docker_util.py] [INFO]: Progress (1): 8.2 kB
+[2026-04-11 09:35:24,287] [docker_util.py] [INFO]: Progress (1): 8.3 kB
+[2026-04-11 09:35:24,312] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:24,312] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-shared-components/11/maven-shared-components-11.pom (8.3 kB at 139 kB/s)
+[2026-04-11 09:35:24,315] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/11/maven-parent-11.pom
+[2026-04-11 09:35:24,351] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:35:24,351] [docker_util.py] [INFO]: Progress (1): 8.2 kB
+[2026-04-11 09:35:24,351] [docker_util.py] [INFO]: Progress (1): 12 kB
+[2026-04-11 09:35:24,352] [docker_util.py] [INFO]: Progress (1): 16 kBProgress (1): 20 kB
+[2026-04-11 09:35:24,352] [docker_util.py] [INFO]: Progress (1): 25 kB
+[2026-04-11 09:35:24,352] [docker_util.py] [INFO]: Progress (1): 29 kB
+[2026-04-11 09:35:24,352] [docker_util.py] [INFO]: Progress (1): 32 kB
+[2026-04-11 09:35:24,378] [docker_util.py] [INFO]: Downloaded from central: https://repo
+[2026-04-11 09:35:24,378] [docker_util.py] [INFO]: .maven.apache.org/
+[2026-04-11 09:35:24,378] [docker_util.py] [INFO]: mave
+[2026-04-11 09:35:24,378] [docker_util.py] [INFO]: n2/
+[2026-04-11 09:35:24,378] [docker_util.py] [INFO]: o
+[2026-04-11 09:35:24,378] [docker_util.py] [INFO]: rg/
+[2026-04-11 09:35:24,378] [docker_util.py] [INFO]: apach
+[2026-04-11 09:35:24,378] [docker_util.py] [INFO]: e/maven/maven-parent/
+[2026-04-11 09:35:24,378] [docker_util.py] [INFO]: 11/maven-parent-11.pom (32 kB at 514 kB/s)
+[2026-04-11 09:35:24,380] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/apache/5/apache-5.pom
+[2026-04-11 09:35:24,413] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 4.1 kB
+[2026-04-11 09:35:24,479] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/apache/5/apache-5.pom (4.1 kB at 41 kB/s)
+[2026-04-11 09:35:24,485] [docker_util.py] [INFO]: D
+[2026-04-11 09:35:24,486] [docker_util.py] [INFO]: ow
+[2026-04-11 09:35:24,487] [docker_util.py] [INFO]: nloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-model/2.0.8/maven-model-2.0.8.pom
+[2026-04-11 09:35:24,533] [docker_util.py] [INFO]: Progress (1): 3.1 kB
+[2026-04-11 09:35:24,586] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:24,586] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-model/2.0.8/maven-model-2.0.8.pom (3.1 kB at 31 kB/s)
+[2026-04-11 09:35:24,588] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven/2.0.8/maven-2.0.8.pom
+[2026-04-11 09:35:24,663] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:35:24,663] [docker_util.py] [INFO]: Progress (1): 8.2 kB
+[2026-04-11 09:35:24,663] [docker_util.py] [INFO]: Progress (1): 12 kB
+[2026-04-11 09:35:24,756] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven/2.0.8/maven-2.0.8.pom (12 kB at 72 kB/s)
+[2026-04-11 09:35:24,758] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-plugin-testing-harness/1.1/mave
+[2026-04-11 09:35:24,758] [docker_util.py] [INFO]: n-plugin-testing-ha
+[2026-04-11 09:35:24,758] [docker_util.py] [INFO]: rness-
+[2026-04-11 09:35:24,758] [docker_util.py] [INFO]: 1.1.pom
+[2026-04-11 09:35:24,821] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 6.3 kB
+[2026-04-11 09:35:24,902] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-plugin-testing-harness/1.1/maven-plugin-testing-harness-1.1.pom (6.3 kB at 44 kB/s)
+[2026-04-11 09:35:24,903] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-shared-components/7/maven-shared-components-7.pom
+[2026-04-11 09:35:24,973] [docker_util.py] [INFO]: Progress (1): 2.6 kB
+[2026-04-11 09:35:25,046] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-shared-components/7/maven-shared-components-7.pom (2.6 kB at 18 kB/s)
+[2026-04-11 09:35:25,048] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-archiver/1.0-alpha-7/plexus-archiver-1.0-alpha-7.pom
+[2026-04-11 09:35:25,131] [docker_util.py] [INFO]: Progress (1): 1.0 kB
+[2026-04-11 09:35:25,215] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-archiver/1.0-alpha-7/plexus-archiver-1.0-alpha-7.pom (1.0 kB at 6.3 kB/s)
+[2026-04-11 09:35:25,218] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.6/plexus-components-1.1.6.pom
+[2026-04-11 09:35:25,296] [docker_util.py] [INFO]: Progress (1): 1.9 kB
+[2026-04-11 09:35:25,392] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:25,392] [docker_util.py] [INFO]: Downloaded from centra
+[2026-04-11 09:35:25,392] [docker_util.py] [INFO]: l: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-components/1.1.6/plexus-components-1.1.
+[2026-04-11 09:35:25,393] [docker_util.py] [INFO]: 6.pom (1.9 kB at 11 kB/s)
+[2026-04-11 09:35:25,393] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:25,393] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/1
+[2026-04-11 09:35:25,393] [docker_util.py] [INFO]: .0.8/plexus-1.0
+[2026-04-11 09:35:25,393] [docker_util.py] [INFO]: .8.pom
+[2026-04-11 09:35:25,489] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 7.2 kB
+[2026-04-11 09:35:25,563] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:25,563] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus/1.0.8/plexus-1.0.8.pom (7.2 kB at 43 kB/s)
+[2026-04-11 09:35:25,569] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-container-default/1.0-alpha-8/plexus-container-default-1.0-alpha-8.pom
+[2026-04-11 09:35:25,671] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 7.3 kB
+[2026-04-11 09:35:25,770] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-co
+[2026-04-11 09:35:25,770] [docker_util.py] [INFO]: ntainer-default/1.0-alpha-8/pl
+[2026-04-11 09:35:25,770] [docker_util.py] [INFO]: exus-con
+[2026-04-11 09:35:25,770] [docker_util.py] [INFO]: tainer
+[2026-04-11 09:35:25,770] [docker_util.py] [INFO]: -default-1
+[2026-04-11 09:35:25,770] [docker_util.py] [INFO]: .0-alpha
+[2026-04-11 09:35:25,770] [docker_util.py] [INFO]: -8.po
+[2026-04-11 09:35:25,770] [docker_util.py] [INFO]: m (7.
+[2026-04-11 09:35:25,771] [docker_util.py] [INFO]: 3 kB a
+[2026-04-11 09:35:25,771] [docker_util.py] [INFO]: t 36 kB/s)
+[2026-04-11 09:35:25,771] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:25,773] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/beanshell/bsh/2.0b4/bsh-2.0b4.pom
+[2026-04-11 09:35:25,851] [docker_util.py] [INFO]: Progress (1): 1.2 kB
+[2026-04-11 09:35:25,973] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/beanshell/bsh/2.0b4/bsh-2.0b4.pom (1.2 kB at 6.0 kB/s)
+[2026-04-11 09:35:25,974] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven
+[2026-04-11 09:35:25,974] [docker_util.py] [INFO]: 2/org/beanshell/beanshell/2.0b4/beanshell-2.0b4.pom
+[2026-04-11 09:35:26,096] [docker_util.py] [INFO]: Progress (1): 1.4 kB
+[2026-04-11 09:35:26,224] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/beanshell/beanshell/2.0b4/beanshel
+[2026-04-11 09:35:26,224] [docker_util.py] [INFO]: l-2.0b4.pom (1.4 kB at 5.7 kB/s)
+[2026-04-11 09:35:26,227] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-de
+[2026-04-11 09:35:26,227] [docker_util.py] [INFO]: pendency-tree/1.2/maven-dependency-tree-1.2.pom
+[2026-04-11 09:35:26,377] [docker_util.py] [INFO]: Progress (1): 3.6 kB
+[2026-04-11 09:35:26,508] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-dependency-tree/1.2/maven-dependency-tree-1.2.pom (3.6 kB at 13 kB/s)
+[2026-04-11 09:35:26,509] [docker_util.py] [INFO]: Downloading from cen
+[2026-04-11 09:35:26,509] [docker_util.py] [INFO]: tral: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-shared-components/9/maven-shared-compo
+[2026-04-11 09:35:26,509] [docker_util.py] [INFO]: nents-9.pom
+[2026-04-11 09:35:26,623] [docker_util.py] [INFO]: Progress (1): 3.5 kB
+[2026-04-11 09:35:26,660] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.o
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: rg/
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: ma
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: ve
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: n
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: 2/
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: org/apa
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: che/mave
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: n/s
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: h
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: ar
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: ed
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: /maven-s
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: h
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: ared-
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: compo
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: n
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: ents/9/maven-shared-com
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: p
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: o
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: nents-9.pom (3
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: .5 k
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: B
+[2026-04-11 09:35:26,661] [docker_util.py] [INFO]: at 23 kB/s)
+[2026-04-11 09:35:26,663] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-i18n/1.0-beta-6/plexus-i18n-1.0-beta-6.pom
+[2026-04-11 09:35:26,768] [docker_util.py] [INFO]: Progress (1): 771 B
+[2026-04-11 09:35:26,878] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:26,878] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/mave
+[2026-04-11 09:35:26,878] [docker_util.py] [INFO]: n2/org/c
+[2026-04-11 09:35:26,878] [docker_util.py] [INFO]: odehaus/plexus/plexus-i18n/1.0-beta-6/plexus-i18n-1.0-beta-6.pom (771 B at 3.6 kB/s)
+[2026-04-11 09:35:26,879] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-com
+[2026-04-11 09:35:26,879] [docker_util.py] [INFO]: ponents/1.1.4/p
+[2026-04-11 09:35:26,879] [docker_util.py] [INFO]: lex
+[2026-04-11 09:35:26,879] [docker_util.py] [INFO]: us
+[2026-04-11 09:35:26,879] [docker_util.py] [INFO]: -com
+[2026-04-11 09:35:26,879] [docker_util.py] [INFO]: pon
+[2026-04-11 09:35:26,879] [docker_util.py] [INFO]: ent
+[2026-04-11 09:35:26,880] [docker_util.py] [INFO]: s-
+[2026-04-11 09:35:26,880] [docker_util.py] [INFO]: 1.1.
+[2026-04-11 09:35:26,880] [docker_util.py] [INFO]: 4.
+[2026-04-11 09:35:26,880] [docker_util.py] [INFO]: po
+[2026-04-11 09:35:26,880] [docker_util.py] [INFO]: m
+[2026-04-11 09:35:26,985] [docker_util.py] [INFO]: Progress (1): 2.1 kB
+[2026-04-11 09:35:27,088] [docker_util.py] [INFO]: 
+[2026-04-11 09:35:27,088] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexu
+[2026-04-11 09:35:27,088] [docker_util.py] [INFO]: s-
+[2026-04-11 09:35:27,088] [docker_util.py] [INFO]: components/1.1.4/plexus-components-1.1.4.pom (2.1 kB at 9.9 kB/s)
+[2026-04-11 09:35:27,096] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact/2.0.9/maven-artifact-2.0.9.jar
+[2026-04-11 09:35:27,097] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-api/2.0.9/maven-plugin-api-2.0.9.jar
+[2026-04-11 09:35:27,097] [docker_util.py] [INFO]: D
+[2026-04-11 09:35:27,098] [docker_util.py] [INFO]: ownloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/mave
+[2026-04-11 09:35:27,098] [docker_util.py] [INFO]: n-project/2.0.9/maven-project-2
+[2026-04-11 09:35:27,098] [docker_util.py] [INFO]: .0.9.jar
+[2026-04-11 09:35:27,098] [docker_util.py] [INFO]: D
+[2026-04-11 09:35:27,098] [docker_util.py] [INFO]: ownloading from central: https://rep
+[2026-04-11 09:35:27,098] [docker_util.py] [INFO]: o.maven.apache.org/maven2/org/apache/maven/maven-profi
+[2026-04-11 09:35:27,098] [docker_util.py] [INFO]: le/2.0.9/maven-profile-2.0.9.jar
+[2026-04-11 09:35:27,098] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-settings/2.0.9/maven-settings-2.0.9.jar
+[2026-04-11 09:50:32,692] [docker_util.py] [INFO]: Progress (1): 2.3/89 kB
+[2026-04-11 09:50:32,693] [docker_util.py] [INFO]: P
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: rogress (1): 5.0/89 kBProgress (1): 7.7/89 kBProgress (1): 10/89 kB Progress (1): 13/89 kBProgress (1): 16/89 kBProgress (1): 19/89 kBProgress (1): 21/89 kBProgress (1): 24/89 kBProgress (1): 27/89 kBProgress (1): 30/89 kBProgress (1): 33/89 kBProgress (1): 36/89 kBProgress (1): 38/89 kBProgress (1): 41/89 kBProgress (1): 44/89 kBProgress (1): 46/89 kBProgress (1): 49/89 kBProgress (1): 52/89 kBProgress (1): 55/89 kBProgress (1): 59/89 kB
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: Progress (
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: 1): 63/
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: 89
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: Progre
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: ss (
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: 1
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: )
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: :
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: 6
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: 7
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: /8
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: 9
+[2026-04-11 09:50:32,694] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,695] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:32,698] [docker_util.py] [INFO]: Progress (1): 71/89 kBProgress (1): 75/89 kB
+[2026-04-11 09:50:32,698] [docker_util.py] [INFO]: Progress (1): 79/89 kB
+[2026-04-11 09:50:32,698] [docker_util.py] [INFO]: Progress (1): 83/89 kBProgress (1): 87/89 kB
+[2026-04-11 09:50:32,698] [docker_util.py] [INFO]: Progress (1): 89 kB
+[2026-04-11 09:50:32,768] [docker_util.py] [INFO]: Downloaded from central: https://repo.m
+[2026-04-11 09:50:32,769] [docker_util.py] [INFO]: aven.apache.org/maven2/org/apache/maven/maven-artifact/2.0.9/maven-artifact-2.0.9.jar (89 kB at 87 kB/s)
+[2026-04-11 09:50:32,770] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-model/2.0.9/maven-model-2.0.9.jar
+[2026-04-11 09:50:32,796] [docker_util.py] [INFO]: Progress (1): 3.8/87 kB
+[2026-04-11 09:50:32,796] [docker_util.py] [INFO]: Progress (1): 7.8/87 kB
+[2026-04-11 09:50:32,797] [docker_util.py] [INFO]: Progress (1): 12/87 kB
+[2026-04-11 09:50:32,797] [docker_util.py] [INFO]: Progress (1): 16/87 kB
+[2026-04-11 09:50:32,803] [docker_util.py] [INFO]: Progress (1): 20/87 kBProgress (1): 24/87 kBProgress (1): 28/87 kB
+[2026-04-11 09:50:32,803] [docker_util.py] [INFO]: Progress (1): 32/87 kB
+[2026-04-11 09:50:32,803] [docker_util.py] [INFO]: Progress (1): 37/87 kB
+[2026-04-11 09:50:32,804] [docker_util.py] [INFO]: Progress (1): 41/87 kB
+[2026-04-11 09:50:32,804] [docker_util.py] [INFO]: Progress (1): 45/87 kB
+[2026-04-11 09:50:32,804] [docker_util.py] [INFO]: Progress (1): 49/87 kB
+[2026-04-11 09:50:32,805] [docker_util.py] [INFO]: Progress (1): 53/87 kBProgress (1): 57/87 kB
+[2026-04-11 09:50:32,805] [docker_util.py] [INFO]: Progress (1): 61/87 kB
+[2026-04-11 09:50:32,805] [docker_util.py] [INFO]: Progress (1): 65/87 kB
+[2026-04-11 09:50:32,805] [docker_util.py] [INFO]: Progress (1): 69/87 kB
+[2026-04-11 09:50:32,807] [docker_util.py] [INFO]: Progress (1): 73/87 kB
+[2026-04-11 09:50:32,807] [docker_util.py] [INFO]: Progress (1): 77/87 kBProgress (1): 80/87
+[2026-04-11 09:50:32,807] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:32,807] [docker_util.py] [INFO]: Progress (1): 84/87 kB
+[2026-04-11 09:50:32,810] [docker_util.py] [INFO]: Progress (1): 87 kB
+[2026-04-11 09:50:32,817] [docker_util.py] [INFO]: Progress (2): 87 kB | 2.3/122 kB
+[2026-04-11 09:50:32,817] [docker_util.py] [INFO]: Progress (2): 87 kB | 5.0/122 kB
+[2026-04-11 09:50:32,817] [docker_util.py] [INFO]: Progress (2): 87 kB | 7.7/122 kB
+[2026-04-11 09:50:32,818] [docker_util.py] [INFO]: Progress (2): 87 kB | 10/122 kB Progress (2): 87 kB | 13/122 kBProgress (2): 87 kB | 16/122 kB
+[2026-04-11 09:50:32,819] [docker_util.py] [INFO]: Progress (2): 87 kB | 19/122 kB
+[2026-04-11 09:50:32,819] [docker_util.py] [INFO]: Progress (2): 87 kB | 21/122 kB
+[2026-04-11 09:50:32,819] [docker_util.py] [INFO]: Progress (2): 87 kB | 24/122 kB
+[2026-04-11 09:50:32,820] [docker_util.py] [INFO]: Progress (2): 87 kB | 27/122 kB
+[2026-04-11 09:50:32,820] [docker_util.py] [INFO]: Progress (2): 87 kB | 30/122 kB
+[2026-04-11 09:50:32,821] [docker_util.py] [INFO]: Progress (2): 87 kB | 32/122 kB
+[2026-04-11 09:50:32,823] [docker_util.py] [INFO]: Progress (2): 87 kB | 35/122 kBProgress (2): 87 kB | 38/122 kBProgress (2): 87 kB | 41/122 kB
+[2026-04-11 09:50:32,823] [docker_util.py] [INFO]: Progress (2): 87 kB | 43/122 kBProgress (2): 87 kB | 46/122 kB
+[2026-04-11 09:50:32,826] [docker_util.py] [INFO]: Progress (2): 87 kB | 49/122 kBProgress (2): 87 kB | 52/122 kB
+[2026-04-11 09:50:32,826] [docker_util.py] [INFO]: P
+[2026-04-11 09:50:32,826] [docker_util.py] [INFO]: rogress (2): 87 kB | 54/122 kB
+[2026-04-11 09:50:32,826] [docker_util.py] [INFO]: Progress (3): 87 kB | 54/122 kB | 2.3/13 kB
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: Progress (3): 87 kB | 58/122 kB | 2.3/13 kBProgress (3): 87 kB | 62/122 kB | 2.3/13 kBProgress (3): 87 kB | 62/122 kB | 5.0/13 kBProgress (3): 87 kB | 62/122 kB | 7.7/13 kBProgress (3): 87 kB | 62/122 kB | 10/13 kB Progress (3): 87 kB | 62/122 kB | 13 kB   Progress (3): 87 kB | 67/122 kB | 13 kBProgress (3): 87 kB | 71/122 kB | 13 kBProgress (3): 87 kB | 75/122 kB | 13 kB
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: Progress (3): 87 kB | 79/122 kB | 13 kBProgress
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: (3): 87 kB
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: | 81/122 kB | 13 kB
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: Prog
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: ress (
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: 3
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: )
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: :
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: 8
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: 7 kB | 85/122 kB |
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: 13
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: kBProgress (3): 87 kB | 89/122 kB | 13 kBProgress (3): 87 kB | 93/122 kB | 13 kBProgress (3): 87 kB | 97/122 kB | 13 kBProgress (3): 87 kB | 102/122 kB | 13 kBProgress (3): 87 kB | 106/122 kB | 13 kBProgress (3): 87 kB | 110/122 kB | 13 kBProgress (3): 87 kB | 114/122 kB | 13 kB
+[2026-04-11 09:50:32,830] [docker_util.py] [INFO]: Progress (3): 87 kB | 118/122 kB | 13 kB
+[2026-04-11 09:50:32,831] [docker_util.py] [INFO]: Progress (4): 87 kB | 118/122 kB | 13 kB | 2.3/49 kB
+[2026-04-11 09:50:32,832] [docker_util.py] [INFO]: Progress (4): 87 kB | 118/122 kB | 13 kB | 5.0/49 kBProgress (4): 87 kB | 118/122 kB | 13 kB | 7.7/49 kBProgress (4): 87 kB | 118/122 kB | 13 kB | 10/49 kB Progress (4): 87 kB | 118/122 kB | 13 kB | 13/49 kBProgress (4): 87 kB | 118/122 kB | 13 kB | 16/49 kBProgress (4): 87 kB | 118/122 kB | 13 kB | 19/49 kBProgress (4): 87 kB | 118/122 kB | 13 kB | 21/49 kB
+[2026-04-11 09:50:32,832] [docker_util.py] [INFO]: Progress (4): 87 kB | 118/122 kB | 13 kB | 24/49 kB
+[2026-04-11 09:50:32,834] [docker_util.py] [INFO]: Progress (4): 87 kB | 118/122 kB | 13 kB | 27/49 kB
+[2026-04-11 09:50:32,834] [docker_util.py] [INFO]: Progress (4): 87 kB | 118/122 kB | 13 kB | 30/49 kB
+[2026-04-11 09:50:32,837] [docker_util.py] [INFO]: Progress (4): 87 kB | 118/122 kB | 13 kB | 33/49 kBProgress (4): 87 kB | 118/122 kB | 13 kB | 36/49 kBProgress (4): 87 kB | 122 kB | 13 kB | 36/49 kB    Progress (4): 87 kB | 122 kB | 13 kB | 38/49 kBProgress (4): 87 kB | 122 kB | 13 kB | 41/49 kB
+[2026-04-11 09:50:32,837] [docker_util.py] [INFO]: Progress (4): 87 kB | 122 kB | 13 kB | 44/49 kB
+[2026-04-11 09:50:32,837] [docker_util.py] [INFO]: Progress (4): 87 kB | 122 kB | 13 kB | 46/49 kB
+[2026-04-11 09:50:32,837] [docker_util.py] [INFO]: Progress (4): 87 kB | 122 kB | 13 kB | 49 kB
+[2026-04-11 09:50:32,839] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven
+[2026-04-11 09:50:32,839] [docker_util.py] [INFO]: /maven-model/2.0.9/maven-model-2.0.9.jar (87 kB at 80 kB/s)
+[2026-04-11 09:50:32,839] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-artifact-manager/2.0.
+[2026-04-11 09:50:32,839] [docker_util.py] [INFO]: 9/maven-artifact-manager-
+[2026-04-11 09:50:32,839] [docker_util.py] [INFO]: 2.0.9.ja
+[2026-04-11 09:50:32,839] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,854] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-api/2.0.9/maven-plugin-api-2
+[2026-04-11 09:50:32,854] [docker_util.py] [INFO]: .0.9.jar (13 kB at 12 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-registry/2.0.9/maven-plugin-registry-2.0.9.jar
+[2026-04-11 09:50:32,869] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-project/2.0.9/maven-project-2.0.9.jar (122 kB at 109 kB
+[2026-04-11 09:50:32,869] [docker_util.py] [INFO]: /s)
+[2026-04-11 09:50:32,869] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-container-default/1.0-alpha-9-stable-1/plexus-container-default-1.0-alpha-9-stable-1.jar
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-settings/2.0.9/maven-settings-2.0.9.jar (49 kB at 44 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-core/2.0.9/maven-core-2.0.9.jar
+[2026-04-11 09:50:32,879] [docker_util.py] [INFO]: Progress (1): 2.3/58 kBProgress (1): 5.0/58 kBProgress (1): 9.1/58 kBProgress (1): 13/58 kB
+[2026-04-11 09:50:32,879] [docker_util.py] [INFO]: Progress (1): 17/58 kB
+[2026-04-11 09:50:32,879] [docker_util.py] [INFO]: Progress (1): 21/58 kB
+[2026-04-11 09:50:32,879] [docker_util.py] [INFO]: Progress (1): 25/58 kB
+[2026-04-11 09:50:32,879] [docker_util.py] [INFO]: Progress (1): 29/58 kB
+[2026-04-11 09:50:32,879] [docker_util.py] [INFO]: Progress (1): 33/58 kB
+[2026-04-11 09:50:32,884] [docker_util.py] [INFO]: Progress (1): 37/58 kB
+[2026-04-11 09:50:32,884] [docker_util.py] [INFO]: Progress (1): 41/58 kB
+[2026-04-11 09:50:32,884] [docker_util.py] [INFO]: Progress (1): 45/58 kB
+[2026-04-11 09:50:32,884] [docker_util.py] [INFO]: Progress (1): 49/58 kB
+[2026-04-11 09:50:32,884] [docker_util.py] [INFO]: Progress (1): 53/58 kB
+[2026-04-11 09:50:32,884] [docker_util.py] [INFO]: Progress (1): 57/58 kBProgress (1): 58 kB
+[2026-04-11 09:50:32,898] [docker_util.py] [INFO]: Progress (2): 58 kB | 2.3/29 kB
+[2026-04-11 09:50:32,898] [docker_util.py] [INFO]: P
+[2026-04-11 09:50:32,898] [docker_util.py] [INFO]: rogress (2): 58 kB | 5.0/29 kB
+[2026-04-11 09:50:32,902] [docker_util.py] [INFO]: Progress (2): 58 kB | 7.7/29 k
+[2026-04-11 09:50:32,902] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:32,902] [docker_util.py] [INFO]: Progress (2):
+[2026-04-11 09:50:32,902] [docker_util.py] [INFO]: 58 kB | 10/29 kB
+[2026-04-11 09:50:32,902] [docker_util.py] [INFO]: Progress (2): 5
+[2026-04-11 09:50:32,902] [docker_util.py] [INFO]: 8 kB | 13/29 kB
+[2026-04-11 09:50:32,902] [docker_util.py] [INFO]: Progress (2):
+[2026-04-11 09:50:32,902] [docker_util.py] [INFO]: 58 kB | 16/29 kB
+[2026-04-11 09:50:32,902] [docker_util.py] [INFO]: Progress (2):
+[2026-04-11 09:50:32,903] [docker_util.py] [INFO]: 58 kB | 19/29 kB
+[2026-04-11 09:50:32,903] [docker_util.py] [INFO]: Progress (2):
+[2026-04-11 09:50:32,903] [docker_util.py] [INFO]: 58 kB | 21/29 kB
+[2026-04-11 09:50:32,903] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,903] [docker_util.py] [INFO]: Progress (2): 5
+[2026-04-11 09:50:32,903] [docker_util.py] [INFO]: 8 kB | 24/29 kB
+[2026-04-11 09:50:32,903] [docker_util.py] [INFO]: Progress (2):
+[2026-04-11 09:50:32,903] [docker_util.py] [INFO]: 58 kB | 27/29 kB
+[2026-04-11 09:50:32,907] [docker_util.py] [INFO]: Progress (2): 58 kB | 29 kB
+[2026-04-11 09:50:32,908] [docker_util.py] [INFO]: Progress (3): 58 kB | 29 kB | 3.8/194 kBProg
+[2026-04-11 09:50:32,908] [docker_util.py] [INFO]: ress (3
+[2026-04-11 09:50:32,908] [docker_util.py] [INFO]: ): 58 kB | 29
+[2026-04-11 09:50:32,908] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:32,908] [docker_util.py] [INFO]: | 7.8/194
+[2026-04-11 09:50:32,908] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:32,908] [docker_util.py] [INFO]: P
+[2026-04-11 09:50:32,909] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,909] [docker_util.py] [INFO]: ogr
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: s
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: s
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: (
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 3
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: )
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: :
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 5
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 8
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: k
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: |
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 2
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 9
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: k
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: |
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,910] [docker_util.py] [INFO]: 1
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: 2
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: /
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: 1
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: 9
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: 4
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: k
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: P
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: o
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: g
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: ss (3): 58 kB | 29 kB | 16/194 kB
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: P
+[2026-04-11 09:50:32,911] [docker_util.py] [INFO]: rogress (3): 58 kB | 29 kB | 20/194 kBProgress (3): 58 kB | 29 kB | 24/194 kB
+[2026-04-11 09:50:32,913] [docker_util.py] [INFO]: P
+[2026-04-11 09:50:32,913] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,913] [docker_util.py] [INFO]: o
+[2026-04-11 09:50:32,913] [docker_util.py] [INFO]: gres
+[2026-04-11 09:50:32,913] [docker_util.py] [INFO]: s
+[2026-04-11 09:50:32,913] [docker_util.py] [INFO]: (3): 58 kB | 29 kB | 28/194 kBProgress (3): 58 kB | 29 kB | 32/194 kBProgress (3): 58 kB | 29 kB | 37/194 kBProgress (3): 58 kB | 29 kB | 41/194 kBProgress (3): 58 kB | 29 kB | 45/194 kBProgress (3): 58 kB | 29 kB | 49/194 kBProgress (3): 58 kB | 29 kB | 53/194 kBProgress (3): 58 kB | 29 kB | 57/194 kB
+[2026-04-11 09:50:32,918] [docker_util.py] [INFO]: Progress (3): 58 kB | 29 kB | 61/194 kB
+[2026-04-11 09:50:32,920] [docker_util.py] [INFO]: Prog
+[2026-04-11 09:50:32,920] [docker_util.py] [INFO]: ress (3): 58 kB | 29 kB |
+[2026-04-11 09:50:32,920] [docker_util.py] [INFO]: 65/19
+[2026-04-11 09:50:32,920] [docker_util.py] [INFO]: 4 k
+[2026-04-11 09:50:32,920] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:32,920] [docker_util.py] [INFO]: Progress (3): 58 kB | 29 kB | 69/194 kB
+[2026-04-11 09:50:32,920] [docker_util.py] [INFO]: Progress (3): 58 kB | 29 kB | 73/19
+[2026-04-11 09:50:32,920] [docker_util.py] [INFO]: 4 k
+[2026-04-11 09:50:32,920] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:32,920] [docker_util.py] [INFO]: Progress (3): 58 kB | 29 kB | 77/194 kB
+[2026-04-11 09:50:32,920] [docker_util.py] [INFO]: Progress (3): 58 kB | 29
+[2026-04-11 09:50:32,920] [docker_util.py] [INFO]: kB | 82/194 kB
+[2026-04-11 09:50:32,922] [docker_util.py] [INFO]: Progress (3)
+[2026-04-11 09:50:32,922] [docker_util.py] [INFO]: : 58 kB | 29 kB | 86/194 kB
+[2026-04-11 09:50:32,922] [docker_util.py] [INFO]: Progress (3): 58 kB | 29 kB | 90/19
+[2026-04-11 09:50:32,922] [docker_util.py] [INFO]: 4 kB
+[2026-04-11 09:50:32,922] [docker_util.py] [INFO]: Progress (3): 58 kB | 29 kB | 94/194 k
+[2026-04-11 09:50:32,922] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:32,922] [docker_util.py] [INFO]: Progress (3): 58 kB | 29 kB | 98/19
+[2026-04-11 09:50:32,922] [docker_util.py] [INFO]: 4 kB
+[2026-04-11 09:50:32,922] [docker_util.py] [INFO]: Progress (3): 58 kB | 29 kB | 102/194
+[2026-04-11 09:50:32,922] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:32,922] [docker_util.py] [INFO]: Progress (3): 58 kB | 29 kB | 106/194 kB
+[2026-04-11 09:50:32,933] [docker_util.py] [INFO]: Progress (3): 58 kB | 29 kB | 110/194 kB
+[2026-04-11 09:50:32,938] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 110/194 kB | 3.4/160 kBProgress (4): 58 kB | 29 kB | 114/194 kB | 3.4/160 kBProgress (4): 58 kB | 29 kB | 118/194 kB | 3.4/160 kBProgress (4): 58 kB | 29 kB | 123/194 kB | 3.4/160 kBProgress (4): 58 kB | 29 kB | 127/194 kB | 3.4/160 kBProgress (4): 58 kB | 29 kB | 131/194 kB | 3.4/160 kBProgress (4): 58 kB | 29 kB | 135/194 kB | 3.4/160 kBProgress (4): 58 kB | 29 kB | 139/194 kB | 3.4/160 kBProgress (4): 58 kB | 29 kB | 139/194 kB | 7.5/160 kBProgress (4): 58 kB | 29 kB | 143/194 kB | 7.5/160 kBProgress (4): 58 kB | 29 kB | 147/194 kB | 7.5/160 kBProgress (4): 58 kB | 29 kB | 151/194 kB | 7.5/160 kBProgress (4): 58 kB | 29 kB | 155/194 kB | 7.5/160 kBProgress (4): 58 kB | 29 kB | 155/194 kB | 12/160 kB Progress (4): 58 kB | 29 kB | 155/194 kB | 16/160 kBProgress (4): 58 kB | 29 kB | 155/194 kB | 20/160 kBProgress (4): 58 kB | 29 kB | 159/194 kB | 20/160 kBProgress (4): 58 kB | 29 kB | 159/194 kB | 24/160 kBProgress (4): 58 kB
+[2026-04-11 09:50:32,938] [docker_util.py] [INFO]: | 29 kB | 159/
+[2026-04-11 09:50:32,938] [docker_util.py] [INFO]: 194 k
+[2026-04-11 09:50:32,939] [docker_util.py] [INFO]: B | 28/160 kBProgress (4): 58 kB | 29 kB | 159/194 kB | 32/160 kB
+[2026-04-11 09:50:32,940] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 159/194 kB | 36/160 kBProgress (4): 58 kB | 29 kB | 163/194 kB | 36/160 kBProgress (4): 58 kB | 29 kB | 168/194 kB | 36/160 kBProgress (4): 58 kB | 29 kB | 172/194 kB | 36/160 kBProgress (4): 58 kB | 29 kB | 172/194 kB | 40/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 40/160 kBPr
+[2026-04-11 09:50:32,941] [docker_util.py] [INFO]: ogress (4): 58 kB | 29 kB | 176/194 kB | 44/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 48/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 53/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 57/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 61/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 65/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 69/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 71/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 75/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 79/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 83/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 87/160 kB
+[2026-04-11 09:50:32,941] [docker_util.py] [INFO]: Progress (4): 58 k
+[2026-04-11 09:50:32,942] [docker_util.py] [INFO]: B | 2
+[2026-04-11 09:50:32,944] [docker_util.py] [INFO]: 9 kB | 176/194 kB | 92/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 96/160 kB
+[2026-04-11 09:50:32,944] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 176/194 kB | 100/160 kB
+[2026-04-11 09:50:32,944] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 176/194 kB | 104/160 kBProgress (4): 58 kB | 29
+[2026-04-11 09:50:32,945] [docker_util.py] [INFO]: kB | 176/194 kB | 108/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 112/160 kB
+[2026-04-11 09:50:32,945] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 176/194 kB | 116/160 kB
+[2026-04-11 09:50:32,945] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 176/194 kB | 120/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 124/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 128/160 kB
+[2026-04-11 09:50:32,945] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 176/194 kB | 132/160 kB
+[2026-04-11 09:50:32,949] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 176/194 kB | 137/160 kB
+[2026-04-11 09:50:32,949] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 176/194 kB | 141/160 kBProgress (4): 58 kB | 29 kB | 176/194 kB | 145/160 kB
+[2026-04-11 09:50:32,949] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 176/194 kB | 149/160 kB
+[2026-04-11 09:50:32,949] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 176/194 kB | 153/160 kB
+[2026-04-11 09:50:32,949] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 176/194 kB | 157/160 kB
+[2026-04-11 09:50:32,949] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 176/194 kB | 160 kB
+[2026-04-11 09:50:32,950] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 180/194 kB | 160 kB
+[2026-04-11 09:50:32,950] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 184/194 kB | 160 kB
+[2026-04-11 09:50:32,950] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 188/194 kB
+[2026-04-11 09:50:32,950] [docker_util.py] [INFO]: | 160 kB
+[2026-04-11 09:50:32,950] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 192/194 kB | 160 kB
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: Progress (4): 58 kB | 29 kB | 194 kB | 160 kB
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,951] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: Do
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: wn
+[2026-04-11 09:50:32,952] [docker_util.py] [INFO]: l
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: o
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: d
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: d
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: f
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: ro
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: m
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: c
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: en
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: tr
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: l:
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: h
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: t
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: t
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: ps
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: :/
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: /
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: re
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: po
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: .
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: ma
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: ven
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: .a
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: pa
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: c
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: h
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: .
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: o
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: g/
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: m
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: v
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: n
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: 2
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: /
+[2026-04-11 09:50:32,953] [docker_util.py] [INFO]: o
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: g/a
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: pa
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: che
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: /m
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: av
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: n
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: /
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: m
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: ve
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: n
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: -a
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: rt
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: i
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: f
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: c
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: t
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: -m
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: n
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: g
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: /2.
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: 0
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: .9
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: /m
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: v
+[2026-04-11 09:50:32,954] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: n
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: -
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: rti
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: fa
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: ct
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: -
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: ma
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: na
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: g
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: -2.
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: 0.
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: 9.j
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: (
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: 5
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: 8
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: at
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: 48 k
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: B/s)
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: Do
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: w
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: n
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: lo
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: d
+[2026-04-11 09:50:32,955] [docker_util.py] [INFO]: in
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: g
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: f
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: om
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: ce
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: n
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: tr
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: l
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: :
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: h
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: tt
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: p
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: s:
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: /
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: /r
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: po
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: .
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: maven
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: .
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: p
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: ac
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: h
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: e.
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: o
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: rg
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: /
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: ma
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: v
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: en
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: 2
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: /o
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: g
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: /a
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: p
+[2026-04-11 09:50:32,956] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: ch
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: /m
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: ve
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: n
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: /
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: ma
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: v
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: en
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: -
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: pl
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: u
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: g
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: in
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: -
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: pa
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: am
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: et
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: r-
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: d
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: oc
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: u
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: me
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: n
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: te
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: /
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: 2.
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: 0
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: .9
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: /
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: m
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: av
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: n-
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: p
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: lu
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: g
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: in
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: -p
+[2026-04-11 09:50:32,957] [docker_util.py] [INFO]: ar
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: a
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: m
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: et
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: er
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: -
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: d
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: oc
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: u
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: m
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: nt
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: e
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: r-
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: 2
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: .0
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: .
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: 9.
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: j
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: ar
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: Downloaded from central: http
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: s://repo.maven.apache.org/maven2/org/apache/
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: maven/maven-plugin-re
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: gistry/2.0.9/maven-plugin-registry-2.0.9.j
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: ar
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: (29
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: k
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: at
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: 2
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: 4
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: /s
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: )
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,958] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/reporting/maven-reporting-api/2.0.9/maven-reporting-api-2.0.9.jar
+[2026-04-11 09:50:32,982] [docker_util.py] [INFO]: Download
+[2026-04-11 09:50:32,983] [docker_util.py] [INFO]: ed fr
+[2026-04-11 09:50:32,983] [docker_util.py] [INFO]: o
+[2026-04-11 09:50:32,983] [docker_util.py] [INFO]: m
+[2026-04-11 09:50:32,983] [docker_util.py] [INFO]: ce
+[2026-04-11 09:50:32,986] [docker_util.py] [INFO]: ntral: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-container-default/1.0-alpha-9-stable-1/plexus-container-default-1.0-alpha-9-stable-1.jar (194 kB at 158 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/doxia/doxia-sink-api/1.0-alpha-10/doxia-sink-api-1.0-alpha-10.jar
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-core/2.0.9/maven-core-2.0.9.jar (160 kB at 129 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-repository-metadata/2.0.9/maven-repository-metadata-2.0.9.jar
+[2026-04-11 09:50:32,996] [docker_util.py] [INFO]: Progress (1): 2.3/21 kBProgress (1): 5.0/21 kBProgress (1): 7.7/21 kBProgress (1): 12/21 kB Progress (1): 16/21 kBProgress (1): 20/21 kBProgress (1): 21 kB
+[2026-04-11 09:50:32,998] [docker_util.py] [INFO]: Progress (2): 21 kB | 4.1/10 kB
+[2026-04-11 09:50:32,998] [docker_util.py] [INFO]: Progress (2): 21 kB | 7.7/10 kB
+[2026-04-11 09:50:32,998] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:32,998] [docker_util.py] [INFO]: Progress (2): 21 kB | 10 kB
+[2026-04-11 09:50:33,019] [docker_util.py] [INFO]: Progress (3): 21 kB | 10 kB | 4.1/9.9 kBProgress (3): 21 kB | 10 kB | 7.7/9.9 kBProgress (3): 21 kB | 10 kB | 9.9 kB
+[2026-04-11 09:50:33,021] [docker_util.py] [INFO]: Progress (4): 21 kB | 10 kB | 9.9 kB | 3.8/25 kBProgress (4): 21 kB | 10 kB | 9.9 kB | 7.8/25 kBProgress (4): 21 kB | 10 kB | 9.9 kB | 12/25 k
+[2026-04-11 09:50:33,021] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:33,021] [docker_util.py] [INFO]: Progress (4): 21 kB | 10 kB | 9.9 kB | 16/25 kB
+[2026-04-11 09:50:33,024] [docker_util.py] [INFO]: Progress (4): 21 kB | 10 kB | 9.9 kB | 20/25 kBProgress (4): 21 kB | 10 kB | 9.9 kB | 24/25 kBProgress (4): 21 kB | 10 kB | 9.9 kB | 25 kB
+[2026-04-11 09:50:33,024] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,024] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/o
+[2026-04-11 09:50:33,024] [docker_util.py] [INFO]: rg/apache/maven/maven-plugin-parameter-
+[2026-04-11 09:50:33,024] [docker_util.py] [INFO]: documenter/2.0.9/maven-plugin-parameter-documenter-2.0.9.jar (21 kB at 16 kB/s)
+[2026-04-11 09:50:33,024] [docker_util.py] [INFO]: Downloading from central: https://repo
+[2026-04-11 09:50:33,024] [docker_util.py] [INFO]: .
+[2026-04-11 09:50:33,025] [docker_util.py] [INFO]: maven.apache.org/maven2/org/apache/maven/maven-error-diagnostics/2.0.9/maven-error-diagnostics-2.0.9.jar
+[2026-04-11 09:50:33,045] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/doxia/doxia-sink-api/1.0-alpha-10/doxia-sink-api-1.0-alpha-10.jar (9.9 kB at 7.7 kB/s)
+[2026-04-11 09:50:33,046] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/commons-cli/commons-cli/1.0/commons-cli-1.0.jar
+[2026-04-11 09:50:33,050] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/reporting/maven-reporting-api/2.0.9/maven-reporting-api-2.0.9.jar (10 kB at 7.8 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-descriptor/2.0.9/maven-plugin-descriptor-2.0.9.jar
+[2026-04-11 09:50:33,065] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-repository-metadata/2.0.9/maven-repository-metadata-2.0.9.jar (25 kB at 19 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interactivity-api/1.0-alpha-4/plexus-interactivity-api-1.0-alpha-4.jar
+[2026-04-11 09:50:33,069] [docker_util.py] [INFO]: Progress (1): 3.8/14 kB
+[2026-04-11 09:50:33,069] [docker_util.py] [INFO]: Progress (1): 7.8/14 kB
+[2026-04-11 09:50:33,069] [docker_util.py] [INFO]: Progress (1): 12/14 kB
+[2026-04-11 09:50:33,069] [docker_util.py] [INFO]: Progress (1): 14 kB
+[2026-04-11 09:50:33,076] [docker_util.py] [INFO]: Progress (2): 14 kB | 4.1/30 kBProgress (2): 14 kB | 7.
+[2026-04-11 09:50:33,076] [docker_util.py] [INFO]: 7/30 kB
+[2026-04-11 09:50:33,076] [docker_util.py] [INFO]: Progress (2): 14 kB | 12/30 kB
+[2026-04-11 09:50:33,076] [docker_util.py] [INFO]: P
+[2026-04-11 09:50:33,076] [docker_util.py] [INFO]: rogress (2): 14 kB | 16/30 kB
+[2026-04-11 09:50:33,076] [docker_util.py] [INFO]: Progress (2): 14 kB | 20/30 kBProgress (2): 14 kB | 24/30 kBProgress (2): 14 kB | 28/30 kB
+[2026-04-11 09:50:33,076] [docker_util.py] [INFO]: Progress (2): 14 kB | 30 kB
+[2026-04-11 09:50:33,083] [docker_util.py] [INFO]: Progress (3): 14 kB | 30 kB | 4.1/37 kB
+[2026-04-11 09:50:33,083] [docker_util.py] [INFO]: Progress (3): 14 kB | 30 kB | 7.7/37 kB
+[2026-04-11 09:50:33,084] [docker_util.py] [INFO]: Progress (3): 14 kB | 30 kB | 12/37 kB Progress (3): 14 kB |
+[2026-04-11 09:50:33,084] [docker_util.py] [INFO]: 30 kB | 16/37 kB
+[2026-04-11 09:50:33,085] [docker_util.py] [INFO]: Progress (3): 14 kB | 30 kB | 20/37 kB
+[2026-04-11 09:50:33,085] [docker_util.py] [INFO]: Progress (3): 14 kB | 30 kB | 24/37 kB
+[2026-04-11 09:50:33,085] [docker_util.py] [INFO]: Progress (3): 14 kB | 30 kB | 28/37 kB
+[2026-04-11 09:50:33,085] [docker_util.py] [INFO]: Progress (3): 14 kB | 30 kB | 32/37 kB
+[2026-04-11 09:50:33,086] [docker_util.py] [INFO]: Progress (3): 14 kB | 30 kB | 36/37 kBProgress (3): 14 kB | 30 kB | 37 kB
+[2026-04-11 09:50:33,096] [docker_util.py] [INFO]: Progress (4): 14 kB | 30 kB | 37 kB | 3.8/13 kBProgress (4): 14 kB | 30 kB | 37 kB | 7.5/13 kBProgress (4): 14 kB | 30 kB | 37 kB | 12/13 kB
+[2026-04-11 09:50:33,096] [docker_util.py] [INFO]: Progress (4): 14 kB | 30 kB | 37 kB | 13 kB
+[2026-04-11 09:50:33,102] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.
+[2026-04-11 09:50:33,102] [docker_util.py] [INFO]: apache.org/maven2/org/apache/maven/maven-error-diagnostics/2.0.9/maven-error-diagnostics-2.0.9.jar (14 kB at 10 kB/s)
+[2026-04-11 09:50:33,102] [docker_util.py] [INFO]: Downloading from central: htt
+[2026-04-11 09:50:33,102] [docker_util.py] [INFO]: p
+[2026-04-11 09:50:33,102] [docker_util.py] [INFO]: s://repo.maven.apache.org/maven2/org/apache/maven/maven-monitor/2.0.9/maven-monitor-2.0.9.jar
+[2026-04-11 09:50:33,103] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/commons-cli/commons-cli/1.0/commons-cli-1.0.jar (30 kB at 22 kB/s)
+Downloading from central: https://repo.maven.a
+[2026-04-11 09:50:33,103] [docker_util.py] [INFO]: pache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar
+[2026-04-11 09:50:33,110] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-plugin-descriptor/2.0.9/maven-plugin-descriptor-2.0.9.jar (37 kB at 27 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/1.5.8/plexus-utils-1.5.8.jar
+[2026-04-11 09:50:33,126] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-interactivity-api/1.0-alpha-4/plexus-interactivity-api-1.0-alpha-4.jar (13 kB at 9.8 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/commons-lang/commons-lang/
+[2026-04-11 09:50:33,126] [docker_util.py] [INFO]: 2.3/com
+[2026-04-11 09:50:33,126] [docker_util.py] [INFO]: mo
+[2026-04-11 09:50:33,126] [docker_util.py] [INFO]: ns
+[2026-04-11 09:50:33,126] [docker_util.py] [INFO]: -
+[2026-04-11 09:50:33,126] [docker_util.py] [INFO]: l
+[2026-04-11 09:50:33,127] [docker_util.py] [INFO]: an
+[2026-04-11 09:50:33,127] [docker_util.py] [INFO]: g
+[2026-04-11 09:50:33,127] [docker_util.py] [INFO]: -
+[2026-04-11 09:50:33,127] [docker_util.py] [INFO]: 2.3
+[2026-04-11 09:50:33,127] [docker_util.py] [INFO]: .
+[2026-04-11 09:50:33,127] [docker_util.py] [INFO]: jar
+[2026-04-11 09:50:33,127] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,129] [docker_util.py] [INFO]: P
+[2026-04-11 09:50:33,129] [docker_util.py] [INFO]: rogress (1): 4.1/10 kB
+[2026-04-11 09:50:33,129] [docker_util.py] [INFO]: Progress (1): 7.7/10 kB
+[2026-04-11 09:50:33,131] [docker_util.py] [INFO]: Progress (1): 10 kB
+[2026-04-11 09:50:33,144] [docker_util.py] [INFO]: Progress (2): 10 kB | 3.8/38 kBPr
+[2026-04-11 09:50:33,147] [docker_util.py] [INFO]: ogress (2): 10 kB | 7.8/38 kBProgress (2): 10 kB | 12/38 kB Progress (2): 10 kB | 16/38 kBProgress (2): 10 kB | 20/38 kBProgress (2): 10 kB | 24/38 kBProgress (2): 10 kB | 28/38 kBProgress (2): 10 kB | 32/38 kBProgress (2): 10 kB | 37/38 kBProgress (2): 10 kB | 38 kB   Progress (3): 10 kB | 38 kB | 4.1/268 kBProgress (3): 10 kB | 38 kB | 7.4/268 kB
+[2026-04-11 09:50:33,148] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 12/268 kB Progress (3): 10 kB | 38 kB |
+[2026-04-11 09:50:33,148] [docker_util.py] [INFO]: 16/268 kB
+[2026-04-11 09:50:33,148] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 20/268 kB
+[2026-04-11 09:50:33,148] [docker_util.py] [INFO]: P
+[2026-04-11 09:50:33,148] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:33,148] [docker_util.py] [INFO]: ogress (3): 10 kB | 38 kB | 24/268 k
+[2026-04-11 09:50:33,148] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:33,153] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 28/268 kBProgress (3): 10 kB | 38 kB | 32/268 kBProgress (3): 10 kB | 38 kB | 36/268 kBProgress (3): 10 kB | 38 kB | 40/268 kBProgress (3): 10 kB | 38 kB | 44/268 kBProgress (3): 10 kB | 38 kB | 48/268 kBProgress (3): 10 kB | 38 kB | 53/268 kBProgress (3): 10 kB | 38 kB | 57/268 kBProgress (3): 10 kB | 38 kB | 61/268 kBProgress (3): 10 kB | 38 kB | 65/268 kB
+[2026-04-11 09:50:33,164] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 69/268 kBProgress (3): 10 kB | 38 kB | 73/268 kBProgress (3): 10 kB | 38 kB | 77/268 kBProgress (3): 10 kB | 38 kB | 81/268 kBProgress (3): 10 kB | 38 kB | 85/268 kBProgress (3): 10 kB | 38 kB | 89/268 kBProgress (3): 10 kB | 38 kB | 93/268 kBProgress (3): 10 kB | 38 kB | 98/268 kB
+[2026-04-11 09:50:33,168] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 102/268 kBProgress (3): 10 kB | 38 kB | 106/268 kBProgress (3): 10 kB | 38 kB | 110/268 kBProgress (3): 10 kB | 38 kB | 114/268 kB
+[2026-04-11 09:50:33,168] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 118/268 k
+[2026-04-11 09:50:33,168] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:33,168] [docker_util.py] [INFO]: Progress (
+[2026-04-11 09:50:33,168] [docker_util.py] [INFO]: 3): 10 kB | 38 kB | 122/268 kB
+[2026-04-11 09:50:33,168] [docker_util.py] [INFO]: Progress
+[2026-04-11 09:50:33,169] [docker_util.py] [INFO]: (3): 10 kB | 38 kB | 126/268 kBProgress (3): 10 kB | 38 kB | 130/268 kB
+[2026-04-11 09:50:33,170] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 134
+[2026-04-11 09:50:33,170] [docker_util.py] [INFO]: /268 kB
+[2026-04-11 09:50:33,170] [docker_util.py] [INFO]: Progress (3): 10 kB | 38
+[2026-04-11 09:50:33,170] [docker_util.py] [INFO]: kB | 139/268 kB
+[2026-04-11 09:50:33,170] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 143/268 kB
+[2026-04-11 09:50:33,171] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 147/268 kB
+[2026-04-11 09:50:33,172] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 151/268 kBProgress (3): 10 kB | 38 kB | 155/268 kBProgress (3): 10 kB | 38 kB | 159/268 kBProgress (3): 10 kB | 38 kB | 163/268 kB
+[2026-04-11 09:50:33,173] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 167/268 kBProgress (3): 10 kB | 38 kB | 171/268 kBProgress (3): 10 kB | 38 kB | 175/268 kBProgress (3): 10 kB | 38 kB | 179/268 kB
+[2026-04-11 09:50:33,173] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 184/268 kBProgress (3): 10 kB | 38 kB | 188/268 kBProgress (3): 10 kB | 38 kB | 192/268 kB
+[2026-04-11 09:50:33,173] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 196/268 kB
+[2026-04-11 09:50:33,176] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 200/268 kB
+[2026-04-11 09:50:33,177] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 204/268 kB
+[2026-04-11 09:50:33,177] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 208/268 kBProgress (3): 10 kB | 38 kB | 212/268 kB
+[2026-04-11 09:50:33,179] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 216/268 kBProgress (3): 10 kB | 38 kB | 220/268 kB
+[2026-04-11 09:50:33,179] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 225/268 kB
+[2026-04-11 09:50:33,179] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 22
+[2026-04-11 09:50:33,179] [docker_util.py] [INFO]: 9/268 kB
+[2026-04-11 09:50:33,180] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 233/268 kB
+[2026-04-11 09:50:33,180] [docker_util.py] [INFO]: Progress (3)
+[2026-04-11 09:50:33,180] [docker_util.py] [INFO]: : 10 kB | 38 kB
+[2026-04-11 09:50:33,180] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,180] [docker_util.py] [INFO]: |
+[2026-04-11 09:50:33,180] [docker_util.py] [INFO]: 237/268 kB
+[2026-04-11 09:50:33,180] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 241/268 kB
+[2026-04-11 09:50:33,180] [docker_util.py] [INFO]: Progress (3): 10 kB
+[2026-04-11 09:50:33,180] [docker_util.py] [INFO]: | 38 kB | 245/268 kB
+[2026-04-11 09:50:33,184] [docker_util.py] [INFO]: Progress (3): 10 kB | 38 kB | 249/268 kBProgress (3): 10 kB | 38 kB | 253/268 kBProgress (3): 10 kB | 38 kB | 257/268 kBProgress (3): 10 kB | 38 kB | 261/268 kB
+[2026-04-11 09:50:33,185] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB
+[2026-04-11 09:50:33,185] [docker_util.py] [INFO]: | 261/268 kB |
+[2026-04-11 09:50:33,185] [docker_util.py] [INFO]: 3.
+[2026-04-11 09:50:33,185] [docker_util.py] [INFO]: 8
+[2026-04-11 09:50:33,185] [docker_util.py] [INFO]: /2
+[2026-04-11 09:50:33,185] [docker_util.py] [INFO]: 4
+[2026-04-11 09:50:33,185] [docker_util.py] [INFO]: 5
+[2026-04-11 09:50:33,185] [docker_util.py] [INFO]: k
+[2026-04-11 09:50:33,185] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:33,185] [docker_util.py] [INFO]: Progre
+[2026-04-11 09:50:33,185] [docker_util.py] [INFO]: ss
+[2026-04-11 09:50:33,185] [docker_util.py] [INFO]: (4): 10
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: kB | 38
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: k
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: |
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 26
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 1/268
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: kB | 7.8/245 kB
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: Progress (4): 10 kB
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: | 38 k
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: |
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 2
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 61/
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 2
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 6
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 8 k
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: B |
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 12
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: /24
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 5 k
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: Pro
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: gr
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: ess
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: (4)
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: :
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 1
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: 0
+[2026-04-11 09:50:33,186] [docker_util.py] [INFO]: k
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: |
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 38 kB | 26
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 1/
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 268
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: k
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: | 1
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 6
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: /24
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 5
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: k
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: Pro
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: gre
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: s
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: s
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: (4
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: ):
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 10
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: kB | 38 kB | 26
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 1/268 kB |
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 2
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 0/
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 24
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: 5
+[2026-04-11 09:50:33,187] [docker_util.py] [INFO]: k
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 265/268 kB | 20/245 kB
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: Progress
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: (4): 10 kB | 38 kB | 268 kB | 20/
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: 245 kB
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: Progress (
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: 4): 10
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: |
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: 38
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: k
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: |
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: 2
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: 6
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: 8
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: k
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: |
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,188] [docker_util.py] [INFO]: 24/245 kBProgress (4): 10 kB
+[2026-04-11 09:50:33,189] [docker_util.py] [INFO]: | 38 k
+[2026-04-11 09:50:33,189] [docker_util.py] [INFO]: B | 268 kB | 28/245 kBProgress (4): 10 kB | 38 kB | 268 kB | 32/245
+[2026-04-11 09:50:33,189] [docker_util.py] [INFO]: kBProgress (4): 10 kB | 38 kB | 268 kB | 37/245 kB
+[2026-04-11 09:50:33,189] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 41/245 kB
+[2026-04-11 09:50:33,189] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 45/245 kB
+[2026-04-11 09:50:33,189] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 49/245 kB
+[2026-04-11 09:50:33,189] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 53/245 kB
+[2026-04-11 09:50:33,189] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 57/245 kB
+[2026-04-11 09:50:33,189] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 61/245 kB
+[2026-04-11 09:50:33,189] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 65/245 kB
+[2026-04-11 09:50:33,189] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 69/245 kB
+[2026-04-11 09:50:33,191] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 73/245 kB
+[2026-04-11 09:50:33,191] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 77/245 kB
+[2026-04-11 09:50:33,192] [docker_util.py] [INFO]: P
+[2026-04-11 09:50:33,192] [docker_util.py] [INFO]: rogress (4): 10 kB | 38 kB | 268 kB | 80/245 kBProgress (4): 10 kB | 38 kB | 268 kB | 84/245 kBProgress (4): 10 kB | 38 kB | 268 kB | 88/245 kB
+[2026-04-11 09:50:33,197] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 92/245 kBProgress (4): 10 kB | 38 kB | 268 kB | 96/245 kBProgress (4): 10 kB | 38 kB | 268 kB | 100/245 kBProgress (4): 10 kB | 38 kB | 268 kB | 104/245 kBProgress (4): 10 kB | 38 kB | 268 kB | 108/245 kBProgress (4): 10 kB | 38 kB | 268 kB | 112/245 kBProgress (4): 10 kB | 38 kB | 268 kB | 116/245 kBProgress (4): 10 kB | 38 kB | 268 kB | 121/245 kB
+[2026-04-11 09:50:33,204] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 125/245 kBProgress (4): 10 kB
+[2026-04-11 09:50:33,204] [docker_util.py] [INFO]: | 38 kB | 268 k
+[2026-04-11 09:50:33,204] [docker_util.py] [INFO]: B | 12
+[2026-04-11 09:50:33,204] [docker_util.py] [INFO]: 9/2
+[2026-04-11 09:50:33,204] [docker_util.py] [INFO]: 45
+[2026-04-11 09:50:33,204] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:33,204] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,204] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 133/245 kB
+[2026-04-11 09:50:33,205] [docker_util.py] [INFO]: Progress (4): 10 kB | 38 kB | 268 kB | 137/245
+[2026-04-11 09:50:33,205] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:33,206] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-monitor/2.0.9/maven-monitor-2.0.9.jar (10 kB at 7.1 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/enforcer/enforcer-api/1.0/enforcer-api-1.0.jar
+Progress (3): 38 kB | 268 kB | 141/245 kBProgress (3): 38 kB | 268 kB | 145/245 kBProgress (3): 38 kB | 268 kB | 149/245 kBProgress (3): 38 kB | 268 kB | 153/245 kB
+[2026-04-11 09:50:33,206] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,206] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/classworlds/classworlds/1.1/classworlds-1.1.jar (38 kB at 26 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/enforcer/enforcer-rules/1.0/enforcer-rules-1.0.jar
+[2026-04-11 09:50:33,206] [docker_util.py] [INFO]: Progress (2): 268 kB | 156/245 kB
+[2026-04-11 09:50:33,207] [docker_util.py] [INFO]: P
+[2026-04-11 09:50:33,207] [docker_util.py] [INFO]: rogress (2): 268 kB | 160/245 kBProgress (2): 268 kB | 164/245 kBProgress (2): 268 kB | 168/245 kBProgress (2): 268 kB | 172/245 kB
+[2026-04-11 09:50:33,217] [docker_util.py] [INFO]: Progress (2): 268 kB | 176/245 kB
+[2026-04-11 09:50:33,217] [docker_util.py] [INFO]: Progress (2): 268 kB | 180/245 kB
+[2026-04-11 09:50:33,217] [docker_util.py] [INFO]: Progress (2): 268 kB | 184/245 kB
+[2026-04-11 09:50:33,217] [docker_util.py] [INFO]: Progress (2): 268 kB | 188/245 kB
+[2026-04-11 09:50:33,218] [docker_util.py] [INFO]: Progress (2): 268 kB | 193/245 kB
+[2026-04-11 09:50:33,218] [docker_util.py] [INFO]: Progress (2): 268 kB | 197/245 kB
+[2026-04-11 09:50:33,220] [docker_util.py] [INFO]: Progress (2): 268 kB | 201/245 kBProgress (2): 268 kB | 205/245 kBProgress (2): 268 kB | 209/245 kBProgress (2): 268 kB | 213/245 kBProgress (2): 268 kB | 217/245 kBProgress (2): 268 kB | 221/245 kB
+[2026-04-11 09:50:33,221] [docker_util.py] [INFO]: Progress (2): 268 kB
+[2026-04-11 09:50:33,221] [docker_util.py] [INFO]: | 225/245 kBProgress (2): 268 kB |
+[2026-04-11 09:50:33,221] [docker_util.py] [INFO]: 229/245
+[2026-04-11 09:50:33,221] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:33,221] [docker_util.py] [INFO]: Progress (2): 268 kB | 233/245 kB
+[2026-04-11 09:50:33,221] [docker_util.py] [INFO]: Progress (2): 268 kB | 238/245 kB
+[2026-04-11 09:50:33,226] [docker_util.py] [INFO]: Progress (2): 268 kB | 242/245 kBProgress (2):
+[2026-04-11 09:50:33,226] [docker_util.py] [INFO]: 268 kB | 245 kB
+[2026-04-11 09:50:33,227] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-utils/1.5.8/plexus-utils-1.5.8.jar (268 kB at 181 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-common-artifact-filters/1.2/maven-common-artifact-fil
+[2026-04-11 09:50:33,227] [docker_util.py] [INFO]: t
+[2026-04-11 09:50:33,227] [docker_util.py] [INFO]: ers-1.2.jar
+[2026-04-11 09:50:33,227] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,237] [docker_util.py] [INFO]: Progress (2): 245 kB | 4.1/9.8 kB
+[2026-04-11 09:50:33,237] [docker_util.py] [INFO]: Progress (2): 245 kB | 7.7/9.8 kB
+[2026-04-11 09:50:33,237] [docker_util.py] [INFO]: Progress (2): 245 kB | 9.8 kB
+[2026-04-11 09:50:33,244] [docker_util.py] [INFO]: Progress (3): 245 kB | 9.8 kB | 3.8/61 kBProgress (3): 245 kB | 9.8 kB | 7.8/61 kB
+[2026-04-11 09:50:33,248] [docker_util.py] [INFO]: Progress (3): 245 kB | 9.8 kB | 12/61 kB Progress (3): 245 kB | 9.8 kB | 16/61 kBProgress (3): 245 kB | 9.8 kB | 20/61 kBProgress (3): 245 kB | 9.8 kB | 24/61 kB
+[2026-04-11 09:50:33,248] [docker_util.py] [INFO]: Progress (3): 245 kB | 9.8 kB | 28/61 kBProgress (3): 245 kB | 9.8 kB | 32/61 kB
+[2026-04-11 09:50:33,248] [docker_util.py] [INFO]: Progress (3): 245 kB | 9.8 kB
+[2026-04-11 09:50:33,248] [docker_util.py] [INFO]: | 37/61 kB
+[2026-04-11 09:50:33,248] [docker_util.py] [INFO]: Progress (3): 245 kB | 9.8 kB | 41/61 kB
+[2026-04-11 09:50:33,252] [docker_util.py] [INFO]: Progress (3): 245 kB | 9.8 kB | 45/61 kBProgress (3): 245 kB | 9.8 kB | 49/61 kBProgress (3): 245 kB | 9.8 kB | 53/61 kBProgress (3): 245 kB | 9.8 kB | 57/61 kBProgress (3): 245 kB | 9.8 kB | 61 kB
+[2026-04-11 09:50:33,270] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/enforcer/enforcer-api/1.0/enforcer-
+[2026-04-11 09:50:33,271] [docker_util.py] [INFO]: api-1.0.jar (9.8 kB at 6.4 kB/s)
+[2026-04-11 09:50:33,271] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/o
+[2026-04-11 09:50:33,271] [docker_util.py] [INFO]: rg/beanshell/bsh/2
+[2026-04-11 09:50:33,271] [docker_util.py] [INFO]: .0b4/bsh
+[2026-04-11 09:50:33,271] [docker_util.py] [INFO]: -2.0b4.ja
+[2026-04-11 09:50:33,271] [docker_util.py] [INFO]: r
+[2026-04-11 09:50:33,275] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/commons-lang/commons-lang/2.3/commons-lang-2.3.jar (245 kB at 161 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-dependency-tree/1.2/maven-dependency-tree-1.2.jar
+[2026-04-11 09:50:33,280] [docker_util.py] [INFO]: Progress (2): 61 kB | 3.4/32 kB
+[2026-04-11 09:50:33,281] [docker_util.py] [INFO]: Progress (2): 61 kB | 7.5/32 kBProgress (2): 61 kB | 12/32 kB Progress (2): 61 kB | 16/32 kBProgress (2): 61 kB | 20/32 kB
+[2026-04-11 09:50:33,283] [docker_util.py] [INFO]: Progress (2): 61 kB | 24/32 kBProgress (2): 61 kB | 28/32 kBProgress (2): 61 kB | 32 kB
+[2026-04-11 09:50:33,285] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/enforcer/enforcer-rules/1.0/enforcer-rules-1.0.jar (61 kB at 40 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-i18n/1.0-beta-6/plexus-i18n-1.0-beta-6.jar
+[2026-04-11 09:50:33,298] [docker_util.py] [INFO]: Progress (2): 32 kB | 4.1/282 kBProgress (2): 32 kB | 7.7/282 kBProgress (2): 32 kB | 12/282 kB Progress (2): 32 kB | 16/282 kB
+[2026-04-11 09:50:33,298] [docker_util.py] [INFO]: Progress (2): 32 kB | 20/282 kB
+[2026-04-11 09:50:33,298] [docker_util.py] [INFO]: Progress (2): 32 kB | 2
+[2026-04-11 09:50:33,298] [docker_util.py] [INFO]: 4/282 kB
+[2026-04-11 09:50:33,300] [docker_util.py] [INFO]: Progress (2): 32 kB | 28/282 kB
+[2026-04-11 09:50:33,301] [docker_util.py] [INFO]: Progress (2): 32 kB | 32/282 kBProgress (2): 32 kB | 36/282 kB
+[2026-04-11 09:50:33,301] [docker_util.py] [INFO]: Progress (2): 32 kB | 40/282 kB
+[2026-04-11 09:50:33,302] [docker_util.py] [INFO]: Progress (2): 32 kB | 45/282 kBProgress (2): 32 kB | 49/282 kBProgress (2): 32 kB | 53/282 kBProgress (2): 32 kB | 57/282 kB
+[2026-04-11 09:50:33,304] [docker_util.py] [INFO]: Progress (2): 32 kB | 61/282 kBProgress (2): 32 kB | 65/282 kBProgress (2): 32 kB | 69/282 kBProgress (2): 32 kB | 73/282 kB
+[2026-04-11 09:50:33,306] [docker_util.py] [INFO]: Progress (2): 32 kB | 77/282 kBProgress (2): 32 kB | 81/282 kBProgress (2): 32 kB | 86/282 kBProgress (2): 32 kB | 90/282 kB
+[2026-04-11 09:50:33,308] [docker_util.py] [INFO]: Progress (2): 32 kB | 94/282 kBProgress (2): 32 kB | 98/282 kBProgress (2): 32 kB | 102/282 kBProgress (2): 32 kB | 106/282 kB
+[2026-04-11 09:50:33,310] [docker_util.py] [INFO]: Progress (2): 32 kB | 110/282 kBProgress (2): 32 kB | 114/282 kBProgress (2): 32 kB | 118/282 kB
+[2026-04-11 09:50:33,310] [docker_util.py] [INFO]: Progress (2): 32 kB | 122/282 kB
+[2026-04-11 09:50:33,313] [docker_util.py] [INFO]: Progress (2): 32 kB | 126/282 kB
+[2026-04-11 09:50:33,313] [docker_util.py] [INFO]: Progress (2): 32 kB | 131/282 kBProgress (2): 32 kB | 135/282
+[2026-04-11 09:50:33,313] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:33,313] [docker_util.py] [INFO]: Progress (2): 32 kB | 139/282 kB
+[2026-04-11 09:50:33,316] [docker_util.py] [INFO]: Progress (2): 32 kB | 143/282 kBProgress (2): 32 kB | 147/282 kBProgress (2): 32 kB | 151/282 kBProgress (2): 32 kB | 155/282 kB
+[2026-04-11 09:50:33,316] [docker_util.py] [INFO]: Progress (2): 32 kB | 159/282 kBProgress (2): 32 kB | 163/282 kBProgress (2): 32 kB | 167/282 kBProgress (2): 32 kB | 172/282 kB
+[2026-04-11 09:50:33,322] [docker_util.py] [INFO]: Progress (3): 32 kB | 172/282 kB | 4.1/35 kB
+[2026-04-11 09:50:33,322] [docker_util.py] [INFO]: Progress (3): 32 kB | 172/282 kB | 7.7/35 kB
+[2026-04-11 09:50:33,322] [docker_util.py] [INFO]: Progress (3): 32 kB | 172/282 kB | 12/35 kB
+[2026-04-11 09:50:33,325] [docker_util.py] [INFO]: Progress (3): 32 kB | 172/282 kB | 16/35 kBProgress (3): 32 kB | 172/282 kB | 20/35 kBProgress (3): 32 kB | 172/282 kB | 24/35 kB                                           Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-common-artifact-filters/1.2/maven-common-artifact-filters-1.2.jar (32 kB at 20 kB/s)
+Progress (3): 172/282 kB | 24/35 kB | 4.1/12 kBProgress (3): 172/282 kB | 28/35 kB | 4.1/12 kBProgress (3): 172/282 kB | 28/35 kB | 7.7/12 kBProgress (3): 172/282 kB | 32/35 kB | 7.7/12 kB
+[2026-04-11 09:50:33,325] [docker_util.py] [INFO]: Progress (3): 172/282 kB | 35 kB | 7.7/12 kB   Progress (3): 172/282 kB | 35 kB | 12/12 kB Progress (3): 172/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,337] [docker_util.py] [INFO]: Progress (3): 176/282 kB | 35 kB | 12 kBProgress (3): 180/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,337] [docker_util.py] [INFO]: Progress (3): 184/282 kB | 35 kB | 12 kBProgress (3): 188/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,338] [docker_util.py] [INFO]: Progress (3): 192/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,338] [docker_util.py] [INFO]: Progress (3): 196/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,339] [docker_util.py] [INFO]: Progress (3): 200/282 kB | 35 kB | 12 kBProgress (3): 204/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,342] [docker_util.py] [INFO]: Progress (3): 208/282 kB | 35 kB | 12 kBProgress (3): 213/282 kB | 35 kB | 12 kBProgress (3): 217/282 kB | 35 kB | 12 kBProgress (3): 221/282 kB | 35 kB | 12 kBProgress (3): 225/282 kB | 35 kB | 12 kBProgress (3): 229/282 kB | 35 kB | 12 kBProgress (3): 233/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,342] [docker_util.py] [INFO]: Progress (3): 237/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,345] [docker_util.py] [INFO]: Progress (3): 241/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,345] [docker_util.py] [INFO]: Progress (3): 245/282 kB | 35 kB | 12 kBProgress (3): 249/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,345] [docker_util.py] [INFO]: Progress (3): 253/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,346] [docker_util.py] [INFO]: Progress (3): 258/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,346] [docker_util.py] [INFO]: Progress (3): 262/282 kB | 35 kB | 12 kBProgress (3): 266/282 kB | 35 kB | 12 kBProgress (3): 270/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,348] [docker_util.py] [INFO]: Progress (3): 274/282 kB | 35 kB | 12 kB
+[2026-04-11 09:50:33,348] [docker_util.py] [INFO]: Progress (3): 278/282 kB | 35 kB | 12 kBProgress (3): 282 k
+[2026-04-11 09:50:33,348] [docker_util.py] [INFO]: B | 35 kB
+[2026-04-11 09:50:33,348] [docker_util.py] [INFO]: |
+[2026-04-11 09:50:33,348] [docker_util.py] [INFO]: 12
+[2026-04-11 09:50:33,348] [docker_util.py] [INFO]: kB
+[2026-04-11 09:50:33,348] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,348] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,348] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:33,353] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/plexus/plexus-i18n/1.0-beta-6/plexus-i18n-1.0-beta-6.jar (12 kB at 7.5 kB/s)
+[2026-04-11 09:50:33,355] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-dependency-tree/1.2/maven-dependency-tree-1.2.jar (35 kB at 22 kB/s)
+[2026-04-11 09:50:33,378] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/mave
+[2026-04-11 09:50:33,378] [docker_util.py] [INFO]: n2/org/beanshell/bsh/2.0b4/bsh-2.0b4.jar (282 kB at 173 kB/s)
+[2026-04-11 09:50:33,821] [docker_util.py] [INFO]: Progress (1): 2.3/35 kB
+[2026-04-11 09:50:33,822] [docker_util.py] [INFO]: Progress (1): 5.0/35 kB
+[2026-04-11 09:50:33,822] [docker_util.py] [INFO]: Progress (1): 7.7/35 kB
+[2026-04-11 09:50:33,823] [docker_util.py] [INFO]: Progress (1): 10/35 kB
+[2026-04-11 09:50:33,823] [docker_util.py] [INFO]: Progress (1): 13/35 kB
+[2026-04-11 09:50:33,823] [docker_util.py] [INFO]: Progress (1): 16/35 kB
+[2026-04-11 09:50:33,823] [docker_util.py] [INFO]: Progress
+[2026-04-11 09:50:33,823] [docker_util.py] [INFO]: (1): 19/35 kB
+[2026-04-11 09:50:33,824] [docker_util.py] [INFO]: Progress (1): 21/3
+[2026-04-11 09:50:33,824] [docker_util.py] [INFO]: 5 kB
+[2026-04-11 09:50:33,825] [docker_util.py] [INFO]: Progress (1):
+[2026-04-11 09:50:33,825] [docker_util.py] [INFO]: 24/35 kB
+[2026-04-11 09:50:33,825] [docker_util.py] [INFO]: Progress (1): 27/35 kB
+[2026-04-11 09:50:33,825] [docker_util.py] [INFO]: Progress (
+[2026-04-11 09:50:33,825] [docker_util.py] [INFO]: 1): 30/35 kB
+[2026-04-11 09:50:33,826] [docker_util.py] [INFO]: Progress (1
+[2026-04-11 09:50:33,826] [docker_util.py] [INFO]: ): 33/35 kB
+[2026-04-11 09:50:33,826] [docker_util.py] [INFO]: Progress (1): 35 kB
+[2026-04-11 09:50:33,880] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-profile/2.0.9/maven-profile-2.0.9.jar (35 kB at 17 kB/s)
+[2026-04-11 09:50:33,912] [docker_util.py] [INFO]: [[1;34mINFO[m] 
+[[1;34mINFO[m] [1m---------------------< [0;36mcom.google.code.gson:gson[0;1m >----------------------[m
+[[1;34mINFO[m] [1mBuilding Gson 2.8.6-SNAPSHOT                                       [2
+[2026-04-11 09:50:33,912] [docker_util.py] [INFO]: /2][m
+[[1;34mINFO[m] [1m--------------------------------[ jar ]-----------------------------
+[2026-04-11 09:50:33,912] [docker_util.py] [INFO]: ----[m
+[2026-04-11 09:50:33,912] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/biz/aQute/bnd/bnd-maven-plugin/3.1.0/bnd-maven-plugi
+[2026-04-11 09:50:33,912] [docker_util.py] [INFO]: n-3.1.0.pom
+[2026-04-11 09:50:33,993] [docker_util.py] [INFO]: Progress (1): 2.4 kB
+[2026-04-11 09:50:34,196] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:34,196] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/biz/aQute/bnd/bnd-maven-plugin/3.1.0/bnd-maven-plugin-3.1.0.pom (2.4 kB at 8.7 kB/s)
+[2026-04-11 09:50:34,197] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/biz/aQute/bnd/bnd-plugin-parent/3.1.0/bnd-plugin-parent-3.1.0.pom
+[2026-04-11 09:50:34,197] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:34,271] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 7.5 kB
+[2026-04-11 09:50:34,530] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/biz/aQute/bnd/bnd-plugin-parent/3.1.0/bnd-plugin-parent-3.1.0.pom (7.5 kB at 23 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/biz/aQute/bnd/bnd-maven-plugin/3.1.0/bnd-maven-plugin-3.1.0.jar
+[2026-04-11 09:50:34,627] [docker_util.py] [INFO]: Progress (1): 2.3/12 kBProgress (1): 5.0/12 kBProgress (1): 7.7/12 kBProgress (1): 12/12 kB Progress (1): 12 kB
+[2026-04-11 09:50:35,235] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/biz/aQute/bnd/bnd-maven-plugin/3.1.0/bnd-maven-plugin-3.1.0.jar (12 kB at 17 kB/s)
+[2026-04-11 09:50:35,236] [docker_util.py] [INFO]: Downloading from central: https://
+[2026-04-11 09:50:35,236] [docker_util.py] [INFO]: repo.maven.apache.org/maven2/org/codehaus/mojo/templating-maven-plugin/1.0.0/templating-maven-plugin-1.0.0.pom
+[2026-04-11 09:50:35,358] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:50:35,358] [docker_util.py] [INFO]: Progress (1): 7.7 kB
+[2026-04-11 09:50:35,486] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/templating-maven-plugin/1.0.0/templating-maven-plugin-1.0.0.pom (7.7 kB at 31 kB/s)
+[2026-04-11 09:50:35,489] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/mojo-parent/38/mojo-parent-38.pom
+[2026-04-11 09:50:35,584] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 8.2 kBProgress (1): 12 kB Progress (1): 16 kB
+[2026-04-11 09:50:35,584] [docker_util.py] [INFO]: Progress (1): 20 kB
+[2026-04-11 09:50:35,584] [docker_util.py] [INFO]: Progress (1): 25 kBProgress (1): 29 kBProgress (1): 33 kBProgress (1): 33 kB
+[2026-04-11 09:50:35,689] [docker_util.py] [INFO]: Downloaded from central: ht
+[2026-04-11 09:50:35,689] [docker_util.py] [INFO]: tps://repo.maven.apache.org/maven2/org/codehaus/mojo/mojo-parent/38/
+[2026-04-11 09:50:35,689] [docker_util.py] [INFO]: mojo-parent-
+[2026-04-11 09:50:35,689] [docker_util.py] [INFO]: 38.pom
+[2026-04-11 09:50:35,689] [docker_util.py] [INFO]: (33 kB
+[2026-04-11 09:50:35,689] [docker_util.py] [INFO]: at 165
+[2026-04-11 09:50:35,690] [docker_util.py] [INFO]: kB/s)
+[2026-04-11 09:50:35,690] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:35,693] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/templating-maven-plugin/1.0.0/templating-maven-plugin-1.0.0.jar
+[2026-04-11 09:50:35,809] [docker_util.py] [INFO]: Progress (1): 3.8/22 kB
+[2026-04-11 09:50:35,810] [docker_util.py] [INFO]: P
+[2026-04-11 09:50:35,810] [docker_util.py] [INFO]: rogress (1): 7.8/22 kBProgress (1): 12/22 kB
+[2026-04-11 09:50:35,810] [docker_util.py] [INFO]: Progress (1): 16/22 kB
+[2026-04-11 09:50:35,811] [docker_util.py] [INFO]: Progress (1): 20/22 kB
+[2026-04-11 09:50:35,812] [docker_util.py] [INFO]: Progress (1): 22 kB
+[2026-04-11 09:50:35,915] [docker_util.py] [INFO]: 
+[2026-04-11 09:50:35,915] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/templating-maven-plugin/1.0.0/templating-maven-plugin-1.0.0.jar (22 kB at 101 kB/s)
+[2026-04-11 09:50:35,920] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom
+[2026-04-11 09:50:36,067] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:50:36,067] [docker_util.py] [INFO]: Progress (1): 8.1 kB
+[2026-04-11 09:50:36,201] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.pom (8.1 kB at 29 kB/s)
+[2026-04-11 09:50:36,204] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-plugins/23/maven-plugins-23.pom
+[2026-04-11 09:50:36,324] [docker_util.py] [INFO]: Progress (1): 4.1 kBProgress (1): 8.2 kBProgress (1): 9.2 kB
+[2026-04-11 09:50:36,439] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-plugins/23/maven-plugins-23.pom (9.2 kB at 39 kB/s)
+[2026-04-11 09:50:36,443] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/22/maven-parent-22.pom
+[2026-04-11 09:50:36,550] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:50:36,558] [docker_util.py] [INFO]: Progress (1): 8.2 k
+[2026-04-11 09:50:36,558] [docker_util.py] [INFO]: B
+[2026-04-11 09:50:36,558] [docker_util.py] [INFO]: Progress (1): 12 kB
+[2026-04-11 09:50:36,558] [docker_util.py] [INFO]: Progress (1): 16 kB
+[2026-04-11 09:50:36,558] [docker_util.py] [INFO]: Progress (1): 20 kBProgress (1): 25 kBProgress (1): 29 kBProgress (1): 30 kB
+[2026-04-11 09:50:36,652] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/maven-parent/22/maven-parent-22.pom (30 kB at 142 kB/s)
+[2026-04-11 09:50:36,654] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/apache/11/apache-11.pom
+[2026-04-11 09:50:36,765] [docker_util.py] [INFO]: Progress (1): 4.1 kB
+[2026-04-11 09:50:36,766] [docker_util.py] [INFO]: Progress (1): 8.2 kB
+[2026-04-11 09:50:36,768] [docker_util.py] [INFO]: Progre
+[2026-04-11 09:50:36,768] [docker_util.py] [INFO]: ss (1): 12 kB Progress (1): 15 kB
+[2026-04-11 09:50:36,875] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/apache/11/apache-11.pom (15 kB at 67 kB/s)
+[2026-04-11 09:50:36,880] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-reso
+[2026-04-11 09:50:36,882] [docker_util.py] [INFO]: urces-plugin/2.6/maven-resources-plugin-2.6.jar
+[2026-04-11 09:50:36,993] [docker_util.py] [INFO]: Progress (1): 3.8/30 kBProgress (1): 7.8/30 kBProgress (1): 12/30 kB
+[2026-04-11 09:50:36,993] [docker_util.py] [INFO]: Progress (1): 16/30 kB
+[2026-04-11 09:50:36,996] [docker_util.py] [INFO]: Progress (1): 20/30 kB
+[2026-04-11 09:50:37,006] [docker_util.py] [INFO]: Progress (1): 24/30 kBProgress (1): 28/30 kB
+[2026-04-11 09:50:37,006] [docker_util.py] [INFO]: Progress (1): 30 kB
+[2026-04-11 09:50:37,095] [docker_util.py] [INFO]: Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-resources-plugin/2.6/maven-resources-plugin-2.6.jar (30 kB at 137 kB/s)
+[2026-04-11 09:50:37,098] [docker_util.py] [INFO]: Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-compiler-plugin/3.7.0/maven-compiler-plugin-3.7.0.pom
+[2026-04-11 10:08:29,630] [docker_util.py] [INFO]: [[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] [1mReactor Summary for Gson Parent 2.8.6-SNAPSHOT:[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] Gson Parent ........................................ [1;32mSUCCESS[m [ 13.105 s]
+[[1;34mINFO[m] Gson ............................................... [1;31mFAILURE[m [  4.002 s]
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] [1;31mBUILD FAILURE[m
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] Total time:  17.788 s
+[[1;34mINFO[m] Finished at: 2026-04-11T07:08:24Z
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;31mERROR[m] Plugin org.apache.maven.plugins:maven-compiler-plugin:3.7.0 or one of its dependencies could not be resolved: Failed to read artifact descriptor for org.apache.maven.plugins:maven-compiler-plugin:jar:3.7.0: Could not transfer artifact org.apache.maven.plugins:maven-compiler-plugin:pom:3.7.0 from/to central (https://repo.maven.apache.org/maven2): Transfer failed for https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-compiler-plugin/3.7.0/maven-compiler-plugin-3.7.0.pom: repo.maven.apache.org:443 failed to respond -> [1m[Help 1][m
+[[1;31mERROR[m] 
+[[1;31mERROR[m] To see the full stack trace of the errors, re-run Maven with the [1m-e[m switch.
+[[1;31mERROR[m] Re-run Maven using the [1m-X[m switch to enable full debug logging.
+[[1;31mERROR[m] 
+[[1;31mERROR[m] For more information about the errors and possible solutions, please read the following articles:
+[[1;31mERROR[m] [1m[Help 1][m http://cwiki.apache.org/confluence/display/MAVEN/PluginResolutionException
+[2026-04-11 10:08:31,569] [docker_util.py] [INFO]: ---> Removed intermediate container cebba4b2fe35
+[2026-04-11 10:08:31,570] [docker_util.py] [INFO]: ---> b175fb766704
+[2026-04-11 10:08:31,570] [docker_util.py] [INFO]: sha256:b175fb766704786e48756b18a82dc1cc7d7d534ca57431d837a002c70018b187
+[2026-04-11 10:08:31,600] [docker_util.py] [INFO]: Successfully built b175fb766704
+[2026-04-11 10:08:31,639] [docker_util.py] [INFO]: Successfully tagged mswebench/google_m_gson:pr-1391
+[2026-04-11 10:08:31,639] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/google/gson/images/pr-1391) build success: mswebench/google_m_gson:pr-1391

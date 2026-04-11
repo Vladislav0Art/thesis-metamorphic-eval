@@ -1,0 +1,40 @@
+[2026-04-11 01:01:29,771] [docker_util.py] [INFO]: Start building image `mswebench/google_m_gson:pr-1703`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_50_all_mini_harness_only_fix_patches/run-1/eval/workdir/google/gson/images/pr-1703`
+[2026-04-11 01:01:30,153] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/google_m_gson:base
+[2026-04-11 01:01:30,153] [docker_util.py] [INFO]: 
+[2026-04-11 01:01:30,165] [docker_util.py] [INFO]: ---> ed511b4bf7d8
+[2026-04-11 01:01:30,165] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-04-11 01:01:30,165] [docker_util.py] [INFO]: 
+[2026-04-11 01:01:30,195] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:01:30,195] [docker_util.py] [INFO]: ---> 9ce40d493d72
+[2026-04-11 01:01:30,195] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-04-11 01:01:30,195] [docker_util.py] [INFO]: 
+[2026-04-11 01:01:30,214] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:01:30,214] [docker_util.py] [INFO]: ---> a767d8eb8d97
+[2026-04-11 01:01:30,214] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-04-11 01:01:30,214] [docker_util.py] [INFO]: 
+[2026-04-11 01:01:30,233] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:01:30,233] [docker_util.py] [INFO]: ---> 3911d7e43d5e
+[2026-04-11 01:01:30,233] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-04-11 01:01:30,233] [docker_util.py] [INFO]: 
+[2026-04-11 01:01:30,249] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:01:30,249] [docker_util.py] [INFO]: ---> 15f2d45e3d43
+[2026-04-11 01:01:30,249] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-04-11 01:01:30,249] [docker_util.py] [INFO]: 
+[2026-04-11 01:01:30,263] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:01:30,263] [docker_util.py] [INFO]: ---> 522cb4dd65ed
+[2026-04-11 01:01:30,264] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-04-11 01:01:30,264] [docker_util.py] [INFO]: 
+[2026-04-11 01:01:30,278] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:01:30,278] [docker_util.py] [INFO]: ---> 6a6ce3f3341c
+[2026-04-11 01:01:30,278] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-04-11 01:01:30,278] [docker_util.py] [INFO]: 
+[2026-04-11 01:01:30,288] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:01:30,288] [docker_util.py] [INFO]: ---> 8b395af10760
+[2026-04-11 01:01:30,288] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-04-11 01:01:30,289] [docker_util.py] [INFO]: 
+[2026-04-11 01:01:30,296] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:01:30,297] [docker_util.py] [INFO]: ---> 003747d87383
+[2026-04-11 01:01:30,297] [docker_util.py] [INFO]: sha256:003747d87383dd6fe364fab4cad8cc9c76c001fe1197f26b8c8384234ba5c17a
+[2026-04-11 01:01:30,297] [docker_util.py] [INFO]: Successfully built 003747d87383
+[2026-04-11 01:01:30,304] [docker_util.py] [INFO]: Successfully tagged mswebench/google_m_gson:pr-1703
+[2026-04-11 01:01:30,304] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_50_all_mini_harness_only_fix_patches/run-1/eval/workdir/google/gson/images/pr-1703) build success: mswebench/google_m_gson:pr-1703

@@ -1,0 +1,122 @@
+[2026-04-11 07:06:43,026] [docker_util.py] [INFO]: Start building image `mswebench/elastic_m_logstash:pr-14571`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/elastic/logstash/images/pr-14571`
+[2026-04-11 07:06:43,605] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/elastic_m_logstash:base
+[2026-04-11 07:06:43,605] [docker_util.py] [INFO]: 
+[2026-04-11 07:06:43,610] [docker_util.py] [INFO]: ---> ae9a5354f0b8
+[2026-04-11 07:06:43,610] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-04-11 07:06:43,610] [docker_util.py] [INFO]: 
+[2026-04-11 07:06:45,623] [docker_util.py] [INFO]: ---> 2abb2331426a
+[2026-04-11 07:06:45,623] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-04-11 07:06:45,623] [docker_util.py] [INFO]: 
+[2026-04-11 07:06:46,613] [docker_util.py] [INFO]: ---> 6f2fb9d3a0cd
+[2026-04-11 07:06:46,613] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-04-11 07:06:46,613] [docker_util.py] [INFO]: 
+[2026-04-11 07:06:47,438] [docker_util.py] [INFO]: ---> 65dfb87a8436
+[2026-04-11 07:06:47,438] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-04-11 07:06:47,438] [docker_util.py] [INFO]: 
+[2026-04-11 07:06:48,380] [docker_util.py] [INFO]: ---> 4c435baca50d
+[2026-04-11 07:06:48,381] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-04-11 07:06:48,381] [docker_util.py] [INFO]: 
+[2026-04-11 07:22:20,838] [docker_util.py] [INFO]: ---> 8541a4e2bb66
+[2026-04-11 07:22:20,838] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-04-11 07:22:20,838] [docker_util.py] [INFO]: 
+[2026-04-11 07:22:21,633] [docker_util.py] [INFO]: ---> 5090df5072f6
+[2026-04-11 07:22:21,633] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-04-11 07:22:21,633] [docker_util.py] [INFO]: 
+[2026-04-11 07:22:22,615] [docker_util.py] [INFO]: ---> 42f05f6094cf
+[2026-04-11 07:22:22,615] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-04-11 07:22:22,615] [docker_util.py] [INFO]: 
+[2026-04-11 07:22:22,765] [docker_util.py] [INFO]: ---> Running in dae7301fe0bc
+[2026-04-11 07:22:23,933] [docker_util.py] [INFO]: [91mUpdating files:  98% (2147/2183)[0m
+[2026-04-11 07:22:23,948] [docker_util.py] [INFO]: [91mUpdating files:  99% (2162/2183)[0m
+[2026-04-11 07:22:23,965] [docker_util.py] [INFO]: [91mUpdating files: 100% (2183/2183)Updating files: 100% (2183/2183), done.
+[0m
+[2026-04-11 07:22:23,970] [docker_util.py] [INFO]: HEAD is now at c4d7362b5 Adds verification of the file name (#18848)
+[2026-04-11 07:22:24,007] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-04-11 07:22:24,176] [docker_util.py] [INFO]: [91mNote: switching to '6dc5c5648ab497dfdeb31f0f1e085f9298135191'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 6dc5c5648 [DOC] Add a short guide for using Logstash with K8s (#14532)
+[0m
+[2026-04-11 07:22:24,283] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-04-11 07:22:24,291] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-11 07:22:24,432] [docker_util.py] [INFO]: Downloading https://services.gradle.org/distributions/gradle-7.5-bin.zip
+[2026-04-11 07:37:36,905] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:37,010] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:37,118] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:37,251] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:37,409] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:37,622] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:37,683] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:37,821] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:37,958] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:38,112] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:38,223] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:38,330] [docker_util.py] [INFO]: 10%.
+[2026-04-11 07:37:38,432] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:38,624] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:38,652] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:38,760] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:38,873] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:38,984] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:39,090] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:39,212] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:39,364] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:39,514] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:39,616] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:39,739] [docker_util.py] [INFO]: 20%.
+[2026-04-11 07:37:39,854] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:39,959] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:40,084] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:40,215] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:40,337] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:40,478] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:40,607] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:40,741] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:40,887] [docker_util.py] [INFO]: .
+[2026-04-11 07:37:41,038] [docker_util.py] [INFO]: .
+[2026-04-11 07:55:32,569] [docker_util.py] [INFO]: 
+[2026-04-11 07:55:32,569] [docker_util.py] [INFO]: [91mException in thread "main" [0m
+[2026-04-11 07:55:32,569] [docker_util.py] [INFO]: Could not unzip /root/.gradle/wrapper/dists/gradle-7.5-bin/f1w0cc9nuo0eivz97x2xlu9sv/gradle-7.5-bin.zip to /root/.gradle/wrapper/dists/gradle-7.5-bin/f1w0cc9nuo0eivz97x2xlu9sv.
+Reason: zip END header not found
+[2026-04-11 07:55:32,569] [docker_util.py] [INFO]: [91mjava.util.zip.ZipException: zip END header not found
+[0m
+[2026-04-11 07:55:32,571] [docker_util.py] [INFO]: [91m	at java.base/java.util.zip.ZipFile$Source.zerror(ZipFile.java:1792)
+	at java.base/java.util.zip.ZipFile$Source.findEND(ZipFile.java:1673)
+	at java.base/java.util.zip.ZipFile$Source.initCEN(ZipFile.java:1680)
+	at java.base/java.util.zip.ZipFile$Source.<init>(ZipFile.java:1484)
+	at java.base/java.util.zip.ZipFile$Source.get(ZipFile.java:1447)
+	at java.base/java.util.zip.ZipFile$CleanableResource.<init>(ZipFile.java:757)
+	at java.base/java.util.zip.ZipFile$CleanableResource.get(ZipFile.java:874)
+	at java.base/java.util.zip.ZipFile.<init>(ZipFile.java:272)
+	at java.base/java.util.zip.ZipFile.<init>(ZipFile.java:201)
+	at java.base/java.util.zip.ZipFile.<init>(ZipFile.java:215)
+	at org.gradle.wrapper.Install.unzip(Install.java:250)
+	at org.gradle.wrapper.Install.access$900(Install.java:42)
+	at org.gradle.wrapper.Install$1.call(Install.java:96)
+	at org.gradle.wrapper.Install$1.call(Install.java:63)
+	at org.gradle.wrapper.ExclusiveFileAccessManager.access(ExclusiveFileAccessManager.java:69)
+	at org.gradle.wrapper.Install.createDist(Install.java:63)
+	at org.gradle.wrapper.WrapperExecutor.execute(WrapperExecutor.java:107)
+	at org.gradle.wrapper.GradleWrapperMain.main(GradleWrapperMain.java:63)
+[0m
+[2026-04-11 07:55:36,655] [docker_util.py] [INFO]: ---> Removed intermediate container dae7301fe0bc
+[2026-04-11 07:55:36,656] [docker_util.py] [INFO]: ---> 18fcaa148692
+[2026-04-11 07:55:36,656] [docker_util.py] [INFO]: sha256:18fcaa14869247f89f76c3374582bd202d4bbaf51f0823f755a1e95fc3732437
+[2026-04-11 07:55:36,705] [docker_util.py] [INFO]: Successfully built 18fcaa148692
+[2026-04-11 07:55:36,750] [docker_util.py] [INFO]: Successfully tagged mswebench/elastic_m_logstash:pr-14571
+[2026-04-11 07:55:36,751] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/elastic/logstash/images/pr-14571) build success: mswebench/elastic_m_logstash:pr-14571

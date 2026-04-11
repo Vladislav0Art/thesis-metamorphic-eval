@@ -1,0 +1,40 @@
+[2026-04-11 01:22:35,894] [docker_util.py] [INFO]: Start building image `mswebench/apache_m_dubbo:pr-11781`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_50_all_mini_harness_only_fix_patches/run-1/eval/workdir/apache/dubbo/images/pr-11781`
+[2026-04-11 01:22:37,945] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/apache_m_dubbo:base
+[2026-04-11 01:22:37,945] [docker_util.py] [INFO]: 
+[2026-04-11 01:22:38,576] [docker_util.py] [INFO]: ---> 621cc701d5b1
+[2026-04-11 01:22:38,577] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-04-11 01:22:38,577] [docker_util.py] [INFO]: 
+[2026-04-11 01:22:38,889] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:22:38,889] [docker_util.py] [INFO]: ---> c28d2a275664
+[2026-04-11 01:22:38,889] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-04-11 01:22:38,889] [docker_util.py] [INFO]: 
+[2026-04-11 01:22:39,173] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:22:39,174] [docker_util.py] [INFO]: ---> 28c4db40463f
+[2026-04-11 01:22:39,174] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-04-11 01:22:39,174] [docker_util.py] [INFO]: 
+[2026-04-11 01:22:39,473] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:22:39,473] [docker_util.py] [INFO]: ---> 2ad21fd2dd0f
+[2026-04-11 01:22:39,474] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-04-11 01:22:39,474] [docker_util.py] [INFO]: 
+[2026-04-11 01:22:39,834] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:22:39,834] [docker_util.py] [INFO]: ---> 61bd22e817ad
+[2026-04-11 01:22:39,834] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-04-11 01:22:39,834] [docker_util.py] [INFO]: 
+[2026-04-11 01:22:40,764] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:22:40,765] [docker_util.py] [INFO]: ---> 2f68d84e3bf8
+[2026-04-11 01:22:40,765] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-04-11 01:22:40,765] [docker_util.py] [INFO]: 
+[2026-04-11 01:22:41,768] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:22:41,768] [docker_util.py] [INFO]: ---> 7bf6ea5fde7b
+[2026-04-11 01:22:41,768] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-04-11 01:22:41,768] [docker_util.py] [INFO]: 
+[2026-04-11 01:22:41,847] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:22:41,848] [docker_util.py] [INFO]: ---> aac40952697e
+[2026-04-11 01:22:41,848] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-04-11 01:22:41,848] [docker_util.py] [INFO]: 
+[2026-04-11 01:22:41,997] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-11 01:22:41,998] [docker_util.py] [INFO]: ---> 0bd62bb4f697
+[2026-04-11 01:22:41,998] [docker_util.py] [INFO]: sha256:0bd62bb4f69775ee32f964978fe0f66313860a7276ab63b5de790c4005553a5d
+[2026-04-11 01:22:42,079] [docker_util.py] [INFO]: Successfully built 0bd62bb4f697
+[2026-04-11 01:22:42,357] [docker_util.py] [INFO]: Successfully tagged mswebench/apache_m_dubbo:pr-11781
+[2026-04-11 01:22:42,358] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_50_all_mini_harness_only_fix_patches/run-1/eval/workdir/apache/dubbo/images/pr-11781) build success: mswebench/apache_m_dubbo:pr-11781

@@ -1,0 +1,311 @@
+[2026-04-11 00:34:16,467] [run_evaluation.py] [INFO]: Initialize logger successfully.
+[2026-04-11 00:34:16,468] [run_evaluation.py] [INFO]: Building images...
+[2026-04-11 00:34:16,468] [run_evaluation.py] [INFO]: Loading repo commits...
+[2026-04-11 00:34:16,468] [run_evaluation.py] [INFO]: Creating instances...
+[2026-04-11 00:34:16,468] [run_evaluation.py] [INFO]: Loading datasets...
+[2026-04-11 00:34:17,169] [run_evaluation.py] [INFO]: Successfully loaded 11 valid datasets from ['/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java_easy_11_mini.jsonl']
+[2026-04-11 00:34:17,171] [run_evaluation.py] [INFO]: Successfully loaded 11 valid instances.
+[2026-04-11 00:34:17,171] [run_evaluation.py] [DEBUG]: Repo: mockito/mockito, commits: 1
+[2026-04-11 00:34:17,171] [run_evaluation.py] [DEBUG]: Repo: fasterxml/jackson-databind, commits: 7
+[2026-04-11 00:34:17,171] [run_evaluation.py] [DEBUG]: Repo: elastic/logstash, commits: 1
+[2026-04-11 00:34:17,171] [run_evaluation.py] [DEBUG]: Repo: alibaba/fastjson2, commits: 1
+[2026-04-11 00:34:17,171] [run_evaluation.py] [DEBUG]: Repo: fasterxml/jackson-core, commits: 1
+[2026-04-11 00:34:17,266] [util.py] [DEBUG]: sys.platform='darwin', git_executable='git'
+[2026-04-11 00:34:17,267] [cmd.py] [DEBUG]: Popen(['git', 'rev-list', '--all', '--'], cwd=/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/repos/mockito/mockito, stdin=None, shell=False, universal_newlines=False)
+[2026-04-11 00:34:17,546] [util.py] [DEBUG]: sys.platform='darwin', git_executable='git'
+[2026-04-11 00:34:17,547] [cmd.py] [DEBUG]: Popen(['git', 'rev-list', '--all', '--'], cwd=/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/repos/fasterxml/jackson-databind, stdin=None, shell=False, universal_newlines=False)
+[2026-04-11 00:34:17,702] [util.py] [DEBUG]: sys.platform='darwin', git_executable='git'
+[2026-04-11 00:34:17,703] [cmd.py] [DEBUG]: Popen(['git', 'rev-list', '--all', '--'], cwd=/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/repos/elastic/logstash, stdin=None, shell=False, universal_newlines=False)
+[2026-04-11 00:34:18,071] [util.py] [DEBUG]: sys.platform='darwin', git_executable='git'
+[2026-04-11 00:34:18,073] [cmd.py] [DEBUG]: Popen(['git', 'rev-list', '--all', '--'], cwd=/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/repos/alibaba/fastjson2, stdin=None, shell=False, universal_newlines=False)
+[2026-04-11 00:34:18,319] [util.py] [DEBUG]: sys.platform='darwin', git_executable='git'
+[2026-04-11 00:34:18,320] [cmd.py] [DEBUG]: Popen(['git', 'rev-list', '--all', '--'], cwd=/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/repos/fasterxml/jackson-core, stdin=None, shell=False, universal_newlines=False)
+[2026-04-11 00:34:18,387] [run_evaluation.py] [INFO]: Total images: 16
+[2026-04-11 00:34:18,407] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/elastic_m_logstash:base/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,407] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/alibaba_m_fastjson2:base/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,408] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/fasterxml_m_jackson-databind:base/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,408] [run_evaluation.py] [DEBUG]: Image mswebench/alibaba_m_fastjson2:base already exists, skipping...
+[2026-04-11 00:34:18,408] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/fasterxml_m_jackson-core:base/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,408] [run_evaluation.py] [DEBUG]: Image mswebench/fasterxml_m_jackson-databind:base already exists, skipping...
+[2026-04-11 00:34:18,408] [run_evaluation.py] [DEBUG]: Image mswebench/elastic_m_logstash:base already exists, skipping...
+[2026-04-11 00:34:18,409] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/mockito_m_mockito:base/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,409] [run_evaluation.py] [DEBUG]: Image mswebench/fasterxml_m_jackson-core:base already exists, skipping...
+[2026-04-11 00:34:18,409] [run_evaluation.py] [DEBUG]: Image mswebench/mockito_m_mockito:base already exists, skipping...
+[2026-04-11 00:34:18,425] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/fasterxml_m_jackson-core:pr-183/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,425] [run_evaluation.py] [DEBUG]: Image mswebench/fasterxml_m_jackson-core:pr-183 already exists, skipping...
+[2026-04-11 00:34:18,426] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/fasterxml_m_jackson-databind:pr-4426/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,426] [run_evaluation.py] [DEBUG]: Image mswebench/fasterxml_m_jackson-databind:pr-4426 already exists, skipping...
+[2026-04-11 00:34:18,426] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/fasterxml_m_jackson-databind:pr-4486/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,427] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/fasterxml_m_jackson-databind:pr-1923/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,427] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/fasterxml_m_jackson-databind:pr-3701/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,427] [run_evaluation.py] [DEBUG]: Image mswebench/fasterxml_m_jackson-databind:pr-4486 already exists, skipping...
+[2026-04-11 00:34:18,428] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/alibaba_m_fastjson2:pr-82/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,428] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/mockito_m_mockito:pr-3129/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,429] [run_evaluation.py] [DEBUG]: Image mswebench/fasterxml_m_jackson-databind:pr-1923 already exists, skipping...
+[2026-04-11 00:34:18,429] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/fasterxml_m_jackson-databind:pr-4304/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,429] [run_evaluation.py] [DEBUG]: Image mswebench/fasterxml_m_jackson-databind:pr-3701 already exists, skipping...
+[2026-04-11 00:34:18,431] [run_evaluation.py] [DEBUG]: Image mswebench/mockito_m_mockito:pr-3129 already exists, skipping...
+[2026-04-11 00:34:18,431] [run_evaluation.py] [DEBUG]: Image mswebench/alibaba_m_fastjson2:pr-82 already exists, skipping...
+[2026-04-11 00:34:18,431] [run_evaluation.py] [DEBUG]: Image mswebench/fasterxml_m_jackson-databind:pr-4304 already exists, skipping...
+[2026-04-11 00:34:18,438] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/elastic_m_logstash:pr-15964/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,438] [run_evaluation.py] [DEBUG]: Image mswebench/elastic_m_logstash:pr-15964 already exists, skipping...
+[2026-04-11 00:34:18,439] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/fasterxml_m_jackson-databind:pr-4338/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,439] [run_evaluation.py] [DEBUG]: Image mswebench/fasterxml_m_jackson-databind:pr-4338 already exists, skipping...
+[2026-04-11 00:34:18,441] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/fasterxml_m_jackson-databind:pr-4311/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,441] [run_evaluation.py] [DEBUG]: Image mswebench/fasterxml_m_jackson-databind:pr-4311 already exists, skipping...
+[2026-04-11 00:34:18,442] [run_evaluation.py] [INFO]: Images built successfully.
+[2026-04-11 00:34:18,442] [run_evaluation.py] [INFO]: Running instances...
+[2026-04-11 00:34:18,443] [run_evaluation.py] [INFO]: Running instance mswebench/mockito_m_mockito:pr-3129 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/run-2/eval/workdir/mockito/mockito/evals/pr-3129
+[2026-04-11 00:34:18,443] [run_evaluation.py] [INFO]: Running instance mswebench/fasterxml_m_jackson-databind:pr-4486 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/run-2/eval/workdir/fasterxml/jackson-databind/evals/pr-4486
+[2026-04-11 00:34:18,443] [run_evaluation.py] [INFO]: Running instance mswebench/fasterxml_m_jackson-databind:pr-3701 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/run-2/eval/workdir/fasterxml/jackson-databind/evals/pr-3701
+[2026-04-11 00:34:18,443] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-04-11 00:34:18,443] [run_evaluation.py] [INFO]: Running instance mswebench/fasterxml_m_jackson-databind:pr-4426 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/run-2/eval/workdir/fasterxml/jackson-databind/evals/pr-4426
+[2026-04-11 00:34:18,443] [run_evaluation.py] [INFO]: Running instance mswebench/fasterxml_m_jackson-databind:pr-1923 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/run-2/eval/workdir/fasterxml/jackson-databind/evals/pr-1923
+[2026-04-11 00:34:18,443] [run_evaluation.py] [INFO]: Running instance mswebench/fasterxml_m_jackson-databind:pr-4338 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/run-2/eval/workdir/fasterxml/jackson-databind/evals/pr-4338
+[2026-04-11 00:34:18,443] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-04-11 00:34:18,443] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-04-11 00:34:18,443] [run_evaluation.py] [INFO]: Running instance mswebench/fasterxml_m_jackson-databind:pr-4304 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/run-2/eval/workdir/fasterxml/jackson-databind/evals/pr-4304
+[2026-04-11 00:34:18,444] [run_evaluation.py] [INFO]: Running instance mswebench/fasterxml_m_jackson-databind:pr-4311 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/run-2/eval/workdir/fasterxml/jackson-databind/evals/pr-4311
+[2026-04-11 00:34:18,444] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-04-11 00:34:18,444] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-04-11 00:34:18,444] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-04-11 00:34:18,444] [run_evaluation.py] [INFO]: Running mswebench/mockito_m_mockito:pr-3129 with command: bash /home/fix-run.sh...
+[2026-04-11 00:34:18,444] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-04-11 00:34:18,444] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-04-11 00:34:18,444] [run_evaluation.py] [INFO]: Running mswebench/fasterxml_m_jackson-databind:pr-4486 with command: bash /home/fix-run.sh...
+[2026-04-11 00:34:18,444] [run_evaluation.py] [INFO]: Running mswebench/fasterxml_m_jackson-databind:pr-3701 with command: bash /home/fix-run.sh...
+[2026-04-11 00:34:18,445] [run_evaluation.py] [INFO]: Running mswebench/fasterxml_m_jackson-databind:pr-4426 with command: bash /home/fix-run.sh...
+[2026-04-11 00:34:18,445] [run_evaluation.py] [INFO]: Running mswebench/fasterxml_m_jackson-databind:pr-1923 with command: bash /home/fix-run.sh...
+[2026-04-11 00:34:18,446] [run_evaluation.py] [INFO]: Running mswebench/fasterxml_m_jackson-databind:pr-4304 with command: bash /home/fix-run.sh...
+[2026-04-11 00:34:18,446] [run_evaluation.py] [INFO]: Running mswebench/fasterxml_m_jackson-databind:pr-4338 with command: bash /home/fix-run.sh...
+[2026-04-11 00:34:18,446] [run_evaluation.py] [INFO]: Running mswebench/fasterxml_m_jackson-databind:pr-4311 with command: bash /home/fix-run.sh...
+[2026-04-11 00:34:18,548] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-04-11 00:34:18,552] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/ee24c59b80d9416ddab9a5497f4a10906c55b8138dc75a5af7bd87c0980e16b7/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,558] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-04-11 00:34:18,561] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/18f35a0d8d63b0a7f70cfbbbe98a51a9275c99501ca5ff6a769a8af702bf8bd4/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,580] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-04-11 00:34:18,582] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-04-11 00:34:18,584] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/105a7a1978b68d37674662cbbfb69646183733cd14074dac64168e02744d27a6/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,585] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-04-11 00:34:18,587] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/f15cb728406343faa62ca54758251088c613f8b2ead52381ee822531fb66c5e2/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,591] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-04-11 00:34:18,591] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/6b234715179094ad0678e6177effe9dbffc11e3a87e694abeb6634320b9189de/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,593] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-04-11 00:34:18,598] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-04-11 00:34:18,598] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/30f39ddde51620b321ec77dc663a98d410919596ba42ad9db68ea3a6ce074993/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,599] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/c5448751f71e9bc28efb3adadfc0d5142cb02af8794e988b4e313e809d5e859d/json HTTP/1.1" 200 None
+[2026-04-11 00:34:18,604] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/74c2614f33ade13441bbf31cfe40b53a5ea5a27b4c38e5c5da12d32680ad4f7f/json HTTP/1.1" 200 None
+[2026-04-11 00:34:19,074] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/18f35a0d8d63b0a7f70cfbbbe98a51a9275c99501ca5ff6a769a8af702bf8bd4/start HTTP/1.1" 204 0
+[2026-04-11 00:34:19,103] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/18f35a0d8d63b0a7f70cfbbbe98a51a9275c99501ca5ff6a769a8af702bf8bd4/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-04-11 00:34:19,112] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/f15cb728406343faa62ca54758251088c613f8b2ead52381ee822531fb66c5e2/start HTTP/1.1" 204 0
+[2026-04-11 00:34:19,115] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/18f35a0d8d63b0a7f70cfbbbe98a51a9275c99501ca5ff6a769a8af702bf8bd4/json HTTP/1.1" 200 None
+[2026-04-11 00:34:19,117] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/f15cb728406343faa62ca54758251088c613f8b2ead52381ee822531fb66c5e2/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-04-11 00:34:19,118] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/ee24c59b80d9416ddab9a5497f4a10906c55b8138dc75a5af7bd87c0980e16b7/start HTTP/1.1" 204 0
+[2026-04-11 00:34:19,123] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/f15cb728406343faa62ca54758251088c613f8b2ead52381ee822531fb66c5e2/json HTTP/1.1" 200 None
+[2026-04-11 00:34:19,124] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/ee24c59b80d9416ddab9a5497f4a10906c55b8138dc75a5af7bd87c0980e16b7/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-04-11 00:34:19,128] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/ee24c59b80d9416ddab9a5497f4a10906c55b8138dc75a5af7bd87c0980e16b7/json HTTP/1.1" 200 None
+[2026-04-11 00:34:19,221] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/74c2614f33ade13441bbf31cfe40b53a5ea5a27b4c38e5c5da12d32680ad4f7f/start HTTP/1.1" 204 0
+[2026-04-11 00:34:19,230] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/74c2614f33ade13441bbf31cfe40b53a5ea5a27b4c38e5c5da12d32680ad4f7f/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-04-11 00:34:19,240] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/74c2614f33ade13441bbf31cfe40b53a5ea5a27b4c38e5c5da12d32680ad4f7f/json HTTP/1.1" 200 None
+[2026-04-11 00:34:19,314] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/6b234715179094ad0678e6177effe9dbffc11e3a87e694abeb6634320b9189de/start HTTP/1.1" 204 0
+[2026-04-11 00:34:19,320] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/6b234715179094ad0678e6177effe9dbffc11e3a87e694abeb6634320b9189de/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-04-11 00:34:19,325] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/30f39ddde51620b321ec77dc663a98d410919596ba42ad9db68ea3a6ce074993/start HTTP/1.1" 204 0
+[2026-04-11 00:34:19,336] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/6b234715179094ad0678e6177effe9dbffc11e3a87e694abeb6634320b9189de/json HTTP/1.1" 200 None
+[2026-04-11 00:34:19,337] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/30f39ddde51620b321ec77dc663a98d410919596ba42ad9db68ea3a6ce074993/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-04-11 00:34:19,337] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/105a7a1978b68d37674662cbbfb69646183733cd14074dac64168e02744d27a6/start HTTP/1.1" 204 0
+[2026-04-11 00:34:19,351] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/30f39ddde51620b321ec77dc663a98d410919596ba42ad9db68ea3a6ce074993/json HTTP/1.1" 200 None
+[2026-04-11 00:34:19,353] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/105a7a1978b68d37674662cbbfb69646183733cd14074dac64168e02744d27a6/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-04-11 00:34:19,360] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/105a7a1978b68d37674662cbbfb69646183733cd14074dac64168e02744d27a6/json HTTP/1.1" 200 None
+[2026-04-11 00:34:19,399] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/c5448751f71e9bc28efb3adadfc0d5142cb02af8794e988b4e313e809d5e859d/start HTTP/1.1" 204 0
+[2026-04-11 00:34:19,415] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/c5448751f71e9bc28efb3adadfc0d5142cb02af8794e988b4e313e809d5e859d/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-04-11 00:34:19,431] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/c5448751f71e9bc28efb3adadfc0d5142cb02af8794e988b4e313e809d5e859d/json HTTP/1.1" 200 None
+[2026-04-11 00:34:28,803] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/18f35a0d8d63b0a7f70cfbbbe98a51a9275c99501ca5ff6a769a8af702bf8bd4?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-04-11 00:34:28,805] [run_evaluation.py] [INFO]: Running instance mswebench/elastic_m_logstash:pr-15964 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/run-2/eval/workdir/elastic/logstash/evals/pr-15964
+[2026-04-11 00:34:28,805] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-04-11 00:34:28,806] [run_evaluation.py] [INFO]: Running mswebench/elastic_m_logstash:pr-15964 with command: bash /home/fix-run.sh...
+[2026-04-11 00:34:29,162] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-04-11 00:34:29,173] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/803b665f13198b9ca7aa091f482c36cee7e7ecb5e63cbb081e7d9e5250fe5e4f/json HTTP/1.1" 200 None
+[2026-04-11 00:34:29,463] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/ee24c59b80d9416ddab9a5497f4a10906c55b8138dc75a5af7bd87c0980e16b7?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-04-11 00:34:29,465] [run_evaluation.py] [INFO]: Running instance mswebench/alibaba_m_fastjson2:pr-82 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/run-2/eval/workdir/alibaba/fastjson2/evals/pr-82
+[2026-04-11 00:34:29,466] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-04-11 00:34:29,467] [run_evaluation.py] [INFO]: Running mswebench/alibaba_m_fastjson2:pr-82 with command: bash /home/fix-run.sh...
+[2026-04-11 00:34:29,785] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/6b234715179094ad0678e6177effe9dbffc11e3a87e694abeb6634320b9189de?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-04-11 00:34:29,787] [run_evaluation.py] [INFO]: Running instance mswebench/fasterxml_m_jackson-core:pr-183 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_11_easy_harness_only_fix_patches/run-2/eval/workdir/fasterxml/jackson-core/evals/pr-183
+[2026-04-11 00:34:29,787] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-04-11 00:34:29,788] [run_evaluation.py] [INFO]: Running mswebench/fasterxml_m_jackson-core:pr-183 with command: bash /home/fix-run.sh...
+[2026-04-11 00:34:29,917] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/74c2614f33ade13441bbf31cfe40b53a5ea5a27b4c38e5c5da12d32680ad4f7f?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-04-11 00:34:30,069] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/f15cb728406343faa62ca54758251088c613f8b2ead52381ee822531fb66c5e2?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-04-11 00:34:30,169] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/c5448751f71e9bc28efb3adadfc0d5142cb02af8794e988b4e313e809d5e859d?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-04-11 00:34:30,247] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-04-11 00:34:30,256] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/45b33766ccfd04db0f528a8fbe0df0e876b89fdea91ce228bf1a233063cd1ebd/json HTTP/1.1" 200 None
+[2026-04-11 00:34:30,437] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-04-11 00:34:30,463] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/6fdf3dc9321e40c477596b9a543744e775b3c29dd76abb072a178399ea038672/json HTTP/1.1" 200 None
+[2026-04-11 00:34:31,492] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/803b665f13198b9ca7aa091f482c36cee7e7ecb5e63cbb081e7d9e5250fe5e4f/start HTTP/1.1" 204 0
+[2026-04-11 00:34:31,537] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/803b665f13198b9ca7aa091f482c36cee7e7ecb5e63cbb081e7d9e5250fe5e4f/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-04-11 00:34:31,547] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/803b665f13198b9ca7aa091f482c36cee7e7ecb5e63cbb081e7d9e5250fe5e4f/json HTTP/1.1" 200 None
+[2026-04-11 00:34:31,715] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/45b33766ccfd04db0f528a8fbe0df0e876b89fdea91ce228bf1a233063cd1ebd/start HTTP/1.1" 204 0
+[2026-04-11 00:34:31,746] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/45b33766ccfd04db0f528a8fbe0df0e876b89fdea91ce228bf1a233063cd1ebd/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-04-11 00:34:31,757] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/45b33766ccfd04db0f528a8fbe0df0e876b89fdea91ce228bf1a233063cd1ebd/json HTTP/1.1" 200 None
+[2026-04-11 00:34:32,099] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/6fdf3dc9321e40c477596b9a543744e775b3c29dd76abb072a178399ea038672/start HTTP/1.1" 204 0
+[2026-04-11 00:34:32,104] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/6fdf3dc9321e40c477596b9a543744e775b3c29dd76abb072a178399ea038672/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-04-11 00:34:32,107] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/6fdf3dc9321e40c477596b9a543744e775b3c29dd76abb072a178399ea038672/json HTTP/1.1" 200 None
+[2026-04-11 00:35:11,679] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/6fdf3dc9321e40c477596b9a543744e775b3c29dd76abb072a178399ea038672?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-04-11 00:35:43,134] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/30f39ddde51620b321ec77dc663a98d410919596ba42ad9db68ea3a6ce074993?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-04-11 00:38:05,279] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/45b33766ccfd04db0f528a8fbe0df0e876b89fdea91ce228bf1a233063cd1ebd?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-04-11 00:41:31,384] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/105a7a1978b68d37674662cbbfb69646183733cd14074dac64168e02744d27a6?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-04-11 00:43:41,164] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/803b665f13198b9ca7aa091f482c36cee7e7ecb5e63cbb081e7d9e5250fe5e4f?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-04-11 00:43:41,165] [run_evaluation.py] [INFO]: Instances run successfully.
+[2026-04-11 00:43:41,165] [run_evaluation.py] [INFO]: Running evaluation...
+[2026-04-11 00:43:41,166] [gen_report.py] [INFO]: Initialize logger successfully.
+[2026-04-11 00:43:41,166] [gen_report.py] [INFO]: Collecting report tasks...
+[2026-04-11 00:43:41,167] [gen_report.py] [INFO]: Successfully collected 11 tasks.
+[2026-04-11 00:43:41,167] [gen_report.py] [INFO]: Loading dataset...
+[2026-04-11 00:43:41,641] [gen_report.py] [INFO]: Successfully loaded 11 valid datasets from ['/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java_easy_11_mini.jsonl']
+[2026-04-11 00:43:41,790] [gen_report.py] [ERROR]: Invalid eval report for fasterxml/jackson-databind:pr-4338, Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (643, 0, 1)
+  test = (642, 1, 1)
+  fix  = (0, 0, 0), After applying the fix patch, no test results were captured when executing the test command. A brief summary is as follows: Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (643, 0, 1)
+  test = (642, 1, 1)
+  fix  = (0, 0, 0)
+[2026-04-11 00:43:41,790] [gen_report.py] [ERROR]: Invalid eval report for fasterxml/jackson-databind:pr-4426, Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (648, 0, 1)
+  test = (648, 1, 1)
+  fix  = (0, 0, 0), After applying the fix patch, no test results were captured when executing the test command. A brief summary is as follows: Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (648, 0, 1)
+  test = (648, 1, 1)
+  fix  = (0, 0, 0)
+[2026-04-11 00:43:41,804] [gen_report.py] [ERROR]: Invalid eval report for fasterxml/jackson-databind:pr-4311, Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (636, 1, 1)
+  test = (636, 2, 1)
+  fix  = (0, 0, 0), After applying the fix patch, no test results were captured when executing the test command. A brief summary is as follows: Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (636, 1, 1)
+  test = (636, 2, 1)
+  fix  = (0, 0, 0)
+[2026-04-11 00:43:41,835] [gen_report.py] [ERROR]: Invalid eval report for fasterxml/jackson-databind:pr-4486, Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (650, 0, 1)
+  test = (649, 1, 1)
+  fix  = (0, 0, 0), After applying the fix patch, no test results were captured when executing the test command. A brief summary is as follows: Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (650, 0, 1)
+  test = (649, 1, 1)
+  fix  = (0, 0, 0)
+[2026-04-11 00:43:41,863] [gen_report.py] [ERROR]: Invalid eval report for fasterxml/jackson-databind:pr-4304, Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (622, 0, 1)
+  test = (621, 1, 1)
+  fix  = (0, 0, 0), After applying the fix patch, no test results were captured when executing the test command. A brief summary is as follows: Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (622, 0, 1)
+  test = (621, 1, 1)
+  fix  = (0, 0, 0)
+[2026-04-11 00:43:41,877] [gen_report.py] [ERROR]: Invalid eval report for fasterxml/jackson-databind:pr-3701, Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (598, 0, 0)
+  test = (597, 1, 0)
+  fix  = (0, 0, 0), After applying the fix patch, no test results were captured when executing the test command. A brief summary is as follows: Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (598, 0, 0)
+  test = (597, 1, 0)
+  fix  = (0, 0, 0)
+[2026-04-11 00:43:42,022] [gen_report.py] [ERROR]: Invalid eval report for elastic/logstash:pr-15964, Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (1087, 2, 30)
+  test = (168, 1, 24)
+  fix  = (1086, 3, 30), By comparing the test results before and after applying the fix patch, an anomalous pattern was detected. A brief summary is as follows: Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (1087, 2, 30)
+  test = (168, 1, 24)
+  fix  = (1086, 3, 30). `org.logstash.RSpecTests > rspecTests[compliance]`: Test(run=<TestStatus.PASS: 'PASS'>, test=<TestStatus.NONE: 'NONE'>, fix=<TestStatus.FAIL: 'FAIL'>)
+[2026-04-11 00:43:42,023] [gen_report.py] [INFO]: Successfully generated 4 reports.
