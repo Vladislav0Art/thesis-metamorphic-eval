@@ -24,6 +24,31 @@ python transform.py \
     --override
 ```
 
+Apply Sample Transformation:
+```
+python scripts/transform.py \
+    -i /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java_easy_1_mini.jsonl \
+    -o /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/metamorphic_new_java_easy_1_mini.jsonl \
+    -s SampleTransformation \
+    -c /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/code-coccoon/CodeCocoon-Plugin \
+    -e /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/.env \
+    -r /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/repos \
+    -t /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/transformations/sample.json \
+    --override
+
+python scripts/transform.py \
+    -i /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java_easy_2_mini.jsonl \
+    -o /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/metamorphic_new_java_easy_2_mini.jsonl \
+    -s SampleTransformation \
+    -c /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/code-coccoon/CodeCocoon-Plugin \
+    -e /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/.env \
+    -r /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/repos \
+    -t /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/transformations/sample.json \
+    --override
+```
+
+
+
 Select Easy Benchmarks from SWE Bench Mini:
 ```
 python bootstrap.py benchmark Multi-SWE-bench_mini \

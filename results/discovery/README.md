@@ -23,4 +23,3 @@ This folder contains evals that discover which benchmarks are aligible (buildabl
     - reasoning_effort: high
     - top_p: omitted
     - goal: получить buildable easy инстансы для быстрых прогонов
-
