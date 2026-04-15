@@ -549,24 +549,29 @@ def process_entry(
         # Step 1.5: Check if branches exist and handle override
         base_branch = f"{strategy}-base-transformation"
         test_branch = f"{strategy}-test-transformation"
+        fix_branch  = f"{strategy}-fix-transformation"
 
         base_exists = branch_exists(repo_dir, base_branch)
         test_exists = branch_exists(repo_dir, test_branch)
+        fix_exists = branch_exists(repo_dir, fix_branch)
 
-        if (base_exists or test_exists) and not override:
+        if (base_exists or test_exists or fix_exists) and not override:
             logger.info(
                 f"Branches for strategy '{strategy}' already exist. "
                 f"Skipping transformation (use --override to regenerate)."
             )
             return entry
 
-        if override and (base_exists or test_exists):
+        if override and (base_exists or test_exists or fix_exists):
             logger.info(f"Override enabled: Deleting existing branches for strategy '{strategy}'")
             if base_exists and not delete_branch(repo_dir, base_branch):
                 logger.error(f"Failed to delete base branch '{base_branch}'")
                 return entry
             if test_exists and not delete_branch(repo_dir, test_branch):
                 logger.error(f"Failed to delete test branch '{test_branch}'")
+                return entry
+            if fix_exists and not delete_branch(repo_dir, fix_branch):
+                logger.error(f"Failed to delete test branch '{fix_branch}'")
                 return entry
 
         # Step 2: Extract changed files
@@ -604,7 +609,7 @@ def process_entry(
         )
 
         # Step 4: Apply metamorphic modifications to base commit
-        logger.info(f"===== STEP 1: Applying metamorphic modifications to base commit =====")
+        logger.info(f"\n===== STEP 1: Applying metamorphic modifications to base commit =====")
 
         # Ensure we're on base commit before starting
         if not checkout_branch(repo_dir, base_sha, create=False):
@@ -640,6 +645,7 @@ def process_entry(
             "branches": {
                 "base": base_branch,
                 "test": test_branch,
+                "fix": fix_branch,
             },
         }
 
@@ -657,7 +663,7 @@ def process_entry(
         logger.info(f"Base metamorphic transformation complete. Commit: {metamorphic_base_commit}")
 
         # Step 5: Apply test_patch and then metamorphic modifications
-        logger.info(f"===== STEP 2: Applying test_patch + metamorphic modifications =====")
+        logger.info(f"\n===== STEP 2: Applying test_patch + metamorphic modifications =====")
 
         # Checkout base commit again before applying test patch
         if not checkout_branch(repo_dir, base_sha, create=False):
@@ -697,7 +703,7 @@ def process_entry(
         )
 
         # Step 6: Generate new_morphed_test_patch as diff between two metamorphic commits
-        logger.info(f"===== STEP 3: Generating new_morphed_test_patch =====")
+        logger.info(f"\n===== STEP 3: Generating new_morphed_test_patch =====")
 
         # NOTE: this patch should be applied instead of test_patch when evaluating
         #       on the metamorphed version of the benchmark.
@@ -718,19 +724,81 @@ def process_entry(
         # store the generated new_morphed_test_patch (replaces test_patch)
         strategy_entry['new_morphed_test_patch'] = new_morphed_test_patch
 
+        # Step 4: Apply fix_patch and then metamorphic modifications
+        logger.info(f"\n===== STEP 4: Applying fix_patch + metamorphic modifications =====")
 
-        logger.info(f"===== STEP 4: Replacing test_patch with new_morphed_test_patch and save metamorphic_base_patch into 'base' =====")
+        # Checkout base commit again before applying fix patch
+        if not checkout_branch(repo_dir, base_sha, create=False):
+            logger.error(f"Failed to checkout base SHA {base_sha}")
+            return entry
 
-        # base: sha -> sha + metamorphic_base_patch (MSWE-agent and multi_swe_bench should applied the patch manually)
+        fix_patch = entry.get('fix_patch', '')
+
+        fix_morph_result: MorphResult = morph(
+            repo_dir=repo_dir,
+            patches=[Patch(name="fix_patch", content=fix_patch)] if fix_patch else [],
+            env_vars=env_vars,
+            branch=fix_branch,
+            metamorphic_commit_msg="Apply metamorphic modifications on: base commit + fix_patch (pre-committed)",
+            codecocoon_dir=codecocoon_dir,
+            config_path=config_path,
+        )
+
+        if fix_morph_result.succeeded is False:
+            logger.error("Failed to apply fix metamorphic transformations")
+            return entry
+
+        metamorphic_fix_commit = fix_morph_result.last_commit_sha
+        _metamorphic_fix_patch = fix_morph_result.metamorphic_patch
+
+        logger.info(f"Fix metamorphic transformation complete. Commit: {metamorphic_fix_commit}")
+
+        # Store metadata in strategy entry for reference
+        strategy_entry['_metamorphic_fix_patch'] = _metamorphic_fix_patch
+        strategy_entry['metamorphic_fix_commit'] = metamorphic_fix_commit
+        # save CodeCocoon logs for fix transformation
+        insert_metamorphic_log(
+            strategy_entry=strategy_entry,
+            label="fix_metamorphic_transformation_log",
+            applied_to="fix",
+            result=fix_morph_result.codecocoon_result,
+        )
+
+        # Step 5: Generate new_morphed_fix_patch as diff between two metamorphic commits
+        logger.info(f"\n===== STEP 5: Generating new_morphed_fix_patch =====")
+
+        # This final `new_morphed_fix_patch` represents the difference between
+        # the base metamorphic state and the fix + metamorphic state.
+        new_morphed_fix_patch = diff_between_commits(
+            repo_dir=repo_dir,
+            base=metamorphic_base_commit,
+            another=metamorphic_fix_commit,
+        )
+
+        if not new_morphed_fix_patch:
+            logger.error("Failed to generate new_morphed_fix_patch")
+            return entry
+
+        # save the original fix patch as well for reference
+        strategy_entry['original_fix_patch'] = fix_patch
+        # store the generated new_morphed_fix_patch (replaces fix_patch)
+        strategy_entry['new_morphed_fix_patch'] = new_morphed_fix_patch
+
+        logger.info(f"\n===== STEP 6: Replacing test_patch/fix_patch with morphed versions and save metamorphic_base_patch into 'base' =====")
+
+        # base: sha -> sha + metamorphic_base_patch (MSWE-agent and multi_swe_bench should apply the patch manually)
         # test: test_patch -> new_morphed_test_patch
+        # fix:  fix_patch  -> new_morphed_fix_patch
         entry['base']['metamorphic_base_patch'] = metamorphic_base_patch
         entry['test_patch'] = new_morphed_test_patch
-
+        entry['fix_patch'] = new_morphed_fix_patch
 
         logger.info(f"Successfully completed all transformations for {instance_id}")
         logger.info(f"  Base branch: {base_branch}")
         logger.info(f"  Test branch: {test_branch}")
+        logger.info(f"  Fix branch:  {fix_branch}")
         logger.info(f"  Generated new_morphed_test_patch (replaces test_patch)")
+        logger.info(f"  Generated new_morphed_fix_patch  (replaces fix_patch)")
 
     except Exception as e:
         logger.error(f"Failed to process {instance_id}: {e}", exc_info=True)
