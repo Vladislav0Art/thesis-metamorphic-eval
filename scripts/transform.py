@@ -517,6 +517,7 @@ def process_entry(
     strategy: str,
     codecocoon_dir: str,
     transformations: List[Dict],
+    transformations_filepath: str | None,
     repos_dir: str,
     env_vars: Dict[str, str | None],
     transform_test_files: bool,
@@ -532,7 +533,12 @@ def process_entry(
 
     # Strategy entry dict — built up locally and appended to entry["metamorphic"] once
     # we know base morphing succeeded (to avoid partial empty entries on early failures).
-    strategy_entry = {"strategy": strategy}
+    strategy_entry = {
+        "strategy": {
+            "name": strategy,
+            "config": transformations_filepath,
+        },
+    }
 
     try:
         # Step 1: Clone repository
@@ -609,7 +615,9 @@ def process_entry(
         )
 
         # Step 4: Apply metamorphic modifications to base commit
-        logger.info(f"\n===== STEP 1: Applying metamorphic modifications to base commit =====")
+        logger.info("=====================================================================")
+        logger.info("===== STEP 1: Applying metamorphic modifications to base commit =====")
+        logger.info("=====================================================================")
 
         # Ensure we're on base commit before starting
         if not checkout_branch(repo_dir, base_sha, create=False):
@@ -621,7 +629,7 @@ def process_entry(
             patches=[],
             env_vars=env_vars,
             branch=base_branch,
-            metamorphic_commit_msg="Apply metamorphic modifications on: base commit",
+            metamorphic_commit_msg="[transform.py] Apply metamorphic modifications on: base commit",
             codecocoon_dir=codecocoon_dir,
             config_path=config_path,
         )
@@ -649,9 +657,18 @@ def process_entry(
             },
         }
 
+        # Structured container for all three morph results; populated incrementally below
+        strategy_entry["metamorphic_patches"] = {}
+
         # Store base transformation results
-        strategy_entry['metamorphic_base_patch'] = metamorphic_base_patch
-        strategy_entry['metamorphic_base_commit'] = metamorphic_base_commit
+        strategy_entry["metamorphic_patches"]["base"] = {
+            "patch": {
+                "description": "CodeCocoon transformations applied on the original base commit",
+                "value": metamorphic_base_patch,
+            },
+            "commit": metamorphic_base_commit,
+            "branch": base_branch,
+        }
         # saving CodeCocoon logs for base transformation
         insert_metamorphic_log(
             strategy_entry=strategy_entry,
@@ -663,7 +680,9 @@ def process_entry(
         logger.info(f"Base metamorphic transformation complete. Commit: {metamorphic_base_commit}")
 
         # Step 5: Apply test_patch and then metamorphic modifications
-        logger.info(f"\n===== STEP 2: Applying test_patch + metamorphic modifications =====")
+        logger.info("===================================================================")
+        logger.info("===== STEP 2: Applying test_patch + metamorphic modifications =====")
+        logger.info("===================================================================")
 
         # Checkout base commit again before applying test patch
         if not checkout_branch(repo_dir, base_sha, create=False):
@@ -677,7 +696,7 @@ def process_entry(
             patches=[Patch(name="test_patch", content=test_patch)] if test_patch else [],
             env_vars=env_vars,
             branch=test_branch,
-            metamorphic_commit_msg="Apply metamorphic modifications on: base commit + test_patch (pre-committed)",
+            metamorphic_commit_msg="[transform.py] Apply metamorphic modifications on: base commit + test_patch (pre-committed)",
             codecocoon_dir=codecocoon_dir,
             config_path=config_path,
         )
@@ -691,9 +710,15 @@ def process_entry(
 
         logger.info(f"Test metamorphic transformation complete. Commit: {metamorphic_test_commit}")
 
-        # Store metadata in strategy entry for reference
-        strategy_entry['_metamorphic_test_patch'] = _metamorphic_test_patch
-        strategy_entry['metamorphic_test_commit'] = metamorphic_test_commit
+        # Store test transformation results
+        strategy_entry["metamorphic_patches"]["test"] = {
+            "patch": {
+                "description": "CodeCocoon transformations applied on the base commit with original test_patch pre-applied (base + test_patch)",
+                "value": _metamorphic_test_patch,
+            },
+            "commit": metamorphic_test_commit,
+            "branch": test_branch,
+        }
         # save CodeCocoon logs for test transformation
         insert_metamorphic_log(
             strategy_entry=strategy_entry,
@@ -702,8 +727,10 @@ def process_entry(
             result=test_morph_result.codecocoon_result,
         )
 
-        # Step 6: Generate new_morphed_test_patch as diff between two metamorphic commits
-        logger.info(f"\n===== STEP 3: Generating new_morphed_test_patch =====")
+        # Step 3: Generate new_morphed_test_patch as diff between two metamorphic commits
+        logger.info("=====================================================")
+        logger.info("===== STEP 3: Generating new_morphed_test_patch =====")
+        logger.info("=====================================================")
 
         # NOTE: this patch should be applied instead of test_patch when evaluating
         #       on the metamorphed version of the benchmark.
@@ -719,13 +746,21 @@ def process_entry(
             logger.error("Failed to generate new_morphed_test_patch")
             return entry
 
-        # save the original test patch as well for reference
-        strategy_entry['original_test_patch'] = test_patch
-        # store the generated new_morphed_test_patch (replaces test_patch)
-        strategy_entry['new_morphed_test_patch'] = new_morphed_test_patch
+        # complete the test section with original and morphed patch
+        strategy_entry["metamorphic_patches"]["test"]["original_patch"] = test_patch
+        strategy_entry["metamorphic_patches"]["test"]["new_morphed_test_patch"] = {
+            "description": (
+                "Difference between 1) metamorphically transformed base commit and "
+                "2) metamorphically transformed base + original test_patch "
+                "(replaces original `test_patch` field)"
+            ),
+            "value": new_morphed_test_patch,
+        }
 
         # Step 4: Apply fix_patch and then metamorphic modifications
-        logger.info(f"\n===== STEP 4: Applying fix_patch + metamorphic modifications =====")
+        logger.info("==================================================================")
+        logger.info("===== STEP 4: Applying fix_patch + metamorphic modifications =====")
+        logger.info("==================================================================")
 
         # Checkout base commit again before applying fix patch
         if not checkout_branch(repo_dir, base_sha, create=False):
@@ -739,7 +774,7 @@ def process_entry(
             patches=[Patch(name="fix_patch", content=fix_patch)] if fix_patch else [],
             env_vars=env_vars,
             branch=fix_branch,
-            metamorphic_commit_msg="Apply metamorphic modifications on: base commit + fix_patch (pre-committed)",
+            metamorphic_commit_msg="[transform.py] Apply metamorphic modifications on: base commit + fix_patch (pre-committed)",
             codecocoon_dir=codecocoon_dir,
             config_path=config_path,
         )
@@ -753,9 +788,15 @@ def process_entry(
 
         logger.info(f"Fix metamorphic transformation complete. Commit: {metamorphic_fix_commit}")
 
-        # Store metadata in strategy entry for reference
-        strategy_entry['_metamorphic_fix_patch'] = _metamorphic_fix_patch
-        strategy_entry['metamorphic_fix_commit'] = metamorphic_fix_commit
+        # Store fix transformation results
+        strategy_entry["metamorphic_patches"]["fix"] = {
+            "patch": {
+                "description": "CodeCocoon transformations applied on the base commit with original fix_patch pre-applied (base + fix_patch)",
+                "value": _metamorphic_fix_patch,
+            },
+            "commit": metamorphic_fix_commit,
+            "branch": fix_branch,
+        }
         # save CodeCocoon logs for fix transformation
         insert_metamorphic_log(
             strategy_entry=strategy_entry,
@@ -765,7 +806,9 @@ def process_entry(
         )
 
         # Step 5: Generate new_morphed_fix_patch as diff between two metamorphic commits
-        logger.info(f"\n===== STEP 5: Generating new_morphed_fix_patch =====")
+        logger.info("====================================================")
+        logger.info("===== STEP 5: Generating new_morphed_fix_patch =====")
+        logger.info("====================================================")
 
         # This final `new_morphed_fix_patch` represents the difference between
         # the base metamorphic state and the fix + metamorphic state.
@@ -779,12 +822,20 @@ def process_entry(
             logger.error("Failed to generate new_morphed_fix_patch")
             return entry
 
-        # save the original fix patch as well for reference
-        strategy_entry['original_fix_patch'] = fix_patch
-        # store the generated new_morphed_fix_patch (replaces fix_patch)
-        strategy_entry['new_morphed_fix_patch'] = new_morphed_fix_patch
+        # complete the fix section with original and morphed patch
+        strategy_entry["metamorphic_patches"]["fix"]["original_patch"] = fix_patch
+        strategy_entry["metamorphic_patches"]["fix"]["new_morphed_fix_patch"] = {
+            "description": (
+                "Difference between 1) metamorphically transformed base commit and "
+                "2) metamorphically transformed base + original fix_patch "
+                "(replaces original `fix_patch` field)"
+            ),
+            "value": new_morphed_fix_patch,
+        }
 
-        logger.info(f"\n===== STEP 6: Replacing test_patch/fix_patch with morphed versions and save metamorphic_base_patch into 'base' =====")
+        logger.info("====================================================================================================================")
+        logger.info("===== STEP 6: Replacing test_patch/fix_patch with morphed versions and save metamorphic_base_patch into 'base' =====")
+        logger.info("====================================================================================================================")
 
         # base: sha -> sha + metamorphic_base_patch (MSWE-agent and multi_swe_bench should apply the patch manually)
         # test: test_patch -> new_morphed_test_patch
@@ -949,6 +1000,7 @@ def main():
             strategy=args.strategy,
             codecocoon_dir=args.codecoccoon,
             transformations=transformations,
+            transformations_filepath=args.transformations,
             repos_dir=args.repos,
             env_vars=env_vars,
             transform_test_files=args.transform_test_files,
