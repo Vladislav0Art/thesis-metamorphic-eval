@@ -253,6 +253,7 @@ def _write_metrics_summary(workdir: Path, n_runs: int):
     run_summaries: list  = []
     all_executions: list = []
     eval_summaries: list = []
+    any_agent_metrics    = False
     any_eval_metrics     = False
 
     for run_number in range(1, n_runs + 1):
@@ -264,31 +265,48 @@ def _write_metrics_summary(workdir: Path, n_runs: int):
             result_data = json.load(f)
 
         agent_metrics = result_data.get("agent", {}).get("metrics", {})
-        summary   = agent_metrics.get("summary")
-        execution = agent_metrics.get("execution", [])
+        agent_summary   = agent_metrics.get("summary")
+        agent_execution = agent_metrics.get("execution", [])
 
-        if not summary:
-            logger.warning(f"No agent metrics in run-{run_number}/result.json; skipping.")
+        eval_summary = result_data.get("evaluation", {}).get("metrics", {}).get("summary")
+
+        if not agent_summary and not eval_summary:
+            logger.warning(
+                f"No agent or evaluation metrics in run-{run_number}/result.json; skipping."
+            )
             continue
 
         run_numbers.append(run_number)
-        run_summaries.append(summary)
-        all_executions.append(execution)
-
-        eval_summary = result_data.get("evaluation", {}).get("metrics", {}).get("summary")
+        # agent_summary may be None for evaluation-only runs; aggregate_runs handles that.
+        run_summaries.append(agent_summary)
+        all_executions.append(agent_execution)
         eval_summaries.append(eval_summary)
+
+        if agent_summary:
+            any_agent_metrics = True
         if eval_summary:
             any_eval_metrics = True
 
-    if not run_summaries:
-        logger.warning("No per-run agent metrics found; metrics_summary.json will not be written.")
+    if not run_numbers:
+        logger.warning("No metrics found in any run; metrics_summary.json will not be written.")
         return
+
+    if not any_agent_metrics:
+        logger.info(
+            "No agent metrics found across all runs (evaluation-only run). "
+            "metrics_summary.json will contain pass_rate data only."
+        )
 
     summary = aggregate_runs(
         run_numbers,
         run_summaries,
         all_executions,
         eval_summaries=eval_summaries if any_eval_metrics else None,
+    )
+    logger.info(
+        f"Aggregated metrics: {len(run_numbers)} run(s), "
+        f"agent={'yes' if any_agent_metrics else 'no'}, "
+        f"eval={'yes' if any_eval_metrics else 'no'}."
     )
     metrics_path = workdir / "metrics_summary.json"
     with open(metrics_path, "w", encoding="utf-8") as f:
@@ -392,6 +410,8 @@ def run_evaluation(config: EvalConfig, config_filepath: str):
         }
 
         context: dict[str, StepResult] = {}
+        # Inject run_number so steps (e.g. EvaluationStep) can adjust per-run behaviour.
+        context["_run_number"] = run_number
 
         for step_name in config.run.steps:
             logger.info("")
@@ -426,10 +446,11 @@ def run_evaluation(config: EvalConfig, config_filepath: str):
         logger.info(f"  Run {run_number} complete.  Manifest: {run_dir / 'result.json'}")
 
     # ── Cross-run metrics summary ─────────────────────────────────────────────
-    if "agent" in config.run.steps and config.steps.agent is not None:
-        logger.info("")
-        logger.info("Computing cross-run metrics summary ...")
-        _write_metrics_summary(workdir, config.run.N)
+    # Always attempt: _write_metrics_summary handles agent-only, eval-only, and
+    # combined runs gracefully; it skips writing only when no metrics exist at all.
+    logger.info("")
+    logger.info("Computing cross-run metrics summary ...")
+    _write_metrics_summary(workdir, config.run.N)
 
     # ── Summary ───────────────────────────────────────────────────────────────
     logger.info("")

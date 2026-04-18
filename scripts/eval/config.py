@@ -148,6 +148,7 @@ class EvalHarnessConfig:
     dataset_files: List[str]
     patch_files: Optional[List[str]] = None   # None = auto-resolve from agent step
     force_build: bool = False
+    force_build_on_first_run: bool = False    # True → force_build only for run-1
     stop_on_error: bool = True
     need_clone: bool = True
     max_workers: int = 8
@@ -310,6 +311,7 @@ def load_config(config_filepath: str) -> EvalConfig:
                 dataset_files=_resolve_list(c["dataset_files"], base),
                 patch_files=_resolve_list(patch_files_raw, base) if patch_files_raw else None,
                 force_build=c.get("force_build", False),
+                force_build_on_first_run=c.get("force_build_on_first_run", False),
                 stop_on_error=c.get("stop_on_error", True),
                 need_clone=c.get("need_clone", True),
                 max_workers=c.get("max_workers", 8),

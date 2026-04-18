@@ -229,7 +229,7 @@ def run_variability_stats(run_summaries: list) -> dict:
         avgs = [
             s[field]["avg"]
             for s in run_summaries
-            if isinstance(s.get(field), dict) and s[field].get("avg") is not None
+            if s is not None and isinstance(s.get(field), dict) and s[field].get("avg") is not None
         ]
         result[field] = {
             "avg_of_run_avgs": mean(avgs)   if avgs          else None,
@@ -403,22 +403,32 @@ def aggregate_runs(
     ``per_run[i]["evaluation"]`` is ``null`` when *eval_summaries* is not
     provided.
     """
-    n_instances = run_summaries[0]["n_instances"] if run_summaries else 0
+    # n_instances: prefer agent summary; fall back to eval summary total_instances.
+    n_instances = (
+        next((s["n_instances"] for s in run_summaries if s is not None), None)
+        or (eval_summaries[0].get("total_instances", 0) if eval_summaries else 0)
+    )
 
     per_run = [
         {
             "run_number": run_numbers[i],
-            "agent":      run_summaries[i],
-            "evaluation": eval_summaries[i] if eval_summaries else None,
+            "agent":      run_summaries[i] if i < len(run_summaries) else None,
+            "evaluation": eval_summaries[i] if eval_summaries and i < len(eval_summaries) else None,
         }
         for i in range(len(run_numbers))
     ]
 
+    # Filter to runs that have agent data for pooled / variability stats.
+    # When only the evaluation step ran, these will be empty lists and the
+    # pooled/run_variability sections will contain null values.
+    agent_summaries   = [s for s in run_summaries  if s is not None]
+    agent_executions  = [e for s, e in zip(run_summaries, all_executions) if s is not None]
+
     result: dict = {
-        "n_runs":               len(run_summaries),
+        "n_runs":               len(run_numbers),
         "n_instances_per_run":  n_instances,
-        "pooled":               pooled_stats(all_executions),
-        "run_variability":      run_variability_stats(run_summaries),
+        "pooled":               pooled_stats(agent_executions),
+        "run_variability":      run_variability_stats(agent_summaries),
         "per_run":              per_run,
     }
 

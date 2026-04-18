@@ -190,6 +190,12 @@ steps:
 
       # --- Options with sensible defaults (override as needed) ---
       force_build: false
+
+      # Set to true to rebuild Docker images on run-1 only.
+      # Runs 2..N reuse the images from run-1, saving time in multi-run evaluations.
+      # Has no effect when force_build: true (which rebuilds on every run regardless).
+      force_build_on_first_run: false
+
       stop_on_error: true
       need_clone: true
       max_workers: 8

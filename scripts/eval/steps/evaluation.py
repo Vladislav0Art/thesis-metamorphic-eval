@@ -97,6 +97,8 @@ class EvaluationStep(Step):
     def run(self, run_dir: Path, context: dict) -> EvaluationStepResult:
         """Execute the full evaluation pipeline."""
         try:
+            run_number = context.get("_run_number", 1)
+
             # Step 1: put the repo on the right branch
             self._checkout_branch()
 
@@ -108,7 +110,7 @@ class EvaluationStep(Step):
             logger.info(f"Using fix_patches: {fix_patches_path}")
 
             # Step 4: generate config.json for the harness
-            eval_config_path = self._generate_eval_config(fix_patches_path, run_dir)
+            eval_config_path = self._generate_eval_config(fix_patches_path, run_dir, run_number)
             logger.info(f"Generated eval config: {eval_config_path}")
 
             # Step 5: run the harness (currently a placeholder)
@@ -206,13 +208,16 @@ class EvaluationStep(Step):
             "and evaluation.config.patch_files is not set in the config."
         )
 
-    def _generate_eval_config(self, fix_patches_path: Path, run_dir: Path) -> Path:
+    def _generate_eval_config(self, fix_patches_path: Path, run_dir: Path, run_number: int = 1) -> Path:
         """
         Auto-generate ``config.json`` for the multi_swe_bench harness.
 
         The file is written to ``{run_dir}/eval/config.json``.
         All harness sub-directories (workdir, output, repos, logs) are placed
         under ``{run_dir}/eval/`` to keep the run self-contained.
+
+        When ``force_build_on_first_run=True``, ``force_build`` is set to True
+        only for run-1 and False for all subsequent runs.
         """
         eval_dir = run_dir / "eval"
 
@@ -233,12 +238,24 @@ class EvaluationStep(Step):
         for d in (harness_workdir, harness_output, harness_repos, harness_logs):
             d.mkdir(parents=True, exist_ok=True)
 
+        force_build = self.config.config.force_build
+        logger.info(f"force_build={force_build} (BEFORE applying `force_build_on_first_run` logic)")
+        if self.config.config.force_build_on_first_run and run_number == 1:
+            force_build = True
+            logger.info("force_build_on_first_run=True and this is run-1: setting force_build=True")
+        elif self.config.config.force_build_on_first_run and run_number > 1:
+            logger.info(
+                f"force_build_on_first_run=True but this is run-{run_number} (not first): "
+                "force_build stays False (if not set by config explicitly!) to reuse images built in run-1"
+            )
+        logger.info(f"force_build={force_build} (AFTER applying `force_build_on_first_run` logic)")
+
         config_dict = {
             "mode": "evaluation",
             "workdir":       str(harness_workdir),
             "patch_files":   [str(fix_patches_path)],
             "dataset_files": self.config.config.dataset_files,
-            "force_build":   self.config.config.force_build,
+            "force_build":   force_build,
             "output_dir":    str(harness_output),
             "specifics":     self.config.config.specifics,
             "skips":         self.config.config.skips,
