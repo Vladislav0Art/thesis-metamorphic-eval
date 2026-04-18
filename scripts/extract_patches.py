@@ -27,16 +27,20 @@ def main() -> None:
     parser.add_argument("-o", "--output", required=True, help="Output directory")
     parser.add_argument(
         "--instance_ids",
-        required=True,
-        help="Comma-separated list of instance IDs to extract",
+        default=None,
+        help="Comma-separated list of instance IDs to extract (omit to extract all)",
     )
     args = parser.parse_args()
 
-    target_ids: set[str] = {
-        normalize_instance_id(s.strip())
-        for s in args.instance_ids.split(",")
-        if s.strip()
-    }
+    target_ids: set[str] | None = (
+        {
+            normalize_instance_id(s.strip())
+            for s in args.instance_ids.split(",")
+            if s.strip()
+        }
+        if args.instance_ids is not None
+        else None
+    )
 
     output_root = Path(args.output)
     input_path = Path(args.input)
@@ -57,7 +61,7 @@ def main() -> None:
                 sys.exit(f"JSON parse error on line {lineno}: {exc}")
 
             iid = entry.get("instance_id", "")
-            if iid not in target_ids:
+            if target_ids is not None and iid not in target_ids:
                 continue
 
             base_patch = (entry.get("base") or {}).get("metamorphic_base_patch", "")
@@ -74,12 +78,14 @@ def main() -> None:
             found.add(iid)
             print(f"Extracted: {iid}")
 
-    missing = target_ids - found
-    if missing:
-        for iid in sorted(missing):
-            print(f"Warning: not found in input: {iid}", file=sys.stderr)
-
-    print(f"\nDone. {len(found)}/{len(target_ids)} instances extracted to {output_root}")
+    if target_ids is not None:
+        missing = target_ids - found
+        if missing:
+            for iid in sorted(missing):
+                print(f"Warning: not found in input: {iid}", file=sys.stderr)
+        print(f"\nDone. {len(found)}/{len(target_ids)} instances extracted to {output_root}")
+    else:
+        print(f"\nDone. {len(found)} instances extracted to {output_root}")
 
 
 if __name__ == "__main__":
