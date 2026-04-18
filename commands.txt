@@ -1,12 +1,15 @@
 
 Run transform.py:
 ```
-python transform.py -i /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/mockito.jsonl \
-    -o /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/metamorphic-mockito.jsonl \
+python transform.py \
+    -i benchmarks/mockito.jsonl \
+    -o benchmarks/metamorphic-mockito.jsonl \
     -s sample \
-    -c /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/code-coccoon/CodeCocoon-Plugin \
-    -r /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/repos \
-    -t /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/transformations/sample.json \
+    -c code-coccoon/CodeCocoon-Plugin \
+    -e .env/.env \
+    -d .env/benchmark_envs.json \
+    -r repos \
+    -t transformations/sample.json \
     --override \
     --transform_test_files
 ```
@@ -14,13 +17,14 @@ python transform.py -i /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorph
 Apply Rename Transformations:
 ```
 python scripts/transform.py \
-    -i /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/original/java_easy_4_mini.jsonl \
-    -o /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/metamorphic/java_easy_4_mini.jsonl \
+    -i benchmarks/original/java_easy_4_mini.jsonl \
+    -o benchmarks/metamorphic/java_easy_4_mini.jsonl \
     -s rename-class-method-transformations \
-    -c /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/code-coccoon/CodeCocoon-Plugin \
-    -e /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/.env \
-    -r /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/repos \
-    -t /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/transformations/rename-transformations.json \
+    -c code-coccoon/CodeCocoon-Plugin \
+    -e .env/.env \
+    -d .env/benchmark_envs.json \
+    -r repos \
+    -t transformations/rename-transformations.json \
     --override
 ```
 

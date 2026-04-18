@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 import re
 import yaml
 import tempfile
@@ -205,6 +206,15 @@ class MorphResult:
     metamorphic_patch: Optional[str] = None
     codecocoon_result: Optional[CodeCocoonResult] = None
 
+@dataclass
+class EnvVar:
+    name: str
+    value: str | None
+
+@dataclass
+class EnvEntry:
+    instance_id: str
+    envs: List[EnvVar]
 
 
 
@@ -476,7 +486,7 @@ def morph(
         codecocoon_result: CodeCocoonResult = execute_codecocoon(codecocoon_dir, config_path, env_vars)
 
         if codecocoon_result.return_code != 0:
-            logger.error(f"CodeCocoon execution failed: {stderr}")
+            logger.error(f"CodeCocoon execution failed: {codecocoon_result.stderr}")
             return MorphResult(succeeded=False, codecocoon_result=codecocoon_result)
 
         logger.info(f"CodeCocoon execution successful")
@@ -526,6 +536,8 @@ def process_entry(
     """Process a single entry through the transformation pipeline."""
     instance_id = entry['instance_id']
     logger.info(f"Processing entry: {instance_id}")
+
+    logger.info(f"ENV variables: [{ ', '.join(env_vars.keys()) }]")
 
     # Initialize metamorphic array if not present
     if "metamorphic" not in entry:
@@ -903,6 +915,9 @@ def main():
 
     parser.add_argument('-e', "--env_filepath", type=str, default=None,
                         help="Filepath to a file with key-value pairs defining environment variables to be set when executing CodeCocoon (e.g., to provide credentials for private repositories) (default: None)")
+    # per-benchmark ENV variables (e.g., specific JAVA_HOME)
+    parser.add_argument('-d', "--additional_envs_filepath", type=str, default=None,
+                        help="Filepath to JSON file with additional benchmark-specific ENVs (per instance id)")
 
     parser.add_argument('-r', '--repos', type=str, help="Filepath which the repositories from the input should be cloned into")
     parser.add_argument('-t', '--transformations', type=str, default=None, help="Filepath to a JSON file with transformations definitions. The file should contain a list of objects with `id` and `config` entries where the config is transformation-specific. Defaults to a config defined inn `default/defaults.py` when missing.")
@@ -923,9 +938,10 @@ def main():
     args.codecoccoon = make_absolute_path(args.codecoccoon)
     if args.env_filepath:
         args.env_filepath = make_absolute_path(args.env_filepath)
+    if args.additional_envs_filepath:
+        args.additional_envs_filepath = make_absolute_path(args.additional_envs_filepath)
     if args.transformations:
         args.transformations = make_absolute_path(args.transformations)
-
 
     # Validate arguments
     if not os.path.exists(args.input):
@@ -947,6 +963,7 @@ def main():
       --transformations: {args.transformations}
       --repos: {args.repos}
       --env_filepath: {args.env_filepath}
+      --additional_envs_filepath: {args.additional_envs_filepath}
       --transform_test_files: {args.transform_test_files}
       --override: {args.override}
     """)
@@ -977,6 +994,46 @@ def main():
         logger.info("`env_filepath` not provided: No additional ENV variables loaded")
         env_vars = {}
 
+    # load per instance id ENVs
+    additional_envs: List[EnvEntry] = []
+
+    if args.additional_envs_filepath is not None:
+        if not os.path.exists(args.additional_envs_filepath):
+            logger.error(f"Provided `additional_envs_filepath` does not exist: {args.additional_envs_filepath}")
+            return
+        if not os.path.isfile(args.additional_envs_filepath):
+            logger.error(f"Provided `additional_envs_filepath` is not a file: {args.additional_envs_filepath}")
+            return
+        with open(args.additional_envs_filepath) as file:
+            import json
+            # array of entries defined below
+            envs_data = json.load(file)
+            logger.info(f"Successfully loaded additional ENVs for instances from {args.additional_envs_filepath}")
+
+            # expected instance format:
+            # { "instance_id", "envs": [{ "name": "str", "value": "str" }] }
+            for entry in envs_data:
+                if ('instance_id' not in entry) or ('envs' not in entry) or (not isinstance(entry['envs'], list)):
+                    logger.error(f"Malformed entry in additional ENVs file (missing 'instance_id' or 'envs' list): {entry}")
+                    sys.exit(1)
+
+                instance_id = entry['instance_id']
+                envs: List[EnvVar] = []
+                for env in entry['envs']:
+                    if ('name' not in env) or ('value' not in env):
+                        logger.error(f"Malformed env entry for instance '{instance_id}' in additional ENVs file (missing 'name' or 'value'): {env}")
+                        sys.exit(1)
+                    # valid ENV variable
+                    envs.append(EnvVar(name=env['name'], value=env['value']))
+
+                # append to the list of additional envs
+                additional_envs.append(
+                    EnvEntry(
+                        instance_id=instance_id,
+                        envs=envs,
+                    )
+                )
+
     transformations = load_codecoccoon_transformations(from_filepath=args.transformations)
     if transformations is None:
         logger.error("Failed to load transformations, terminating execution.")
@@ -995,6 +1052,15 @@ def main():
         logger.info("==========================================================================")
         logger.info(f"====== ⌛ Processing entry '{instance_id}' ({i}/{len(entries)}) ======")
 
+        # Merge common env_vars with per-instance additional envs
+        instance_env_vars = dict(env_vars)
+        for env_entry in additional_envs:
+            if env_entry.instance_id == instance_id:
+                for env_var in env_entry.envs:
+                    instance_env_vars[env_var.name] = env_var.value
+                break
+
+
         processed_entry = process_entry(
             entry=entry,
             strategy=args.strategy,
@@ -1002,7 +1068,7 @@ def main():
             transformations=transformations,
             transformations_filepath=args.transformations,
             repos_dir=args.repos,
-            env_vars=env_vars,
+            env_vars=instance_env_vars,
             transform_test_files=args.transform_test_files,
             override=args.override,
         )
