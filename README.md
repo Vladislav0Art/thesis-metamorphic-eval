@@ -559,3 +559,8 @@ The math functions are in [`scripts/eval/metrics.py`](./scripts/eval/metrics.py)
 and can be imported directly into Jupyter notebooks without loading the rest
 of the pipeline.
 
+## Other repositories
+
+1. [MSWE-agent modification](https://github.com/Vladislav0Art/MSWE-agent)
+2. [Multi-SWE-Bench harness](https://github.com/Vladislav0Art/multi-swe-bench)
+3. [CodeCoCoon-Plugin](https://github.com/JetBrains-Research/CodeCocoon-Plugin)
