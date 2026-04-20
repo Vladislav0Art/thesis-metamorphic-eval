@@ -171,31 +171,52 @@ def download_benchmark_dataset(dataset_name: str) -> Path:
     return target_dir
 
 
-def find_jsonl_file(dataset_dir: Path, dataset_name: str) -> Path:
+def find_jsonl_files(dataset_dir: Path, dataset_name: str, language: str = None) -> list[Path]:
     """
-    Find the JSONL file in the downloaded dataset directory.
+    Find JSONL files in the downloaded dataset directory.
+
+    For mini datasets (flat structure): returns a single JSONL file.
+    For the full dataset (nested by language): collects all JSONL files under
+    the language subdirectory (or all language subdirectories if language is None).
 
     Args:
         dataset_dir: Directory containing the dataset
         dataset_name: Name of the dataset
+        language: Language subdirectory to search (e.g. 'java'); None means all
 
     Returns:
-        Path to the JSONL file
+        List of paths to JSONL files
     """
-    # Expected filename is the dataset name with underscores and .jsonl extension
-    expected_filename = dataset_name.replace('-', '_').lower() + '.jsonl'
-    jsonl_path = dataset_dir / expected_filename
+    is_mini = dataset_name.endswith('_mini')
 
-    if jsonl_path.exists():
-        return jsonl_path
+    if is_mini:
+        expected_filename = dataset_name.replace('-', '_').lower() + '.jsonl'
+        jsonl_path = dataset_dir / expected_filename
+        if jsonl_path.exists():
+            return [jsonl_path]
+        jsonl_files = list(dataset_dir.glob('*.jsonl'))
+        if jsonl_files:
+            logger.warning(f"Expected {expected_filename} not found, using {jsonl_files[0].name}")
+            return [jsonl_files[0]]
+        raise FileNotFoundError(f"No JSONL file found in {dataset_dir}")
 
-    # Fallback: search for any .jsonl file
-    jsonl_files = list(dataset_dir.glob('*.jsonl'))
-    if jsonl_files:
-        logger.warning(f"Expected {expected_filename} not found, using {jsonl_files[0].name}")
-        return jsonl_files[0]
+    # Full dataset: nested structure {dataset_dir}/{language}/*.jsonl
+    if language:
+        lang_dir = dataset_dir / language.lower()
+        if not lang_dir.exists():
+            raise FileNotFoundError(f"Language directory not found: {lang_dir}")
+        jsonl_files = sorted(lang_dir.glob('*.jsonl'))
+        if not jsonl_files:
+            raise FileNotFoundError(f"No JSONL files found in {lang_dir}")
+        logger.info(f"Found {len(jsonl_files)} JSONL files in {lang_dir}")
+        return jsonl_files
 
-    raise FileNotFoundError(f"No JSONL file found in {dataset_dir}")
+    # No language filter: collect from all language subdirectories
+    jsonl_files = sorted(dataset_dir.glob('*/*.jsonl'))
+    if not jsonl_files:
+        raise FileNotFoundError(f"No JSONL files found under {dataset_dir}")
+    logger.info(f"Found {len(jsonl_files)} JSONL files across all languages")
+    return jsonl_files
 
 
 def filter_entries(entries: list, language: str = None, difficulty: str = None, instance_ids: list = None) -> list:
@@ -257,17 +278,23 @@ def benchmark_command(args):
     # Download the benchmark dataset
     try:
         dataset_dir = download_benchmark_dataset(args.name)
-        jsonl_file = find_jsonl_file(dataset_dir, args.name)
+        jsonl_files = find_jsonl_files(dataset_dir, args.name, args.language)
     except Exception as e:
         logger.error(f"Failed to prepare benchmark dataset: {e}")
         sys.exit(1)
 
-    # Read and filter entries
-    logger.info(f"Reading benchmark data from {jsonl_file}...")
-    entries = read_jsonl(str(jsonl_file))
+    # Read and merge entries from all files
+    entries = []
+    for jsonl_file in jsonl_files:
+        logger.info(f"Reading benchmark data from {jsonl_file}...")
+        entries.extend(read_jsonl(str(jsonl_file)))
     logger.info(f"Total entries: {len(entries)}")
 
-    filtered_entries = filter_entries(entries, args.language, args.difficulty, instance_ids)
+    # For the full (non-mini) dataset, language was already applied at the directory
+    # level in find_jsonl_files, so entries have no 'language' field to filter on.
+    is_mini = args.name.endswith('_mini')
+    filter_language = args.language if is_mini else None
+    filtered_entries = filter_entries(entries, filter_language, args.difficulty, instance_ids)
 
     if not filtered_entries:
         logger.warning("No entries match the specified filters!")
