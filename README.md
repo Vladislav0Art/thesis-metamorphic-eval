@@ -563,4 +563,4 @@ of the pipeline.
 
 1. [MSWE-agent modification](https://github.com/Vladislav0Art/MSWE-agent)
 2. [Multi-SWE-Bench harness](https://github.com/Vladislav0Art/multi-swe-bench)
-3. [CodeCoCoon-Plugin](https://github.com/JetBrains-Research/CodeCocoon-Plugin)
+3. [CodeCoCoon-Plugin](https://github.com/Vladislav0Art/CodeCocoon-Plugin/tree/vartiukhov/evaluation)
