@@ -57,17 +57,17 @@ After all N runs, `{workdir}/metrics_summary.json` is written with pooled cost/t
 Applies CodeCocoon-Plugin transformations to each benchmark entry in a JSONL file, producing a new metamorphic JSONL.
 
 ```bash
-python scripts/transform.py \
-    -i benchmarks/input.jsonl \
-    -o benchmarks/metamorphic.jsonl \
-    -s MyStrategy \
-    -c code-coccoon/CodeCocoon-Plugin \
-    -r repos/ \
-    -t transformations/sample.json \
-    [-e path/to/.env] \
-    [--override] \
-    [--transform_test_files]
+python scripts/transform.py --config path/to/transform.yaml
 ```
+
+See `transform.example.yaml` in the repo root for a fully annotated config template. Copy and edit it before running:
+
+```bash
+cp transform.example.yaml my_transform.yaml
+python scripts/transform.py --config my_transform.yaml
+```
+
+All relative paths in the config are resolved relative to the config file's own directory.
 
 **What it does per benchmark entry:**
 

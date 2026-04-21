@@ -1,65 +1,10 @@
-
 Run transform.py:
 ```
-python transform.py \
-    -i benchmarks/mockito.jsonl \
-    -o benchmarks/metamorphic-mockito.jsonl \
-    -s sample \
-    -c code-coccoon/CodeCocoon-Plugin \
-    -e .env/.env \
-    -d .env/benchmark_envs.json \
-    -r repos \
-    -t transformations/sample.json \
-    --override \
-    --transform_test_files
-```
+# 1. Copy and edit the example config
+cp transform.example.yaml my_transform.yaml
 
-Apply Rename Transformations:
-```
-python scripts/transform.py \
-    -i benchmarks/original/java_easy_1_mockito_mini.jsonl \
-    -o benchmarks/metamorphic/java_easy_1_mockito_mini_sample.jsonl \
-    -s sample \
-    -c code-coccoon/CodeCocoon-Plugin \
-    -e .env/.env \
-    -d .env/benchmark_envs.json \
-    -r repos \
-    -t transformations/sample.json \
-    --override
-```
-
-Apply Sample Transformation:
-```
-python scripts/transform.py \
-    -i benchmarks/original/java_easy_1_mockito_mini.jsonl \
-    -o benchmarks/metamorphic/java_easy_1_mockito_mini_sample.jsonl \
-    -s sample \
-    -c code-coccoon/CodeCocoon-Plugin \
-    -e .env/.env \
-    -d .env/benchmark_envs.json \
-    -r repos \
-    -t transformations/sample.json \
-    --override
-
-python scripts/transform.py \
-    -i /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java_easy_1_mini.jsonl \
-    -o /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/metamorphic_new_java_easy_1_mini.jsonl \
-    -s SampleTransformation \
-    -c /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/code-coccoon/CodeCocoon-Plugin \
-    -e /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/.env \
-    -r /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/repos \
-    -t /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/transformations/sample.json \
-    --override
-
-python scripts/transform.py \
-    -i /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java_easy_2_mini.jsonl \
-    -o /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/metamorphic_new_java_easy_2_mini.jsonl \
-    -s SampleTransformation \
-    -c /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/code-coccoon/CodeCocoon-Plugin \
-    -e /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/.env \
-    -r /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/repos \
-    -t /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/transformations/sample.json \
-    --override
+# 2. Run
+python scripts/transform.py --config my_transform.yaml
 ```
 
 

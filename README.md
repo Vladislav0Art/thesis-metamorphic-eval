@@ -183,27 +183,33 @@ _TODO: document how metamorphic patches are created and why in this way + add im
 
 **General usage**:
 
-Given filepaths will be converted to absolute filepaths.
-
-Here is a runnable example:
+`transform.py` is configured via a YAML file. Copy the annotated example at the repo root and edit it:
 
 ```bash
-python scripts/transform.py -i ./benchmarks/sample.jsonl \
-    -o ./benchmarks/metamorphic-sample.jsonl \
-    -s 'MyStrategy' \
-    -c ./code-coccoon/CodeCocoon-Plugin \
-    -r ./repos \
-    -e /path/to/env/file \ # filepath to ENV file that will provided to CodeCocoon (optional)
-    -t ./transformations/sample.json \
-    --override
+cp transform.example.yaml my_transform.yaml
+# edit my_transform.yaml
+python scripts/transform.py --config my_transform.yaml
 ```
 
-CodeCocoon needs `GRAZIE_TOKEN` for some transformations. To supply additional ENV variables, create an `.env` file (any name allowed) with a key-value entries, and pass it as `-e/--env_filepath` parameter. CodeCocoon subprocess will be executed with ENV variables of the parent process along with the ENV variables defined in the provided `.env` file:
-```bash
-GRAZIE_TOKEN="your-grazie-token"
-```
+All relative paths in the config are resolved relative to the config file's own directory.
 
-After running, navigate to `benchmarks/metamorphic-sample.jsonl` and search for `"metamorphic"` JSON field.
+See `transform.example.yaml` for documentation of every field. The key fields are:
+
+| Field | Required | Description |
+|---|---|---|
+| `input` | yes | Input benchmark JSONL file |
+| `output` | yes | Output metamorphic JSONL file (streamed, append mode) |
+| `strategy` | yes | Name for the transformation strategy (used as branch prefix) |
+| `codecocoon` | yes | Path to CodeCocoon-Plugin repo root |
+| `repos` | yes | Directory to clone benchmark repos into |
+| `transformations` | no | Path to transformations JSON file (defaults to built-in) |
+| `env_filepath` | no | Dotenv file supplying `GRAZIE_TOKEN` etc. to CodeCocoon |
+| `additional_envs_filepath` | no | JSON file with per-instance ENV overrides |
+| `transform_test_files` | no | Also transform test-patch files (default: `false`) |
+| `override` | no | Delete and recreate existing strategy branches (default: `false`) |
+| `skip_existing_entries` | no | Skip entries already in the output file (default: `true`) |
+
+After running, open the output JSONL and search for the `"metamorphic"` JSON field.
 
 
 ---
