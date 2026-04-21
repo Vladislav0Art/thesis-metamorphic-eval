@@ -4,7 +4,6 @@ import os
 import sys
 import re
 import yaml
-import tempfile
 import logging
 from pathlib import Path
 from dataclasses import dataclass
@@ -14,6 +13,16 @@ from default.defaults import DEFAULT_CODE_COCCOON_TRANSFORMATIONS
 from common.cli import run_cli_command
 from common.logger import configure_logging
 from common.fs import read_jsonl, write_jsonl
+from common.git import (
+    clone_repository,
+    apply_patch,
+    create_diff,
+    commit_all_changes,
+    diff_between_commits,
+    branch_exists,
+    delete_branch,
+    checkout_branch,
+)
 
 
 description="""
@@ -55,99 +64,6 @@ def extract_changed_files(patch: str) -> List[str]:
             files.append(match.group(1))
     logger.debug(f"Extracted {len(files)} files from patch")
     return files
-
-
-def clone_repository(repo_url: str, target_dir: str, sha: str) -> bool:
-    """Clone a repository and checkout a specific commit."""
-    try:
-        if os.path.exists(target_dir):
-            logger.info(f"Repository already exists at {target_dir}")
-            # Ensure we're on the correct commit
-            stdout, stderr, code = run_cli_command('git', ['checkout', sha], cwd=target_dir)
-            if code != 0:
-                logger.error(f"Failed to checkout {sha}: {stderr}")
-                return False
-            return True
-
-        logger.info(f"Cloning {repo_url} to {target_dir}")
-        stdout, stderr, code = run_cli_command('git', ['clone', repo_url, target_dir])
-        if code != 0:
-            logger.error(f"Failed to clone repository: {stderr}")
-            return False
-
-        stdout, stderr, code = run_cli_command('git', ['checkout', sha], cwd=target_dir)
-        if code != 0:
-            logger.error(f"Failed to checkout {sha}: {stderr}")
-            return False
-
-        logger.info(f"Successfully cloned and checked out {sha}")
-        return True
-    except Exception as e:
-        logger.error(f"Repository cloning failed: {e}")
-        return False
-
-
-def apply_patch(repo_dir: str, patch: str) -> bool:
-    """Apply a git patch to a repository."""
-    try:
-        # Write patch to temporary file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.patch', delete=False) as f:
-            f.write(patch)
-            patch_file = f.name
-
-        try:
-            stdout, stderr, code = run_cli_command('git', ['apply', patch_file], cwd=repo_dir)
-            if code != 0:
-                logger.error(f"Failed to apply patch: {stderr}")
-                return False
-            logger.debug(f"Patch applied successfully: {stdout}")
-            return True
-        finally:
-            os.unlink(patch_file)
-    except Exception as e:
-        logger.error(f"Patch application failed: {e}")
-        return False
-
-
-def create_diff(repo_dir: str) -> Optional[str]:
-    """Create a git diff of all changes in the repository."""
-    try:
-        stdout, stderr, code = run_cli_command('git', ['diff', 'HEAD'], cwd=repo_dir)
-        if code != 0:
-            logger.error(f"Failed to create diff: {stderr}")
-            return None
-        return stdout
-    except Exception as e:
-        logger.error(f"Diff creation failed: {e}")
-        return None
-
-
-def commit_changes(repo_dir: str, branch_name: str, message: str) -> bool:
-    """Commit all changes to a new branch."""
-    try:
-        # Add all changes
-        stdout, stderr, code = run_cli_command('git', ['add', '-A'], cwd=repo_dir)
-        if code != 0:
-            logger.error(f"Failed to stage changes: {stderr}")
-            return False
-
-        # Create and checkout new branch
-        stdout, stderr, code = run_cli_command('git', ['checkout', '-b', branch_name], cwd=repo_dir)
-        if code != 0:
-            logger.error(f"Failed to create branch: {stderr}")
-            return False
-
-        # Commit changes
-        stdout, stderr, code = run_cli_command('git', ['commit', '-m', message], cwd=repo_dir)
-        if code != 0:
-            logger.error(f"Failed to commit: {stderr}")
-            return False
-
-        logger.info(f"Changes committed to branch {branch_name}")
-        return True
-    except Exception as e:
-        logger.error(f"Commit failed: {e}")
-        return False
 
 
 def generate_codecocoon_config(
@@ -291,124 +207,8 @@ def build_github_url(org: str, repo: str) -> str:
     return f"https://github.com/{org}/{repo}.git"
 
 
-def branch_exists(repo_dir: str, branch_name: str) -> bool:
-    """Check if a branch exists in the repository."""
-    try:
-        stdout, stderr, code = run_cli_command(
-            'git', ['rev-parse', '--verify', branch_name], cwd=repo_dir,
-        )
-        exists = code == 0
-        logger.debug(f"Branch '{branch_name}' exists: {exists}")
-        return exists
-    except Exception as e:
-        logger.error(f"Failed to check branch existence: {e}")
-        return False
 
 
-def delete_branch(repo_dir: str, branch_name: str) -> bool:
-    """Delete a branch from the repository."""
-    try:
-        # First checkout to a different branch (base SHA)
-        stdout, stderr, code = run_cli_command('git', ['checkout', 'HEAD~0'], cwd=repo_dir)
-        if code != 0:
-            logger.error(f"Failed to detach HEAD: {stderr}")
-            return False
-
-        # Delete the branch
-        stdout, stderr, code = run_cli_command('git', ['branch', '-D', branch_name], cwd=repo_dir)
-        if code != 0:
-            logger.error(f"Failed to delete branch '{branch_name}': {stderr}")
-            return False
-
-        logger.info(f"Successfully deleted branch '{branch_name}'")
-        return True
-    except Exception as e:
-        logger.error(f"Branch deletion failed: {e}")
-        return False
-
-
-def checkout_branch(repo_dir: str, branch_name: str, create: bool = False, base_ref: str = None) -> bool:
-    """Checkout a branch, optionally creating it from a base reference."""
-    try:
-        if create:
-            if base_ref:
-                # Checkout base reference first
-                stdout, stderr, code = run_cli_command('git', ['checkout', base_ref], cwd=repo_dir)
-                if code != 0:
-                    logger.error(f"Failed to checkout base ref '{base_ref}': {stderr}")
-                    return False
-
-            # Create and checkout new branch
-            stdout, stderr, code = run_cli_command('git', ['checkout', '-b', branch_name], cwd=repo_dir)
-            if code != 0:
-                logger.error(f"Failed to create branch '{branch_name}': {stderr}")
-                return False
-            logger.info(f"Created and checked out branch '{branch_name}'")
-        else:
-            # Just checkout existing branch
-            stdout, stderr, code = run_cli_command('git', ['checkout', branch_name], cwd=repo_dir)
-            if code != 0:
-                logger.error(f"Failed to checkout branch '{branch_name}': {stderr}")
-                return False
-            logger.info(f"Checked out branch '{branch_name}'")
-
-        return True
-    except Exception as e:
-        logger.error(f"Branch checkout failed: {e}")
-        return False
-
-
-def commit_all_changes(repo_dir: str, message: str) -> bool:
-    """Stage and commit all changes in the repository."""
-    try:
-        # Add all changes
-        stdout, stderr, code = run_cli_command('git', ['add', '-A'], cwd=repo_dir)
-        if code != 0:
-            logger.error(f"Failed to stage changes: {stderr}")
-            return False
-
-        # Check if there are changes to commit
-        stdout, stderr, code = run_cli_command('git', ['diff', '--cached', '--exit-code'], cwd=repo_dir)
-        if code == 0:
-            logger.info("No changes to commit")
-            return True
-
-        # Commit changes
-        stdout, stderr, code = run_cli_command('git', ['commit', '-m', message], cwd=repo_dir)
-        if code != 0:
-            logger.error(f"Failed to commit: {stderr}")
-            return False
-
-        logger.info(f"Successfully committed changes: `{message}`")
-        return True
-    except Exception as e:
-        logger.error(f"Commit failed: {e}")
-        return False
-
-
-def diff_between_commits(repo_dir: str, base: str, another: str) -> Optional[str]:
-    """
-    Generate a git diff between two commits.
-
-    Args:
-        repo_dir: Path to the git repository
-        base: Base commit SHA or reference
-        another: Another commit SHA or reference to compare against base
-
-    Returns:
-        The diff as a string, or None if the operation fails
-    """
-    try:
-        logger.debug(f"Creating diff between '{base}' and '{another}'")
-        stdout, stderr, code = run_cli_command('git', ['diff', base, another], cwd=repo_dir)
-        if code != 0:
-            logger.error(f"Failed to create diff between commits: {stderr}")
-            return None
-        logger.info(f"Successfully created diff between '{base}' and '{another}'")
-        return stdout
-    except Exception as e:
-        logger.error(f"Diff creation failed: {e}")
-        return None
 
 
 
@@ -450,16 +250,16 @@ def morph(
     try:
         # Step 1: Checkout branch (create if doesn't exist)
         logger.info(f"Checking out branch '{branch}'")
-        branch_existed = branch_exists(repo_dir, branch)
+        branch_existed = branch_exists(repo_dir, branch, logger)
 
         if not branch_existed:
             # Create new branch from current HEAD
-            if not checkout_branch(repo_dir, branch, create=True):
+            if not checkout_branch(repo_dir, branch, logger, create=True):
                 logger.error(f"Failed to create and checkout branch '{branch}'")
                 return MorphResult(succeeded=False)
         else:
             # Just checkout existing branch
-            if not checkout_branch(repo_dir, branch, create=False):
+            if not checkout_branch(repo_dir, branch, logger, create=False):
                 logger.error(f"Failed to checkout existing branch '{branch}'")
                 return MorphResult(succeeded=False)
 
@@ -467,14 +267,14 @@ def morph(
         if len(patches) > 0:
             logger.info(f"Applying {len(patches)} patch(es) to branch '{branch}'")
             for i, patch in enumerate(patches, 1):
-                if not apply_patch(repo_dir, patch.content):
+                if not apply_patch(repo_dir, patch.content, logger):
                     logger.error(f"Failed to apply patch `{patch.name}` ({i}/{len(patches)})")
                     return MorphResult(succeeded=False)
 
             # Commit the applied patches
             applied_patches_str = ', '.join([p.name for p in patches])
             patches_commit_msg = f"[transform.py] Applied patches: {applied_patches_str}"
-            if not commit_all_changes(repo_dir, patches_commit_msg):
+            if not commit_all_changes(repo_dir, patches_commit_msg, logger):
                 logger.error("Failed to commit applied patches")
                 return MorphResult(succeeded=False)
             logger.info(f"Successfully applied and committed {len(patches)} patch(es)")
@@ -492,13 +292,13 @@ def morph(
         logger.info(f"CodeCocoon execution successful")
 
         # Step 5: Collect metamorphic diff
-        metamorphic_patch = create_diff(repo_dir)
+        metamorphic_patch = create_diff(repo_dir, logger)
         if not metamorphic_patch:
             logger.warning("No metamorphic changes detected: The metamorphic patch is empty")
             metamorphic_patch = ""
 
         # Step 6: Commit metamorphic changes
-        if not commit_all_changes(repo_dir, metamorphic_commit_msg):
+        if not commit_all_changes(repo_dir, metamorphic_commit_msg, logger):
             logger.error("Failed to commit metamorphic changes")
             return MorphResult(succeeded=False, codecocoon_result=codecocoon_result)
 
@@ -560,7 +360,7 @@ def process_entry(
         repo_dir = os.path.join(repos_dir, strategy, instance_id, "repo")
         base_sha = entry['base']['sha']
 
-        if not clone_repository(repo_url, repo_dir, base_sha):
+        if not clone_repository(repo_url, repo_dir, base_sha, logger):
             logger.error(f"Failed to clone repository for {instance_id}")
             return entry
 
@@ -569,9 +369,9 @@ def process_entry(
         test_branch = f"{strategy}-test-transformation"
         fix_branch  = f"{strategy}-fix-transformation"
 
-        base_exists = branch_exists(repo_dir, base_branch)
-        test_exists = branch_exists(repo_dir, test_branch)
-        fix_exists = branch_exists(repo_dir, fix_branch)
+        base_exists = branch_exists(repo_dir, base_branch, logger)
+        test_exists = branch_exists(repo_dir, test_branch, logger)
+        fix_exists = branch_exists(repo_dir, fix_branch, logger)
 
         if (base_exists or test_exists or fix_exists) and not override:
             logger.info(
@@ -582,13 +382,13 @@ def process_entry(
 
         if override and (base_exists or test_exists or fix_exists):
             logger.info(f"Override enabled: Deleting existing branches for strategy '{strategy}'")
-            if base_exists and not delete_branch(repo_dir, base_branch):
+            if base_exists and not delete_branch(repo_dir, base_branch, logger):
                 logger.error(f"Failed to delete base branch '{base_branch}'")
                 return entry
-            if test_exists and not delete_branch(repo_dir, test_branch):
+            if test_exists and not delete_branch(repo_dir, test_branch, logger):
                 logger.error(f"Failed to delete test branch '{test_branch}'")
                 return entry
-            if fix_exists and not delete_branch(repo_dir, fix_branch):
+            if fix_exists and not delete_branch(repo_dir, fix_branch, logger):
                 logger.error(f"Failed to delete test branch '{fix_branch}'")
                 return entry
 
@@ -632,7 +432,7 @@ def process_entry(
         logger.info("=====================================================================")
 
         # Ensure we're on base commit before starting
-        if not checkout_branch(repo_dir, base_sha, create=False):
+        if not checkout_branch(repo_dir, base_sha, logger, create=False):
             logger.error(f"Failed to checkout base SHA {base_sha}")
             return entry
 
@@ -697,7 +497,7 @@ def process_entry(
         logger.info("===================================================================")
 
         # Checkout base commit again before applying test patch
-        if not checkout_branch(repo_dir, base_sha, create=False):
+        if not checkout_branch(repo_dir, base_sha, logger, create=False):
             logger.error(f"Failed to checkout base SHA {base_sha}")
             return entry
 
@@ -752,6 +552,7 @@ def process_entry(
             repo_dir=repo_dir,
             base=metamorphic_base_commit,
             another=metamorphic_test_commit,
+            logger=logger,
         )
 
         if not new_morphed_test_patch:
@@ -775,7 +576,7 @@ def process_entry(
         logger.info("==================================================================")
 
         # Checkout base commit again before applying fix patch
-        if not checkout_branch(repo_dir, base_sha, create=False):
+        if not checkout_branch(repo_dir, base_sha, logger, create=False):
             logger.error(f"Failed to checkout base SHA {base_sha}")
             return entry
 
@@ -828,6 +629,7 @@ def process_entry(
             repo_dir=repo_dir,
             base=metamorphic_base_commit,
             another=metamorphic_fix_commit,
+            logger=logger,
         )
 
         if not new_morphed_fix_patch:
