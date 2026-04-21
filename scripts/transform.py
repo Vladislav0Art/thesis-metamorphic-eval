@@ -21,6 +21,7 @@ from common.git import (
     branch_exists,
     delete_branch,
     checkout_branch,
+    extract_changed_files,
 )
 from common.codecocoon import (
     CodeCocoonResult,
@@ -54,24 +55,6 @@ python transform.py -i path/to/input.jsonl -o path/to/output.jsonl -s transforma
 configure_logging(log_filename="transform.log", level=logging.INFO)
 
 logger = logging.getLogger(__name__)
-
-
-
-def extract_changed_files(patch: str) -> List[str]:
-    """Extract file paths from a git diff patch."""
-    files = []
-    # Match lines like "diff --git a/path/to/file b/path/to/file"
-    pattern = r'^diff --git a/(.*?) b/.*?$'
-    for line in patch.split('\n'):
-        match = re.match(pattern, line)
-        if match:
-            files.append(match.group(1))
-    logger.debug(f"Extracted {len(files)} files from patch")
-    return files
-
-
-
-
 
 
 
@@ -353,8 +336,8 @@ def process_entry(
         # NOTE: based on `transform_test_files` flag, apply transformations to files from either:
         #         1) fix patch only (default behavior)
         #         2) both fix and test patches (if `transform_test_files` is True)
-        fix_files = extract_changed_files(entry.get('fix_patch', ''))
-        test_files = extract_changed_files(entry.get('test_patch', ''))
+        fix_files  = extract_changed_files(patch=entry.get('fix_patch', '') , logger=logger)
+        test_files = extract_changed_files(patch=entry.get('test_patch', ''), logger=logger)
 
         if transform_test_files:
             # transform files from the test patch as well

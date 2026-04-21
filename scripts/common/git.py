@@ -1,6 +1,7 @@
 import os
+import re
 import tempfile
-from typing import Optional
+from typing import List, Optional
 from common.cli import run_cli_command
 from common.fs import read_jsonl, write_jsonl
 
@@ -241,3 +242,15 @@ def commit_changes(
         logger.error(f"Commit failed: {e}")
         return False
 
+
+def extract_changed_files(patch: str, logger) -> List[str]:
+    """Extract file paths from a git diff patch."""
+    files = []
+    # Match lines like "diff --git a/path/to/file b/path/to/file"
+    pattern = r'^diff --git a/(.*?) b/.*?$'
+    for line in patch.split('\n'):
+        match = re.match(pattern, line)
+        if match:
+            files.append(match.group(1))
+    logger.debug(f"Extracted {len(files)} files from patch")
+    return files
