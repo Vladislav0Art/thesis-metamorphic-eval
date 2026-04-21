@@ -1,0 +1,94 @@
+# transform.example.yaml
+# ──────────────────────────────────────────────────────────────────────────────
+# Example configuration for scripts/transform.py.
+#
+# Usage:
+#   cp transform.example.yaml my_transform.yaml
+#   # edit my_transform.yaml with your actual paths
+#   python scripts/transform.py --config my_transform.yaml
+#
+# Path resolution
+# ───────────────
+# All relative paths are resolved relative to THIS file's directory, not the
+# CWD from which transform.py is invoked.  If this file lives at the project
+# root, then "./benchmarks/input.jsonl" resolves correctly regardless of where
+# you run the script from.
+#
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+# ── I/O ───────────────────────────────────────────────────────────────────────
+
+# REQUIRED: input JSONL file produced by bootstrap.py benchmark.
+input: ./benchmarks/input.jsonl
+
+# REQUIRED: output JSONL file where transformed entries are written.
+# Entries are appended one-by-one as they are processed (streamed).
+output: ./benchmarks/metamorphic.jsonl
+
+
+# ── Transformation identity ───────────────────────────────────────────────────
+
+# REQUIRED: name of the transformation strategy.
+# Used as a key in the "metamorphic" array of each output entry and as a prefix
+# for the git branches created inside each cloned repo
+# ({strategy}-base-transformation, {strategy}-test-transformation, etc.).
+strategy: MyStrategy
+
+
+# ── CodeCocoon ────────────────────────────────────────────────────────────────
+
+# REQUIRED: path to the CodeCocoon-Plugin repository root.
+# Its Gradle headless mode is invoked for each benchmark entry.
+# Cloned by bootstrap.py init into code-coccoon/CodeCocoon-Plugin by default.
+codecocoon: ./code-coccoon/CodeCocoon-Plugin
+
+# Optional: path to a JSON file listing CodeCocoon transformations to apply.
+# Each entry must have the shape: { "id": "...", "config": { ... } }
+# (use {} for transformations that take no config params).
+# Falls back to the built-in default from scripts/default/defaults.py when omitted.
+# See transformations/sample.json for an example.
+transformations: ./transformations/sample.json
+
+
+# ── Repository management ─────────────────────────────────────────────────────
+
+# REQUIRED: directory into which benchmark repositories are cloned.
+# Each repo is placed at {repos}/{strategy}/{instance_id}/repo/.
+repos: ./repos
+
+
+# ── Environment variables ─────────────────────────────────────────────────────
+
+# Optional: path to a dotenv-style file (.env) with key=value pairs.
+# These are merged into the environment when CodeCocoon is executed.
+# Required for transformations that need GRAZIE_TOKEN, etc.
+# Example file contents:
+#   GRAZIE_TOKEN=your-token-here
+env_filepath: ./.env/.env
+
+# Optional: path to a JSON file with per-instance environment variable overrides.
+# Useful when individual benchmarks need a specific JAVA_HOME or similar.
+# Expected format:
+#   [
+#     { "instance_id": "mockito__mockito-3129", "envs": [{ "name": "JAVA_HOME", "value": "/usr/lib/jvm/java-17" }] }
+#   ]
+additional_envs_filepath: ./.env/benchmark_envs.json
+
+
+# ── Behaviour flags ───────────────────────────────────────────────────────────
+
+# Whether to also transform files touched by the test patch (test_patch field),
+# in addition to those touched by the fix patch.
+# Default: false — only fix-patch files are passed to CodeCocoon.
+transform_test_files: false
+
+# Whether to delete and recreate the strategy branches inside each cloned repo
+# if they already exist.  Set to true when re-running with updated transformations.
+# Default: false — entries whose branches already exist are skipped.
+override: false
+
+# Whether to skip benchmark entries whose instance_id is already present in the
+# output file.  Enables resuming an interrupted run without reprocessing entries.
+# Default: true
+skip_existing_entries: true

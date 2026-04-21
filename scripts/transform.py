@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import logging
+import yaml
 from pathlib import Path
 from typing import Dict, List
 from dotenv import dotenv_values
@@ -23,6 +24,7 @@ from transform.models import (
     MorphResult,
     EnvVar,
     EnvEntry,
+    TransformConfig,
 )
 from transform.morph import (
     morph,
@@ -31,24 +33,13 @@ from transform.morph import (
 
 
 description="""
-This script accepts jsonl file with benchmarks and applies transformations via CodeCocoon-Plugin.
-The result patches after transformation are added into the entries of the given jsonl file and
-save into the output file.
-
-Arguments:
-  -i, --input: Path to the input JSONL file containing benchmarks.
-  -o, --output: Path to the output jsonl file where transformed benchmarks will be saved.
-  -s, --strategy: The transformation strategy name
-                  (the resulting transformations will be saved as entry['strategy']['metamorphic_base_patch'] and
-                   entry['strategy']['metamorphic_fix_patch']).
-  -c, --codecoccoon: Filepath to the Code Codecoccoon repository (its headless mode will be executed).
-  -e, --env_filepath: Filepath to a file with key-value pairs defining environment variables to be set when executing CodeCocoon (e.g., to provide credentials for private repositories) (default: None).
-  -r, --repos: Filepath which the repositories from the input should be cloned into.
-  --transform_test_files: Whether to also transform test files changed in the test patch (`test_patch` field in every benchmark) (default: False).
-  --override: Whether to override existing transformation results if branches already exist (default: False).
+This script accepts a YAML config file and applies CodeCocoon-Plugin metamorphic transformations
+to each benchmark entry in the input JSONL file, writing results to the output JSONL file.
 
 Usage:
-python transform.py -i path/to/input.jsonl -o path/to/output.jsonl -s transformation_strategy_name -c path/to/codecoccoon
+  python transform.py --config path/to/transform.yaml
+
+See transform.example.yaml in the repository root for a fully annotated config template.
 """
 
 # Configure logging
@@ -58,10 +49,67 @@ logger = logging.getLogger(__name__)
 
 
 
+
 def build_github_url(org: str, repo: str) -> str:
     """Build GitHub repository URL."""
     return f"https://github.com/{org}/{repo}.git"
 
+
+def load_transform_config(config_filepath: str) -> TransformConfig:
+    """Load and validate a TransformConfig from a YAML file. Relative paths are resolved
+    relative to the config file's own directory."""
+    config_dir = os.path.dirname(os.path.abspath(config_filepath))
+
+    def resolve(path: str | None) -> str | None:
+        if path is None:
+            return None
+        return path if os.path.isabs(path) else os.path.abspath(os.path.join(config_dir, path))
+
+    with open(config_filepath, 'r') as f:
+        raw = yaml.safe_load(f)
+
+    for field in ('input', 'output', 'strategy', 'codecocoon', 'repos'):
+        if field not in raw or not raw[field]:
+            raise ValueError(f"Missing required field '{field}' in config: {config_filepath}")
+
+    return TransformConfig(
+        input=resolve(raw['input']),
+        output=resolve(raw['output']),
+        strategy=raw['strategy'],
+        codecocoon=resolve(raw['codecocoon']),
+        repos=resolve(raw['repos']),
+        env_filepath=resolve(raw.get('env_filepath')),
+        additional_envs_filepath=resolve(raw.get('additional_envs_filepath')),
+        transformations=resolve(raw.get('transformations')),
+        transform_test_files=raw.get('transform_test_files', False),
+        override=raw.get('override', False),
+        skip_existing_entries=raw.get('skip_existing_entries', True),
+    )
+
+
+def load_codecoccoon_transformations(from_filepath: str | None) -> List[Dict] | None:
+    def is_transformation_schema(transformation) -> bool:
+        # NOTE: if transformation accepts zero config params, its config still needs to be defined
+        #       as an empty dict (i.e., "config": {}) to be valid
+        return isinstance(transformation, dict) and ('id' in transformation) and ('config' in transformation)
+
+    if from_filepath is None:
+        logger.info(
+        f"No file with transformations provided, using default transformations:\n{json.dumps(DEFAULT_CODE_COCCOON_TRANSFORMATIONS, indent=3)}")
+        return DEFAULT_CODE_COCCOON_TRANSFORMATIONS
+
+    try:
+        with open(from_filepath, 'r') as f:
+            transformations = json.load(f)
+        # validate that it is a list of dicts
+        if not isinstance(transformations, list) or not all(is_transformation_schema(t) for t in transformations):
+            raise ValueError(f"Transformations file must contain a JSON list of objects, got {transformations}")
+
+        logger.info(f"Loaded transformations from file: {from_filepath}")
+        return transformations
+    except Exception as e:
+        logger.error(f"Failed to load transformations file: {e}")
+        return None
 
 
 def process_entry(
@@ -433,200 +481,118 @@ def process_entry(
 
 
 
-def load_codecoccoon_transformations(from_filepath: str | None) -> List[Dict] | None:
-    def is_transformation_schema(transformation) -> bool:
-        # NOTE: if transformation accepts zero config params, its config still needs to be defined
-        #       as an empty dict (i.e., "config": {}) to be valid
-        return isinstance(transformation, dict) and ('id' in transformation) and ('config' in transformation)
 
-    if from_filepath is None:
-        logger.info(
-        f"No file with transformations provided, using default transformations:\n{json.dumps(DEFAULT_CODE_COCCOON_TRANSFORMATIONS, indent=3)}")
-        return DEFAULT_CODE_COCCOON_TRANSFORMATIONS
+def load_additional_envs(filepath: str | None) -> List[EnvEntry]:
+    """Parse a JSON file of per-instance ENV overrides into a list of EnvEntry objects.
+    Returns an empty list when filepath is None."""
+    if filepath is None:
+        return []
 
-    try:
-        with open(from_filepath, 'r') as f:
-            transformations = json.load(f)
-        # validate that it is a list of dicts
-        if not isinstance(transformations, list) or not all(is_transformation_schema(t) for t in transformations):
-            raise ValueError(f"Transformations file must contain a JSON list of objects, got {transformations}")
+    with open(filepath) as f:
+        envs_data = json.load(f)
+    logger.info(f"Loaded additional per-instance ENVs from {filepath}")
 
-        logger.info(f"Loaded transformations from file: {from_filepath}")
-        return transformations
-    except Exception as e:
-        logger.error(f"Failed to load transformations file: {e}")
-        return None
+    result: List[EnvEntry] = []
+    for entry in envs_data:
+        if ('instance_id' not in entry) or ('envs' not in entry) or (not isinstance(entry['envs'], list)):
+            logger.error(f"Malformed entry in additional ENVs file (missing 'instance_id' or 'envs' list): {entry}")
+            sys.exit(1)
+        instance_id = entry['instance_id']
+        envs: List[EnvVar] = []
+        for env in entry['envs']:
+            if ('name' not in env) or ('value' not in env):
+                logger.error(f"Malformed env entry for '{instance_id}' (missing 'name' or 'value'): {env}")
+                sys.exit(1)
+            envs.append(EnvVar(name=env['name'], value=env['value']))
+        result.append(EnvEntry(instance_id=instance_id, envs=envs))
+    return result
 
 
+def validate_config(config: TransformConfig) -> None:
+    """Raise ValueError if any path in config is invalid or missing."""
+    if not os.path.exists(config.input):
+        raise ValueError(f"Input file does not exist: {config.input}")
+    if not os.path.exists(config.codecocoon):
+        raise ValueError(f"CodeCocoon directory does not exist: {config.codecocoon}")
+    if not os.path.isdir(config.codecocoon):
+        raise ValueError(f"CodeCocoon path is not a directory: {config.codecocoon}")
+    if config.env_filepath is not None:
+        if not os.path.exists(config.env_filepath):
+            raise ValueError(f"`env_filepath` does not exist: {config.env_filepath}")
+        if not os.path.isfile(config.env_filepath):
+            raise ValueError(f"`env_filepath` is not a file: {config.env_filepath}")
+    if config.additional_envs_filepath is not None:
+        if not os.path.exists(config.additional_envs_filepath):
+            raise ValueError(f"`additional_envs_filepath` does not exist: {config.additional_envs_filepath}")
+        if not os.path.isfile(config.additional_envs_filepath):
+            raise ValueError(f"`additional_envs_filepath` is not a file: {config.additional_envs_filepath}")
 
 
 def main():
-    # Parse command-line arguments
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('-i', '--input', type=str, required=True,
-                        help="Path to the input jsonl file containing benchmarks")
-    parser.add_argument('-o', '--output', type=str, required=True,
-                        help="Path to the output jsonl file where transformed benchmarks will be saved.")
-    parser.add_argument('-s', '--strategy', type=str, help="""
-        The transformation strategy name (the resulting transformations will be saved as
-        entry['strategy']['metamorphic_base_patch'] and entry['strategy']['metamorphic_fix_patch']).
-    """)
-    parser.add_argument('-c', "--codecoccoon", type=str, help="Filepath to the Code Codecoccoon repository (its headless mode will be executed).")
-
-    parser.add_argument('-e', "--env_filepath", type=str, default=None,
-                        help="Filepath to a file with key-value pairs defining environment variables to be set when executing CodeCocoon (e.g., to provide credentials for private repositories) (default: None)")
-    # per-benchmark ENV variables (e.g., specific JAVA_HOME)
-    parser.add_argument('-d', "--additional_envs_filepath", type=str, default=None,
-                        help="Filepath to JSON file with additional benchmark-specific ENVs (per instance id)")
-
-    parser.add_argument('-r', '--repos', type=str, help="Filepath which the repositories from the input should be cloned into")
-    parser.add_argument('-t', '--transformations', type=str, default=None, help="Filepath to a JSON file with transformations definitions. The file should contain a list of objects with `id` and `config` entries where the config is transformation-specific. Defaults to a config defined inn `default/defaults.py` when missing.")
-    # bool arguments
-    parser.add_argument('--transform_test_files', action='store_true', default=False,
-                        help="Whether to also transform test files changed in the test patch (`test_patch` field in every benchmark) (default: False)")
-    parser.add_argument('--override', action='store_true', default=False,
-                        help="Override existing transformation results if branches already exist (default: False)")
-
-
+    parser.add_argument('--config', type=str, required=True,
+                        help="Path to the YAML config file (see transform.example.yaml)")
     args = parser.parse_args()
 
+    config: TransformConfig = load_transform_config(args.config)
 
-    # Convert paths to absolute if they are relative
-    args.repos = make_absolute_path(args.repos)
-    args.input = make_absolute_path(args.input)
-    args.output = make_absolute_path(args.output)
-    args.codecoccoon = make_absolute_path(args.codecoccoon)
-    if args.env_filepath:
-        args.env_filepath = make_absolute_path(args.env_filepath)
-    if args.additional_envs_filepath:
-        args.additional_envs_filepath = make_absolute_path(args.additional_envs_filepath)
-    if args.transformations:
-        args.transformations = make_absolute_path(args.transformations)
-
-    # Validate arguments
-    if not os.path.exists(args.input):
-        logger.error(f"Input file does not exist: {args.input}")
-        return
-
-    if not os.path.exists(args.codecoccoon):
-        logger.error(f"CodeCocoon directory does not exist: {args.codecoccoon}")
-        return
-
-    # Create repos directory if it doesn't exist
-    os.makedirs(args.repos, exist_ok=True)
-
-    logger.info(f"""Given arguments (converted to absolute paths if needed):
-      --input: {args.input}
-      --output: {args.output}
-      --strategy: {args.strategy}
-      --codecoccoon: {args.codecoccoon}
-      --transformations: {args.transformations}
-      --repos: {args.repos}
-      --env_filepath: {args.env_filepath}
-      --additional_envs_filepath: {args.additional_envs_filepath}
-      --transform_test_files: {args.transform_test_files}
-      --override: {args.override}
+    logger.info(f"""Config loaded from {args.config}:
+      input:                     {config.input}
+      output:                    {config.output}
+      strategy:                  {config.strategy}
+      codecocoon:                {config.codecocoon}
+      transformations:           {config.transformations}
+      repos:                     {config.repos}
+      env_filepath:              {config.env_filepath}
+      additional_envs_filepath:  {config.additional_envs_filepath}
+      transform_test_files:      {config.transform_test_files}
+      override:                  {config.override}
+      skip_existing_entries:     {config.skip_existing_entries}
     """)
 
-    # CodeCocoon existence check (validate that the provided path is a directory and contains expected files)
-    if not os.path.exists(args.codecoccoon):
-        raise ValueError(f"CodeCocoon directory does not exist: {args.codecoccoon}. Directory path to the Code Codecoccoon Plugin repository expected (its headless mode will be executed) and should be provided via `--codecoccoon` argument.")
-    if not os.path.isdir(args.codecoccoon):
-        raise ValueError(f"Provided CodeCocoon path is not a directory: {args.codecoccoon}. Directory path to the Code Codecoccoon Plugin repository expected (its headless mode will be executed) and should be provided via `--codecoccoon` argument.")
+    try:
+        validate_config(config)
+    except ValueError as e:
+        logger.error(f"Config validation failed: {e}")
+        return
 
-    if args.strategy is None or len(args.strategy) <= 0:
-        raise ValueError(f"Received malformed transformation strategy: '{args.strategy}'. Transformation strategy name must be provided via `--strategy` argument and should be a non-empty string (e.g., 'default')")
-
-    # loading additional environment variables from the provided file (if any)
-    # and setting them in the environment for when we execute CodeCocoon later
-    if args.env_filepath is not None:
-        if not os.path.exists(args.env_filepath):
-            logger.error(f"Provided `env_filepath` does not exist: {args.env_filepath}")
-            return
-        if not os.path.isfile(args.env_filepath):
-            logger.error(f"Provided `env_filepath` is not a file: {args.env_filepath}")
-            return
-        env_vars = dotenv_values(args.env_filepath)
-
-        env_keys_str = ', '.join(list(env_vars.keys()))
-        logger.info(f"Successfully loaded {len(env_vars)} environment variables from {args.env_filepath}: {env_keys_str}")
+    # Load common ENV variables from env file (if provided)
+    if config.env_filepath is not None:
+        env_vars = dotenv_values(config.env_filepath)
+        logger.info(f"Loaded {len(env_vars)} ENV variable(s) from {config.env_filepath}: {', '.join(env_vars.keys())}")
     else:
-        logger.info("`env_filepath` not provided: No additional ENV variables loaded")
+        logger.info("`env_filepath` not provided: no additional ENV variables loaded")
         env_vars = {}
 
-    # load per instance id ENVs
-    additional_envs: List[EnvEntry] = []
+    additional_envs: List[EnvEntry] = load_additional_envs(config.additional_envs_filepath)
 
-    if args.additional_envs_filepath is not None:
-        if not os.path.exists(args.additional_envs_filepath):
-            logger.error(f"Provided `additional_envs_filepath` does not exist: {args.additional_envs_filepath}")
-            return
-        if not os.path.isfile(args.additional_envs_filepath):
-            logger.error(f"Provided `additional_envs_filepath` is not a file: {args.additional_envs_filepath}")
-            return
-        with open(args.additional_envs_filepath) as file:
-            import json
-            # array of entries defined below
-            envs_data = json.load(file)
-            logger.info(f"Successfully loaded additional ENVs for instances from {args.additional_envs_filepath}")
-
-            # expected instance format:
-            # { "instance_id", "envs": [{ "name": "str", "value": "str" }] }
-            for entry in envs_data:
-                if ('instance_id' not in entry) or ('envs' not in entry) or (not isinstance(entry['envs'], list)):
-                    logger.error(f"Malformed entry in additional ENVs file (missing 'instance_id' or 'envs' list): {entry}")
-                    sys.exit(1)
-
-                instance_id = entry['instance_id']
-                envs: List[EnvVar] = []
-                for env in entry['envs']:
-                    if ('name' not in env) or ('value' not in env):
-                        logger.error(f"Malformed env entry for instance '{instance_id}' in additional ENVs file (missing 'name' or 'value'): {env}")
-                        sys.exit(1)
-                    # valid ENV variable
-                    envs.append(EnvVar(name=env['name'], value=env['value']))
-
-                # append to the list of additional envs
-                additional_envs.append(
-                    EnvEntry(
-                        instance_id=instance_id,
-                        envs=envs,
-                    )
-                )
-
-    transformations = load_codecoccoon_transformations(from_filepath=args.transformations)
+    transformations = load_codecoccoon_transformations(from_filepath=config.transformations)
     if transformations is None:
         logger.error("Failed to load transformations, terminating execution.")
         return
 
-    logger.info(f"Creating repos directory if doesn't exist already at: {args.repos}")
-    Path(args.repos).mkdir(parents=True, exist_ok=True)
+    logger.info(f"Creating repos directory if it doesn't exist: {config.repos}")
+    Path(config.repos).mkdir(parents=True, exist_ok=True)
 
-    # Read input entries
-    entries = read_jsonl(args.input)
-
-    # TODO: implement resumable runs — when True, skip instance_ids already present in the output file
-    SKIP_EXISTING_ENTRIES = True
+    entries = read_jsonl(config.input)
 
     already_processed: set[str] = set()
-    if SKIP_EXISTING_ENTRIES and os.path.exists(args.output):
-        existing = read_jsonl(args.output)
+    if config.skip_existing_entries and os.path.exists(config.output):
+        existing = read_jsonl(config.output)
         already_processed = {e["instance_id"] for e in existing if "instance_id" in e}
-        logger.info(f"Resuming: found {len(already_processed)} already-processed entries in {args.output}")
+        logger.info(f"Resuming: {len(already_processed)} already-processed entries found in {config.output}")
 
-    # Process each entry and stream results to disk immediately
     for i, entry in enumerate(entries, 1):
         instance_id = entry["instance_id"]
         logger.info("==========================================================================")
         logger.info(f"====== ⌛ Processing entry '{instance_id}' ({i}/{len(entries)}) ======")
 
-        if SKIP_EXISTING_ENTRIES and instance_id in already_processed:
+        if config.skip_existing_entries and instance_id in already_processed:
             logger.info(f"Skipping '{instance_id}': already present in output file")
             logger.info(f"====== ⏭️  Skipped entry '{instance_id}' ({i}/{len(entries)}) ======")
             logger.info("==========================================================================")
             continue
 
-        # Merge common env_vars with per-instance additional envs
         instance_env_vars = dict(env_vars)
         for env_entry in additional_envs:
             if env_entry.instance_id == instance_id:
@@ -636,16 +602,16 @@ def main():
 
         processed_entry = process_entry(
             entry=entry,
-            strategy=args.strategy,
-            codecocoon_dir=args.codecoccoon,
+            strategy=config.strategy,
+            codecocoon_dir=config.codecocoon,
             transformations=transformations,
-            transformations_filepath=args.transformations,
-            repos_dir=args.repos,
+            transformations_filepath=config.transformations,
+            repos_dir=config.repos,
             env_vars=instance_env_vars,
-            transform_test_files=args.transform_test_files,
-            override=args.override,
+            transform_test_files=config.transform_test_files,
+            override=config.override,
         )
-        append_jsonl(args.output, processed_entry)
+        append_jsonl(config.output, processed_entry)
 
         logger.info(f"====== ✅ Completed entry '{instance_id}' ({i}/{len(entries)}) ======")
         logger.info("==========================================================================")

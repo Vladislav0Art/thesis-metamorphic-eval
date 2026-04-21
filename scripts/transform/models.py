@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 from common.codecocoon import CodeCocoonResult
 
@@ -31,3 +31,20 @@ class EnvVar:
 class EnvEntry:
     instance_id: str
     envs: List[EnvVar]
+
+
+@dataclass
+class TransformConfig:
+    # required
+    input: str                              # input benchmark JSONL file
+    output: str                             # output metamorphic JSONL file (entries appended as processed)
+    strategy: str                           # strategy name — used as key in entry["metamorphic"] and as git branch prefix
+    codecocoon: str                         # path to CodeCocoon-Plugin repo root (headless mode is invoked)
+    repos: str                              # directory into which benchmark repos are cloned
+    # optional
+    env_filepath: Optional[str] = None                  # dotenv file with ENV vars passed to CodeCocoon (e.g. GRAZIE_TOKEN)
+    additional_envs_filepath: Optional[str] = None      # JSON file with per-instance ENV overrides (e.g. per-benchmark JAVA_HOME)
+    transformations: Optional[str] = None               # JSON file listing CodeCocoon transformations; falls back to built-in default
+    transform_test_files: bool = False                  # also pass test-patch files to CodeCocoon (default: fix-patch files only)
+    override: bool = False                              # delete and recreate strategy branches if they already exist
+    skip_existing_entries: bool = True                  # skip entries whose instance_id is already present in the output file
