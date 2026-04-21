@@ -17,14 +17,14 @@ python transform.py \
 Apply Rename Transformations:
 ```
 python scripts/transform.py \
-    -i benchmarks/original/java_easy_4_mini.jsonl \
-    -o benchmarks/metamorphic/java_easy_4_mini.jsonl \
-    -s rename-class-method-transformations \
+    -i benchmarks/original/java_resovable_47_bench.jsonl \
+    -o benchmarks/metamorphic/java_resovable_47_bench.jsonl \
+    -s s1-renaming-all \
     -c code-coccoon/CodeCocoon-Plugin \
     -e .env/.env \
     -d .env/benchmark_envs.json \
     -r repos \
-    -t transformations/rename-transformations.json \
+    -t transformations/eval/s1-renaming-all.json \
     --override
 ```
 
