@@ -35,6 +35,16 @@ def write_jsonl(filepath: str, entries: List[Dict]):
         raise
 
 
+def append_jsonl(filepath: str, entry: Dict):
+    """Append a single entry to a JSONL file (creates the file if it doesn't exist)."""
+    try:
+        with open(filepath, 'a') as f:
+            f.write(json.dumps(entry) + '\n')
+    except Exception as e:
+        logger.error(f"Failed to append entry to {filepath}: {e}")
+        raise
+
+
 def make_absolute_path(path: str) -> str:
     """Convert a relative path to an absolute path."""
     return os.path.abspath(path)

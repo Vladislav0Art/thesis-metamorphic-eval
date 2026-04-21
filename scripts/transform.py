@@ -8,7 +8,7 @@ from typing import Dict, List
 from dotenv import dotenv_values
 from default.defaults import DEFAULT_CODE_COCCOON_TRANSFORMATIONS
 from common.logger import configure_logging
-from common.fs import read_jsonl, write_jsonl, make_absolute_path
+from common.fs import read_jsonl, write_jsonl, append_jsonl, make_absolute_path
 from common.git import (
     clone_repository,
     diff_between_commits,
@@ -605,12 +605,26 @@ def main():
     # Read input entries
     entries = read_jsonl(args.input)
 
-    # Process each entry
-    processed_entries = []
+    # TODO: implement resumable runs — when True, skip instance_ids already present in the output file
+    SKIP_EXISTING_ENTRIES = True
+
+    already_processed: set[str] = set()
+    if SKIP_EXISTING_ENTRIES and os.path.exists(args.output):
+        existing = read_jsonl(args.output)
+        already_processed = {e["instance_id"] for e in existing if "instance_id" in e}
+        logger.info(f"Resuming: found {len(already_processed)} already-processed entries in {args.output}")
+
+    # Process each entry and stream results to disk immediately
     for i, entry in enumerate(entries, 1):
         instance_id = entry["instance_id"]
         logger.info("==========================================================================")
         logger.info(f"====== ⌛ Processing entry '{instance_id}' ({i}/{len(entries)}) ======")
+
+        if SKIP_EXISTING_ENTRIES and instance_id in already_processed:
+            logger.info(f"Skipping '{instance_id}': already present in output file")
+            logger.info(f"====== ⏭️  Skipped entry '{instance_id}' ({i}/{len(entries)}) ======")
+            logger.info("==========================================================================")
+            continue
 
         # Merge common env_vars with per-instance additional envs
         instance_env_vars = dict(env_vars)
@@ -619,7 +633,6 @@ def main():
                 for env_var in env_entry.envs:
                     instance_env_vars[env_var.name] = env_var.value
                 break
-
 
         processed_entry = process_entry(
             entry=entry,
@@ -632,13 +645,11 @@ def main():
             transform_test_files=args.transform_test_files,
             override=args.override,
         )
-        processed_entries.append(processed_entry)
+        append_jsonl(args.output, processed_entry)
 
         logger.info(f"====== ✅ Completed entry '{instance_id}' ({i}/{len(entries)}) ======")
         logger.info("==========================================================================")
 
-    # Write output
-    write_jsonl(args.output, processed_entries)
     logger.info("Processing complete!")
 
 
