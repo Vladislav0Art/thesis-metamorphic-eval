@@ -17,19 +17,30 @@ python transform.py \
 Apply Rename Transformations:
 ```
 python scripts/transform.py \
-    -i benchmarks/original/java_resovable_47_bench.jsonl \
-    -o benchmarks/metamorphic/java_resovable_47_bench.jsonl \
-    -s s1-renaming-all \
+    -i benchmarks/original/java_easy_1_mockito_mini.jsonl \
+    -o benchmarks/metamorphic/java_easy_1_mockito_mini_sample.jsonl \
+    -s sample \
     -c code-coccoon/CodeCocoon-Plugin \
     -e .env/.env \
     -d .env/benchmark_envs.json \
     -r repos \
-    -t transformations/eval/s1-renaming-all.json \
+    -t transformations/sample.json \
     --override
 ```
 
 Apply Sample Transformation:
 ```
+python scripts/transform.py \
+    -i benchmarks/original/java_easy_1_mockito_mini.jsonl \
+    -o benchmarks/metamorphic/java_easy_1_mockito_mini_sample.jsonl \
+    -s sample \
+    -c code-coccoon/CodeCocoon-Plugin \
+    -e .env/.env \
+    -d .env/benchmark_envs.json \
+    -r repos \
+    -t transformations/sample.json \
+    --override
+
 python scripts/transform.py \
     -i /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/java_easy_1_mini.jsonl \
     -o /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/benchmarks/metamorphic_new_java_easy_1_mini.jsonl \
