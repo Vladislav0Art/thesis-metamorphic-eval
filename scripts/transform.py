@@ -150,12 +150,24 @@ def process_entry(
             files_to_transform = list(set(fix_files))
             logger.info(f"Transforming files modified ONLY BY FIX PATCH for {instance_id}")
 
+
+        # Filter to .java files only — CodeCocoon only handles Java; non-Java files would pollute the config
+        java_files = [f for f in files_to_transform if f.endswith('.java')]
+        non_java_files = [f for f in files_to_transform if not f.endswith('.java')]
+
+        if non_java_files:
+            non_java_str = ''.join([f"\n     - {f}" for f in non_java_files])
+            logger.info(f"Filtered out {len(non_java_files)} non-Java file(s) (not passed to CodeCocoon):{non_java_str}")
+
+        files_to_transform = java_files
+
         if not files_to_transform:
             logger.warning(f"No files found in patches for {instance_id}")
             return entry
 
         files_to_transform_joined = ''.join([f"\n     - {file}" for file in files_to_transform])
         logger.info(f"Extracted {len(files_to_transform)} unique changed files:{files_to_transform_joined}")
+
 
         # Step 3: Generate CodeCocoon config
         # config_path=repos_dir/strategy/instance_id/codecocoon.yml
