@@ -65,6 +65,7 @@ METRIC_FIELDS: tuple = (
     "instance_cost",
     "tokens_sent",
     "tokens_received",
+    "reasoning_tokens_total",
     "api_calls",
 )
 
