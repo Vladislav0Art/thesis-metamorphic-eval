@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from typing import List, Dict
 
 
@@ -33,3 +34,7 @@ def write_jsonl(filepath: str, entries: List[Dict]):
         logger.error(f"Failed to write to {filepath}: {e}")
         raise
 
+
+def make_absolute_path(path: str) -> str:
+    """Convert a relative path to an absolute path."""
+    return os.path.abspath(path)

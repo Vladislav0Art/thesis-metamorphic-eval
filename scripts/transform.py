@@ -3,16 +3,15 @@ import json
 import os
 import sys
 import re
-import yaml
 import logging
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional
 from dotenv import dotenv_values
 from default.defaults import DEFAULT_CODE_COCCOON_TRANSFORMATIONS
 from common.cli import run_cli_command
 from common.logger import configure_logging
-from common.fs import read_jsonl, write_jsonl
+from common.fs import read_jsonl, write_jsonl, make_absolute_path
 from common.git import (
     clone_repository,
     apply_patch,
@@ -22,6 +21,11 @@ from common.git import (
     branch_exists,
     delete_branch,
     checkout_branch,
+)
+from common.codecocoon import (
+    CodeCocoonResult,
+    generate_codecocoon_config,
+    execute_codecocoon,
 )
 
 
@@ -66,34 +70,6 @@ def extract_changed_files(patch: str) -> List[str]:
     return files
 
 
-def generate_codecocoon_config(
-    project_root: str,
-    files: List[str],
-    transformations: List[Dict],
-    output_path: str,
-):
-    """
-    Generate a codecocoon.yml configuration file.
-
-    Arguments:
-        - project_root: The root directory of the project to be transformed (e.g., the cloned repository path).
-        - files: A list of file paths (relative to project_root) that should be considered for transformations.
-        - transformations: A list of transformation configurations to apply (each with an 'id' and 'config'; config should be transformation-specific).
-        - output_path: The file path where the generated codecocoon.yml should be saved.
-    """
-
-    config = {
-        'projectRoot': project_root,
-        'files': files,
-        'transformations': transformations
-    }
-
-    with open(output_path, 'w') as f:
-        yaml.dump(config, f, default_flow_style=False)
-        # flushing so that the process where we run CodeCocoon sees this file
-        f.flush()
-        os.fsync(f.fileno())
-        logger.info(f"Generated codecocoon config at {output_path} with content:\n```\n{yaml.dump(config)}\n```")
 
 
 
@@ -109,11 +85,6 @@ class Patch:
     name: str
     content: str
 
-@dataclass
-class CodeCocoonResult:
-    stdout: str
-    stderr: str
-    return_code: int
 
 @dataclass
 class MorphResult:
@@ -134,25 +105,6 @@ class EnvEntry:
 
 
 
-def execute_codecocoon(
-    codecocoon_dir: str,
-    config_path: str,
-    env_vars: Dict[str, str | None],
-) -> CodeCocoonResult:
-    """Execute CodeCocoon in headless mode."""
-    logger.info(f"Executing CodeCocoon with config {config_path}")
-    stdout, stderr, code = run_cli_command(
-        './gradlew',
-        ['headless', f'-Pcodecocoon.config={config_path}'],
-        cwd=codecocoon_dir,
-        # merge current environment with additional env vars
-        env={**os.environ, **env_vars},
-    )
-    return CodeCocoonResult(
-        stdout=stdout,
-        stderr=stderr,
-        return_code=code,
-    )
 
 
 def insert_metamorphic_log(
@@ -283,7 +235,12 @@ def morph(
 
         # Step 4: Run CodeCocoon
         logger.info(f"Executing CodeCocoon transformations on branch '{branch}'")
-        codecocoon_result: CodeCocoonResult = execute_codecocoon(codecocoon_dir, config_path, env_vars)
+        codecocoon_result: CodeCocoonResult = execute_codecocoon(
+            codecocoon_dir,
+            config_path,
+            env_vars,
+            logger,
+        )
 
         if codecocoon_result.return_code != 0:
             logger.error(f"CodeCocoon execution failed: {codecocoon_result.stderr}")
@@ -424,6 +381,7 @@ def process_entry(
             files=files_to_transform,
             transformations=transformations,
             output_path=config_path,
+            logger=logger,
         )
 
         # Step 4: Apply metamorphic modifications to base commit
@@ -697,9 +655,6 @@ def load_codecoccoon_transformations(from_filepath: str | None) -> List[Dict] | 
         return None
 
 
-def make_absolute_path(path: str) -> str:
-    """Convert a relative path to an absolute path."""
-    return os.path.abspath(path)
 
 
 def main():
