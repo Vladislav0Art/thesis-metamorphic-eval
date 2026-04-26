@@ -48,3 +48,4 @@ class TransformConfig:
     transform_test_files: bool = False                  # also pass test-patch files to CodeCocoon (default: fix-patch files only)
     override: bool = False                              # delete and recreate strategy branches if they already exist
     skip_existing_entries: bool = True                  # skip entries whose instance_id is already present in the output file
+    rewrite_problem_statement: bool = False             # run rewriteProblemStatement after all code transformations

@@ -92,3 +92,13 @@ override: false
 # output file.  Enables resuming an interrupted run without reprocessing entries.
 # Default: true
 skip_existing_entries: true
+
+# Whether to run the CodeCocoon `rewriteProblemStatement` task after all other transformations.
+# When true, the task rewrites the prose in each {title, body} block so the surface looks
+# substantially different while preserving all semantics, identifiers, and structure.
+# Requires GRAZIE_TOKEN to be set via env_filepath.
+# NOTE: `transformMetamorphicTexts` does NOT have a config flag — it runs automatically whenever
+# rename or file-move transformation IDs are detected in the active transformations list, because
+# updating the problem statement is a correctness requirement in that case (not optional).
+# Default: false
+rewrite_problem_statement: false

@@ -18,7 +18,11 @@ from common.git import (
     checkout_branch,
     extract_changed_files,
 )
-from common.codecocoon import generate_codecocoon_config
+from common.codecocoon import (
+    generate_codecocoon_config,
+    execute_transform_metamorphic_texts,
+    execute_rewrite_problem_statement,
+)
 from transform.models import (
     Patch,
     MorphResult,
@@ -46,6 +50,19 @@ See transform.example.yaml in the repository root for a fully annotated config t
 configure_logging(log_filename="transform.log", level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+
+
+RENAMING_MOVING_TRANSFORMATION_IDS = {
+    "rename-class-transformation",
+    "rename-method-transformation",
+    "rename-variable-transformation",
+    "move-file-into-suggested-directory-transformation/ai",
+    "move-file-into-suggested-directory-transformation/config",
+}
+
+
+def has_renaming_or_moving_transformations(transformations: List[Dict]) -> bool:
+    return any(t.get('id') in RENAMING_MOVING_TRANSFORMATION_IDS for t in transformations)
 
 
 
@@ -84,6 +101,7 @@ def load_transform_config(config_filepath: str) -> TransformConfig:
         transform_test_files=raw.get('transform_test_files', False),
         override=raw.get('override', False),
         skip_existing_entries=raw.get('skip_existing_entries', True),
+        rewrite_problem_statement=raw.get('rewrite_problem_statement', False),
     )
 
 
@@ -122,6 +140,7 @@ def process_entry(
     env_vars: Dict[str, str | None],
     transform_test_files: bool,
     override: bool,
+    rewrite_problem_statement: bool,
 ) -> Dict:
     """Process a single entry through the transformation pipeline."""
     instance_id = entry['instance_id']
@@ -221,11 +240,18 @@ def process_entry(
         # config_path=repos_dir/strategy/instance_id/codecocoon.yml
         config_path = os.path.join(repos_dir, strategy, instance_id, "codecocoon.yml")
         os.makedirs(os.path.dirname(config_path), exist_ok=True)
+
+        # All per-instance artifacts (memory, problem statement snapshots) go here
+        artifacts_dir = os.path.join(repos_dir, strategy, instance_id, ".codecocoon-artifacts")
+        os.makedirs(artifacts_dir, exist_ok=True)
+        memory_filepath = os.path.join(artifacts_dir, "memory.json")
+
         generate_codecocoon_config(
             project_root=repo_dir,
             files=files_to_transform,
             transformations=transformations,
             output_path=config_path,
+            memory_filepath=memory_filepath,
             logger=logger,
         )
 
@@ -474,6 +500,101 @@ def process_entry(
         logger.info(f"  Generated new_morphed_test_patch (replaces test_patch)")
         logger.info(f"  Generated new_morphed_fix_patch  (replaces fix_patch)")
 
+        # Step 7: Problem statement text transformations
+        has_rename_move = has_renaming_or_moving_transformations(transformations)
+        if has_rename_move or rewrite_problem_statement:
+            logger.info("=========================================================================================")
+            logger.info("===== STEP 7: Problem statement text transformations =====")
+            logger.info("=========================================================================================")
+
+            # initial input: title, body, resolved_issues
+            ps_input = os.path.join(artifacts_dir, "ps_input.json")
+            # intermediate output if rename/move transformations are present
+            # (since they must be applied before `rewriteProblemStatement` to keep
+            # the problem statement in sync with code changes)
+            ps_renamed = os.path.join(artifacts_dir, "ps_renamed.json")
+            # final output if `rewriteProblemStatement` is applied
+            ps_rewritten = os.path.join(artifacts_dir, "ps_rewritten.json")
+
+            input_record = {
+                k: entry[k] for k in ("title", "body", "resolved_issues") if k in entry
+            }
+            with open(ps_input, 'w') as f:
+                json.dump(input_record, f, indent=2)
+            logger.info(f"Wrote problem statement input snapshot to {ps_input}")
+
+            strategy_entry["text_transformations"] = {"input": input_record}
+
+            current_ps_path = ps_input
+
+            # 7a: transformMetamorphicTexts — always run when rename/move transforms are present,
+            # since renamed/moved identifiers in the source MUST be reflected in the problem statement
+            if has_rename_move:
+                logger.info("Running transformMetamorphicTexts (rename/move transforms detected — required)")
+                tmt_result = execute_transform_metamorphic_texts(
+                    codecocoon_dir=codecocoon_dir,
+                    memory_file=memory_filepath,
+                    input_file=ps_input,
+                    output_file=ps_renamed,
+                    env_vars=env_vars,
+                    logger=logger,
+                )
+                tmt_log: Dict = {
+                    "applied": tmt_result.return_code == 0,
+                    "result": tmt_result.__dict__,
+                }
+                if tmt_result.return_code == 0:
+                    with open(ps_renamed) as f:
+                        tmt_output = json.load(f)
+                    tmt_log["output"] = tmt_output
+                    current_ps_path = ps_renamed
+                    logger.info("transformMetamorphicTexts succeeded")
+                else:
+                    logger.error(
+                        f"transformMetamorphicTexts failed (return_code={tmt_result.return_code}); "
+                        "keeping original problem statement"
+                    )
+                strategy_entry["text_transformations"]["transform_metamorphic_texts"] = tmt_log
+
+            # 7b: rewriteProblemStatement — runs on current_ps_path (may be renamed or original)
+            if rewrite_problem_statement:
+                logger.info(f"Running rewriteProblemStatement on {current_ps_path}")
+                rps_result = execute_rewrite_problem_statement(
+                    codecocoon_dir=codecocoon_dir,
+                    input_file=current_ps_path,
+                    output_file=ps_rewritten,
+                    env_vars=env_vars,
+                    logger=logger,
+                )
+                rps_log: Dict = {
+                    "applied": rps_result.return_code == 0,
+                    "result": rps_result.__dict__,
+                }
+                if rps_result.return_code == 0:
+                    with open(ps_rewritten) as f:
+                        rps_output = json.load(f)
+                    rps_log["output"] = rps_output
+                    current_ps_path = ps_rewritten
+                    logger.info("rewriteProblemStatement succeeded")
+                else:
+                    logger.error(
+                        f"rewriteProblemStatement failed (return_code={rps_result.return_code}); "
+                        "keeping current problem statement"
+                    )
+                strategy_entry["text_transformations"]["rewrite_problem_statement"] = rps_log
+
+            # Apply final text to entry if any task ran and produced output
+            if current_ps_path != ps_input:
+                with open(current_ps_path) as f:
+                    final_ps = json.load(f)
+                for key in ("title", "body", "resolved_issues"):
+                    if key in final_ps:
+                        entry[key] = final_ps[key]
+                logger.info(
+                    f"Updated entry text fields from {current_ps_path}: "
+                    f"title={entry.get('title', '')[:80]!r}"
+                )
+
     except Exception as e:
         logger.error(f"Failed to process {instance_id}: {e}", exc_info=True)
 
@@ -548,6 +669,7 @@ def main():
       transform_test_files:      {config.transform_test_files}
       override:                  {config.override}
       skip_existing_entries:     {config.skip_existing_entries}
+      rewrite_problem_statement: {config.rewrite_problem_statement}
     """)
 
     try:
@@ -610,6 +732,7 @@ def main():
             env_vars=instance_env_vars,
             transform_test_files=config.transform_test_files,
             override=config.override,
+            rewrite_problem_statement=config.rewrite_problem_statement,
         )
         append_jsonl(config.output, processed_entry)
 
