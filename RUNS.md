@@ -5,10 +5,10 @@
 
 | Step                 | Transform | Patches Check | Evaluation (GPT-5.4) | Evaluation (Claude-Sonnet-4.6) |
 |----------------------|-----------|---------------|----------------------|--------------------------------|
-| s0-original          | N/A       | N/A           | ❌                    | ❌                             |
+| s0-original          | N/A       | N/A           | ...                  | ❌                             |
 | s1-renaming          | ❌        | ❌            | ❌                    | ❌                             |
-| s2-structural        | ❌        | ❌            | ❌                    | ❌                             |
-| s3-problem-statement | ❌        | ❌            | ❌                    | ❌                             |
+| s2-structural        | ...       | ❌            | ❌                    | ❌                             |
+| s3-problem-statement | ...       | ❌            | ❌                    | ❌                             |
 | s4-combined          | ❌        | ❌            | ❌                    | ❌                             |
 
 **Total: 18 executions**
@@ -38,7 +38,10 @@ tbd
 
 1. Transform:
 ```bash
+cd artifacts/benchmarks/eval/s2-structural
 
+python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/transform.py \
+    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s2-structural/s2_transform.yaml
 ```
 
 1. Patches Check:
@@ -52,6 +55,24 @@ tbd
 
 
 ### s3-problem-statement
+
+1. Transform:
+```bash
+cd artifacts/benchmarks/eval/s3-problem-statement
+
+python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/transform.py \
+    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s3-problem-statement/s3_transform.yaml
+```
+
+1. Patches Check:
+```bash
+
+```
+
+1. Evaluation (GPT-5.4):
+
+1. Evaluation (Claude-Sonnet-4.6):
+
 
 ### s4-combined
 
