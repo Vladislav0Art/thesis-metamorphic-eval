@@ -30,13 +30,17 @@ logger = logging.getLogger(__name__)
 SCRIPT_DIR = Path(__file__).parent.resolve()
 PROJECT_ROOT = SCRIPT_DIR.parent
 
+COMPONENTS_DIR = PROJECT_ROOT / 'components'
+ARTIFACTS_DIR = PROJECT_ROOT / 'artifacts'
+
 # Define target directories relative to project root
 DIRS = {
-    'code_coccoon': PROJECT_ROOT / 'code-coccoon',
-    'agents': PROJECT_ROOT / 'agents',
-    'swe_bench': PROJECT_ROOT / 'swe_bench',
-    'benchmarks': PROJECT_ROOT / 'benchmarks',
-    'benchmark_downloads': PROJECT_ROOT / 'benchmarks' / 'downloads'
+    'code_coccoon': COMPONENTS_DIR / 'code-coccoon',
+    'agents': COMPONENTS_DIR / 'agents',
+    'swe_bench': COMPONENTS_DIR / 'swe_bench',
+
+    'benchmarks': ARTIFACTS_DIR / 'benchmarks',
+    'benchmark_downloads': ARTIFACTS_DIR / 'benchmarks' / 'downloads'
 }
 
 
