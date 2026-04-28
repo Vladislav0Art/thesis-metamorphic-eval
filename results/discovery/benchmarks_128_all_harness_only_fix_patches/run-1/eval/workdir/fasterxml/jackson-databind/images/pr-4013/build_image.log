@@ -1,196 +1,0 @@
-[2026-04-11 05:40:37,399] [docker_util.py] [INFO]: Start building image `mswebench/fasterxml_m_jackson-databind:pr-4013`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/fasterxml/jackson-databind/images/pr-4013`
-[2026-04-11 05:40:38,476] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/fasterxml_m_jackson-databind:base
-[2026-04-11 05:40:38,476] [docker_util.py] [INFO]: 
-[2026-04-11 05:40:38,621] [docker_util.py] [INFO]: ---> d3d4b151e0a1
-[2026-04-11 05:40:38,621] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
-[2026-04-11 05:40:38,621] [docker_util.py] [INFO]: 
-[2026-04-11 05:41:48,822] [docker_util.py] [INFO]: ---> a7ad81de59e3
-[2026-04-11 05:41:48,822] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
-[2026-04-11 05:41:48,822] [docker_util.py] [INFO]: 
-[2026-04-11 05:41:57,834] [docker_util.py] [INFO]: ---> db32da978967
-[2026-04-11 05:41:57,834] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
-[2026-04-11 05:41:57,834] [docker_util.py] [INFO]: 
-[2026-04-11 05:42:07,557] [docker_util.py] [INFO]: ---> 05eea55c7cf6
-[2026-04-11 05:42:07,557] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
-[2026-04-11 05:42:07,557] [docker_util.py] [INFO]: 
-[2026-04-11 05:42:16,313] [docker_util.py] [INFO]: ---> bd283541ba11
-[2026-04-11 05:42:16,314] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
-[2026-04-11 05:42:16,314] [docker_util.py] [INFO]: 
-[2026-04-11 05:42:25,031] [docker_util.py] [INFO]: ---> fc0df8661527
-[2026-04-11 05:42:25,031] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
-[2026-04-11 05:42:25,031] [docker_util.py] [INFO]: 
-[2026-04-11 05:42:34,198] [docker_util.py] [INFO]: ---> bf6c94a4a8d3
-[2026-04-11 05:42:34,198] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
-[2026-04-11 05:42:34,198] [docker_util.py] [INFO]: 
-[2026-04-11 05:42:43,387] [docker_util.py] [INFO]: ---> cd22ae851e70
-[2026-04-11 05:42:43,388] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
-[2026-04-11 05:42:43,388] [docker_util.py] [INFO]: 
-[2026-04-11 05:42:44,730] [docker_util.py] [INFO]: ---> Running in cf8db2e0b845
-[2026-04-11 05:42:47,925] [docker_util.py] [INFO]: [91mUpdating files:   9% (133/1415)[0m
-[2026-04-11 05:42:48,093] [docker_util.py] [INFO]: [91mUpdating files:  10% (142/1415)[0m
-[2026-04-11 05:42:48,167] [docker_util.py] [INFO]: [91mUpdating files:  11% (156/1415)[0m
-[2026-04-11 05:42:48,245] [docker_util.py] [INFO]: [91mUpdating files:  12% (170/1415)[0m
-[2026-04-11 05:42:48,265] [docker_util.py] [INFO]: [91mUpdating files:  13% (184/1415)[0m
-[2026-04-11 05:42:48,483] [docker_util.py] [INFO]: [91mUpdating files:  14% (199/1415)[0m
-[2026-04-11 05:42:48,568] [docker_util.py] [INFO]: [91mUpdating files:  15% (213/1415)[0m
-[2026-04-11 05:42:48,697] [docker_util.py] [INFO]: [91mUpdating files:  16% (227/1415)Updating files:  17% (241/1415)Updating files:  18% (255/1415)Updating files:  19% (269/1415)[0m
-[2026-04-11 05:42:48,856] [docker_util.py] [INFO]: [91mUpdating files:  19% (281/1415)[0m
-[2026-04-11 05:42:48,956] [docker_util.py] [INFO]: [91mUpdating files:  20% (283/1415)[0m
-[2026-04-11 05:42:49,046] [docker_util.py] [INFO]: [91mUpdating files:  21% (298/1415)[0m
-[2026-04-11 05:42:49,123] [docker_util.py] [INFO]: [91mUpdating files:  22% (312/1415)[0m
-[2026-04-11 05:42:49,124] [docker_util.py] [INFO]: [91mUpdating files:  23% (326/1415)[0m
-[2026-04-11 05:42:49,384] [docker_util.py] [INFO]: [91mUpdating files:  24% (340/1415)[0m
-[2026-04-11 05:42:49,584] [docker_util.py] [INFO]: [91mUpdating files:  25% (354/1415)Updating files:  26% (368/1415)Updating files:  27% (383/1415)[0m
-[2026-04-11 05:42:49,712] [docker_util.py] [INFO]: [91mUpdating files:  28% (397/1415)[0m
-[2026-04-11 05:42:49,752] [docker_util.py] [INFO]: [91mUpdating files:  29% (411/1415)[0m
-[2026-04-11 05:42:49,764] [docker_util.py] [INFO]: [91mUpdating files:  30% (425/1415)Updating files:  31% (439/1415)[0m
-[2026-04-11 05:42:49,918] [docker_util.py] [INFO]: [91mUpdating files:  31% (450/1415)[0m
-[2026-04-11 05:42:49,919] [docker_util.py] [INFO]: [91mUpdating files:  32% (453/1415)[0m
-[2026-04-11 05:42:49,943] [docker_util.py] [INFO]: [91mUpdating files:  33% (467/1415)[0m
-[2026-04-11 05:42:50,196] [docker_util.py] [INFO]: [91mUpdating files:  34% (482/1415)Updating files:  35% (496/1415)[0m
-[2026-04-11 05:42:50,215] [docker_util.py] [INFO]: [91mUpdating files:  36% (510/1415)[0m
-[2026-04-11 05:42:50,639] [docker_util.py] [INFO]: [91mUpdating files:  37% (524/1415)[0m
-[2026-04-11 05:42:50,768] [docker_util.py] [INFO]: [91mUpdating files:  38% (538/1415)[0m
-[2026-04-11 05:42:50,948] [docker_util.py] [INFO]: [91mUpdating files:  38% (539/1415)[0m
-[2026-04-11 05:42:51,007] [docker_util.py] [INFO]: [91mUpdating files:  39% (552/1415)[0m
-[2026-04-11 05:42:51,016] [docker_util.py] [INFO]: [91mUpdating files:  40% (566/1415)[0m
-[2026-04-11 05:42:51,046] [docker_util.py] [INFO]: [91mUpdating files:  41% (581/1415)[0m
-[2026-04-11 05:42:51,147] [docker_util.py] [INFO]: [91mUpdating files:  42% (595/1415)[0m
-[2026-04-11 05:42:51,177] [docker_util.py] [INFO]: [91mUpdating files:  43% (609/1415)[0m
-[2026-04-11 05:42:51,182] [docker_util.py] [INFO]: [91mUpdating files:  44% (623/1415)[0m
-[2026-04-11 05:42:51,184] [docker_util.py] [INFO]: [91mUpdating files:  45% (637/1415)[0m
-[2026-04-11 05:42:51,414] [docker_util.py] [INFO]: [91mUpdating files:  46% (651/1415)[0m
-[2026-04-11 05:42:51,824] [docker_util.py] [INFO]: [91mUpdating files:  47% (666/1415)[0m
-[2026-04-11 05:42:51,832] [docker_util.py] [INFO]: [91mUpdating files:  47% (670/1415)[0m
-[2026-04-11 05:42:51,872] [docker_util.py] [INFO]: [91mUpdating files:  48% (680/1415)[0m
-[2026-04-11 05:42:52,417] [docker_util.py] [INFO]: [91mUpdating files:  49% (694/1415)[0m
-[2026-04-11 05:42:52,575] [docker_util.py] [INFO]: [91mUpdating files:  50% (708/1415)Updating files:  51% (722/1415)[0m
-[2026-04-11 05:42:52,575] [docker_util.py] [INFO]: [91mUpdating files:  52% (736/1415)[0m
-[2026-04-11 05:42:52,586] [docker_util.py] [INFO]: [91mUpdating files:  53% (750/1415)[0m
-[2026-04-11 05:42:52,748] [docker_util.py] [INFO]: [91mUpdating files:  54% (765/1415)[0m
-[2026-04-11 05:42:52,764] [docker_util.py] [INFO]: [91mUpdating files:  55% (779/1415)[0m
-[2026-04-11 05:42:52,779] [docker_util.py] [INFO]: [91mUpdating files:  56% (793/1415)[0m
-[2026-04-11 05:42:52,909] [docker_util.py] [INFO]: [91mUpdating files:  56% (805/1415)Updating files:  57% (807/1415)[0m
-[2026-04-11 05:42:52,963] [docker_util.py] [INFO]: [91mUpdating files:  58% (821/1415)[0m
-[2026-04-11 05:42:53,197] [docker_util.py] [INFO]: [91mUpdating files:  59% (835/1415)[0m
-[2026-04-11 05:42:53,220] [docker_util.py] [INFO]: [91mUpdating files:  60% (849/1415)[0m
-[2026-04-11 05:42:53,406] [docker_util.py] [INFO]: [91mUpdating files:  61% (864/1415)[0m
-[2026-04-11 05:42:53,433] [docker_util.py] [INFO]: [91mUpdating files:  62% (878/1415)[0m
-[2026-04-11 05:42:53,439] [docker_util.py] [INFO]: [91mUpdating files:  63% (892/1415)[0m
-[2026-04-11 05:42:53,452] [docker_util.py] [INFO]: [91mUpdating files:  64% (906/1415)[0m
-[2026-04-11 05:42:53,470] [docker_util.py] [INFO]: [91mUpdating files:  65% (920/1415)[0m
-[2026-04-11 05:42:53,719] [docker_util.py] [INFO]: [91mUpdating files:  66% (934/1415)Updating files:  67% (949/1415)[0m
-[2026-04-11 05:42:53,760] [docker_util.py] [INFO]: [91mUpdating files:  68% (963/1415)[0m
-[2026-04-11 05:42:53,795] [docker_util.py] [INFO]: [91mUpdating files:  69% (977/1415)Updating files:  70% (991/1415)[0m
-[2026-04-11 05:42:54,276] [docker_util.py] [INFO]: [91mUpdating files:  70% (995/1415)[0m
-[2026-04-11 05:42:54,335] [docker_util.py] [INFO]: [91mUpdating files:  71% (1005/1415)[0m
-[2026-04-11 05:42:54,480] [docker_util.py] [INFO]: [91mUpdating files:  72% (1019/1415)[0m
-[2026-04-11 05:42:54,533] [docker_util.py] [INFO]: [91mUpdating files:  73% (1033/1415)[0m
-[2026-04-11 05:42:54,768] [docker_util.py] [INFO]: [91mUpdating files:  74% (1048/1415)[0m
-[2026-04-11 05:42:54,770] [docker_util.py] [INFO]: [91mUpdating files:  75% (1062/1415)[0m
-[2026-04-11 05:42:54,795] [docker_util.py] [INFO]: [91mUpdating files:  76% (1076/1415)Updating files:  77% (1090/1415)[0m
-[2026-04-11 05:42:54,804] [docker_util.py] [INFO]: [91mUpdating files:  78% (1104/1415)[0m
-[2026-04-11 05:42:54,811] [docker_util.py] [INFO]: [91mUpdating files:  79% (1118/1415)[0m
-[2026-04-11 05:42:54,823] [docker_util.py] [INFO]: [91mUpdating files:  80% (1132/1415)[0m
-[2026-04-11 05:42:54,830] [docker_util.py] [INFO]: [91mUpdating files:  81% (1147/1415)[0m
-[2026-04-11 05:42:54,866] [docker_util.py] [INFO]: [91mUpdating files:  81% (1149/1415)[0m
-[2026-04-11 05:42:54,897] [docker_util.py] [INFO]: [91mUpdating files:  82% (1161/1415)[0m
-[2026-04-11 05:42:54,916] [docker_util.py] [INFO]: [91mUpdating files:  83% (1175/1415)[0m
-[2026-04-11 05:42:54,970] [docker_util.py] [INFO]: [91mUpdating files:  84% (1189/1415)[0m
-[2026-04-11 05:42:55,019] [docker_util.py] [INFO]: [91mUpdating files:  85% (1203/1415)Updating files:  86% (1217/1415)Updating files:  87% (1232/1415)Updating files:  88% (1246/1415)[0m
-[2026-04-11 05:42:55,047] [docker_util.py] [INFO]: [91mUpdating files:  89% (1260/1415)Updating files:  90% (1274/1415)Updating files:  91% (1288/1415)[0m
-[2026-04-11 05:42:55,125] [docker_util.py] [INFO]: [91mUpdating files:  92% (1302/1415)Updating files:  93% (1316/1415)Updating files:  94% (1331/1415)[0m
-[2026-04-11 05:42:55,164] [docker_util.py] [INFO]: [91mUpdating files:  95% (1345/1415)[0m
-[2026-04-11 05:42:55,198] [docker_util.py] [INFO]: [91mUpdating files:  96% (1359/1415)[0m
-[2026-04-11 05:42:55,320] [docker_util.py] [INFO]: [91mUpdating files:  97% (1373/1415)[0m
-[2026-04-11 05:42:55,329] [docker_util.py] [INFO]: [91mUpdating files:  98% (1387/1415)[0m
-[2026-04-11 05:42:55,334] [docker_util.py] [INFO]: [91mUpdating files:  99% (1401/1415)[0m
-[2026-04-11 05:42:55,747] [docker_util.py] [INFO]: [91mUpdating files: 100% (1415/1415)Updating files: 100% (1415/1415), done.
-[0m
-[2026-04-11 05:42:55,840] [docker_util.py] [INFO]: HEAD is now at 7faddc8d2 Test refactoring,  batch/12 (#5880)
-[2026-04-11 05:42:55,905] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
-[2026-04-11 05:42:56,624] [docker_util.py] [INFO]: [91mNote: switching to 'badad566edcfb91dfb4c2ba7e2d20b23520e6f6c'.
-
-You are in 'detached HEAD' state. You can look around, make experimental
-changes and commit them, and you can discard any commits you make in this
-state without impacting any branches by switching back to a branch.
-
-If you want to create a new branch to retain commits you create, you may
-do so (now or later) by using -c with the switch command. Example:
-
-  git switch -c <new-branch-name>
-
-Or undo this operation with:
-
-  git switch -
-
-Turn off this advice by setting config variable advice.detachedHead to false
-
-HEAD is now at badad566e Minor rewrite of test from #4012, to easy merge to master
-[0m
-[2026-04-11 05:42:56,861] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
-[2026-04-11 05:43:01,325] [docker_util.py] [INFO]: [[1;34mINFO[m] Scanning for projects...
-[2026-04-11 05:43:02,161] [docker_util.py] [INFO]: Downloading from sonatype-nexus-snapshots: https://oss.sonatype.org/content/repositories/snapshots/com/fasterxml/jack
-[2026-04-11 05:43:02,161] [docker_util.py] [INFO]: son/jackson-base/2.16.3-SNAPSHOT/maven-metadata.xml
-[2026-04-11 05:43:03,221] [docker_util.py] [INFO]: D
-[2026-04-11 05:43:03,221] [docker_util.py] [INFO]: ownloading from sonatype-nexus-snapshots: https://oss.sonatype.org/content/repositories/snapshots/com/fasterxml/jackson/jackson-base/2.16.3-SNAPSHOT/jackson-base-2.16.3-SNAPSHOT.pom
-[2026-04-11 05:43:03,397] [docker_util.py] [INFO]: [[1;31mERROR[m] [ERROR] Some problems were encountered while processing the POMs:
-[FATAL] Non-resolvable parent POM for com.fasterxml.jackson.core:jackson-databind:2.16.3-SNAPSHOT: Could not find artifact com.fasterxml.jackson:jackson-base:pom:2.16.3-SNAPSHOT in sonatype-nexus-snapshots (https://oss.sonatype.org/content/repositories/snapshots) and 'parent.relativePath' points at wrong local POM @ line 9, column 11
- @
-[2026-04-11 05:43:03,397] [docker_util.py] [INFO]: [[1;31mERROR[m] The build could not read 1 project -> [1m[Help 1][m
-[2026-04-11 05:43:03,397] [docker_util.py] [INFO]: [[1;31mERROR[m]
-[2026-04-11 05:43:03,397] [docker_util.py] [INFO]: [
-[2026-04-11 05:43:03,397] [docker_util.py] [INFO]: [1;31mERR
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: OR[m]   The project com.fasterxml.jackson.core:jackson-databind:2.
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: 16.3-SNAPS
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: HOT (/ho
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: me/jack
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: son-databi
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: nd/pom.xml) has
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: 1 error
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: [[1;31mERROR[m]     Non-resolvable parent
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: POM for com.faster
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: xml.jackson.cor
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: e:jackson-databind:2.16
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: .3-SNAPS
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: HOT: Co
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: uld not
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: find a
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: rtifact
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: com.fasterxml.jackso
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: n:jackso
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: n-base:p
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: om:2.16.3-SNAPSHOT in
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: sonatyp
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: e-nexus-
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: snapsho
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: ts (https://oss.so
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: natype.o
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: rg/conte
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: nt/repos
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: itories/snapshots
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: ) and 'pa
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: rent.re
-[2026-04-11 05:43:03,398] [docker_util.py] [INFO]: lativePa
-[2026-04-11 05:43:03,399] [docker_util.py] [INFO]: th' points at wron
-[2026-04-11 05:43:03,399] [docker_util.py] [INFO]: g local P
-[2026-04-11 05:43:03,399] [docker_util.py] [INFO]: OM @ li
-[2026-04-11 05:43:03,399] [docker_util.py] [INFO]: ne 9, co
-[2026-04-11 05:43:03,399] [docker_util.py] [INFO]: lumn 11 -> 
-[2026-04-11 05:43:03,399] [docker_util.py] [INFO]: [1m[Help
-[2026-04-11 05:43:03,399] [docker_util.py] [INFO]: 2][m
-[2026-04-11 05:43:03,399] [docker_util.py] [INFO]: 
-[2026-04-11 05:43:03,399] [docker_util.py] [INFO]: [[1;31mERR
-[2026-04-11 05:43:03,399] [docker_util.py] [INFO]: OR[m]
-[2026-04-11 05:43:03,399] [docker_util.py] [INFO]: [[1;31mERROR[m] To see the full stack trace of the errors, re-run Maven with the [1m-e[m switch.
-[[1;31mERROR[m] Re-run Maven using the [1m-X[m switch to enable full debug logging.
-[[1;31mERROR[m] 
-[[1;31mERROR[m] For more information about the errors and possible solutions, please read the following articles:
-[[1;31mERROR[m] [1m[Help 1][m http://cwiki.apache.org/confluence/display/MAVEN/ProjectBuildingException
-[[1;31mERROR[m] [1m[Help 2][m http://cwiki.apache.org/confluence/display/MAVEN/UnresolvableModelException
-[2026-04-11 05:43:13,251] [docker_util.py] [INFO]: ---> Removed intermediate container cf8db2e0b845
-[2026-04-11 05:43:13,251] [docker_util.py] [INFO]: ---> 0b12bc88abd2
-[2026-04-11 05:43:13,252] [docker_util.py] [INFO]: sha256:0b12bc88abd22fc7e4d4c63b3814a95a86b1b7552c354c5a67400d25c2e008e9
-[2026-04-11 05:43:13,660] [docker_util.py] [INFO]: Successfully built 0b12bc88abd2
-[2026-04-11 05:43:13,767] [docker_util.py] [INFO]: Successfully tagged mswebench/fasterxml_m_jackson-databind:pr-4013
-[2026-04-11 05:43:13,768] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/fasterxml/jackson-databind/images/pr-4013) build success: mswebench/fasterxml_m_jackson-databind:pr-4013

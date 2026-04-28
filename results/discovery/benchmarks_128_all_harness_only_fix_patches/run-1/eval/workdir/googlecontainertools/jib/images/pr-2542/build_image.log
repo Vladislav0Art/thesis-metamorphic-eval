@@ -1,528 +1,0 @@
-[2026-04-11 05:44:28,170] [docker_util.py] [INFO]: Start building image `mswebench/googlecontainertools_m_jib:pr-2542`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/googlecontainertools/jib/images/pr-2542`
-[2026-04-11 05:44:29,207] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/googlecontainertools_m_jib:base
-[2026-04-11 05:44:29,207] [docker_util.py] [INFO]: 
-[2026-04-11 05:44:29,425] [docker_util.py] [INFO]: ---> 5b35b88e7cd7
-[2026-04-11 05:44:29,425] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
-[2026-04-11 05:44:29,425] [docker_util.py] [INFO]: 
-[2026-04-11 05:44:44,384] [docker_util.py] [INFO]: ---> a838800b620e
-[2026-04-11 05:44:44,384] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
-[2026-04-11 05:44:44,384] [docker_util.py] [INFO]: 
-[2026-04-11 05:44:49,546] [docker_util.py] [INFO]: ---> d7fef29b7dc3
-[2026-04-11 05:44:49,546] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
-[2026-04-11 05:44:49,546] [docker_util.py] [INFO]: 
-[2026-04-11 05:44:53,147] [docker_util.py] [INFO]: ---> d0804c87e9fd
-[2026-04-11 05:44:53,148] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
-[2026-04-11 05:44:53,148] [docker_util.py] [INFO]: 
-[2026-04-11 05:44:57,629] [docker_util.py] [INFO]: ---> d8da4b6722c6
-[2026-04-11 05:44:57,629] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
-[2026-04-11 05:44:57,629] [docker_util.py] [INFO]: 
-[2026-04-11 05:45:02,113] [docker_util.py] [INFO]: ---> cb707852ad6a
-[2026-04-11 05:45:02,114] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
-[2026-04-11 05:45:02,114] [docker_util.py] [INFO]: 
-[2026-04-11 05:45:06,506] [docker_util.py] [INFO]: ---> b2c4894b53a6
-[2026-04-11 05:45:06,506] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
-[2026-04-11 05:45:06,506] [docker_util.py] [INFO]: 
-[2026-04-11 05:45:11,530] [docker_util.py] [INFO]: ---> 1f834cc71d07
-[2026-04-11 05:45:11,530] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
-[2026-04-11 05:45:11,530] [docker_util.py] [INFO]: 
-[2026-04-11 05:45:13,277] [docker_util.py] [INFO]: ---> Running in bc4fc0461817
-[2026-04-11 05:45:16,414] [docker_util.py] [INFO]: [91mUpdating files:   6% (76/1221)[0m
-[2026-04-11 05:45:16,467] [docker_util.py] [INFO]: [91mUpdating files:   7% (86/1221)[0m
-[2026-04-11 05:45:17,144] [docker_util.py] [INFO]: [91mUpdating files:   8% (98/1221)[0m
-[2026-04-11 05:45:17,144] [docker_util.py] [INFO]: [91mUpdating files:   9% (110/1221)[0m
-[2026-04-11 05:45:17,430] [docker_util.py] [INFO]: [91mUpdating files:   9% (120/1221)[0m
-[2026-04-11 05:45:17,528] [docker_util.py] [INFO]: [91mUpdating files:  10% (123/1221)[0m
-[2026-04-11 05:45:17,585] [docker_util.py] [INFO]: [91mUpdating files:  11% (135/1221)[0m
-[2026-04-11 05:45:17,619] [docker_util.py] [INFO]: [91mUpdating files:  12% (147/1221)[0m
-[2026-04-11 05:45:17,935] [docker_util.py] [INFO]: [91mUpdating files:  13% (159/1221)[0m
-[2026-04-11 05:45:18,118] [docker_util.py] [INFO]: [91mUpdating files:  14% (171/1221)[0m
-[2026-04-11 05:45:18,366] [docker_util.py] [INFO]: [91mUpdating files:  14% (176/1221)[0m
-[2026-04-11 05:45:18,472] [docker_util.py] [INFO]: [91mUpdating files:  15% (184/1221)[0m
-[2026-04-11 05:45:18,869] [docker_util.py] [INFO]: [91mUpdating files:  16% (196/1221)[0m
-[2026-04-11 05:45:19,012] [docker_util.py] [INFO]: [91mUpdating files:  17% (208/1221)[0m
-[2026-04-11 05:45:19,674] [docker_util.py] [INFO]: [91mUpdating files:  17% (214/1221)[0m
-[2026-04-11 05:45:20,041] [docker_util.py] [INFO]: [91mUpdating files:  18% (220/1221)[0m
-[2026-04-11 05:45:20,054] [docker_util.py] [INFO]: [91mUpdating files:  19% (232/1221)[0m
-[2026-04-11 05:45:20,058] [docker_util.py] [INFO]: [91mUpdating files:  20% (245/1221)[0m
-[2026-04-11 05:45:20,316] [docker_util.py] [INFO]: [91mUpdating files:  20% (256/1221)[0m
-[2026-04-11 05:45:20,323] [docker_util.py] [INFO]: [91mUpdating files:  21% (257/1221)[0m
-[2026-04-11 05:45:20,340] [docker_util.py] [INFO]: [91mUpdating files:  22% (269/1221)[0m
-[2026-04-11 05:45:20,342] [docker_util.py] [INFO]: [91mUpdating files:  23% (281/1221)[0m
-[2026-04-11 05:45:20,392] [docker_util.py] [INFO]: [91mUpdating files:  24% (294/1221)[0m
-[2026-04-11 05:45:20,598] [docker_util.py] [INFO]: [91mUpdating files:  25% (306/1221)[0m
-[2026-04-11 05:45:20,879] [docker_util.py] [INFO]: [91mUpdating files:  26% (318/1221)[0m
-[2026-04-11 05:45:20,947] [docker_util.py] [INFO]: [91mUpdating files:  27% (330/1221)[0m
-[2026-04-11 05:45:20,987] [docker_util.py] [INFO]: [91mUpdating files:  28% (342/1221)[0m
-[2026-04-11 05:45:21,208] [docker_util.py] [INFO]: [91mUpdating files:  29% (355/1221)[0m
-[2026-04-11 05:45:21,267] [docker_util.py] [INFO]: [91mUpdating files:  30% (367/1221)[0m
-[2026-04-11 05:45:21,393] [docker_util.py] [INFO]: [91mUpdating files:  30% (370/1221)[0m
-[2026-04-11 05:45:21,398] [docker_util.py] [INFO]: [91mUpdating files:  31% (379/1221)[0m
-[2026-04-11 05:45:21,401] [docker_util.py] [INFO]: [91mUpdating files:  32% (391/1221)[0m
-[2026-04-11 05:45:21,406] [docker_util.py] [INFO]: [91mUpdating files:  33% (403/1221)[0m
-[2026-04-11 05:45:21,414] [docker_util.py] [INFO]: [91mUpdating files:  34% (416/1221)[0m
-[2026-04-11 05:45:21,416] [docker_util.py] [INFO]: [91mUpdating files:  35% (428/1221)[0m
-[2026-04-11 05:45:21,426] [docker_util.py] [INFO]: [91mUpdating files:  36% (440/1221)[0m
-[2026-04-11 05:45:21,444] [docker_util.py] [INFO]: [91mUpdating files:  37% (452/1221)[0m
-[2026-04-11 05:45:21,464] [docker_util.py] [INFO]: [91mUpdating files:  38% (464/1221)[0m
-[2026-04-11 05:45:21,474] [docker_util.py] [INFO]: [91mUpdating files:  39% (477/1221)[0m
-[2026-04-11 05:45:21,496] [docker_util.py] [INFO]: [91mUpdating files:  40% (489/1221)Updating files:  41% (501/1221)[0m
-[2026-04-11 05:45:21,500] [docker_util.py] [INFO]: [91mUpdating files:  42% (513/1221)[0m
-[2026-04-11 05:45:21,521] [docker_util.py] [INFO]: [91mUpdating files:  43% (526/1221)[0m
-[2026-04-11 05:45:21,856] [docker_util.py] [INFO]: [91mUpdating files:  44% (538/1221)Updating files:  45% (550/1221)Updating files:  46% (562/1221)[0m
-[2026-04-11 05:45:21,899] [docker_util.py] [INFO]: [91mUpdating files:  47% (574/1221)[0m
-[2026-04-11 05:45:21,935] [docker_util.py] [INFO]: [91mUpdating files:  48% (587/1221)[0m
-[2026-04-11 05:45:22,008] [docker_util.py] [INFO]: [91mUpdating files:  49% (599/1221)[0m
-[2026-04-11 05:45:22,065] [docker_util.py] [INFO]: [91mUpdating files:  50% (611/1221)[0m
-[2026-04-11 05:45:22,066] [docker_util.py] [INFO]: [91mUpdating files:  51% (623/1221)[0m
-[2026-04-11 05:45:22,081] [docker_util.py] [INFO]: [91mUpdating files:  52% (635/1221)[0m
-[2026-04-11 05:45:22,119] [docker_util.py] [INFO]: [91mUpdating files:  53% (648/1221)[0m
-[2026-04-11 05:45:22,322] [docker_util.py] [INFO]: [91mUpdating files:  53% (652/1221)[0m
-[2026-04-11 05:45:22,560] [docker_util.py] [INFO]: [91mUpdating files:  54% (660/1221)[0m
-[2026-04-11 05:45:22,581] [docker_util.py] [INFO]: [91mUpdating files:  55% (672/1221)[0m
-[2026-04-11 05:45:22,814] [docker_util.py] [INFO]: [91mUpdating files:  56% (684/1221)[0m
-[2026-04-11 05:45:22,837] [docker_util.py] [INFO]: [91mUpdating files:  57% (696/1221)Updating files:  58% (709/1221)[0m
-[2026-04-11 05:45:22,972] [docker_util.py] [INFO]: [91mUpdating files:  59% (721/1221)[0m
-[2026-04-11 05:45:23,101] [docker_util.py] [INFO]: [91mUpdating files:  60% (733/1221)[0m
-[2026-04-11 05:45:23,569] [docker_util.py] [INFO]: [91mUpdating files:  60% (735/1221)[0m
-[2026-04-11 05:45:23,611] [docker_util.py] [INFO]: [91mUpdating files:  61% (745/1221)[0m
-[2026-04-11 05:45:24,298] [docker_util.py] [INFO]: [91mUpdating files:  62% (758/1221)[0m
-[2026-04-11 05:45:24,449] [docker_util.py] [INFO]: [91mUpdating files:  62% (759/1221)[0m
-[2026-04-11 05:45:24,503] [docker_util.py] [INFO]: [91mUpdating files:  63% (770/1221)[0m
-[2026-04-11 05:45:24,640] [docker_util.py] [INFO]: [91mUpdating files:  64% (782/1221)[0m
-[2026-04-11 05:45:25,022] [docker_util.py] [INFO]: [91mUpdating files:  65% (794/1221)[0m
-[2026-04-11 05:45:25,382] [docker_util.py] [INFO]: [91mUpdating files:  66% (806/1221)[0m
-[2026-04-11 05:45:25,476] [docker_util.py] [INFO]: [91mUpdating files:  67% (819/1221)Updating files:  68% (831/1221)[0m
-[2026-04-11 05:45:26,004] [docker_util.py] [INFO]: [91mUpdating files:  69% (843/1221)[0m
-[2026-04-11 05:45:26,245] [docker_util.py] [INFO]: [91mUpdating files:  70% (855/1221)[0m
-[2026-04-11 05:45:26,330] [docker_util.py] [INFO]: [91mUpdating files:  70% (863/1221)[0m
-[2026-04-11 05:45:26,466] [docker_util.py] [INFO]: [91mUpdating files:  71% (867/1221)[0m
-[2026-04-11 05:45:26,726] [docker_util.py] [INFO]: [91mUpdating files:  72% (880/1221)[0m
-[2026-04-11 05:45:27,163] [docker_util.py] [INFO]: [91mUpdating files:  73% (892/1221)[0m
-[2026-04-11 05:45:27,341] [docker_util.py] [INFO]: [91mUpdating files:  73% (897/1221)[0m
-[2026-04-11 05:45:27,436] [docker_util.py] [INFO]: [91mUpdating files:  74% (904/1221)[0m
-[2026-04-11 05:45:27,539] [docker_util.py] [INFO]: [91mUpdating files:  75% (916/1221)[0m
-[2026-04-11 05:45:28,003] [docker_util.py] [INFO]: [91mUpdating files:  76% (928/1221)[0m
-[2026-04-11 05:45:28,081] [docker_util.py] [INFO]: [91mUpdating files:  77% (941/1221)[0m
-[2026-04-11 05:45:28,437] [docker_util.py] [INFO]: [91mUpdating files:  77% (951/1221)Updating files:  78% (953/1221)[0m
-[2026-04-11 05:45:28,588] [docker_util.py] [INFO]: [91mUpdating files:  79% (965/1221)[0m
-[2026-04-11 05:45:28,616] [docker_util.py] [INFO]: [91mUpdating files:  80% (977/1221)[0m
-[2026-04-11 05:45:28,897] [docker_util.py] [INFO]: [91mUpdating files:  81% (990/1221)[0m
-[2026-04-11 05:45:28,981] [docker_util.py] [INFO]: [91mUpdating files:  82% (1002/1221)[0m
-[2026-04-11 05:45:29,344] [docker_util.py] [INFO]: [91mUpdating files:  82% (1006/1221)[0m
-[2026-04-11 05:45:30,269] [docker_util.py] [INFO]: [91mUpdating files:  83% (1014/1221)[0m
-[2026-04-11 05:45:30,407] [docker_util.py] [INFO]: [91mUpdating files:  83% (1019/1221)[0m
-[2026-04-11 05:45:30,649] [docker_util.py] [INFO]: [91mUpdating files:  84% (1026/1221)[0m
-[2026-04-11 05:45:31,114] [docker_util.py] [INFO]: [91mUpdating files:  85% (1038/1221)[0m
-[2026-04-11 05:45:31,311] [docker_util.py] [INFO]: [91mUpdating files:  85% (1048/1221)[0m
-[2026-04-11 05:45:31,369] [docker_util.py] [INFO]: [91mUpdating files:  86% (1051/1221)[0m
-[2026-04-11 05:45:31,832] [docker_util.py] [INFO]: [91mUpdating files:  87% (1063/1221)[0m
-[2026-04-11 05:45:31,888] [docker_util.py] [INFO]: [91mUpdating files:  88% (1075/1221)[0m
-[2026-04-11 05:45:32,298] [docker_util.py] [INFO]: [91mUpdating files:  89% (1087/1221)[0m
-[2026-04-11 05:45:32,342] [docker_util.py] [INFO]: [91mUpdating files:  89% (1088/1221)[0m
-[2026-04-11 05:45:32,394] [docker_util.py] [INFO]: [91mUpdating files:  90% (1099/1221)[0m
-[2026-04-11 05:45:32,695] [docker_util.py] [INFO]: [91mUpdating files:  91% (1112/1221)Updating files:  92% (1124/1221)Updating files:  93% (1136/1221)Updating files:  94% (1148/1221)[0m
-[2026-04-11 05:45:32,797] [docker_util.py] [INFO]: [91mUpdating files:  95% (1160/1221)[0m
-[2026-04-11 05:45:33,008] [docker_util.py] [INFO]: [91mUpdating files:  96% (1173/1221)[0m
-[2026-04-11 05:45:33,127] [docker_util.py] [INFO]: [91mUpdating files:  97% (1185/1221)[0m
-[2026-04-11 05:45:33,476] [docker_util.py] [INFO]: [91mUpdating files:  97% (1187/1221)[0m
-[2026-04-11 05:45:33,485] [docker_util.py] [INFO]: [91mUpdating files:  98% (1197/1221)[0m
-[2026-04-11 05:45:33,505] [docker_util.py] [INFO]: [91mUpdating files:  99% (1209/1221)[0m
-[2026-04-11 05:45:33,506] [docker_util.py] [INFO]: [91mUpdating files: 100% (1221/1221)Updating files: 100% (1221/1221), done.
-[0m
-[2026-04-11 05:45:33,525] [docker_util.py] [INFO]: HEAD is now at 24b44450 Refactor Github Action per b/485167538 (#4491)
-[2026-04-11 05:45:33,569] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
-[2026-04-11 05:45:33,792] [docker_util.py] [INFO]: [91mNote: switching to '34a757b0d64f19c47c60fcb56e705e14c2a4e0c8'.
-
-You are in 'detached HEAD' state. You can look around, make experimental
-changes and commit them, and you can discard any commits you make in this
-state without impacting any branches by switching back to a branch.
-
-If you want to create a new branch to retain commits you create, you may
-do so (now or later) by using -c with the switch command. Example:
-
-  git switch -c <new-branch-name>
-
-Or undo this operation with:
-
-  git switch -
-
-Turn off this advice by setting config variable advice.detachedHead to false
-
-HEAD is now at 34a757b0 Add jbcrypt dependency where required (#2540)
-[0m
-[2026-04-11 05:45:34,177] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
-[2026-04-11 05:45:34,219] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
-[0m
-[2026-04-11 05:45:34,634] [docker_util.py] [INFO]: Downloading https://services.gradle.org/distributions/gradle-5.2.1-bin.zip
-[2026-04-11 05:45:36,849] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:36,917] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:37,019] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:37,168] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:37,345] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:37,503] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:37,672] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:37,803] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:37,913] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:38,061] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:38,262] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:38,375] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:38,579] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:38,651] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:38,779] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:39,002] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:39,064] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:39,247] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:39,323] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:39,528] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:39,776] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:39,818] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:39,910] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:40,114] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:40,177] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:40,314] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:40,510] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:40,670] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:40,743] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:40,887] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:41,073] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:41,239] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:41,466] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:41,651] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:41,814] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:41,950] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:42,162] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:42,249] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:42,375] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:42,580] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:42,651] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:42,835] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:42,974] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:43,067] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:43,194] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:43,338] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:43,455] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:43,648] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:43,825] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:44,017] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:44,186] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:44,599] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:44,910] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:45,201] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:45,596] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:46,337] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:47,261] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:47,929] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:48,267] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:48,869] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:49,694] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:50,620] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:51,292] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:51,860] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:52,208] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:52,353] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:52,534] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:52,733] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:52,893] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:53,152] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:53,299] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:53,601] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:53,886] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:53,971] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:54,168] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:54,283] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:54,513] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:54,680] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:54,839] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:55,005] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:55,142] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:55,372] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:55,476] [docker_util.py] [INFO]: .
-[2026-04-11 05:45:55,559] [docker_util.py] [INFO]: 
-[2026-04-11 05:45:58,454] [docker_util.py] [INFO]: Welcome to Gradle 5.2.1!
-
-Here are the highlights of this release:
- - Define sets of dependencies that work together with Java Platform plugin
- - New C++ plugins with dependency management built-in
- - New C++ project types for gradle init
- - Service injection into plugins and project extensions
-
-For more details see https://docs.gradle.org/5.2.1/release-notes.html
-[2026-04-11 05:45:58,793] [docker_util.py] [INFO]: Starting a Gradle Daemon (subsequent builds will be faster)
-[2026-04-11 05:45:58,795] [docker_util.py] [INFO]: 
-[2026-04-11 05:47:05,600] [docker_util.py] [INFO]: > Task :jib-build-plan:clean
-[2026-04-11 05:47:05,601] [docker_util.py] [INFO]: 
-[2026-04-11 05:47:05,601] [docker_util.py] [INFO]: > Task :jib-cli:clean
-[2026-04-11 05:47:05,601] [docker_util.py] [INFO]: 
-[2026-04-11 05:47:05,708] [docker_util.py] [INFO]: > Task :jib-core:clean
-[2026-04-11 05:47:05,708] [docker_util.py] [INFO]: 
-[2026-04-11 05:47:05,708] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:clean
-[2026-04-11 05:47:05,708] [docker_util.py] [INFO]: 
-[2026-04-11 05:47:05,708] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:clean
-[2026-04-11 05:47:05,708] [docker_util.py] [INFO]: 
-[2026-04-11 05:47:05,791] [docker_util.py] [INFO]: > Task :jib-maven-plugin:clean
-> Task :jib-maven-plugin-extension-api:clean
-> Task :jib-plugins-common:clean
-> Task :jib-plugins-extension-common:clean
-> Task :jib-build-plan:ensureTransitiveDependencyOverrides
-[2026-04-11 05:47:19,298] [docker_util.py] [INFO]: > Task :jib-build-plan:compileJava
-> Task :jib-build-plan:processResources NO-SOURCE
-> Task :jib-build-plan:classes
-[2026-04-11 05:47:34,922] [docker_util.py] [INFO]: > Task :jib-build-plan:compileTestJava
-> Task :jib-build-plan:processTestResources
-> Task :jib-build-plan:testClasses
-[2026-04-11 05:47:36,897] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
-[0m
-[2026-04-11 05:47:36,897] [docker_util.py] [INFO]: > Task :jib-build-plan:test
-[2026-04-11 05:47:40,110] [docker_util.py] [INFO]: > Task :jib-cli:ensureTransitiveDependencyOverrides
-[2026-04-11 05:47:40,202] [docker_util.py] [INFO]: > Task :jib-core:ensureTransitiveDependencyOverrides
-[2026-04-11 05:47:54,115] [docker_util.py] [INFO]: > Task :jib-core:compileJava
-[2026-04-11 05:47:54,115] [docker_util.py] [INFO]: [91m/home/jib/jib-core/src/main/java/com/google/cloud/tools/jib/cache/Retry.java:104: warning: [PreferJavaTimeOverload] Prefer using java.time-based APIs when available. Note that this checker does not and cannot guarantee that the overloads have equivalent semantics, but that is generally the case with overloaded methods.
-    this.sleepMilliseconds = unit.convert(duration, TimeUnit.MILLISECONDS);
-                                         ^
-    (see https://errorprone.info/bugpattern/PreferJavaTimeOverload)
-  Did you mean 'this.sleepMilliseconds = unit.convert(Duration.ofMillis(duration));'?
-[0m
-[2026-04-11 05:47:57,705] [docker_util.py] [INFO]: [91m1 warning
-[0m
-[2026-04-11 05:48:06,488] [docker_util.py] [INFO]: > Task :jib-cli:compileJava
-> Task :jib-cli:processResources
-[2026-04-11 05:48:06,488] [docker_util.py] [INFO]: NO-SOURCE
-[2026-04-11 05:48:06,489] [docker_util.py] [INFO]: 
-[2026-04-11 05:48:06,489] [docker_util.py] [INFO]: > Task :jib-cli:classes
-[2026-04-11 05:48:06,489] [docker_util.py] [INFO]: 
-[2026-04-11 05:48:09,296] [docker_util.py] [INFO]: > Task :jib-cli:compileTestJava
-> Task :jib-cli:processTestResources NO-SOURCE
-[2026-04-11 05:48:09,296] [docker_util.py] [INFO]: > Task :jib-cli:testClasses
-[2026-04-11 05:48:09,392] [docker_util.py] [INFO]: > Task :jib-core:processResources
-> Task :jib-core:classes
-[2026-04-11 05:48:09,591] [docker_util.py] [INFO]: > Task :jib-core:jar
-[2026-04-11 05:48:11,621] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
-[0m
-[2026-04-11 05:48:11,622] [docker_util.py] [INFO]: > Task :jib-cli:test
-[2026-04-11 05:48:34,126] [docker_util.py] [INFO]: > Task :jib-core:compileTestJava
-[2026-04-11 05:48:34,126] [docker_util.py] [INFO]: 
-[2026-04-11 05:48:34,697] [docker_util.py] [INFO]: > Task :jib-core:processTestResources
-> Task :jib-core:testClasses
-[2026-04-11 05:48:36,706] [docker_util.py] [INFO]: 
-[2026-04-11 05:48:36,706] [docker_util.py] [INFO]: > Task :jib-core:test
-[2026-04-11 05:48:36,706] [docker_util.py] [INFO]: 
-[2026-04-11 05:48:36,706] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
-[2026-04-11 05:48:36,706] [docker_util.py] [INFO]: [91m
-[0m
-[2026-04-11 05:49:05,198] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:ensureTransitiveDependencyOverrides
-[2026-04-11 05:49:05,290] [docker_util.py] [INFO]: > Task :jib-plugins-common:ensureTransitiveDependencyOverrides
-[2026-04-11 05:49:11,523] [docker_util.py] [INFO]: > Task :jib-plugins-common:compileJava
-> Task :jib-plugins-common:processResources
-[2026-04-11 05:49:11,525] [docker_util.py] [INFO]: NO-SOURCE
-> Task :jib-plugins-common:classes
-[2026-04-11 05:49:11,701] [docker_util.py] [INFO]: > Task :jib-plugins-common:jar
-[2026-04-11 05:49:41,610] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:compileJava
-[2026-04-11 05:50:10,921] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:pluginDescriptors
-> Task :jib-gradle-plugin:processResources
-[2026-04-11 05:50:11,055] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:classes
-[2026-04-11 05:50:11,498] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:pluginUnderTestMetadata
-[2026-04-11 05:50:11,704] [docker_util.py] [INFO]: > Task :jib-core:testJar
-[2026-04-11 05:50:16,403] [docker_util.py] [INFO]: > Task :jib-plugins-common:compileTestJava
-[2026-04-11 05:50:16,691] [docker_util.py] [INFO]: > Task :jib-plugins-common:processTestResources
-> Task :jib-plugins-common:testClasses
-[2026-04-11 05:50:16,806] [docker_util.py] [INFO]: > Task :jib-plugins-common:testJar
-[2026-04-11 05:50:27,393] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:compileTestJava
-[2026-04-11 05:50:28,191] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:processTestResources
-[2026-04-11 05:50:28,191] [docker_util.py] [INFO]: 
-[2026-04-11 05:50:28,192] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:testClasses
-[2026-04-11 05:50:28,192] [docker_util.py] [INFO]: 
-[2026-04-11 05:50:31,591] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:test
-[2026-04-11 05:50:31,591] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
-[0m
-[2026-04-11 05:50:36,695] [docker_util.py] [INFO]: [91mWARNING: An illegal reflective access operation has occurred
-WARNING: Illegal reflective access using Lookup on org.gradle.internal.classloader.ClassLoaderUtils$AbstractClassLoaderLookuper (file:/root/.gradle/caches/5.2.1/generated-gradle-jars/gradle-api-5.2.1.jar) to class java.lang.ClassLoader
-WARNING: Please consider reporting this to the maintainers of org.gradle.internal.classloader.ClassLoaderUtils$AbstractClassLoaderLookuper
-WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
-WARNING: All illegal access operations will be denied in a future release
-[0m
-[2026-04-11 05:50:46,206] [docker_util.py] [INFO]: 
-[2026-04-11 05:50:46,296] [docker_util.py] [INFO]: com.google.cloud.tools.jib.gradle.skaffold.FilesTaskV2Test > testFilesTast_withConfigModifiers STANDARD_OUT
-    Downloading https://services.gradle.org/distributions/gradle-5.1-bin.zip
-[2026-04-11 05:50:59,805] [docker_util.py] [INFO]: .................................................................................
-[2026-04-11 05:51:27,689] [docker_util.py] [INFO]: com.google.cloud.tools.jib.gradle.skaffold.FilesTaskV2Test > testFilesTask_platformProject STANDARD_OUT
-    Downloading https://services.gradle.org/distributions/gradle-5.2-bin.zip
-[2026-04-11 05:51:54,499] [docker_util.py] [INFO]: ...................................................................................
-[2026-04-11 05:52:33,004] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:ensureTransitiveDependencyOverrides
-[2026-04-11 05:52:35,104] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:compileJava
-> Task :jib-gradle-plugin-extension-api:processResources NO-SOURCE
-> Task :jib-gradle-plugin-extension-api:classes
-> Task :jib-gradle-plugin-extension-api:compileTestJava NO-SOURCE
-> Task :jib-gradle-plugin-extension-api:processTestResources NO-SOURCE
-> Task :jib-gradle-plugin-extension-api:testClasses UP-TO-DATE
-> Task :jib-gradle-plugin-extension-api:test NO-SOURCE
-[2026-04-11 05:52:37,709] [docker_util.py] [INFO]: > Task :jib-maven-plugin:ensureTransitiveDependencyOverrides
-[2026-04-11 05:52:49,406] [docker_util.py] [INFO]: > Task :jib-maven-plugin:compileJava
-[2026-04-11 05:52:49,542] [docker_util.py] [INFO]: > Task :jib-maven-plugin:generatePomFileForMavenJavaPublication
-[2026-04-11 05:52:50,202] [docker_util.py] [INFO]: > Task :jib-maven-plugin:generateMavenPluginDescriptor
-[2026-04-11 05:52:50,300] [docker_util.py] [INFO]: > Task :jib-maven-plugin:processResources
-> Task :jib-maven-plugin:classes
-[2026-04-11 05:52:50,503] [docker_util.py] [INFO]: > Task :jib-maven-plugin:jar
-[2026-04-11 05:52:52,133] [docker_util.py] [INFO]: > Task :jib-maven-plugin:publishMavenJavaPublicationToMavenLocal
-> Task :jib-maven-plugin:publishToMavenLocal
-[2026-04-11 05:52:59,890] [docker_util.py] [INFO]: > Task :jib-maven-plugin:compileTestJava
-[2026-04-11 05:53:00,227] [docker_util.py] [INFO]: > Task :jib-maven-plugin:processTestResources
-> Task :jib-maven-plugin:testClasses
-[2026-04-11 05:53:02,208] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
-[0m
-[2026-04-11 05:53:02,208] [docker_util.py] [INFO]: > Task :jib-maven-plugin:test
-[2026-04-11 05:54:29,294] [docker_util.py] [INFO]: com.google.cloud.tools.jib.maven.skaffold.SyncMapMojoTest > testSyncMapMojo_multiProjectOutput FAILED
-    java.lang.AssertionError: expected:<3> but was:<4>
-        at org.junit.Assert.fail(Assert.java:88)
-        at org.junit.Assert.failNotEquals(Assert.java:834)
-        at org.junit.Assert.assertEquals(Assert.java:645)
-        at org.junit.Assert.assertEquals(Assert.java:631)
-        at com.google.cloud.tools.jib.maven.skaffold.SyncMapMojoTest.getSyncMapJson(SyncMapMojoTest.java:68)
-        at com.google.cloud.tools.jib.maven.skaffold.SyncMapMojoTest.testSyncMapMojo_multiProjectOutput(SyncMapMojoTest.java:111)
-[2026-04-11 05:54:35,905] [docker_util.py] [INFO]: com.google.cloud.tools.jib.maven.skaffold.SyncMapMojoTest > testSyncMapMojo_skaffoldConfig FAILED
-    java.lang.AssertionError: expected:<3> but was:<4>
-        at org.junit.Assert.fail(Assert.java:88)
-        at org.junit.Assert.failNotEquals(Assert.java:834)
-        at org.junit.Assert.assertEquals(Assert.java:645)
-        at org.junit.Assert.assertEquals(Assert.java:631)
-        at com.google.cloud.tools.jib.maven.skaffold.SyncMapMojoTest.getSyncMapJson(SyncMapMojoTest.java:68)
-        at com.google.cloud.tools.jib.maven.skaffold.SyncMapMojoTest.testSyncMapMojo_skaffoldConfig(SyncMapMojoTest.java:137)
-[2026-04-11 05:54:44,392] [docker_util.py] [INFO]: com.google.cloud.tools.jib.maven.skaffold.SyncMapMojoTest > testSyncMapMojo_simpleTestProjectOutput FAILED
-    java.lang.AssertionError: expected:<3> but was:<4>
-        at org.junit.Assert.fail(Assert.java:88)
-        at org.junit.Assert.failNotEquals(Assert.java:834)
-        at org.junit.Assert.assertEquals(Assert.java:645)
-        at org.junit.Assert.assertEquals(Assert.java:631)
-        at com.google.cloud.tools.jib.maven.skaffold.SyncMapMojoTest.getSyncMapJson(SyncMapMojoTest.java:68)
-        at com.google.cloud.tools.jib.maven.skaffold.SyncMapMojoTest.testSyncMapMojo_simpleTestProjectOutput(SyncMapMojoTest.java:81)
-[2026-04-11 05:55:47,406] [docker_util.py] [INFO]: 
-[2026-04-11 05:55:47,406] [docker_util.py] [INFO]: com.google.cloud.tools.jib.maven.skaffold.InitMojoTest > testFilesMojo_multiModule_differentParent FAILED
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: 
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: java.lang.AssertionError:
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: Expected: a string starting with "BEGIN JIB JSON"
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: but: was "Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: BEGIN JIB JSON
-    {"image":"testimage","project":"org.springframework.boot:service-1"}
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: 
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: BEGIN JIB JSON
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: 
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: {"image":"testimage","project":"org.springframework.boot:service-2"}"
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: 
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: at org.hamcrest.MatcherAssert.assertThat(MatcherAssert.java:20)
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: at org.junit.Assert.assertThat(Assert.java:956)
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: at org.junit.Assert.assertThat(Assert.java:923)
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: 
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: at com.google.cloud.tools.jib.maven.skaffold.InitMojoTest.getJsons(InitMojoTest.java:65)
-[2026-04-11 05:55:47,407] [docker_util.py] [INFO]: at com.google.cloud.tools.jib.maven.skaffold.InitMojoTest.testFilesMojo_multiModule_differentParent(InitMojoTest.java:108)
-[2026-04-11 05:55:51,624] [docker_util.py] [INFO]: com.google.cloud.tools.jib.maven.skaffold.InitMojoTest > testFilesMojo_singleModule FAILED
-    java.lang.AssertionError: 
-    Expected: a string starting with "BEGIN JIB JSON"
-         but: was "Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
-
-    BEGIN JIB JSON
-    {"image":"testimage","project":"com.test:hello-world"}"
-        at org.hamcrest.MatcherAssert.assertThat(MatcherAssert.java:20)
-        at org.junit.Assert.assertThat(Assert.java:956)
-        at org.junit.Assert.assertThat(Assert.java:923)
-        at com.google.cloud.tools.jib.maven.skaffold.InitMojoTest.getJsons(InitMojoTest.java:65)
-        at com.google.cloud.tools.jib.maven.skaffold.InitMojoTest.testFilesMojo_singleModule(InitMojoTest.java:79)
-[2026-04-11 05:55:56,933] [docker_util.py] [INFO]: com.google.cloud.tools.jib.maven.skaffold.InitMojoTest > testFilesMojo_multiModule FAILED
-    java.lang.AssertionError: 
-    Expected: a string starting with "BEGIN JIB JSON"
-         but: was "Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
-
-    BEGIN JIB JSON
-    {"image":"testimage","project":"com.jib.test:simple-service"}
-
-    BEGIN JIB JSON
-    {"image":"testimage","project":"com.jib.test:lib"}
-
-    BEGIN JIB JSON
-    {"image":"testimage","project":"com.jib.test:complex-service"}"
-        at org.hamcrest.MatcherAssert.assertThat(MatcherAssert.java:20)
-        at org.junit.Assert.assertThat(Assert.java:956)
-        at org.junit.Assert.assertThat(Assert.java:923)
-        at com.google.cloud.tools.jib.maven.skaffold.InitMojoTest.getJsons(InitMojoTest.java:65)
-        at com.google.cloud.tools.jib.maven.skaffold.InitMojoTest.testFilesMojo_multiModule(InitMojoTest.java:89)
-[2026-04-11 05:56:14,390] [docker_util.py] [INFO]: 
-[2026-04-11 05:56:14,390] [docker_util.py] [INFO]: com.google.cloud.tools.jib.maven.skaffold.PackageGoalsMojoTest > testPackageGoalsMojo_complexServiceRemoteProfile FAILED
-    java.lang.AssertionError: expected:<[build]> but was:<[Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai, build]>
-        at org.junit.Assert.fail(Assert.java:88)
-        at org.junit.Assert.failNotEquals(Assert.java:834)
-        at org.junit.Assert.assertEquals(Assert.java:118)
-        at org.junit.Assert.assertEquals(Assert.java:144)
-        at com.google.cloud.tools.jib.maven.skaffold.PackageGoalsMojoTest.verifyGoals(PackageGoalsMojoTest.java:56)
-        at com.google.cloud.tools.jib.maven.skaffold.PackageGoalsMojoTest.testPackageGoalsMojo_complexServiceRemoteProfile(PackageGoalsMojoTest.java:74)
-[2026-04-11 05:56:19,425] [docker_util.py] [INFO]: com.google.cloud.tools.jib.maven.skaffold.PackageGoalsMojoTest > testPackageGoalsMojo_complexServiceMultipleProfiles FAILED
-    java.lang.AssertionError: expected:<[dockerBuild, build]> but was:<[Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai, dockerBuild, build]>
-        at org.junit.Assert.fail(Assert.java:88)
-        at org.junit.Assert.failNotEquals(Assert.java:834)
-        at org.junit.Assert.assertEquals(Assert.java:118)
-        at org.junit.Assert.assertEquals(Assert.java:144)
-        at com.google.cloud.tools.jib.maven.skaffold.PackageGoalsMojoTest.verifyGoals(PackageGoalsMojoTest.java:56)
-        at com.google.cloud.tools.jib.maven.skaffold.PackageGoalsMojoTest.testPackageGoalsMojo_complexServiceMultipleProfiles(PackageGoalsMojoTest.java:80)
-[2026-04-11 05:56:24,019] [docker_util.py] [INFO]: com.google.cloud.tools.jib.maven.skaffold.PackageGoalsMojoTest > testPackageGoalsMojo_complexServiceLocalProfile FAILED
-    java.lang.AssertionError: expected:<[dockerBuild]> but was:<[Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai, dockerBuild]>
-        at org.junit.Assert.fail(Assert.java:88)
-        at org.junit.Assert.failNotEquals(Assert.java:834)
-        at org.junit.Assert.assertEquals(Assert.java:118)
-        at org.junit.Assert.assertEquals(Assert.java:144)
-        at com.google.cloud.tools.jib.maven.skaffold.PackageGoalsMojoTest.verifyGoals(PackageGoalsMojoTest.java:56)
-        at com.google.cloud.tools.jib.maven.skaffold.PackageGoalsMojoTest.testPackageGoalsMojo_complexServiceLocalProfile(PackageGoalsMojoTest.java:68)
-[2026-04-11 05:56:29,390] [docker_util.py] [INFO]: 
-[2026-04-11 05:56:29,390] [docker_util.py] [INFO]: com.google.cloud.tools.jib.maven.skaffold.PackageGoalsMojoTest > testPackageGoalsMojo_complexServiceDefault FAILED
-[2026-04-11 05:56:29,390] [docker_util.py] [INFO]: java.lang.AssertionError: expected:<[]> but was:<[Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai]>
-[2026-04-11 05:56:29,390] [docker_util.py] [INFO]: at org.junit.Assert.fail(Assert.java:88)
-[2026-04-11 05:56:29,390] [docker_util.py] [INFO]: 
-[2026-04-11 05:56:29,390] [docker_util.py] [INFO]: at org.junit.Assert.failNotEquals(Assert.java:834)
-[2026-04-11 05:56:29,390] [docker_util.py] [INFO]: at org.junit.Assert.assertEquals(Assert.java:118)
-[2026-04-11 05:56:29,390] [docker_util.py] [INFO]: at org.junit.Assert.assertEquals(Assert.java:144)
-        at com.google.cloud.tools.jib.maven.skaffold.PackageGoalsMojoTest.verifyGoals(PackageGoalsMojoTest.java:56)
-        at com.google.cloud.tools.jib.maven.skaffold.PackageGoalsMojoTest.testPackageGoalsMojo_complexServiceDefault(PackageGoalsMojoTest.java:62)
-[2026-04-11 05:56:29,390] [docker_util.py] [INFO]: 
-[2026-04-11 05:56:31,991] [docker_util.py] [INFO]: [91m
-135 tests completed, 10 failed
-[0m
-[2026-04-11 05:56:32,292] [docker_util.py] [INFO]: 
-[2026-04-11 05:56:32,293] [docker_util.py] [INFO]: > Task :jib-maven-plugin:test FAILED
-[2026-04-11 05:56:33,052] [docker_util.py] [INFO]: > Task :jib-maven-plugin-extension-api:ensureTransitiveDependencyOverrides
-[2026-04-11 05:56:39,211] [docker_util.py] [INFO]: > Task :jib-maven-plugin-extension-api:compileJava
-[2026-04-11 05:56:39,360] [docker_util.py] [INFO]: > Task :jib-maven-plugin-extension-api:processResources NO-SOURCE
-> Task :jib-maven-plugin-extension-api:classes
-> Task :jib-maven-plugin-extension-api:compileTestJava NO-SOURCE
-> Task :jib-maven-plugin-extension-api:processTestResources NO-SOURCE
-> Task :jib-maven-plugin-extension-api:testClasses UP-TO-DATE
-> Task :jib-maven-plugin-extension-api:test NO-SOURCE
-[2026-04-11 05:56:41,290] [docker_util.py] [INFO]: 
-[2026-04-11 05:56:41,290] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
-[0m
-[2026-04-11 05:56:41,290] [docker_util.py] [INFO]: > Task :jib-plugins-common:test
-[2026-04-11 05:56:52,105] [docker_util.py] [INFO]: > Task :jib-plugins-extension-common:ensureTransitiveDependencyOverrides
-[2026-04-11 05:56:53,801] [docker_util.py] [INFO]: > Task :jib-plugins-extension-common:compileJava
-> Task :jib-plugins-extension-common:processResources NO-SOURCE
-> Task :jib-plugins-extension-common:classes
-> Task :jib-plugins-extension-common:compileTestJava NO-SOURCE
-> Task :jib-plugins-extension-common:processTestResources NO-SOURCE
-> Task :jib-plugins-extension-common:testClasses UP-TO-DATE
-> Task :jib-plugins-extension-common:test NO-SOURCE
-[2026-04-11 05:56:53,936] [docker_util.py] [INFO]: [91m
-[0m
-[2026-04-11 05:56:53,936] [docker_util.py] [INFO]: [91mFAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':jib-maven-plugin:test'.
-> There were failing tests. See the report at: file:///home/jib/jib-maven-plugin/build/reports/test/index.html
-
-* Try:
-Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
-
-* Get more help at https://help.gradle.org
-
-BUILD FAILED in 11m 19s
-[0m
-[2026-04-11 05:56:53,936] [docker_util.py] [INFO]: 57 actionable tasks: 57 executed
-[2026-04-11 06:00:18,479] [docker_util.py] [INFO]: ---> Removed intermediate container bc4fc0461817
-[2026-04-11 06:00:18,480] [docker_util.py] [INFO]: ---> 63e1023e9660
-[2026-04-11 06:00:18,481] [docker_util.py] [INFO]: sha256:63e1023e966024514cf84331c3db0f9c2cc32e52956cc14b6d04c88270470725
-[2026-04-11 06:00:18,706] [docker_util.py] [INFO]: Successfully built 63e1023e9660
-[2026-04-11 06:00:19,018] [docker_util.py] [INFO]: Successfully tagged mswebench/googlecontainertools_m_jib:pr-2542
-[2026-04-11 06:00:19,071] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/googlecontainertools/jib/images/pr-2542) build success: mswebench/googlecontainertools_m_jib:pr-2542

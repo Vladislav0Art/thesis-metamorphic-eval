@@ -1,171 +1,0 @@
-[2026-04-11 09:08:04,531] [docker_util.py] [INFO]: Start building image `mswebench/elastic_m_logstash:pr-17019`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/elastic/logstash/images/pr-17019`
-[2026-04-11 09:08:05,016] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/elastic_m_logstash:base
-[2026-04-11 09:08:05,016] [docker_util.py] [INFO]: 
-[2026-04-11 09:08:05,036] [docker_util.py] [INFO]: ---> ae9a5354f0b8
-[2026-04-11 09:08:05,036] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
-[2026-04-11 09:08:05,036] [docker_util.py] [INFO]: 
-[2026-04-11 09:19:32,759] [docker_util.py] [INFO]: ---> Using cache
-[2026-04-11 09:19:32,759] [docker_util.py] [INFO]: ---> 641483f52c5f
-[2026-04-11 09:19:32,760] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
-[2026-04-11 09:19:32,760] [docker_util.py] [INFO]: 
-[2026-04-11 09:19:32,808] [docker_util.py] [INFO]: ---> Using cache
-[2026-04-11 09:19:32,808] [docker_util.py] [INFO]: ---> f6549f4b9aac
-[2026-04-11 09:19:32,808] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
-[2026-04-11 09:19:32,808] [docker_util.py] [INFO]: 
-[2026-04-11 09:19:32,855] [docker_util.py] [INFO]: ---> Using cache
-[2026-04-11 09:19:32,855] [docker_util.py] [INFO]: ---> d44304282065
-[2026-04-11 09:19:32,856] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
-[2026-04-11 09:19:32,856] [docker_util.py] [INFO]: 
-[2026-04-11 09:19:34,119] [docker_util.py] [INFO]: ---> dbc8675bb37c
-[2026-04-11 09:19:34,119] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
-[2026-04-11 09:19:34,119] [docker_util.py] [INFO]: 
-[2026-04-11 09:19:34,963] [docker_util.py] [INFO]: ---> 1f75cd2a147c
-[2026-04-11 09:19:34,963] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
-[2026-04-11 09:19:34,963] [docker_util.py] [INFO]: 
-[2026-04-11 09:19:38,211] [docker_util.py] [INFO]: ---> d3a3184f7b88
-[2026-04-11 09:19:38,211] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
-[2026-04-11 09:19:38,211] [docker_util.py] [INFO]: 
-[2026-04-11 09:19:38,982] [docker_util.py] [INFO]: ---> 7845e67095ba
-[2026-04-11 09:19:38,983] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
-[2026-04-11 09:19:38,983] [docker_util.py] [INFO]: 
-[2026-04-11 09:19:39,277] [docker_util.py] [INFO]: ---> Running in 96952d56e1dc
-[2026-04-11 09:35:22,673] [docker_util.py] [INFO]: [91mUpdating files:  73% (1600/2183)[0m
-[2026-04-11 09:35:22,683] [docker_util.py] [INFO]: [91mUpdating files:  74% (1616/2183)[0m
-[2026-04-11 09:35:22,710] [docker_util.py] [INFO]: [91mUpdating files:  75% (1638/2183)[0m
-[2026-04-11 09:35:22,718] [docker_util.py] [INFO]: [91mUpdating files:  76% (1660/2183)[0m
-[2026-04-11 09:35:22,732] [docker_util.py] [INFO]: [91mUpdating files:  77% (1681/2183)[0m
-[2026-04-11 09:35:22,776] [docker_util.py] [INFO]: [91mUpdating files:  78% (1703/2183)[0m
-[2026-04-11 09:35:22,777] [docker_util.py] [INFO]: [91mUpdating files:  79% (1725/2183)[0m
-[2026-04-11 09:35:22,778] [docker_util.py] [INFO]: [91mUpdating files:  80% (1747/2183)[0m
-[2026-04-11 09:35:22,779] [docker_util.py] [INFO]: [91mUpdating files:  81% (1769/2183)[0m
-[2026-04-11 09:35:22,780] [docker_util.py] [INFO]: [91mUpdating files:  82% (1791/2183)[0m
-[2026-04-11 09:35:22,780] [docker_util.py] [INFO]: [91mUpdating files:  83% (1812/2183)[0m
-[2026-04-11 09:35:22,781] [docker_util.py] [INFO]: [91mUpdating files:  84% (1834/2183)[0m
-[2026-04-11 09:35:22,782] [docker_util.py] [INFO]: [91mUpdating files:  85% (1856/2183)[0m
-[2026-04-11 09:35:22,782] [docker_util.py] [INFO]: [91mUpdating files:  86% (1878/2183)[0m
-[2026-04-11 09:35:22,784] [docker_util.py] [INFO]: [91mUpdating files:  87% (1900/2183)[0m
-[2026-04-11 09:35:22,784] [docker_util.py] [INFO]: [91mUpdating files:  88% (1922/2183)[0m
-[2026-04-11 09:35:22,785] [docker_util.py] [INFO]: [91mUpdating files:  89% (1943/2183)[0m
-[2026-04-11 09:35:22,790] [docker_util.py] [INFO]: [91mUpdating files:  90% (1965/2183)[0m
-[2026-04-11 09:35:22,798] [docker_util.py] [INFO]: [91mUpdating files:  91% (1987/2183)[0m
-[2026-04-11 09:35:22,811] [docker_util.py] [INFO]: [91mUpdating files:  92% (2009/2183)[0m
-[2026-04-11 09:35:22,828] [docker_util.py] [INFO]: [91mUpdating files:  93% (2031/2183)[0m
-[2026-04-11 09:35:22,841] [docker_util.py] [INFO]: [91mUpdating files:  94% (2053/2183)[0m
-[2026-04-11 09:35:22,855] [docker_util.py] [INFO]: [91mUpdating files:  95% (2074/2183)[0m
-[2026-04-11 09:35:22,878] [docker_util.py] [INFO]: [91mUpdating files:  96% (2096/2183)[0m
-[2026-04-11 09:35:22,886] [docker_util.py] [INFO]: [91mUpdating files:  97% (2118/2183)[0m
-[2026-04-11 09:35:22,896] [docker_util.py] [INFO]: [91mUpdating files:  98% (2140/2183)[0m
-[2026-04-11 09:35:22,910] [docker_util.py] [INFO]: [91mUpdating files:  99% (2162/2183)[0m
-[2026-04-11 09:35:22,926] [docker_util.py] [INFO]: [91mUpdating files: 100% (2183/2183)Updating files: 100% (2183/2183), done.
-[0m
-[2026-04-11 09:35:22,932] [docker_util.py] [INFO]: HEAD is now at c4d7362b5 Adds verification of the file name (#18848)
-[2026-04-11 09:35:22,959] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
-[2026-04-11 09:35:23,103] [docker_util.py] [INFO]: [91mNote: switching to 'f561207b4b562989192cc5c3c7d18b39f6846003'.
-
-You are in 'detached HEAD' state. You can look around, make experimental
-changes and commit them, and you can discard any commits you make in this
-state without impacting any branches by switching back to a branch.
-
-If you want to create a new branch to retain commits you create, you may
-do so (now or later) by using -c with the switch command. Example:
-
-  git switch -c <new-branch-name>
-
-Or undo this operation with:
-
-  git switch -
-
-Turn off this advice by setting config variable advice.detachedHead to false
-
-[0m
-[2026-04-11 09:35:23,103] [docker_util.py] [INFO]: [91mHEAD is now at f561207b4 upgrade jdk to 21.0.6+7 (#16932) (#16987)
-[0m
-[2026-04-11 09:35:23,166] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
-[2026-04-11 09:35:23,173] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
-[0m
-[2026-04-11 09:35:23,625] [docker_util.py] [INFO]: Downloading https://services.gradle.org/distributions/gradle-8.7-bin.zip
-[2026-04-11 09:35:24,509] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:24,637] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:24,789] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:24,899] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:25,015] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:25,126] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:25,239] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:25,343] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:25,452] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:25,568] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:25,670] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:25,779] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:25,886] [docker_util.py] [INFO]: 10
-[2026-04-11 09:35:25,886] [docker_util.py] [INFO]: %.
-[2026-04-11 09:35:25,989] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:26,098] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:26,202] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:26,308] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:26,635] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:26,637] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:26,643] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:26,749] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:26,851] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:26,956] [docker_util.py] [INFO]: .
-[2026-04-11 09:35:27,086] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:32,615] [docker_util.py] [INFO]: 
-[2026-04-11 09:50:32,617] [docker_util.py] [INFO]: Could not unzip /root/.gradle/wrapper/dists/gradle-8.7-bin/bhs2wmbdwecv87pi65oeuq5iu/gradle-8.7-bin.zip to /root/.gradle/wrapper/dists/gradle-8.7-bin/bhs2wmbdwecv87pi65oeuq5iu.
-[2026-04-11 09:50:32,617] [docker_util.py] [INFO]: Reason: zip END header not found
-[2026-04-11 09:50:32,617] [docker_util.py] [INFO]: Downloading https://services.gradle.org/distributions/gradle-8.7-bin.zip.sha256
-[2026-04-11 09:50:32,810] [docker_util.py] [INFO]: 100%
-[2026-04-11 09:50:32,812] [docker_util.py] [INFO]: Downloading https://services.gradle.org/distributions/gradle-8.7-bin.zip
-[2026-04-11 09:50:33,462] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:33,645] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:33,803] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:33,970] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:34,101] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:34,205] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:34,339] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:34,429] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:34,545] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:34,653] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:34,751] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:34,863] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:34,993] [docker_util.py] [INFO]: 10%.
-[2026-04-11 09:50:35,092] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:35,243] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:35,365] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:35,502] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:35,617] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:35,731] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:35,845] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:35,952] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:36,088] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:36,252] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:36,319] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:36,453] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:36,588] [docker_util.py] [INFO]: 20%.
-[2026-04-11 09:50:36,695] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:36,811] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:36,932] [docker_util.py] [INFO]: .
-[2026-04-11 09:50:37,057] [docker_util.py] [INFO]: .
-[2026-04-11 10:08:29,553] [docker_util.py] [INFO]: 
-[2026-04-11 10:08:29,584] [docker_util.py] [INFO]: [91mException in thread "main" [0m
-[2026-04-11 10:08:29,584] [docker_util.py] [INFO]: [91mjava.lang.RuntimeException: Verification of Gradle distribution failed!
-
-Your Gradle distribution may have been tampered with.
-Confirm that the 'distributionSha256Sum' property in your gradle-wrapper.properties file is correct and you are downloading the wrapper from a trusted source.
-
- Distribution Url: https://services.gradle.org/distributions/gradle-8.7-bin.zip
-Download Location: /root/.gradle/wrapper/dists/gradle-8.7-bin/bhs2wmbdwecv87pi65oeuq5iu/gradle-8.7-bin.zip
-Expected checksum: '544c35d6bd849ae8a5ed0bcea39ba677dc40f49df7d1835561582da2009b961d'
-  Actual checksum: 'a78cede7309d5855e90c8ee6f523b03df9f8af1ed5c2dac5e0de0bbd71b475c0'
-[0m
-[2026-04-11 10:08:29,584] [docker_util.py] [INFO]: [91m
-[0m
-[2026-04-11 10:08:29,584] [docker_util.py] [INFO]: [91m	at org.gradle.wrapper.Install.verifyDownloadChecksum(SourceFile:2)
-	at org.gradle.wrapper.Install$1.call(SourceFile:12)
-	at org.gradle.wrapper.GradleWrapperMain.main(SourceFile:67)
-[0m
-[2026-04-11 10:08:32,692] [docker_util.py] [INFO]: ---> Removed intermediate container 96952d56e1dc
-[2026-04-11 10:08:32,692] [docker_util.py] [INFO]: ---> 0363d6d6e2b4
-[2026-04-11 10:08:32,692] [docker_util.py] [INFO]: sha256:0363d6d6e2b473e4f6ad4d355d52cd17ab85ecd7b1f4df8cc8afbb52b05f81d0
-[2026-04-11 10:08:32,716] [docker_util.py] [INFO]: Successfully built 0363d6d6e2b4
-[2026-04-11 10:08:32,766] [docker_util.py] [INFO]: Successfully tagged mswebench/elastic_m_logstash:pr-17019
-[2026-04-11 10:08:32,766] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/elastic/logstash/images/pr-17019) build success: mswebench/elastic_m_logstash:pr-17019

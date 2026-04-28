@@ -1,132 +1,0 @@
-[2026-04-11 08:11:52,144] [docker_util.py] [INFO]: Start building image `mswebench/elastic_m_logstash:pr-16094`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/elastic/logstash/images/pr-16094`
-[2026-04-11 08:11:52,639] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/elastic_m_logstash:base
-[2026-04-11 08:11:52,640] [docker_util.py] [INFO]: 
-[2026-04-11 08:11:52,661] [docker_util.py] [INFO]: ---> ae9a5354f0b8
-[2026-04-11 08:11:52,662] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
-[2026-04-11 08:11:52,662] [docker_util.py] [INFO]: 
-[2026-04-11 08:11:53,459] [docker_util.py] [INFO]: ---> Using cache
-[2026-04-11 08:11:53,460] [docker_util.py] [INFO]: ---> 26fb3720878e
-[2026-04-11 08:11:53,460] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
-[2026-04-11 08:11:53,460] [docker_util.py] [INFO]: 
-[2026-04-11 08:11:53,489] [docker_util.py] [INFO]: ---> Using cache
-[2026-04-11 08:11:53,490] [docker_util.py] [INFO]: ---> 500b041cce52
-[2026-04-11 08:11:53,490] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
-[2026-04-11 08:11:53,490] [docker_util.py] [INFO]: 
-[2026-04-11 08:11:53,513] [docker_util.py] [INFO]: ---> Using cache
-[2026-04-11 08:11:53,513] [docker_util.py] [INFO]: ---> 064a275294f0
-[2026-04-11 08:11:53,513] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
-[2026-04-11 08:11:53,513] [docker_util.py] [INFO]: 
-[2026-04-11 08:11:54,659] [docker_util.py] [INFO]: ---> 9f47a55c9c52
-[2026-04-11 08:11:54,659] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
-[2026-04-11 08:11:54,659] [docker_util.py] [INFO]: 
-[2026-04-11 08:18:32,550] [docker_util.py] [INFO]: ---> 012d8c91e2a2
-[2026-04-11 08:18:32,550] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
-[2026-04-11 08:18:32,550] [docker_util.py] [INFO]: 
-[2026-04-11 08:18:33,645] [docker_util.py] [INFO]: ---> d43ca147fdee
-[2026-04-11 08:18:33,645] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
-[2026-04-11 08:18:33,645] [docker_util.py] [INFO]: 
-[2026-04-11 08:18:34,559] [docker_util.py] [INFO]: ---> fec7e7689e8d
-[2026-04-11 08:18:34,559] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
-[2026-04-11 08:18:34,559] [docker_util.py] [INFO]: 
-[2026-04-11 08:18:34,680] [docker_util.py] [INFO]: ---> Running in 2327f5e0ee3b
-[2026-04-11 08:18:36,100] [docker_util.py] [INFO]: [91mUpdating files:  63% (1381/2183)[0m
-[2026-04-11 08:18:36,905] [docker_util.py] [INFO]: [91mUpdating files:  63% (1383/2183)[0m
-[2026-04-11 08:18:37,781] [docker_util.py] [INFO]: [91mUpdating files:  64% (1398/2183)[0m
-[2026-04-11 08:18:37,796] [docker_util.py] [INFO]: [91mUpdating files:  65% (1419/2183)[0m
-[2026-04-11 08:18:37,819] [docker_util.py] [INFO]: [91mUpdating files:  65% (1437/2183)[0m
-[2026-04-11 08:18:37,820] [docker_util.py] [INFO]: [91mUpdating files:  66% (1441/2183)[0m
-[2026-04-11 08:18:37,826] [docker_util.py] [INFO]: [91mUpdating files:  67% (1463/2183)[0m
-[2026-04-11 08:18:37,851] [docker_util.py] [INFO]: [91mUpdating files:  68% (1485/2183)[0m
-[2026-04-11 08:18:37,857] [docker_util.py] [INFO]: [91mUpdating files:  69% (1507/2183)[0m
-[2026-04-11 08:18:37,862] [docker_util.py] [INFO]: [91mUpdating files:  70% (1529/2183)[0m
-[2026-04-11 08:18:37,867] [docker_util.py] [INFO]: [91mUpdating files:  71% (1550/2183)[0m
-[2026-04-11 08:18:37,869] [docker_util.py] [INFO]: [91mUpdating files:  72% (1572/2183)[0m
-[2026-04-11 08:18:37,890] [docker_util.py] [INFO]: [91mUpdating files:  73% (1594/2183)[0m
-[2026-04-11 08:18:37,917] [docker_util.py] [INFO]: [91mUpdating files:  74% (1616/2183)[0m
-[2026-04-11 08:18:37,940] [docker_util.py] [INFO]: [91mUpdating files:  75% (1638/2183)[0m
-[2026-04-11 08:18:37,952] [docker_util.py] [INFO]: [91mUpdating files:  76% (1660/2183)[0m
-[2026-04-11 08:18:37,982] [docker_util.py] [INFO]: [91mUpdating files:  77% (1681/2183)[0m
-[2026-04-11 08:18:38,096] [docker_util.py] [INFO]: [91mUpdating files:  78% (1703/2183)[0m
-[2026-04-11 08:18:38,097] [docker_util.py] [INFO]: [91mUpdating files:  79% (1725/2183)[0m
-[2026-04-11 08:18:38,098] [docker_util.py] [INFO]: [91mUpdating files:  80% (1747/2183)[0m
-[2026-04-11 08:18:38,100] [docker_util.py] [INFO]: [91mUpdating files:  81% (1769/2183)[0m
-[2026-04-11 08:18:38,100] [docker_util.py] [INFO]: [91mUpdating files:  82% (1791/2183)[0m
-[2026-04-11 08:18:38,101] [docker_util.py] [INFO]: [91mUpdating files:  83% (1812/2183)[0m
-[2026-04-11 08:18:38,103] [docker_util.py] [INFO]: [91mUpdating files:  84% (1834/2183)[0m
-[2026-04-11 08:18:38,105] [docker_util.py] [INFO]: [91mUpdating files:  85% (1856/2183)[0m
-[2026-04-11 08:18:38,106] [docker_util.py] [INFO]: [91mUpdating files:  86% (1878/2183)[0m
-[2026-04-11 08:18:38,107] [docker_util.py] [INFO]: [91mUpdating files:  87% (1900/2183)[0m
-[2026-04-11 08:18:38,108] [docker_util.py] [INFO]: [91mUpdating files:  88% (1922/2183)[0m
-[2026-04-11 08:18:38,108] [docker_util.py] [INFO]: [91mUpdating files:  89% (1943/2183)[0m
-[2026-04-11 08:18:38,120] [docker_util.py] [INFO]: [91mUpdating files:  90% (1965/2183)[0m
-[2026-04-11 08:18:38,137] [docker_util.py] [INFO]: [91mUpdating files:  91% (1987/2183)[0m
-[2026-04-11 08:18:38,150] [docker_util.py] [INFO]: [91mUpdating files:  92% (2009/2183)[0m
-[2026-04-11 08:18:38,165] [docker_util.py] [INFO]: [91mUpdating files:  93% (2031/2183)[0m
-[2026-04-11 08:18:38,178] [docker_util.py] [INFO]: [91mUpdating files:  94% (2053/2183)[0m
-[2026-04-11 08:18:38,211] [docker_util.py] [INFO]: [91mUpdating files:  95% (2074/2183)[0m
-[2026-04-11 08:18:38,253] [docker_util.py] [INFO]: [91mUpdating files:  96% (2096/2183)[0m
-[2026-04-11 08:18:38,269] [docker_util.py] [INFO]: [91mUpdating files:  97% (2118/2183)[0m
-[2026-04-11 08:18:38,290] [docker_util.py] [INFO]: [91mUpdating files:  98% (2140/2183)[0m
-[2026-04-11 08:18:38,314] [docker_util.py] [INFO]: [91mUpdating files:  99% (2162/2183)[0m
-[2026-04-11 08:18:38,342] [docker_util.py] [INFO]: [91mUpdating files: 100% (2183/2183)Updating files: 100% (2183/2183), done.
-[0m
-[2026-04-11 08:18:38,345] [docker_util.py] [INFO]: HEAD is now at c4d7362b5 Adds verification of the file name (#18848)
-[2026-04-11 08:18:38,388] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
-[2026-04-11 08:18:38,606] [docker_util.py] [INFO]: [91mNote: switching to '18583787b3cc1095a002f4a8e1f4d9436e712c54'.
-
-You are in 'detached HEAD' state. You can look around, make experimental
-changes and commit them, and you can discard any commits you make in this
-state without impacting any branches by switching back to a branch.
-
-If you want to create a new branch to retain commits you create, you may
-do so (now or later) by using -c with the switch command. Example:
-
-  git switch -c <new-branch-name>
-
-Or undo this operation with:
-
-  git switch -
-
-Turn off this advice by setting config variable advice.detachedHead to false
-
-HEAD is now at 18583787b bump lock file for 8.14 (#16087)
-[0m
-[2026-04-11 08:18:38,678] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
-[2026-04-11 08:18:38,687] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
-[0m
-[2026-04-11 08:18:38,773] [docker_util.py] [INFO]: Downloading https://services.gradle.org/distributions/gradle-8.5-bin.zip
-[2026-04-11 08:36:08,665] [docker_util.py] [INFO]: 
-[2026-04-11 08:36:08,665] [docker_util.py] [INFO]: [91mException in thread "main" [0m
-[2026-04-11 08:36:08,665] [docker_util.py] [INFO]: [91mjavax.net.ssl.SSLHandshakeException: Remote host terminated the handshake
-[0m
-[2026-04-11 08:36:08,665] [docker_util.py] [INFO]: [91m	at java.base/sun.security.ssl.SSLSocketImpl.handleEOF(SSLSocketImpl.java:1701)
-	at java.base/sun.security.ssl.SSLSocketImpl.decode(SSLSocketImpl.java:1519)
-	at java.base/sun.security.ssl.SSLSocketImpl.readHandshakeRecord(SSLSocketImpl.java:1421)
-	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:456)
-	at java.base/sun.security.ssl.SSLSocketImpl.startHandshake(SSLSocketImpl.java:427)
-[0m
-[2026-04-11 08:36:08,665] [docker_util.py] [INFO]: [91m	at java.base/sun.net.www.protocol.https.HttpsClient.afterConnect(HttpsClient.java:580)
-	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:201)
-	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1636)
-	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1564)
-	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getInputStream(HttpsURLConnectionImpl.java:250)
-	at org.gradle.wrapper.Install.forceFetch(SourceFile:2)[0m
-[2026-04-11 08:36:08,665] [docker_util.py] [INFO]: [91m
-	at org.gradle.wrapper.Install$1.call(SourceFile:8)
-	at org.gradle.wrapper.GradleWrapperMain.main(SourceFile:67)
-[0m
-[2026-04-11 08:36:08,665] [docker_util.py] [INFO]: [91mCaused by: java.io.EOFException: SSL peer shut down incorrectly
-	at java.base/sun.security.ssl.SSLSocketInputRecord.read(SSLSocketInputRecord.java:489)
-[0m
-[2026-04-11 08:36:08,665] [docker_util.py] [INFO]: [91m	at java.base/sun.security.ssl.SSLSocketInputRecord.readHeader(SSLSocketInputRecord.java:478)
-	at java.base/sun.security.ssl.SSLSocketInputRecord.decode(SSLSocketInputRecord.java:160)
-	at java.base/sun.security.ssl.SSLTransport.decode(SSLTransport.java:111)
-	at java.base/sun.security.ssl.SSLSocketImpl.decode(SSLSocketImpl.java:1511)
-	... 11 more
-[0m
-[2026-04-11 08:36:11,686] [docker_util.py] [INFO]: ---> Removed intermediate container 2327f5e0ee3b
-[2026-04-11 08:36:11,686] [docker_util.py] [INFO]: ---> 181b72415d04
-[2026-04-11 08:36:11,686] [docker_util.py] [INFO]: sha256:181b72415d04c348dd0f630a661337303ab257bb49249ad23031382f4894a29e
-[2026-04-11 08:36:11,720] [docker_util.py] [INFO]: Successfully built 181b72415d04
-[2026-04-11 08:36:11,829] [docker_util.py] [INFO]: Successfully tagged mswebench/elastic_m_logstash:pr-16094
-[2026-04-11 08:36:11,830] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/results/discovery/benchmarks_128_all_harness_only_fix_patches/run-1/eval/workdir/elastic/logstash/images/pr-16094) build success: mswebench/elastic_m_logstash:pr-16094
