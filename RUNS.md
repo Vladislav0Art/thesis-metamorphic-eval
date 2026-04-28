@@ -1,14 +1,60 @@
 # Evaluation Runs
 
+
 ## Checklist
 
-| Step                 | Transform | Patches Check | Evaluation |
-|----------------------|-----------|---------------|------------|
-| s0-original          | ❌        | ❌            | ❌          |
-| s1-renaming          | ❌        | ❌            | ❌          |
-| s2-structural        | ❌        | ❌            | ❌          |
-| s3-problem-statement | ❌        | ❌            | ❌          |
-| s4-combined          | ❌        | ❌            | ❌          |
+| Step                 | Transform | Patches Check | Evaluation (GPT-5.4) | Evaluation (Claude-Sonnet-4.6) |
+|----------------------|-----------|---------------|----------------------|--------------------------------|
+| s0-original          | N/A       | N/A           | ❌                    | ❌                             |
+| s1-renaming          | ❌        | ❌            | ❌                    | ❌                             |
+| s2-structural        | ❌        | ❌            | ❌                    | ❌                             |
+| s3-problem-statement | ❌        | ❌            | ❌                    | ❌                             |
+| s4-combined          | ❌        | ❌            | ❌                    | ❌                             |
+
+**Total: 18 executions**
+
+
+
+### s0-original
+
+1. Evaluation (GPT-5.4):
+```bash
+cd artifacts/results/eval/s0-original
+
+python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/evaluate.py \
+    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s0-original/s0_evaluate.yaml
+```
+
+1. Evaluation (Claude-Sonnet-4.6):
+```bash
+tbd
+```
+
+
+### s1-renaming
+
+
+### s2-structural
+
+1. Transform:
+```bash
+
+```
+
+1. Patches Check:
+```bash
+
+```
+
+1. Evaluation (GPT-5.4):
+
+1. Evaluation (Claude-Sonnet-4.6):
+
+
+### s3-problem-statement
+
+### s4-combined
+
 
 
 
@@ -53,3 +99,11 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 
 ### Evaluation
 
+How to run (example with `s0-original`):
+
+```bash
+cd artifacts/results/eval/s0-original
+
+python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/evaluate.py \
+    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s0-original/s0_evaluate.yaml
+```
