@@ -170,6 +170,7 @@ they are also directly importable in Jupyter notebooks.
 import argparse
 import json
 import logging
+import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -183,7 +184,7 @@ from common.logger import configure_logging
 from eval.config import load_config, EvalConfig, AgentStepConfig
 from eval.metrics import aggregate_runs
 from eval.steps.base import StepResult
-from eval.steps.agent import AgentStep, build_run_name
+from eval.steps.agent import AgentStep, AgentStepResult, build_run_name
 from eval.steps.evaluation import EvaluationStep
 
 logger = logging.getLogger(__name__)
@@ -314,6 +315,137 @@ def _write_metrics_summary(workdir: Path, n_runs: int):
     logger.info(f"Cross-run metrics summary → {metrics_path}")
 
 
+# ─── Resume helpers ───────────────────────────────────────────────────────────
+
+# Subdirectories of run-N/ that each step owns. Deleted before a step re-runs
+# so the step always starts with a clean slate.
+_STEP_ARTIFACT_DIRS: dict[str, list[str]] = {
+    "agent":      ["predictions", "trajectories"],
+    "evaluation": ["eval"],
+}
+
+
+def _cleanup_step_artifacts(step_name: str, run_dir: Path) -> None:
+    """
+    Delete the artifact directories that *step_name* produces inside *run_dir*.
+
+    Called when a step is about to be re-executed during a resume so that stale
+    output from the previous attempt does not bleed into the new run.  Missing
+    directories are silently skipped (nothing to clean).
+
+    Directories cleaned per step:
+        agent      → run-N/predictions/, run-N/trajectories/
+        evaluation → run-N/eval/
+    """
+    dirs = _STEP_ARTIFACT_DIRS.get(step_name, [])
+    if not dirs:
+        logger.debug(f"No artifact dirs registered for step '{step_name}'; nothing to clean.")
+        return
+
+    for dir_name in dirs:
+        target = run_dir / dir_name
+        if target.exists():
+            shutil.rmtree(target)
+            logger.info(f"  [CLEANUP] Deleted stale artifact dir before re-run: {target}")
+        else:
+            logger.debug(f"  [CLEANUP] Artifact dir absent, nothing to delete: {target}")
+
+
+def _load_run_result(workdir: Path, run_number: int) -> dict | None:
+    """
+    Load ``result.json`` for *run_number* from the workdir.
+
+    Returns the parsed dict when the file exists and is valid JSON.
+    Returns ``None`` when the file is absent or cannot be parsed, logging
+    an appropriate message in each case.
+    """
+    result_path = workdir / f"run-{run_number}" / "result.json"
+    if not result_path.exists():
+        logger.info(f"Run {run_number}: no result.json found — will start fresh.")
+        return None
+    try:
+        with open(result_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        logger.info(
+            f"Run {run_number}: found existing result.json — checking resume state."
+        )
+        return data
+    except Exception as e:
+        logger.warning(
+            f"Run {run_number}: could not read result.json ({e}) — treating as fresh run."
+        )
+        return None
+
+
+def _classify_run_steps(
+    existing_result: dict | None,
+    configured_steps: list[str],
+) -> tuple[list[str], list[str]]:
+    """
+    Determine which configured steps must run and which can be skipped.
+
+    A step is **skipped** when ``existing_result[step_name]["success"] is True``.
+    Everything else (failed, missing key, or no prior result) goes into
+    ``steps_to_run``.
+
+    A user can force a step to re-run by setting its ``success`` field to
+    ``false`` in the existing result.json before re-invoking evaluate.py.
+
+    Args:
+        existing_result:   Parsed content of ``result.json``, or ``None`` for
+                           a fresh run with no prior result.
+        configured_steps:  Ordered list of step names from ``run.steps`` config.
+
+    Returns:
+        ``(steps_to_run, steps_to_skip)`` — both lists preserve config order.
+    """
+    if existing_result is None:
+        return list(configured_steps), []
+
+    steps_to_run: list[str] = []
+    steps_to_skip: list[str] = []
+
+    for step_name in configured_steps:
+        step_data = existing_result.get(step_name, {})
+        if step_data.get("success") is True:
+            steps_to_skip.append(step_name)
+        else:
+            steps_to_run.append(step_name)
+
+    return steps_to_run, steps_to_skip
+
+
+def _reconstruct_agent_result(agent_data: dict) -> AgentStepResult:
+    """
+    Rebuild an ``AgentStepResult`` from the ``result.json["agent"]`` section.
+
+    Used when the agent step succeeded in a previous run and is being skipped
+    on resume.  The reconstructed object is injected into ``context["agent"]``
+    so that ``EvaluationStep._resolve_patch_files`` can read ``fix_patches_path``
+    from it exactly as if the agent had just run in this session.
+    """
+    fix_patches_str       = agent_data.get("fix_patches")
+    trajectory_source_str = agent_data.get("trajectory_source")
+    trajectory_dest_str   = agent_data.get("trajectory_dest")
+    metrics               = agent_data.get("metrics", {})
+
+    return AgentStepResult(
+        success=agent_data.get("success", False),
+        error=agent_data.get("error", ""),
+        trajectory_source=(
+            Path(trajectory_source_str) if trajectory_source_str else None
+        ),
+        copy_trajectories=agent_data.get("copy_trajectories", True),
+        trajectory_dest=(
+            Path(trajectory_dest_str) if trajectory_dest_str else None
+        ),
+        fix_patches_path=Path(fix_patches_str) if fix_patches_str else None,
+        artifacts=agent_data.get("artifacts", []),
+        metrics_execution=metrics.get("execution", []),
+        metrics_summary=metrics.get("summary", {}),
+    )
+
+
 # ─── result.json helpers ──────────────────────────────────────────────────────
 
 def _write_result_json(run_dir: Path, data: dict):
@@ -388,7 +520,6 @@ def run_evaluation(config: EvalConfig, config_filepath: str):
     # ── N-run loop ────────────────────────────────────────────────────────────
     for run_number in range(1, config.run.N + 1):
         run_dir = workdir / f"run-{run_number}"
-        run_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info("")
         logger.info("=" * 70)
@@ -396,27 +527,85 @@ def run_evaluation(config: EvalConfig, config_filepath: str):
         logger.info(f"  Run dir : {run_dir.resolve()}")
         logger.info("=" * 70)
 
-        # Clean stale all_preds.jsonl so this run starts with a fresh file.
-        # Without this, MSWE-agent appends to the previous run's predictions.
-        if "agent" in config.run.steps and config.steps.agent is not None:
-            _cleanup_agent_preds(config.steps.agent)
+        # ── Resume detection ───────────────────────────────────────────────────
+        existing_result = _load_run_result(workdir, run_number)
+        steps_to_run, steps_to_skip = _classify_run_steps(
+            existing_result, config.run.steps
+        )
 
-        result_data: dict = {
-            "run_number":     run_number,
-            "timestamp":      datetime.now().isoformat(),
-            "config_file":    str(Path(config_filepath).resolve()),
-            "workdir":        str(workdir.resolve()),
-            "steps_executed": [],
-        }
+        if not steps_to_run:
+            logger.info(
+                f"  Run {run_number}/{config.run.N}: all configured steps "
+                f"{config.run.steps} succeeded previously — skipping entire run."
+            )
+            continue
+
+        if steps_to_skip:
+            logger.info(
+                f"  Run {run_number}/{config.run.N}: skipping {steps_to_skip} "
+                f"(succeeded previously); resuming from '{steps_to_run[0]}'."
+            )
+        else:
+            logger.info(
+                f"  Run {run_number}/{config.run.N}: no prior results — starting fresh."
+            )
+
+        run_dir.mkdir(parents=True, exist_ok=True)
+
+        # ── result_data: resume from existing file or start fresh ──────────────
+        if existing_result is not None:
+            result_data = existing_result
+            result_data["timestamp"] = datetime.now().isoformat()
+            logger.info(
+                f"  Loaded existing result_data from result.json; "
+                f"timestamp updated to {result_data['timestamp']}."
+            )
+        else:
+            result_data = {
+                "run_number":     run_number,
+                "timestamp":      datetime.now().isoformat(),
+                "config_file":    str(Path(config_filepath).resolve()),
+                "workdir":        str(workdir.resolve()),
+                "steps_executed": [],
+            }
 
         context: dict[str, StepResult] = {}
         # Inject run_number so steps (e.g. EvaluationStep) can adjust per-run behaviour.
         context["_run_number"] = run_number
 
+        # ── Inject skipped step results into context so later steps can read them ──
+        if "agent" in steps_to_skip and existing_result is not None:
+            agent_data = existing_result.get("agent", {})
+            context["agent"] = _reconstruct_agent_result(agent_data)
+            fix_patches = agent_data.get("fix_patches", "<none>")
+            logger.info(
+                f"  Injected saved agent result into context "
+                f"(fix_patches={fix_patches})."
+            )
+
+        # ── Clean stale all_preds.jsonl only when agent step will actually run ──
+        # Without this, MSWE-agent appends to the previous run's predictions.
+        if "agent" in steps_to_run and config.steps.agent is not None:
+            _cleanup_agent_preds(config.steps.agent)
+
+        # ── Step loop ──────────────────────────────────────────────────────────
         for step_name in config.run.steps:
+            if step_name in steps_to_skip:
+                logger.info(
+                    f"  [SKIP] step '{step_name}' — succeeded in previous execution."
+                )
+                continue
+
+            # On resume: wipe stale artifacts so the step starts clean.
+            # On a fresh run existing_result is None, so this branch is skipped.
+            if existing_result is not None:
+                _cleanup_step_artifacts(step_name, run_dir)
+
             logger.info("")
             logger.info(f"{'─' * 70}")
-            logger.info(f"  Step: {step_name.upper()}  (run {run_number}/{config.run.N})")
+            logger.info(
+                f"  [RUN]  step '{step_name.upper()}'  (run {run_number}/{config.run.N})"
+            )
             logger.info(f"{'─' * 70}")
 
             step_config = getattr(config.steps, step_name)
@@ -426,17 +615,22 @@ def run_evaluation(config: EvalConfig, config_filepath: str):
             result: StepResult = step.run(run_dir, context)
 
             context[step_name] = result
-            result_data["steps_executed"].append(step_name)
+            # Guard against duplicates when the step is being retried on resume.
+            if step_name not in result_data.get("steps_executed", []):
+                result_data.setdefault("steps_executed", []).append(step_name)
             result_data[step_name] = result.to_dict()
 
             # Persist result.json after every step (partial results survive failures)
             _write_result_json(run_dir, result_data)
 
             if not result.success:
-                logger.error(f"Step '{step_name}' failed: {result.error}")
+                logger.error(f"  Step '{step_name}' failed: {result.error}")
                 logger.error(
-                    f"Aborting pipeline.  Partial results saved to: "
-                    f"{run_dir / 'result.json'}"
+                    f"  Partial results saved to: {run_dir / 'result.json'}"
+                )
+                logger.error(
+                    f"  Re-run the same command to resume from "
+                    f"run {run_number}, step '{step_name}'."
                 )
                 sys.exit(1)
 
