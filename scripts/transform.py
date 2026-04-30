@@ -11,7 +11,7 @@ from default.defaults import DEFAULT_CODE_COCCOON_TRANSFORMATIONS
 from common.logger import configure_logging
 from common.fs import read_jsonl, append_jsonl
 from common.codecocoon import execute_transform_metamorphic_texts
-from transform.models import EnvVar, EnvEntry, TransformConfig, validate_config
+from transform.models import EnvVar, EnvEntry, TransformConfig, ProcessEntryResult, validate_config
 from transform.apply import _run_rewrite_problem_statement, _apply_code_morphing
 
 
@@ -140,13 +140,11 @@ def process_entry(
     transform_test_files: bool,
     override: bool,
     rewrite_problem_statement: bool,
-) -> tuple[Dict, list[str]]:
-    """Process a single entry through the transformation pipeline.
-
-    Returns ``(entry, errors)`` where errors is empty on full success.
-    """
+) -> ProcessEntryResult:
+    """Process a single entry through the transformation pipeline."""
     instance_id = entry['instance_id']
-    errors: list[str] = []
+    errors:   List[str] = []
+    warnings: List[str] = []
     logger.info(f"Processing entry: {instance_id}")
     logger.info(f"ENV variables: [{', '.join(env_vars.keys())}]")
 
@@ -190,10 +188,10 @@ def process_entry(
                 errors.append(msg)
         else:
             logger.info("rewrite_problem_statement=false — returning entry unchanged.")
-        return entry, errors
+        return ProcessEntryResult(entry=entry, errors=errors, warnings=warnings)
 
     try:
-        morph_result, morph_errors = _apply_code_morphing(
+        morph_outcome = _apply_code_morphing(
             entry=entry,
             strategy=strategy,
             transformations=transformations,
@@ -205,12 +203,14 @@ def process_entry(
             override=override,
             logger=logger,
         )
-        errors.extend(morph_errors)
+        errors.extend(morph_outcome.errors)
+        warnings.extend(morph_outcome.warnings)
 
-        if morph_result is None:
-            return entry, errors
+        if morph_outcome.result is None:
+            return ProcessEntryResult(entry=entry, errors=errors, warnings=warnings)
 
         # Commit morphing results to entry.
+        morph_result = morph_outcome.result
         strategy_entry = morph_result.strategy_entry
         entry["metamorphic"].append(strategy_entry)
         if morph_result.metamorphic_base_patch:
@@ -226,7 +226,7 @@ def process_entry(
         # Step 7: Problem statement text transformations
         has_rename_move = has_renaming_or_moving_transformations(transformations)
         if not has_rename_move and not rewrite_problem_statement:
-            return entry, errors
+            return ProcessEntryResult(entry=entry, errors=errors, warnings=warnings)
 
         logger.info("=========================================================================================")
         logger.info("===== STEP 7: Problem statement text transformations =====")
@@ -269,6 +269,7 @@ def process_entry(
                 msg = f"transformMetamorphicTexts failed (return_code={tmt_result.return_code})"
                 logger.error(f"{msg}; keeping original problem statement")
                 errors.append(msg)
+
             strategy_entry["text_transformations"]["transform_metamorphic_texts"] = tmt_log
 
         # 7b: rewriteProblemStatement — runs on current_ps_path (may already be renamed)
@@ -308,7 +309,7 @@ def process_entry(
         logger.error(f"Failed to process {instance_id}: {e}", exc_info=True)
         errors.append(msg)
 
-    return entry, errors
+    return entry, errors, warnings
 
 
 
@@ -390,7 +391,7 @@ def main():
                     instance_env_vars[env_var.name] = env_var.value
                 break
 
-        processed_entry, errors = process_entry(
+        result = process_entry(
             entry=entry,
             strategy=config.strategy,
             codecocoon_dir=config.codecocoon,
@@ -402,12 +403,16 @@ def main():
             override=config.override,
             rewrite_problem_statement=config.rewrite_problem_statement,
         )
-        append_jsonl(config.output, processed_entry)
+        append_jsonl(config.output, result.entry)
 
-        if errors:
-            failed_entries.append((instance_id, errors))
-            errors_str = ''.join([f"\n     - {e}" for e in errors])
-            logger.error(f"====== ❌ Completed entry '{instance_id}' ({i}/{len(entries)}) with errors:{errors_str}")
+        issues = result.errors + result.warnings  # combined for display; errors first
+        if result.errors:
+            failed_entries.append((instance_id, issues))
+            issues_str = ''.join([f"\n     - {e}" for e in issues])
+            logger.error(f"====== ❌ Completed entry '{instance_id}' ({i}/{len(entries)}) with errors:{issues_str}")
+        elif result.warnings:
+            issues_str = ''.join([f"\n     - {w}" for w in result.warnings])
+            logger.warning(f"====== ⚠️  Completed entry '{instance_id}' ({i}/{len(entries)}) with warnings:{issues_str}")
         else:
             logger.info(f"====== ✅ Completed entry '{instance_id}' ({i}/{len(entries)}) ======")
         logger.info("==========================================================================")
@@ -418,9 +423,9 @@ def main():
     logger.info(f"Processing complete! succeeded {n_succeeded}/{n_attempted}, failed {len(failed_entries)}/{n_attempted}")
     if failed_entries:
         logger.error("Failed entries:")
-        for fid, ferrors in failed_entries:
-            errors_str = ''.join([f"\n     - {e}" for e in ferrors])
-            logger.error(f"  {fid}:{errors_str}")
+        for fid, fissues in failed_entries:
+            issues_str = ''.join([f"\n     - {e}" for e in fissues])
+            logger.error(f"  {fid}:{issues_str}")
     logger.info("==========================================================================")
 
 

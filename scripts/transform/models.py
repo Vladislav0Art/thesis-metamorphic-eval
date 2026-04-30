@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Dict, List, Optional
 from common.codecocoon import CodeCocoonResult
 import os
 
@@ -21,6 +21,13 @@ class MorphResult:
     last_commit_sha: Optional[str] = None
     metamorphic_patch: Optional[str] = None
     codecocoon_result: Optional[CodeCocoonResult] = None
+
+
+@dataclass
+class ProcessEntryResult:
+    entry:    Dict
+    errors:   List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
 
 
 @dataclass

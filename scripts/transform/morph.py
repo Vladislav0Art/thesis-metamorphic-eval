@@ -1,3 +1,4 @@
+import re
 from typing import List, Dict
 from common.cli import run_cli_command
 from common.git import (
@@ -9,6 +10,17 @@ from common.git import (
 )
 from common.codecocoon import CodeCocoonResult, execute_codecocoon
 from transform.models import Patch, MorphResult
+
+
+def parse_transformation_summary(stdout: str) -> tuple[int, int, int] | None:
+    """Extract (succeeded, failed, skipped) from CodeCocoon's 'Transformation summary' line."""
+    match = re.search(
+        r'Transformation summary:\s*(\d+)\s+succeeded,\s*(\d+)\s+failed,\s*(\d+)\s+skipped',
+        stdout,
+    )
+    if match:
+        return int(match.group(1)), int(match.group(2)), int(match.group(3))
+    return None
 
 
 def morph(
