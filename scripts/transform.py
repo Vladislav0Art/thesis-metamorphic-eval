@@ -152,6 +152,49 @@ def process_entry(
     if "metamorphic" not in entry:
         entry["metamorphic"] = []
 
+    # No code transformations: skip all CodeCocoon morphing (cloning, branch creation,
+    # base/test/fix morphing) and only run rewriteProblemStatement if requested.
+    # The resulting entry is identical to the original except for potentially updated
+    # title/body/resolved_issues fields.
+    if not transformations:
+        logger.info(
+            f"No code transformations defined for strategy '{strategy}' — "
+            "skipping all CodeCocoon morphing (branch creation, base/test/fix morphing)."
+        )
+        if rewrite_problem_statement:
+            logger.info("=========================================================================================")
+            logger.info("===== Problem statement rewrite (no code transformations) =====")
+            logger.info("=========================================================================================")
+            artifacts_dir = os.path.join(repos_dir, strategy, instance_id, ".codecocoon-artifacts")
+            os.makedirs(artifacts_dir, exist_ok=True)
+            ps_input     = os.path.join(artifacts_dir, "ps_input.json")
+            ps_rewritten = os.path.join(artifacts_dir, "ps_rewritten.json")
+            input_record = {k: entry[k] for k in ("title", "body", "resolved_issues") if k in entry}
+            with open(ps_input, "w") as f:
+                json.dump(input_record, f, indent=2)
+            rps_result = execute_rewrite_problem_statement(
+                codecocoon_dir=codecocoon_dir,
+                input_file=ps_input,
+                output_file=ps_rewritten,
+                env_vars=env_vars,
+                logger=logger,
+            )
+            if rps_result.return_code == 0:
+                with open(ps_rewritten) as f:
+                    rps_output = json.load(f)
+                for key in ("title", "body", "resolved_issues"):
+                    if key in rps_output:
+                        entry[key] = rps_output[key]
+                logger.info(f"rewriteProblemStatement succeeded: title={entry.get('title', '')[:80]!r}")
+            else:
+                logger.error(
+                    f"rewriteProblemStatement failed (return_code={rps_result.return_code}); "
+                    "keeping original problem statement"
+                )
+        else:
+            logger.info("rewrite_problem_statement=false — returning entry unchanged.")
+        return entry
+
     # Strategy entry dict — built up locally and appended to entry["metamorphic"] once
     # we know base morphing succeeded (to avoid partial empty entries on early failures).
     strategy_entry = {
