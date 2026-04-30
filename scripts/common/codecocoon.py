@@ -82,7 +82,7 @@ def execute_rewrite_problem_statement(
     logger,
 ) -> CodeCocoonResult:
     """Execute CodeCocoon rewriteProblemStatement gradle task to paraphrase benchmark text fields."""
-    logger.info(f"Executing rewriteProblemStatement: input={input_file}, output={output_file}")
+    logger.info(f"Executing rewriteProblemStatement: input: {input_file}, output: {output_file}")
     stdout, stderr, code = run_cli_command(
         './gradlew',
         [
