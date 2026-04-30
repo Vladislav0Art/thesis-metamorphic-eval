@@ -1,0 +1,94 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
+index b921de01f..2c6d4c61e 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
++++ b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
+@@ -217,6 +217,9 @@ public class ObjectWriterBaseModule
+                 Class<?> serializer = jsonType.serializer();
+                 if (ObjectWriter.class.isAssignableFrom(serializer)) {
+                     beanInfo.serializer = serializer;
++                    if (Enum.class.isAssignableFrom(objectClass)) {
++                        beanInfo.writeEnumAsJavaBean = true;
++                    }
+                 }
+ 
+                 Class<? extends Filter>[] serializeFilters = jsonType.serializeFilters();
+diff --git a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterCreator.java b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterCreator.java
+index c70fcd52d..611357e5d 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterCreator.java
++++ b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterCreator.java
+@@ -1239,6 +1239,11 @@ public class ObjectWriterCreator {
+             if (!(objectWriter instanceof ObjectWriterImplEnum)) {
+                 return objectWriter;
+             }
++
++            objectWriter = provider.getObjectWriter(fieldClass);
++            if (!(objectWriter instanceof ObjectWriterImplEnum)) {
++                return objectWriter;
++            }
+         }
+         return null;
+     }
+diff --git a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+index f8b847de4..c6ced6920 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
++++ b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+@@ -54,4 +54,55 @@ public class JSONType_serializer {
+             assertEquals("{\"ID\":123}", str);
+         }
+     }
++
++    @Test
++    public void testEnumField() {
++        BeanWithEnumField bean = new BeanWithEnumField();
++        bean.status = Status.RUNNING;
++
++        assertEquals("{\"status\":{\"code\":1}}", JSON.toJSONString(bean));
++    }
++
++    @Test
++    public void testEnumFieldWithCreators() {
++        BeanWithEnumField bean = new BeanWithEnumField();
++        bean.status = Status.RUNNING;
++
++        for (ObjectWriterCreator creator : TestUtils.writerCreators()) {
++            ObjectWriter objectWriter = creator.createObjectWriter(BeanWithEnumField.class);
++            JSONWriter jsonWriter = JSONWriter.of();
++            objectWriter.write(jsonWriter, bean);
++            assertEquals("{\"status\":{\"code\":1}}", jsonWriter.toString());
++        }
++    }
++
++    public static class BeanWithEnumField {
++        public Status status;
++    }
++
++    @JSONType(serializer = StatusWriter.class)
++    public enum Status {
++        RUNNING(1),
++        STOP(2);
++
++        public final int code;
++
++        Status(int code) {
++            this.code = code;
++        }
++    }
++
++    public static class StatusWriter
++            implements ObjectWriter<Status> {
++        @Override
++        public void write(JSONWriter jsonWriter, Object object, Object fieldName, Type fieldType, long features) {
++            Status status = (Status) object;
++
++            jsonWriter.startObject();
++            jsonWriter.writeName("code");
++            jsonWriter.writeColon();
++            jsonWriter.writeInt32(status.code);
++            jsonWriter.endObject();
++        }
++    }
+ }

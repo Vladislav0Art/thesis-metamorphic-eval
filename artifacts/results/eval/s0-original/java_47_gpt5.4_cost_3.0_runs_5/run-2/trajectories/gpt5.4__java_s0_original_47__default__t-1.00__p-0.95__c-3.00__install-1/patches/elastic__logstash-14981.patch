@@ -1,0 +1,63 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index c60648423..21df44516 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -96,7 +96,8 @@ public final class DeadLetterQueueWriter implements Closeable {
+     private volatile RecordIOWriter currentWriter;
+     private int currentSegmentIndex;
+     private Timestamp lastEntryTimestamp;
+-    private Duration flushInterval;
++    private final Duration flushInterval;
++
+     private Instant lastWrite;
+     private final AtomicBoolean open = new AtomicBoolean(true);
+     private ScheduledExecutorService flushScheduler;
+@@ -408,7 +409,12 @@ public final class DeadLetterQueueWriter implements Closeable {
+      * Start from the end of the latest block, and going backward try to read the next event from its start.
+      * */
+     private static Optional<Timestamp> readTimestampOfLastEventInSegment(Path segmentPath) throws IOException {
+-        final int lastBlockId = (int) Math.ceil(((Files.size(segmentPath) - VERSION_SIZE) / (double) BLOCK_SIZE)) - 1;
++        final long segmentSize = Files.size(segmentPath);
++        if (segmentSize <= VERSION_SIZE) {
++            return Optional.empty();
++        }
++
++        final int lastBlockId = (int) Math.ceil(((segmentSize - VERSION_SIZE) / (double) BLOCK_SIZE)) - 1;
+         byte[] eventBytes;
+         try (RecordIOReader recordReader = new RecordIOReader(segmentPath)) {
+             int blockId = lastBlockId;
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 5702d169a..f6a9661a4 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -97,6 +97,16 @@ public class DeadLetterQueueWriterTest {
+             writer.close();
+         }
+     }
++    @Test
++    public void testInitializeWithVersionOnlySegment() throws Exception {
++        Files.write(dir.resolve("1.log"), "1".getBytes());
++
++        try (DeadLetterQueueWriter writer = DeadLetterQueueWriter
++                .newBuilder(dir, 1_000, 100_000, Duration.ofSeconds(1))
++                .build()) {
++            assertEquals(2 * EMPTY_DLQ, writer.getCurrentQueueSize());
++        }
++    }
+ 
+     @Test
+     public void testUncleanCloseOfPreviousWriter() throws Exception {

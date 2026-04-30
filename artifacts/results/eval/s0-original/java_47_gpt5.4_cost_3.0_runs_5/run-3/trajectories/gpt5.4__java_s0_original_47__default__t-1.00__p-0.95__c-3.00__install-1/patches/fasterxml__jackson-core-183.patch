@@ -1,0 +1,49 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
+index e6f1cbc5..a28ce79f 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
+@@ -304,7 +304,7 @@ public final class TextBuffer
+             return (_resultArray = _resultString.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!_hasSegments)  return _currentSegment;
++        if (!_hasSegments)  return (_currentSegment == null) ? NO_CHARS : _currentSegment;
+         // Nope, need to have/create a non-segmented array and return it
+         return contentsAsArray();
+     }
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 878224ef..fa245565 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -77,4 +77,18 @@ public class TestTextBuffer
+               }
+           }
+       }
++
++      public void testEmptyBufferConsistentGetTextBuffer()
++      {
++          TextBuffer tb = new TextBuffer(new BufferRecycler());
++          tb.resetWithEmpty();
++
++          assertNotNull(tb.getTextBuffer());
++          assertEquals(0, tb.getTextBuffer().length);
++
++          assertEquals("", tb.contentsAsString());
++
++          assertNotNull(tb.getTextBuffer());
++          assertEquals(0, tb.getTextBuffer().length);
++      }
+ }

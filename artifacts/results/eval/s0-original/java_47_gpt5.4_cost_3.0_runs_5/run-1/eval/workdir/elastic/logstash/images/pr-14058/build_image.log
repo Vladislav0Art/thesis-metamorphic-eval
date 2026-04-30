@@ -1,0 +1,40 @@
+[2026-04-29 13:44:15,002] [docker_util.py] [INFO]: Start building image `mswebench/elastic_m_logstash:pr-14058`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s0-original/java_47_gpt5.4_cost_3.0_runs_5/run-1/eval/workdir/elastic/logstash/images/pr-14058`
+[2026-04-29 13:44:15,299] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/elastic_m_logstash:base
+[2026-04-29 13:44:15,299] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:15,308] [docker_util.py] [INFO]: ---> 177a0c933542
+[2026-04-29 13:44:15,308] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-04-29 13:44:15,308] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:15,758] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:15,758] [docker_util.py] [INFO]: ---> 134b4561a797
+[2026-04-29 13:44:15,758] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-04-29 13:44:15,758] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:15,795] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:15,795] [docker_util.py] [INFO]: ---> 326f45d1435a
+[2026-04-29 13:44:15,795] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-04-29 13:44:15,795] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:15,830] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:15,830] [docker_util.py] [INFO]: ---> 95ee54dfeb57
+[2026-04-29 13:44:15,831] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-04-29 13:44:15,831] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:15,862] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:15,862] [docker_util.py] [INFO]: ---> 11d44e9622be
+[2026-04-29 13:44:15,862] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-04-29 13:44:15,862] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:15,909] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:15,909] [docker_util.py] [INFO]: ---> 4bdae2b611ae
+[2026-04-29 13:44:15,909] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-04-29 13:44:15,909] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:15,943] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:15,943] [docker_util.py] [INFO]: ---> 44567b7e170e
+[2026-04-29 13:44:15,943] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-04-29 13:44:15,943] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:15,977] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:15,977] [docker_util.py] [INFO]: ---> 06a6a16ba54a
+[2026-04-29 13:44:15,977] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-04-29 13:44:15,977] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:16,007] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:16,007] [docker_util.py] [INFO]: ---> ce5248dd985e
+[2026-04-29 13:44:16,007] [docker_util.py] [INFO]: sha256:ce5248dd985ecb4b9e95bbae8caa0f9a1579be5f18adc94b57f0fb8b4d33baa5
+[2026-04-29 13:44:16,010] [docker_util.py] [INFO]: Successfully built ce5248dd985e
+[2026-04-29 13:44:16,036] [docker_util.py] [INFO]: Successfully tagged mswebench/elastic_m_logstash:pr-14058
+[2026-04-29 13:44:16,036] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s0-original/java_47_gpt5.4_cost_3.0_runs_5/run-1/eval/workdir/elastic/logstash/images/pr-14058) build success: mswebench/elastic_m_logstash:pr-14058

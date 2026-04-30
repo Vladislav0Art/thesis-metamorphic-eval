@@ -1,0 +1,128 @@
+
+diff --git a/.gitignore b/.gitignore
+index 5bda0b93..e930bdfb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -18,3 +18,8 @@ local.properties
+ build
+ 
+ .DS_Store
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/gson/src/main/java/com/google/gson/internal/bind/JsonAdapterAnnotationTypeAdapterFactory.java b/gson/src/main/java/com/google/gson/internal/bind/JsonAdapterAnnotationTypeAdapterFactory.java
+index 13a7bb7e..51bebdf7 100644
+--- a/gson/src/main/java/com/google/gson/internal/bind/JsonAdapterAnnotationTypeAdapterFactory.java
++++ b/gson/src/main/java/com/google/gson/internal/bind/JsonAdapterAnnotationTypeAdapterFactory.java
+@@ -66,7 +66,7 @@ public final class JsonAdapterAnnotationTypeAdapterFactory implements TypeAdapte
+       JsonDeserializer<?> deserializer = instance instanceof JsonDeserializer
+           ? (JsonDeserializer) instance
+           : null;
+-      typeAdapter = new TreeTypeAdapter(serializer, deserializer, gson, type, null);
++      typeAdapter = new TreeTypeAdapter(serializer, deserializer, gson, type, null, annotation.nullSafe());
+     } else {
+       throw new IllegalArgumentException("Invalid attempt to bind an instance of "
+           + instance.getClass().getName() + " as a @JsonAdapter for " + type.toString()
+diff --git a/gson/src/main/java/com/google/gson/internal/bind/TreeTypeAdapter.java b/gson/src/main/java/com/google/gson/internal/bind/TreeTypeAdapter.java
+index a5c6c5dc..ad8e4528 100644
+--- a/gson/src/main/java/com/google/gson/internal/bind/TreeTypeAdapter.java
++++ b/gson/src/main/java/com/google/gson/internal/bind/TreeTypeAdapter.java
+@@ -41,6 +41,7 @@ import java.lang.reflect.Type;
+ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
+   private final JsonSerializer<T> serializer;
+   private final JsonDeserializer<T> deserializer;
++  private final boolean nullSafe;
+   final Gson gson;
+   private final TypeToken<T> typeToken;
+   private final TypeAdapterFactory skipPast;
+@@ -50,9 +51,10 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
+   private TypeAdapter<T> delegate;
+ 
+   public TreeTypeAdapter(JsonSerializer<T> serializer, JsonDeserializer<T> deserializer,
+-      Gson gson, TypeToken<T> typeToken, TypeAdapterFactory skipPast) {
++      Gson gson, TypeToken<T> typeToken, TypeAdapterFactory skipPast, boolean nullSafe) {
+     this.serializer = serializer;
+     this.deserializer = deserializer;
++    this.nullSafe = nullSafe;
+     this.gson = gson;
+     this.typeToken = typeToken;
+     this.skipPast = skipPast;
+@@ -63,7 +65,7 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
+       return delegate().read(in);
+     }
+     JsonElement value = Streams.parse(in);
+-    if (value.isJsonNull()) {
++    if (nullSafe && value.isJsonNull()) {
+       return null;
+     }
+     return deserializer.deserialize(value, typeToken.getType(), context);
+@@ -74,7 +76,7 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
+       delegate().write(out, value);
+       return;
+     }
+-    if (value == null) {
++    if (nullSafe && value == null) {
+       out.nullValue();
+       return;
+     }
+@@ -145,9 +147,10 @@ public final class TreeTypeAdapter<T> extends TypeAdapter<T> {
+           : hierarchyType.isAssignableFrom(type.getRawType());
+       return matches
+           ? new TreeTypeAdapter<T>((JsonSerializer<T>) serializer,
+-              (JsonDeserializer<T>) deserializer, gson, type, this)
++              (JsonDeserializer<T>) deserializer, gson, type, this, true)
+           : null;
+     }
++
+   }
+ 
+   private final class GsonContextImpl implements JsonSerializationContext, JsonDeserializationContext {
+diff --git a/gson/src/test/java/com/google/gson/functional/JsonAdapterSerializerDeserializerTest.java b/gson/src/test/java/com/google/gson/functional/JsonAdapterSerializerDeserializerTest.java
+index 8ab4e128..10313062 100644
+--- a/gson/src/test/java/com/google/gson/functional/JsonAdapterSerializerDeserializerTest.java
++++ b/gson/src/test/java/com/google/gson/functional/JsonAdapterSerializerDeserializerTest.java
+@@ -133,6 +133,16 @@ public final class JsonAdapterSerializerDeserializerTest extends TestCase {
+     assertTrue(json.contains("\"b\":\"BaseIntegerAdapter\""));
+   }
+ 
++  public void testJsonSerializerDeserializerBasedJsonAdapterHonorsNullSafeFalse() {
++    Gson gson = new Gson();
++
++    String json = gson.toJson(new NullSafeFalseField(null));
++    assertEquals("{\"user\":\"serialized-null\"}", json);
++
++    NullSafeFalseField value = gson.fromJson("{\"user\":null}", NullSafeFalseField.class);
++    assertEquals("deserialized-null", value.user.name);
++  }
++
+   private static final class Container {
+     @JsonAdapter(BaseStringAdapter.class) Base<String> a;
+     @JsonAdapter(BaseIntegerAdapter.class) Base<Integer> b;
+@@ -161,4 +171,25 @@ public final class JsonAdapterSerializerDeserializerTest extends TestCase {
+       return new JsonPrimitive("BaseIntegerAdapter");
+     }
+   }
++
++  private static final class NullSafeFalseField {
++    @JsonAdapter(value = NullSafeFalseAdapter.class, nullSafe = false) final User user;
++
++    NullSafeFalseField(User user) {
++      this.user = user;
++    }
++  }
++
++  private static final class NullSafeFalseAdapter implements JsonSerializer<User>, JsonDeserializer<User> {
++    @Override
++    public JsonElement serialize(User src, Type typeOfSrc, JsonSerializationContext context) {
++      return src == null ? new JsonPrimitive("serialized-null") : new JsonPrimitive(src.name);
++    }
++
++    @Override
++    public User deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
++        throws JsonParseException {
++      return json.isJsonNull() ? new User("deserialized-null") : new User(json.getAsString());
++    }
++  }
+ }

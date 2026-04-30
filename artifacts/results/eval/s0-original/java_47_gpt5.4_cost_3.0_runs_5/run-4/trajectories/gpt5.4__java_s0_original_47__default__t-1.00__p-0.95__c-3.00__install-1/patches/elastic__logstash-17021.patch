@@ -1,0 +1,111 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index 3d7b4b199..43452c0d0 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -77,6 +77,16 @@ describe  FileWatch::BufferedTokenizer  do
+     end
+   end
+ 
++  it "preserves bytes for non-UTF-8 encoded input when flushing buffered data" do
++    input = "\xA3".b.force_encoding(Encoding::ISO_8859_1)
++
++    expect(subject.extract(input)).to eq([])
++
++    flushed = subject.flush
++    expect(flushed.bytes).to eq([0xA3])
++    expect(flushed.encoding).to eq(Encoding::ISO_8859_1)
++  end
++
+   context 'with delimiter' do
+     subject { FileWatch::BufferedTokenizer.new(delimiter) }
+ 
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+index be1c64d23..076b0eca0 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+@@ -88,6 +88,8 @@ public class BufferedTokenizerExt extends RubyObject {
+             }
+             this.inputSize = inputSize + entitiesSize;
+         }
++        // Append RubyString instances directly to preserve their original encoding.
++        // Using RubyArray#addAll converts elements through Java and can double-encode bytes.
+         input.append(entities.shift(context));
+         if (entities.isEmpty()) {
+             return RubyUtil.RUBY.newArray();
+diff --git a/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+new file mode 100644
+index 000000000..f8282f034
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+@@ -0,0 +1,57 @@
++/*
++ * Licensed to Elasticsearch B.V. under one or more contributor
++ * license agreements. See the NOTICE file distributed with
++ * this work for additional information regarding copyright
++ * ownership. Elasticsearch B.V. licenses this file to you under
++ * the Apache License, Version 2.0 (the "License"); you may
++ * not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ * 	http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied.  See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++
++package org.logstash.common;
++
++import org.jcodings.specific.ISO8859_1Encoding;
++import org.jruby.RubyString;
++import org.jruby.runtime.ThreadContext;
++import org.jruby.runtime.builtin.IRubyObject;
++import org.junit.Before;
++import org.junit.Test;
++import org.logstash.RubyUtil;
++
++import static org.junit.Assert.assertArrayEquals;
++import static org.junit.Assert.assertEquals;
++import static org.logstash.RubyUtil.RUBY;
++
++public final class BufferedTokenizerExtTest {
++
++    private ThreadContext context;
++    private BufferedTokenizerExt subject;
++
++    @Before
++    public void setUp() {
++        context = RUBY.getCurrentContext();
++        subject = new BufferedTokenizerExt(RUBY, RubyUtil.BUFFERED_TOKENIZER);
++        subject.init(context, new IRubyObject[0]);
++    }
++
++    @Test
++    public void preservesBytesForNonUtf8EncodedInputWhenFlushingBufferedData() {
++        RubyString input = RubyString.newString(RUBY, new byte[]{(byte) 0xA3});
++        input.setEncoding(ISO8859_1Encoding.INSTANCE);
++
++        assertEquals(0, subject.extract(context, input).size());
++
++        RubyString flushed = (RubyString) subject.flush(context);
++        assertArrayEquals(new byte[]{(byte) 0xA3}, flushed.getBytes());
++        assertEquals(ISO8859_1Encoding.INSTANCE, flushed.getEncoding());
++    }
++}

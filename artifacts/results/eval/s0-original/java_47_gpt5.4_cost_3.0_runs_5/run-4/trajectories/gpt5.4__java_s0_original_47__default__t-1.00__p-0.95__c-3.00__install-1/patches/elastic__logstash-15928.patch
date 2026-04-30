@@ -1,0 +1,35 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/config/jvm.options b/config/jvm.options
+index b729fce91..3821ddb13 100644
+--- a/config/jvm.options
++++ b/config/jvm.options
+@@ -42,6 +42,9 @@
+ # ensure UTF-8 encoding by default (e.g. filenames)
+ -Dfile.encoding=UTF-8
+ 
++# restore Netty allocator chunk size to 16MB to keep large direct buffers pooled
++-Dio.netty.allocator.maxOrder=11
++
+ # use our provided JNA always versus the system one
+ #-Djna.nosys=true
+ 
+@@ -87,4 +90,4 @@
+ #
+ # Sets the maximum nesting depth. The depth is a count of objects and arrays that have not
+ # been closed, `{` and `[` respectively.
+-#-Dlogstash.jackson.stream-read-constraints.max-nesting-depth=1000
+\ No newline at end of file
++#-Dlogstash.jackson.stream-read-constraints.max-nesting-depth=1000

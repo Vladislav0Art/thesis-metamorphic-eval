@@ -1,0 +1,249 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/docs/static/settings-file.asciidoc b/docs/static/settings-file.asciidoc
+index 5a973df81..6d4c2b38a 100644
+--- a/docs/static/settings-file.asciidoc
++++ b/docs/static/settings-file.asciidoc
+@@ -211,7 +211,7 @@ Values other than `disabled` are currently considered BETA, and may produce unin
+ | 1024
+ 
+ | `queue.checkpoint.retry`
+-| When enabled, Logstash will retry once per attempted checkpoint write for any checkpoint writes that fail. Any subsequent errors are not retried. This is a workaround for failed checkpoint writes that have been seen only on filesystems with non-standard behavior such as SANs and is not recommended except in those specific circumstances.
++| When enabled, Logstash retries failed checkpoint moves caused by `AccessDeniedException` using a bounded exponential backoff before ultimately failing. This is a workaround for failed checkpoint writes that have been seen only on filesystems with non-standard behavior such as SANs and is not recommended except in those specific circumstances.
+ | `false`
+ 
+ | `queue.drain`
+diff --git a/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java b/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
+index 4e0f8866d..d854aed82 100644
+--- a/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
++++ b/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
+@@ -17,13 +17,13 @@
+  * under the License.
+  */
+ 
+-
+ package org.logstash.ackedqueue.io;
+ 
+ import java.io.FileOutputStream;
+ import java.io.IOException;
+ import java.nio.ByteBuffer;
+ import java.nio.channels.FileChannel;
++import java.nio.file.AccessDeniedException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.StandardCopyOption;
+@@ -33,7 +33,6 @@ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ import org.logstash.ackedqueue.Checkpoint;
+ 
+-
+ /**
+  * File implementation for {@link CheckpointIO}
+  * */
+@@ -49,6 +48,9 @@ public class FileCheckpointIO implements CheckpointIO {
+ 
+     private static final Logger logger = LogManager.getLogger(FileCheckpointIO.class);
+ 
++    static final int CHECKPOINT_WRITE_RETRY_ATTEMPTS = 5;
++    static final long CHECKPOINT_WRITE_RETRY_INITIAL_BACKOFF_MILLIS = 10L;
++
+     public static final int BUFFER_SIZE = Short.BYTES // version
+             + Integer.BYTES  // pageNum
+             + Integer.BYTES  // firstUnackedPageNum
+@@ -104,25 +106,67 @@ public class FileCheckpointIO implements CheckpointIO {
+             out.getFD().sync();
+         }
+ 
+-        try {
+-            Files.move(tmpPath, dirPath.resolve(fileName), StandardCopyOption.ATOMIC_MOVE);
+-        } catch (IOException ex) {
+-            if (retry) {
+-                try {
+-                    logger.error("Retrying after exception writing checkpoint: " + ex);
+-                    Thread.sleep(500);
+-                    Files.move(tmpPath, dirPath.resolve(fileName), StandardCopyOption.ATOMIC_MOVE);
+-                } catch (IOException | InterruptedException ex2) {
+-                    logger.error("Aborting after second exception writing checkpoint: " + ex2);
++        moveWithRetry(tmpPath, dirPath.resolve(fileName));
++    }
++
++    private void moveWithRetry(Path source, Path target) throws IOException {
++        long backoffMillis = CHECKPOINT_WRITE_RETRY_INITIAL_BACKOFF_MILLIS;
++        final int maxAttempts = retry ? CHECKPOINT_WRITE_RETRY_ATTEMPTS + 1 : 1;
++
++        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
++            try {
++                atomicMove(source, target);
++                return;
++            } catch (AccessDeniedException ex) {
++                if (attempt == maxAttempts) {
++                    if (retry) {
++                        logger.error(
++                            "Aborting checkpoint move after {} retries due to AccessDeniedException: {}",
++                            CHECKPOINT_WRITE_RETRY_ATTEMPTS,
++                            ex.toString()
++                        );
++                    } else {
++                        logger.error("Error writing checkpoint: {}", ex.toString());
++                    }
+                     throw ex;
+                 }
+-            } else {
+-                logger.error("Error writing checkpoint: " + ex);
++
++                logger.warn(
++                    "Retrying checkpoint move after AccessDeniedException. retry={}/{} backoff={}ms error={}",
++                    attempt,
++                    CHECKPOINT_WRITE_RETRY_ATTEMPTS,
++                    backoffMillis,
++                    ex.toString()
++                );
++                pauseBeforeRetry(backoffMillis, ex);
++                backoffMillis *= 2;
++            } catch (IOException ex) {
++                logger.error("Error writing checkpoint: {}", ex.toString());
+                 throw ex;
+             }
+         }
+     }
+ 
++    protected void atomicMove(Path source, Path target) throws IOException {
++        Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
++    }
++
++    protected void sleep(long millis) throws InterruptedException {
++        Thread.sleep(millis);
++    }
++
++    private void pauseBeforeRetry(long backoffMillis, AccessDeniedException ex) throws IOException {
++        try {
++            sleep(backoffMillis);
++        } catch (InterruptedException interrupted) {
++            Thread.currentThread().interrupt();
++            final IOException interruptedIOException =
++                new IOException("Interrupted while retrying checkpoint move", interrupted);
++            interruptedIOException.addSuppressed(ex);
++            throw interruptedIOException;
++        }
++    }
++
+     @Override
+     public void purge(String fileName) throws IOException {
+         Path path = dirPath.resolve(fileName);
+diff --git a/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java b/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
+index 2ec024e55..2a4d24d17 100644
+--- a/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
++++ b/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
+@@ -27,13 +27,18 @@ import org.junit.rules.TemporaryFolder;
+ import org.logstash.ackedqueue.Checkpoint;
+ 
+ import java.net.URL;
++import java.nio.file.AccessDeniedException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.Paths;
++import java.util.ArrayList;
++import java.util.List;
+ 
+ import static org.hamcrest.CoreMatchers.equalTo;
++import static org.hamcrest.CoreMatchers.instanceOf;
+ import static org.hamcrest.CoreMatchers.is;
+ import static org.hamcrest.MatcherAssert.assertThat;
++import static org.junit.Assert.fail;
+ 
+ public class FileCheckpointIOTest {
+     private Path checkpointFolder;
+@@ -69,4 +74,81 @@ public class FileCheckpointIOTest {
+         byte[] compare = Files.readAllBytes(path);
+         assertThat(contents, is(equalTo(compare)));
+     }
++
++    @Test
++    public void retriesCheckpointMoveWithExponentialBackoff() throws Exception {
++        RetryTrackingFileCheckpointIO retryingIo =
++            new RetryTrackingFileCheckpointIO(checkpointFolder, true, 3);
++
++        retryingIo.write("checkpoint.head", 6, 2, 10L, 8L, 200);
++
++        assertThat(retryingIo.moveAttempts, is(4));
++        assertThat(retryingIo.sleepMillis, is(equalTo(asList(10L, 20L, 40L))));
++        assertThat(Files.exists(checkpointFolder.resolve("checkpoint.head")), is(true));
++    }
++
++    @Test
++    public void abortsAfterMaximumCheckpointMoveRetries() throws Exception {
++        RetryTrackingFileCheckpointIO retryingIo =
++            new RetryTrackingFileCheckpointIO(
++                checkpointFolder,
++                true,
++                FileCheckpointIO.CHECKPOINT_WRITE_RETRY_ATTEMPTS + 1
++            );
++
++        try {
++            retryingIo.write("checkpoint.head", 6, 2, 10L, 8L, 200);
++            fail("expected AccessDeniedException");
++        } catch (AccessDeniedException e) {
++            assertThat(e, is(instanceOf(AccessDeniedException.class)));
++        }
++
++        assertThat(
++            retryingIo.moveAttempts,
++            is(FileCheckpointIO.CHECKPOINT_WRITE_RETRY_ATTEMPTS + 1)
++        );
++        assertThat(
++            retryingIo.sleepMillis,
++            is(equalTo(asList(10L, 20L, 40L, 80L, 160L)))
++        );
++        assertThat(Files.exists(checkpointFolder.resolve("checkpoint.head")), is(false));
++        assertThat(Files.exists(checkpointFolder.resolve("checkpoint.head.tmp")), is(true));
++    }
++
++    private static List<Long> asList(Long... values) {
++        List<Long> list = new ArrayList<>();
++        for (Long value : values) {
++            list.add(value);
++        }
++        return list;
++    }
++
++    private static final class RetryTrackingFileCheckpointIO extends FileCheckpointIO {
++        private final int failuresBeforeSuccess;
++        private final List<Long> sleepMillis = new ArrayList<>();
++        private int moveAttempts = 0;
++
++        private RetryTrackingFileCheckpointIO(
++            Path dirPath,
++            boolean retry,
++            int failuresBeforeSuccess
++        ) {
++            super(dirPath, retry);
++            this.failuresBeforeSuccess = failuresBeforeSuccess;
++        }
++
++        @Override
++        protected void atomicMove(Path source, Path target) throws java.io.IOException {
++            moveAttempts++;
++            if (moveAttempts <= failuresBeforeSuccess) {
++                throw new AccessDeniedException(source.toString(), target.toString(), "simulated");
++            }
++            super.atomicMove(source, target);
++        }
++
++        @Override
++        protected void sleep(long millis) {
++            sleepMillis.add(millis);
++        }
++    }
+ }

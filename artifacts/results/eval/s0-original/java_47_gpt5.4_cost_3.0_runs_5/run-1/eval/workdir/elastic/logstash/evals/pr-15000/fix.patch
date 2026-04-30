@@ -1,0 +1,64 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index 81b24b68a..8201819cb 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -281,6 +281,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+         lastWrite = Instant.now();
+     }
+ 
++
+     private boolean exceedSegmentSize(int eventPayloadSize) throws IOException {
+         return currentWriter.getPosition() + eventPayloadSize > maxSegmentSize;
+     }
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+index 8bcfb6359..b03743cfa 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+@@ -263,6 +263,33 @@ public class DeadLetterQueueWriterAgeRetentionTest {
+         assertThat("Age expired segment is removed", actual, not(hasItem("1.log")));
+     }
+ 
++    @Test
++    public void testDLQWriterCloseRemovesExpiredSegmentWhenCurrentSegmentExpiresBeforeShutdown() throws IOException {
++        final Event event = DeadLetterQueueReaderTest.createEventWithConstantSerializationOverhead(
++                Collections.singletonMap("message", "Not so important content"));
++
++        final Clock pointInTimeFixedClock = Clock.fixed(Instant.now(), ZoneId.of("Europe/Rome"));
++        final ForwardableClock fakeClock = new ForwardableClock(pointInTimeFixedClock);
++
++        Duration retainedPeriod = Duration.ofDays(1);
++        try (DeadLetterQueueWriter writeManager = DeadLetterQueueWriter
++                .newBuilderWithoutFlusher(dir, 10 * MB, 1 * GB)
++                .retentionTime(retainedPeriod)
++                .clock(fakeClock)
++                .build()) {
++
++            DLQEntry entry = new DLQEntry(event, "", "", "00001", DeadLetterQueueReaderTest.constantSerializationLengthTimestamp(fakeClock));
++            writeManager.writeEntry(entry);
++
++            fakeClock.forward(Duration.ofDays(3));
++
++            assertTrue(writeManager.isOpen());
++        }
++
++        Set<String> actual = listFileNames(dir);
++        assertThat("Age expired segment finalized during close is removed", actual, not(hasItem("1.log")));
++    }
++
+     private Set<String> listFileNames(Path path) throws IOException {
+         return Files.list(path)
+                 .map(Path::getFileName)

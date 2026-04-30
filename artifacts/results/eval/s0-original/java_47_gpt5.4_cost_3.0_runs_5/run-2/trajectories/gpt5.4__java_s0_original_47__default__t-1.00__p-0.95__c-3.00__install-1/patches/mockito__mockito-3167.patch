@@ -1,0 +1,66 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubEnumMockingTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubEnumMockingTest.java
+new file mode 100644
+index 000000000..c89869c7d
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubEnumMockingTest.java
+@@ -0,0 +1,46 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.mockito.Answers.RETURNS_DEEP_STUBS;
++import static org.mockito.Mockito.when;
++
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Mock;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++@ExtendWith(MockitoExtension.class)
++class DeepStubEnumMockingTest {
++
++    @Mock(answer = RETURNS_DEEP_STUBS)
++    private Piece piece;
++
++    @Test
++    void deep_stub_can_chain_through_enum_return_type() {
++        when(piece.getType().getCost()).thenReturn(2.5d);
++
++        assertEquals(2.5d, piece.getType().getCost());
++    }
++
++    interface Piece {
++        PieceType getType();
++    }
++
++    enum PieceType {
++        SQUARE(2.5d);
++
++        private final double cost;
++
++        PieceType(double cost) {
++            this.cost = cost;
++        }
++
++        double getCost() {
++            return cost;
++        }
++    }
++}

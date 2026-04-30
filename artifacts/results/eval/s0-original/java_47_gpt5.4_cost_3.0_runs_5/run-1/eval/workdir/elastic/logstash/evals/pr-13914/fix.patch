@@ -1,0 +1,38 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..cb65d8e69 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -860,6 +860,19 @@ tasks.register("copyJdk", Copy) {
+     description = "Download, unpack and copy the JDK"
+     // CLI project properties: -Pjdk_bundle_os=[windows|linux|darwin] -Pjdk_arch=[arm64|x86_64]
+     doLast {
++        File releaseFile = file("${project.ext.jdkBundlingDirectory}/release")
++        if (!releaseFile.exists()) {
++            releaseFile = file("${project.ext.jdkBundlingDirectory}/Contents/Home/release")
++        }
++        if (releaseFile.exists()) {
++            String bundledJdkVersion = releaseFile.readLines().findResult { line ->
++                def matcher = line =~ /^IMPLEMENTOR_VERSION="(.*)"$/
++                matcher.matches() ? matcher[0][1] : null
++            }
++            if (bundledJdkVersion != null) {
++                file("${releaseFile.parentFile}/VERSION").text = "${bundledJdkVersion}\n"
++            }
++        }
+         System.out.println "Download location is ${project.ext.jdkDownloadLocation}, Decompressing ${project.ext.jdkDirectory} to \"${project.ext.jdkBundlingDirectory}\""
+     }
+ }

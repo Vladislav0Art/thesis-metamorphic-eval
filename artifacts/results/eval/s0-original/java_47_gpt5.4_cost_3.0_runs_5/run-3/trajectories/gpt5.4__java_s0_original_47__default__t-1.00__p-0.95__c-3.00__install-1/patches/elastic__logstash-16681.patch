@@ -1,0 +1,52 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+index 6626641a1..ad9debe80 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+@@ -96,8 +96,12 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+ 
+     private void unlistenBlocking(final PipelineInput listener,
+                           final String address) throws InterruptedException {
+-        synchronized (Objects.requireNonNull(listener, "listener must not be null")) {
+-            while(!tryUnlistenOrphan(listener, address)) {
++        while (!tryUnlistenOrphan(listener, address)) {
++            synchronized (listener) {
++                final AddressState.ReadOnly addressState = addressStates.get(address);
++                if (addressState == null || addressState.getInput() != listener || addressState.getOutputs().isEmpty()) {
++                    continue;
++                }
+                 listener.wait(10000);
+             }
+         }
+diff --git a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+index 78f7c22ac..818b2d254 100644
+--- a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
++++ b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+@@ -98,7 +98,6 @@ public class PipelineBusTest {
+             assertThat(addressState.getOutputs()).contains(output);
+         }));
+ 
+-        bus.setBlockOnUnlisten(false);
+         bus.unlisten(input, address);
+ 
+         assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState -> {
+@@ -403,4 +402,4 @@ public class PipelineBusTest {
+             return lastBatchSize;
+         }
+     }
+-}
+\ No newline at end of file
++}

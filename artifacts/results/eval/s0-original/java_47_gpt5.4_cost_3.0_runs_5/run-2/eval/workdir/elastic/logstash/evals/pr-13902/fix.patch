@@ -1,0 +1,214 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java b/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
+index 4e0f8866d..28ad6245a 100644
+--- a/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
++++ b/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
+@@ -57,6 +57,9 @@ public class FileCheckpointIO implements CheckpointIO {
+             + Integer.BYTES  // eventCount
+             + Integer.BYTES;    // checksum
+ 
++    private static final int RETRY_ATTEMPTS = 8;
++    private static final long RETRY_INITIAL_BACKOFF_MILLIS = 10L;
++
+     /**
+      * Using {@link java.nio.DirectByteBuffer} to avoid allocations and copying in
+      * {@link FileChannel#write(ByteBuffer)} and {@link CRC32#update(ByteBuffer)} calls.
+@@ -99,28 +102,59 @@ public class FileCheckpointIO implements CheckpointIO {
+         write(checkpoint, buffer);
+         buffer.flip();
+         final Path tmpPath = dirPath.resolve(fileName + ".tmp");
++        final Path checkpointPath = dirPath.resolve(fileName);
+         try (FileOutputStream out = new FileOutputStream(tmpPath.toFile())) {
+             out.getChannel().write(buffer);
+             out.getFD().sync();
+         }
+ 
+-        try {
+-            Files.move(tmpPath, dirPath.resolve(fileName), StandardCopyOption.ATOMIC_MOVE);
+-        } catch (IOException ex) {
+-            if (retry) {
++        moveWithRetry(tmpPath, checkpointPath);
++    }
++
++    private void moveWithRetry(final Path source, final Path target) throws IOException {
++        IOException last = null;
++        long backoffMillis = RETRY_INITIAL_BACKOFF_MILLIS;
++        final int attempts = retry ? RETRY_ATTEMPTS : 1;
++        for (int attempt = 1; attempt <= attempts; attempt++) {
++            try {
++                moveAtomically(source, target);
++                return;
++            } catch (IOException ex) {
++                last = ex;
++                if (attempt >= attempts) {
++                    break;
++                }
++                logger.warn(
++                    "Retrying checkpoint move after exception on attempt {}/{}: {}",
++                    attempt,
++                    attempts,
++                    ex.toString()
++                );
+                 try {
+-                    logger.error("Retrying after exception writing checkpoint: " + ex);
+-                    Thread.sleep(500);
+-                    Files.move(tmpPath, dirPath.resolve(fileName), StandardCopyOption.ATOMIC_MOVE);
+-                } catch (IOException | InterruptedException ex2) {
+-                    logger.error("Aborting after second exception writing checkpoint: " + ex2);
+-                    throw ex;
++                    sleep(backoffMillis);
++                } catch (InterruptedException interrupted) {
++                    Thread.currentThread().interrupt();
++                    final IOException interruptedIOException = new IOException(
++                        "Interrupted while retrying checkpoint move",
++                        interrupted
++                    );
++                    interruptedIOException.addSuppressed(ex);
++                    throw interruptedIOException;
+                 }
+-            } else {
+-                logger.error("Error writing checkpoint: " + ex);
+-                throw ex;
++                backoffMillis = backoffMillis * 2;
+             }
+         }
++
++        logger.error("Error writing checkpoint after {} attempt(s): {}", attempts, last.toString());
++        throw last;
++    }
++
++    void moveAtomically(final Path source, final Path target) throws IOException {
++        Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
++    }
++
++    void sleep(final long millis) throws InterruptedException {
++        Thread.sleep(millis);
+     }
+ 
+     @Override
+diff --git a/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java b/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
+index 2ec024e55..90756a24f 100644
+--- a/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
++++ b/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
+@@ -26,14 +26,21 @@ import org.junit.Test;
+ import org.junit.rules.TemporaryFolder;
+ import org.logstash.ackedqueue.Checkpoint;
+ 
++import java.io.IOException;
+ import java.net.URL;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.Paths;
++import java.nio.file.StandardCopyOption;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.Collections;
++import java.util.List;
+ 
+ import static org.hamcrest.CoreMatchers.equalTo;
+ import static org.hamcrest.CoreMatchers.is;
+ import static org.hamcrest.MatcherAssert.assertThat;
++import static org.junit.Assert.fail;
+ 
+ public class FileCheckpointIOTest {
+     private Path checkpointFolder;
+@@ -58,6 +65,7 @@ public class FileCheckpointIOTest {
+         assertThat(chk.getMinSeqNum(), is(8L));
+     }
+ 
++
+     @Test
+     public void write() throws Exception {
+         io.write("checkpoint.head", 6, 2, 10L, 8L, 200);
+@@ -69,4 +77,78 @@ public class FileCheckpointIOTest {
+         byte[] compare = Files.readAllBytes(path);
+         assertThat(contents, is(equalTo(compare)));
+     }
++
++    @Test
++    public void writeRetriesMultipleTimesWithExponentialBackoff() throws Exception {
++        RetryingFileCheckpointIO retryingIo = new RetryingFileCheckpointIO(checkpointFolder, true, 2);
++
++        retryingIo.write("checkpoint.head", 6, 2, 10L, 8L, 200);
++
++        assertThat(retryingIo.getMoveAttempts(), is(3));
++        assertThat(retryingIo.getSleepDurations(), is(equalTo(Arrays.asList(10L, 20L))));
++        assertThat(Files.exists(checkpointFolder.resolve("checkpoint.head")), is(true));
++    }
++
++    @Test
++    public void writeFailsAfterExhaustingRetries() throws Exception {
++        RetryingFileCheckpointIO retryingIo = new RetryingFileCheckpointIO(checkpointFolder, true, Integer.MAX_VALUE);
++
++        try {
++            retryingIo.write("checkpoint.head", 6, 2, 10L, 8L, 200);
++            fail("expected IOException");
++        } catch (IOException e) {
++            assertThat(retryingIo.getMoveAttempts(), is(8));
++            assertThat(
++                    retryingIo.getSleepDurations(),
++                    is(equalTo(Arrays.asList(10L, 20L, 40L, 80L, 160L, 320L, 640L)))
++            );
++        }
++    }
++
++    @Test
++    public void writeDoesNotRetryWhenRetryDisabled() throws Exception {
++        RetryingFileCheckpointIO retryingIo = new RetryingFileCheckpointIO(checkpointFolder, false, Integer.MAX_VALUE);
++
++        try {
++            retryingIo.write("checkpoint.head", 6, 2, 10L, 8L, 200);
++            fail("expected IOException");
++        } catch (IOException e) {
++            assertThat(retryingIo.getMoveAttempts(), is(1));
++            assertThat(retryingIo.getSleepDurations(), is(equalTo(Collections.<Long>emptyList())));
++        }
++    }
++
++
++    private static final class RetryingFileCheckpointIO extends FileCheckpointIO {
++        private final int failuresBeforeSuccess;
++        private final List<Long> sleepDurations = new ArrayList<>();
++        private int moveAttempts;
++
++        private RetryingFileCheckpointIO(final Path dirPath, final boolean retry, final int failuresBeforeSuccess) {
++            super(dirPath, retry);
++            this.failuresBeforeSuccess = failuresBeforeSuccess;
++        }
++
++        @Override
++        void moveAtomically(final Path source, final Path target) throws IOException {
++            moveAttempts++;
++            if (moveAttempts <= failuresBeforeSuccess) {
++                throw new IOException("simulated move failure " + moveAttempts);
++            }
++            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
++        }
++
++        @Override
++        void sleep(final long millis) {
++            sleepDurations.add(millis);
++        }
++
++        private int getMoveAttempts() {
++            return moveAttempts;
++        }
++
++        private List<Long> getSleepDurations() {
++            return sleepDurations;
++        }
++    }
+ }

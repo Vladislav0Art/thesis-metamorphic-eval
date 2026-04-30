@@ -1,0 +1,49 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+index a418aab7a..b4477545a 100644
+--- a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+@@ -20,6 +20,30 @@ public class EnumMockingTest {
+         assertThat(a.name(), nullValue(String.class));
+     }
+ 
++    @Test
++    public void testDeepStubEnum() {
++        Piece piece = Mockito.mock(Piece.class, Mockito.RETURNS_DEEP_STUBS);
++
++        Mockito.when(piece.getPiece().getCostPerPieceSpace()).thenReturn(2.5d);
++
++        assertThat(piece.getPiece().getCostPerPieceSpace(), is(2.5d));
++    }
++
++    interface Piece {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE {
++            @Override
++            double getCostPerPieceSpace() {
++                return 1d;
++            }
++        };
++
++        abstract double getCostPerPieceSpace();
++    }
++
+     enum Animal {
+         CAT {
+             @Override

@@ -1,0 +1,73 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/log/CustomLogEventSerializer.java b/logstash-core/src/main/java/org/logstash/log/CustomLogEventSerializer.java
+index b52c14a6f..28f3eda0a 100644
+--- a/logstash-core/src/main/java/org/logstash/log/CustomLogEventSerializer.java
++++ b/logstash-core/src/main/java/org/logstash/log/CustomLogEventSerializer.java
+@@ -70,6 +70,9 @@ public class CustomLogEventSerializer extends JsonSerializer<CustomLogEvent> {
+ 
+         for (final Map.Entry<Object, Object> entry : message.getParams().entrySet()) {
+             final String paramName = entry.getKey().toString();
++            if ("message".equals(paramName)) {
++                continue;
++            }
+             final Object paramValue = entry.getValue();
+ 
+             try {
+diff --git a/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java b/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java
+index c340fb921..3e3e8a764 100644
+--- a/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java
++++ b/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java
+@@ -74,7 +74,7 @@ public class CustomLogEventTests {
+         logger.warn("complex message", Collections.singletonMap("foo", "bar"));
+         logger.error("my name is: {}", "foo");
+         logger.error("here is a map: {}. ok?", Collections.singletonMap(2, 5));
+-        logger.warn("ignored params {}", 4, 6);
++        logger.warn("ignored params {}", 4, 6, 8);
+         List<String> messages = appender.getMessages();
+         assertEquals(5, messages.size());
+         assertEquals("[INFO][EventLogger] simple message", messages.get(0));
+@@ -139,6 +139,31 @@ public class CustomLogEventTests {
+         assertEquals(logEvent, fifthMessage.get("logEvent"));
+     }
+ 
++    @Test
++    @SuppressWarnings("unchecked")
++    public void testJSONLayoutWithStructuredMessageFieldCollision() throws Exception {
++        final ListAppender appender = CTX.getListAppender("JSONEventLogger").clear();
++        final Logger logger = LogManager.getLogger("JSONEventLogger");
++
++        final Map<String, Object> arguments = new HashMap<>();
++        arguments.put("message", "colliding structured value");
++        arguments.put("foo", "bar");
++
++        logger.warn("canonical message", arguments);
++
++        final List<String> loggedMessages = appender.getMessages();
++        assertEquals(1, loggedMessages.size());
++
++        final Map<String, Object> message =
++            ObjectMappers.JSON_MAPPER.readValue(loggedMessages.get(0), Map.class);
++        final Map<String, Object> logEvent = (Map<String, Object>) message.get("logEvent");
++
++        assertEquals("canonical message", logEvent.get("message"));
++        assertEquals("bar", logEvent.get("foo"));
++        assertFalse(logEvent.containsValue("colliding structured value"));
++        assertEquals(2, logEvent.size());
++    }
++
+     @Test
+     @SuppressWarnings("unchecked")
+     public void testJSONLayoutWithRubyObjectArgument() throws JsonProcessingException {

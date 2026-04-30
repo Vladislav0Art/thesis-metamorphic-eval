@@ -1,0 +1,85 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/CaptorAnnotationProcessor.java b/src/main/java/org/mockito/internal/configuration/CaptorAnnotationProcessor.java
+index 600583be5..c5f000ae0 100644
+--- a/src/main/java/org/mockito/internal/configuration/CaptorAnnotationProcessor.java
++++ b/src/main/java/org/mockito/internal/configuration/CaptorAnnotationProcessor.java
+@@ -5,6 +5,8 @@
+ package org.mockito.internal.configuration;
+ 
+ import java.lang.reflect.Field;
++import java.lang.reflect.Type;
++import java.util.function.Supplier;
+ 
+ import org.mockito.ArgumentCaptor;
+ import org.mockito.Captor;
+@@ -17,16 +19,38 @@ import org.mockito.internal.util.reflection.GenericMaster;
+ public class CaptorAnnotationProcessor implements FieldAnnotationProcessor<Captor> {
+     @Override
+     public Object process(Captor annotation, Field field) {
+-        Class<?> type = field.getType();
++        return process(parameterizedType(field.getType(), field::getGenericType), field.getName());
++    }
++
++    public static Object process(Class<?> type, Supplier<Type> genericType, String name) {
++        return process(parameterizedType(type, genericType), name);
++    }
++
++    private static Object process(ParameterizedType parameterizedType, String name) {
++        Class<?> type = parameterizedType.type;
+         if (!ArgumentCaptor.class.isAssignableFrom(type)) {
+             throw new MockitoException(
+                     "@Captor field must be of the type ArgumentCaptor.\n"
+                             + "Field: '"
+-                            + field.getName()
++                            + name
+                             + "' has wrong type\n"
+                             + "For info how to use @Captor annotations see examples in javadoc for MockitoAnnotations class.");
+         }
+-        Class<?> cls = new GenericMaster().getGenericType(field);
++        Class<?> cls = new GenericMaster().getGenericType(parameterizedType.genericType.get());
+         return ArgumentCaptor.forClass(cls);
+     }
++
++    private static ParameterizedType parameterizedType(Class<?> type, Supplier<Type> genericType) {
++        return new ParameterizedType(type, genericType);
++    }
++
++    private static class ParameterizedType {
++        private final Class<?> type;
++        private final Supplier<Type> genericType;
++
++        private ParameterizedType(Class<?> type, Supplier<Type> genericType) {
++            this.type = type;
++            this.genericType = genericType;
++        }
++    }
+ }
+diff --git a/src/main/java/org/mockito/internal/util/reflection/GenericMaster.java b/src/main/java/org/mockito/internal/util/reflection/GenericMaster.java
+index be3db7f97..6cbda54c2 100644
+--- a/src/main/java/org/mockito/internal/util/reflection/GenericMaster.java
++++ b/src/main/java/org/mockito/internal/util/reflection/GenericMaster.java
+@@ -16,7 +16,10 @@ public class GenericMaster {
+      * @param field the field to inspect
+      */
+     public Class<?> getGenericType(Field field) {
+-        Type generic = field.getGenericType();
++        return getGenericType(field.getGenericType());
++    }
++
++    public Class<?> getGenericType(Type generic) {
+         if (generic instanceof ParameterizedType) {
+             Type actual = ((ParameterizedType) generic).getActualTypeArguments()[0];
+             if (actual instanceof Class) {

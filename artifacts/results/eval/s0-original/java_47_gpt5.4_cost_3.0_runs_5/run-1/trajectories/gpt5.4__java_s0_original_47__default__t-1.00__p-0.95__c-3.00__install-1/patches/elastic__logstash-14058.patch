@@ -1,0 +1,65 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/co/elastic/logstash/api/DeadLetterQueueWriter.java b/logstash-core/src/main/java/co/elastic/logstash/api/DeadLetterQueueWriter.java
+index 123b4be82..a6b60f115 100644
+--- a/logstash-core/src/main/java/co/elastic/logstash/api/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/co/elastic/logstash/api/DeadLetterQueueWriter.java
+@@ -29,4 +29,8 @@ public interface DeadLetterQueueWriter {
+     boolean isOpen();
+ 
+     long getCurrentQueueSize();
++
++    long getDroppedEvents();
++
++    String getLastError();
+ }
+diff --git a/logstash-core/src/main/java/org/logstash/common/DLQWriterAdapter.java b/logstash-core/src/main/java/org/logstash/common/DLQWriterAdapter.java
+index 1fbc906ba..d20d6eabb 100644
+--- a/logstash-core/src/main/java/org/logstash/common/DLQWriterAdapter.java
++++ b/logstash-core/src/main/java/org/logstash/common/DLQWriterAdapter.java
+@@ -49,4 +49,14 @@ public class DLQWriterAdapter implements DeadLetterQueueWriter {
+     public long getCurrentQueueSize() {
+         return dlqWriter != null ? dlqWriter.getCurrentQueueSize() : 0;
+     }
++
++    @Override
++    public long getDroppedEvents() {
++        return dlqWriter != null ? dlqWriter.getDroppedEvents() : 0;
++    }
++
++    @Override
++    public String getLastError() {
++        return dlqWriter != null ? dlqWriter.getLastError() : "";
++    }
+ }
+diff --git a/logstash-core/src/main/java/org/logstash/common/NullDeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/NullDeadLetterQueueWriter.java
+index 20eb74195..6d02dd6be 100644
+--- a/logstash-core/src/main/java/org/logstash/common/NullDeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/NullDeadLetterQueueWriter.java
+@@ -50,4 +50,14 @@ public class NullDeadLetterQueueWriter implements DeadLetterQueueWriter {
+     public long getCurrentQueueSize() {
+         return 0;
+     }
++
++    @Override
++    public long getDroppedEvents() {
++        return 0;
++    }
++
++    @Override
++    public String getLastError() {
++        return "";
++    }
+ }

@@ -1,0 +1,189 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index 90082ef49..c337e531e 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -84,7 +84,8 @@ public final class DeadLetterQueueWriter implements Closeable {
+     private final long maxSegmentSize;
+     private final long maxQueueSize;
+     private final QueueStorageType storageType;
+-    private LongAdder currentQueueSize;
++    private final LongAdder currentQueueSize;
++    private final LongAdder droppedEvents;
+     private final Path queuePath;
+     private final FileLock fileLock;
+     private volatile RecordIOWriter currentWriter;
+@@ -92,6 +93,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+     private Timestamp lastEntryTimestamp;
+     private Duration flushInterval;
+     private Instant lastWrite;
++    private volatile String lastError = "";
+     private final AtomicBoolean open = new AtomicBoolean(true);
+     private ScheduledExecutorService flushScheduler;
+ 
+@@ -109,6 +111,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+         this.storageType = storageType;
+         this.flushInterval = flushInterval;
+         this.currentQueueSize = new LongAdder();
++        this.droppedEvents = new LongAdder();
+         this.currentQueueSize.add(getStartupQueueSize());
+ 
+         cleanupTempFiles();
+@@ -133,6 +136,14 @@ public final class DeadLetterQueueWriter implements Closeable {
+         return currentQueueSize.longValue();
+     }
+ 
++    public long getDroppedEvents() {
++        return droppedEvents.longValue();
++    }
++
++    public String getLastError() {
++        return lastError;
++    }
++
+     public String getStoragePolicy() {
+         return storageType.name().toLowerCase(Locale.ROOT);
+     }
+@@ -193,7 +204,9 @@ public final class DeadLetterQueueWriter implements Closeable {
+         int eventPayloadSize = RECORD_HEADER_SIZE + record.length;
+         if (currentQueueSize.longValue() + eventPayloadSize > maxQueueSize) {
+             if (storageType == QueueStorageType.DROP_NEWER) {
+-                logger.error("cannot write event to DLQ(path: " + this.queuePath + "): reached maxQueueSize of " + maxQueueSize);
++                recordDroppedEvent(
++                    "cannot write event to DLQ(path: " + this.queuePath + "): reached maxQueueSize of " + maxQueueSize
++                );
+                 return;
+             } else {
+                 do {
+@@ -218,8 +231,14 @@ public final class DeadLetterQueueWriter implements Closeable {
+         }
+         final Path beheadedSegment = oldestSegment.get();
+         final long segmentSize = Files.size(beheadedSegment);
++        final long droppedSegmentEvents = countEntries(beheadedSegment);
+         currentQueueSize.add(-segmentSize);
+         Files.delete(beheadedSegment);
++        recordDroppedEvents(
++                droppedSegmentEvents,
++                "cannot write event to DLQ(path: " + this.queuePath + "): reached maxQueueSize of " + maxQueueSize
++                        + ", deleted oldest segment " + beheadedSegment.getFileName()
++        );
+         logger.debug("Deleted exceeded retained size segment file {}", beheadedSegment);
+     }
+ 
+@@ -296,6 +315,25 @@ public final class DeadLetterQueueWriter implements Closeable {
+                 .sum();
+     }
+ 
++    private void recordDroppedEvent(final String errorMessage) {
++        recordDroppedEvents(1L, errorMessage);
++    }
++
++    private void recordDroppedEvents(final long events, final String errorMessage) {
++        droppedEvents.add(events);
++        lastError = errorMessage;
++    }
++
++    private long countEntries(final Path segment) throws IOException {
++        long count = 0L;
++        try (RecordIOReader reader = new RecordIOReader(segment)) {
++            while (reader.readEvent() != null) {
++                count++;
++            }
++        }
++        return count;
++    }
++
+     private void releaseFileLock() {
+         try {
+             FileLockFactory.releaseLock(fileLock);
+diff --git a/logstash-core/src/main/java/org/logstash/execution/AbstractPipelineExt.java b/logstash-core/src/main/java/org/logstash/execution/AbstractPipelineExt.java
+index be91d3dd1..7252c05b1 100644
+--- a/logstash-core/src/main/java/org/logstash/execution/AbstractPipelineExt.java
++++ b/logstash-core/src/main/java/org/logstash/execution/AbstractPipelineExt.java
+@@ -112,6 +112,12 @@ public class AbstractPipelineExt extends RubyBasicObject {
+     private static final RubySymbol STORAGE_POLICY =
+             RubyUtil.RUBY.newSymbol("storage_policy");
+ 
++    private static final RubySymbol DROPPED_EVENTS =
++            RubyUtil.RUBY.newSymbol("dropped_events");
++
++    private static final RubySymbol LAST_ERROR =
++            RubyUtil.RUBY.newSymbol("last_error");
++
+     private static final @SuppressWarnings("rawtypes") RubyArray EVENTS_METRIC_NAMESPACE = RubyArray.newArray(
+         RubyUtil.RUBY, new IRubyObject[]{MetricKeys.STATS_KEY, MetricKeys.EVENTS_KEY}
+     );
+@@ -327,8 +333,16 @@ public class AbstractPipelineExt extends RubyBasicObject {
+                 dlqWriter(context).callMethod(context, "get_current_queue_size")
+             );
+             getDlqMetric(context).gauge(
+-                    context, STORAGE_POLICY,
+-                    dlqWriter(context).callMethod(context, "get_storage_policy")
++                context, STORAGE_POLICY,
++                dlqWriter(context).callMethod(context, "get_storage_policy")
++            );
++            getDlqMetric(context).gauge(
++                context, DROPPED_EVENTS,
++                dlqWriter(context).callMethod(context, "get_dropped_events")
++            );
++            getDlqMetric(context).gauge(
++                context, LAST_ERROR,
++                dlqWriter(context).callMethod(context, "get_last_error")
+             );
+         }
+         return context.nil;
+@@ -360,10 +374,10 @@ public class AbstractPipelineExt extends RubyBasicObject {
+             final AbstractNamespacedMetricExt capacityMetrics =
+                 pipelineMetric.namespace(context, CAPACITY_NAMESPACE);
+             capacityMetrics.gauge(
+-                context, PAGE_CAPACITY_IN_BYTES, inner.ruby_page_capacity(context)
++                context, PAGE_CAPACITY_IN_BYTES, inner.ruby_page_capacity_in_bytes(context)
+             );
+             capacityMetrics.gauge(
+-                context, MAX_QUEUE_SIZE_IN_BYTES, inner.ruby_max_size_in_bytes(context)
++                context, MAX_QUEUE_SIZE_IN_BYTES, inner.ruby_max_bytes(context)
+             );
+             capacityMetrics.gauge(
+                 context, MAX_QUEUE_UNREAD_EVENTS, inner.ruby_max_unread_events(context)
+@@ -384,6 +398,7 @@ public class AbstractPipelineExt extends RubyBasicObject {
+         }
+         return context.nil;
+     }
++    }
+ 
+     @JRubyMethod(name = "input_queue_client")
+     public final JRubyAbstractQueueWriteClientExt inputQueueClient() {
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 3a3d4d9f5..340c98198 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -141,7 +141,6 @@ public class DeadLetterQueueWriterTest {
+         final int MESSAGE_COUNT = 5;
+         long MAX_QUEUE_LENGTH = payloadLength * MESSAGE_COUNT;
+ 
+-
+         try (DeadLetterQueueWriter writer = new DeadLetterQueueWriter(dir, payloadLength, MAX_QUEUE_LENGTH, Duration.ofSeconds(1))) {
+ 
+             for (int i = 0; i < MESSAGE_COUNT; i++)
+@@ -153,6 +152,8 @@ public class DeadLetterQueueWriterTest {
+             writer.writeEntry(entry);
+             sleep(2000);
+             assertThat(dlqLength(), is(MAX_QUEUE_LENGTH));
++            assertThat(writer.getDroppedEvents(), is(1L));
++            assertThat(writer.getLastError(), is("cannot write event to DLQ(path: " + dir + "): reached maxQueueSize of " + MAX_QUEUE_LENGTH));
+         }
+     }
+ 

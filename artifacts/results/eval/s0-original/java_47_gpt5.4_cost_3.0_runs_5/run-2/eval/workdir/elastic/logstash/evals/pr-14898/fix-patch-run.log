@@ -1,0 +1,928 @@
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+To honour the JVM settings for this build a single-use Daemon process will be forked. See https://docs.gradle.org/7.5/userguide/gradle_daemon.html#sec:disabling_the_daemon.
+Daemon will be stopped at the end of the build 
+> Task :buildSrc:compileJava NO-SOURCE
+> Task :buildSrc:compileGroovy UP-TO-DATE
+> Task :buildSrc:processResources NO-SOURCE
+> Task :buildSrc:classes UP-TO-DATE
+> Task :buildSrc:jar UP-TO-DATE
+> Task :buildSrc:assemble UP-TO-DATE
+> Task :buildSrc:compileTestJava NO-SOURCE
+> Task :buildSrc:compileTestGroovy UP-TO-DATE
+> Task :buildSrc:processTestResources NO-SOURCE
+> Task :buildSrc:testClasses UP-TO-DATE
+> Task :buildSrc:test UP-TO-DATE
+> Task :buildSrc:check UP-TO-DATE
+> Task :buildSrc:build UP-TO-DATE
+> Task :clean
+> Task :benchmark-cli:clean
+> Task :dependencies-report:clean
+> Task :ingest-converter:clean
+> Task :jvm-options-parser:clean
+> Task :logstash-core:cleanGemjar UP-TO-DATE
+> Task :logstash-core:clean
+> Task :logstash-core-benchmarks:clean
+> Task :logstash-integration-tests:clean
+> Task :logstash-xpack:clean
+> Task :compileJava NO-SOURCE
+> Task :processResources NO-SOURCE
+> Task :classes UP-TO-DATE
+> Task :jar
+> Task :compileTestJava NO-SOURCE
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+> Task :benchmark-cli:compileJava
+> Task :benchmark-cli:processResources
+> Task :benchmark-cli:classes
+> Task :benchmark-cli:jar
+> Task :benchmark-cli:shadowJar
+> Task :benchmark-cli:compileTestJava
+> Task :benchmark-cli:processTestResources
+> Task :benchmark-cli:testClasses
+
+> Task :benchmark-cli:test
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+
+org.logstash.benchmark.cli.LsMetricsMonitorTest > parsesCpuUsage PASSED
+
+org.logstash.benchmark.cli.LsMetricsMonitorTest > parsesFilteredCount PASSED
+
+--------------------------------------------------------------------
+|  Results: SUCCESS (2 tests, 2 successes, 0 failures, 0 skipped)  |
+--------------------------------------------------------------------
+
+> Task :dependencies-report:compileJava
+> Task :dependencies-report:processResources
+> Task :dependencies-report:classes
+> Task :dependencies-report:jar
+> Task :dependencies-report:shadowJar
+> Task :dependencies-report:compileTestJava
+> Task :dependencies-report:processTestResources
+> Task :dependencies-report:testClasses
+
+> Task :dependencies-report:test
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithConflictingLicenses PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithUnacceptableLicenses STANDARD_OUT
+    Generated report with 16 dependencies (2 unknown or unacceptable licenses, 0 unknown or missing notices).
+
+    Add complying licenses (using the SPDX license ID from https://spdx.org/licenses) with URLs for the libraries listed below to tools/dependencies-report/src/main/resources/licenseMapping.csv:
+    "bundler:1.16.1"
+    "com.fasterxml.jackson.core:jackson-core:2.7.3"
+    The following 43 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    bundler
+    com.fasterxml.jackson.core:jackson-core
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithUnacceptableLicenses PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testSuccessfulReport STANDARD_OUT
+    Generated report with 16 dependencies (0 unknown or unacceptable licenses, 0 unknown or missing notices).
+
+    The following 41 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testSuccessfulReport PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithUnusedLicenses STANDARD_OUT
+    Generated report with 16 dependencies (0 unknown or unacceptable licenses, 0 unknown or missing notices).
+
+    The following 42 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    co.elastic:noNoticeDep
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithUnusedLicenses PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingLicenses STANDARD_OUT
+    Generated report with 16 dependencies (2 unknown or unacceptable licenses, 0 unknown or missing notices).
+
+    Add complying licenses (using the SPDX license ID from https://spdx.org/licenses) with URLs for the libraries listed below to tools/dependencies-report/src/main/resources/licenseMapping.csv:
+    "commons-io:commons-io:2.5"
+    "filesize:0.0.4"
+    The following 43 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    commons-io:commons-io
+    filesize
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingLicenses PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingNotices STANDARD_OUT
+    Generated report with 13 dependencies (1 unknown or unacceptable licenses, 1 unknown or missing notices).
+
+    Add complying licenses (using the SPDX license ID from https://spdx.org/licenses) with URLs for the libraries listed below to tools/dependencies-report/src/main/resources/licenseMapping.csv:
+    "co.elastic:noNoticeDep:0.0.1"
+    The following NOTICE.txt entries are missing, please add them:
+    LS_HOME/tools/dependencies-report/src/main/resources/notices/co.elastic!noNoticeDep-NOTICE.txt
+    The following 45 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.errorprone:javac-shaded
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    commons-io:commons-io
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    junit:junit
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:commons-compiler
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingNotices PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingUrls STANDARD_OUT
+    Generated report with 16 dependencies (2 unknown or unacceptable licenses, 0 unknown or missing notices).
+
+    Add complying licenses (using the SPDX license ID from https://spdx.org/licenses) with URLs for the libraries listed below to tools/dependencies-report/src/main/resources/licenseMapping.csv:
+    "json-parser:"
+    "org.codehaus.janino:commons-compiler:3.0.8"
+    The following 43 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    json-parser
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:commons-compiler
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingUrls PASSED
+
+--------------------------------------------------------------------
+|  Results: SUCCESS (7 tests, 7 successes, 0 failures, 0 skipped)  |
+--------------------------------------------------------------------
+
+> Task :ingest-converter:compileJava
+> Task :ingest-converter:processResources NO-SOURCE
+> Task :ingest-converter:classes
+> Task :ingest-converter:jar
+> Task :ingest-converter:shadowJar
+> Task :ingest-converter:compileTestJava
+> Task :ingest-converter:processTestResources
+> Task :ingest-converter:testClasses
+
+> Task :ingest-converter:test
+
+org.logstash.ingest.AppendTest > convertsAppendProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.AppendTest > convertsAppendProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.AppendTest > convertsAppendProcessorCorrectly[2] PASSED
+
+org.logstash.ingest.ConvertTest > convertsConvertProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.ConvertTest > convertsConvertProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.ConvertTest > convertsConvertProcessorCorrectly[2] PASSED
+
+org.logstash.ingest.ConvertTest > convertsConvertProcessorCorrectly[3] PASSED
+
+org.logstash.ingest.DateTest > convertsDateFieldCorrectly[0] PASSED
+
+org.logstash.ingest.DateTest > convertsDateFieldCorrectly[1] PASSED
+
+org.logstash.ingest.DateTest > convertsDateFieldCorrectly[2] PASSED
+
+org.logstash.ingest.GeoIpTest > convertsGeoIpFieldCorrectly[0] PASSED
+
+org.logstash.ingest.GeoIpTest > convertsGeoIpFieldCorrectly[1] PASSED
+
+org.logstash.ingest.GrokTest > convertsGrokFieldCorrectly[0] PASSED
+
+org.logstash.ingest.GrokTest > convertsGrokFieldCorrectly[1] PASSED
+
+org.logstash.ingest.GrokTest > convertsGrokFieldCorrectly[2] PASSED
+
+org.logstash.ingest.GsubTest > convertsGsubCorrectly[0] PASSED
+
+org.logstash.ingest.JsonTest > convertsConvertProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.JsonTest > convertsConvertProcessorCorrectly[1] PASSED
+
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+org.logstash.ingest.JsonTest > convertsConvertProcessorCorrectly[2] PASSED
+
+org.logstash.ingest.LowercaseTest > convertsAppendProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.LowercaseTest > convertsAppendProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[0] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[0] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[1] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[1] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[2] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[2] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[3] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[3] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[4] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[5] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[6] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[7] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[8] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[9] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[9] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[10] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[10] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[11] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[11] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[12] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[13] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[14] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[15] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[16] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[17] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[18] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[19] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[20] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[21] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[22] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[23] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[24] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[25] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[26] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[27] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[28] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[29] PASSED
+
+org.logstash.ingest.RenameTest > convertsConvertProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.RenameTest > convertsConvertProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.SetTest > convertsSetProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.SetTest > convertsSetProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.SetTest > convertsSetProcessorCorrectly[2] PASSED
+
+----------------------------------------------------------------------
+|  Results: SUCCESS (56 tests, 56 successes, 0 failures, 0 skipped)  |
+----------------------------------------------------------------------
+
+> Task :jvm-options-parser:compileJava
+> Task :jvm-options-parser:processResources NO-SOURCE
+> Task :jvm-options-parser:classes
+> Task :jvm-options-parser:jar
+> Task :jvm-options-parser:compileTestJava
+> Task :jvm-options-parser:processTestResources NO-SOURCE
+> Task :jvm-options-parser:testClasses
+
+> Task :jvm-options-parser:test
+
+org.logstash.launchers.JvmOptionsParserTest > testParseOptionWithFixedVersion PASSED
+
+org.logstash.launchers.JvmOptionsParserTest > testParseOptionVersionRange PASSED
+
+org.logstash.launchers.JvmOptionsParserTest > testErrorLinesAreReportedCorrectly PASSED
+
+org.logstash.launchers.JvmOptionsParserTest > testMandatoryJvmOptionNonApplicableJvmNotPresent PASSED
+
+org.logstash.launchers.JvmOptionsParserTest > test_LS_JAVA_OPTS_isUsedWhenNoJvmOptionsIsAvailable PASSED
+
+org.logstash.launchers.JvmOptionsParserTest > testAlwaysMandatoryJvmPresent PASSED
+
+org.logstash.launchers.JvmOptionsParserTest > testParseOptionGreaterThanVersion PASSED
+
+org.logstash.launchers.JvmOptionsParserTest > testParseCommentLine PASSED
+
+org.logstash.launchers.JvmOptionsParserTest > testMandatoryJvmOptionApplicableJvmPresent PASSED
+
+--------------------------------------------------------------------
+|  Results: SUCCESS (9 tests, 9 successes, 0 failures, 0 skipped)  |
+--------------------------------------------------------------------
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+
+> Task :downloadPreviousJRuby
+Download https://repo1.maven.org/maven2/org/jruby/jruby-dist/9.3.9.0/jruby-dist-9.3.9.0-bin.tar.gz
+
+> Task :downloadAndInstallPreviousJRubyFFI
+> Task :buildCustomJRuby SKIPPED
+> Task :installCustomJRuby SKIPPED
+
+> Task :downloadJRuby
+Download https://repo1.maven.org/maven2/org/jruby/jruby-dist/9.3.10.0/jruby-dist-9.3.10.0-bin.tar.gz
+
+> Task :verifyFile UP-TO-DATE
+> Task :downloadAndInstallJRuby
+
+> Task :logstash-core:compileJava FAILED
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:236: error: class, interface, or enum expected
+    void writeEntry(DLQEntry entry) throws IOException {
+    ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:238: error: class, interface, or enum expected
+        try {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:240: error: class, interface, or enum expected
+            if (entryTimestamp.compareTo(lastEntryTimestamp) < 0) {
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:242: error: class, interface, or enum expected
+            }
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:244: error: class, interface, or enum expected
+            lastEntryTimestamp = entryTimestamp;
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:245: error: class, interface, or enum expected
+        } finally {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:247: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:253: error: class, interface, or enum expected
+        if (alreadyProcessed(event)) {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:255: error: class, interface, or enum expected
+            return;
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:256: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:258: error: class, interface, or enum expected
+        int eventPayloadSize = RECORD_HEADER_SIZE + record.length;
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:259: error: class, interface, or enum expected
+        executeAgeRetentionPolicy();
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:260: error: class, interface, or enum expected
+        boolean skipWrite = executeStoragePolicy(eventPayloadSize);
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:261: error: class, interface, or enum expected
+        if (skipWrite) {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:263: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:267: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:269: error: class, interface, or enum expected
+        currentQueueSize.getAndAdd(writtenBytes);
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:270: error: class, interface, or enum expected
+        lastWrite = Instant.now();
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:271: error: class, interface, or enum expected
+    }
+    ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:275: error: class, interface, or enum expected
+    }
+    ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:281: error: class, interface, or enum expected
+            } catch (IOException ex) {
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:283: error: class, interface, or enum expected
+            }
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:294: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:300: error: class, interface, or enum expected
+        } catch (IOException ex) {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:302: error: class, interface, or enum expected
+            return false;
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:303: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:308: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:312: error: class, interface, or enum expected
+            logger.error(lastError);
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:313: error: class, interface, or enum expected
+            droppedEvents.add(1L);
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:314: error: class, interface, or enum expected
+            return true;
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:315: error: class, interface, or enum expected
+        } else {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:319: error: class, interface, or enum expected
+                } while (exceedMaxQueueSize(eventPayloadSize));
+                ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:320: error: class, interface, or enum expected
+            } catch (IOException ex) {
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:322: error: class, interface, or enum expected
+            }
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:324: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:329: error: class, interface, or enum expected
+    }
+    ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:334: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:335: error: class, interface, or enum expected
+        final Instant now = clock.instant();
+              ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:336: error: class, interface, or enum expected
+        return oldestSegmentTimestamp
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:339: error: class, interface, or enum expected
+    }
+    ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:344: error: class, interface, or enum expected
+        do {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:347: error: class, interface, or enum expected
+                expiredEvents.add(deleteTailSegment(beheadedSegment, "age retention policy"));
+                ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:348: error: class, interface, or enum expected
+            }
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:350: error: class, interface, or enum expected
+            cleanNextSegment = isOldestSegmentExpired();
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:351: error: class, interface, or enum expected
+        } while (cleanNextSegment);
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:353: error: class, interface, or enum expected
+        this.currentQueueSize.set(computeQueueSize());
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:354: error: class, interface, or enum expected
+    }
+    ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:369: error: class, interface, or enum expected
+            Files.delete(segment);
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:370: error: class, interface, or enum expected
+            logger.debug("Removed segment file {} due to {}", motivation, segment);
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:371: error: class, interface, or enum expected
+            return eventsInSegment;
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:372: error: class, interface, or enum expected
+        } catch (NoSuchFileException nsfex) {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:375: error: class, interface, or enum expected
+            return 0;
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:376: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:381: error: class, interface, or enum expected
+        if (!oldestSegmentPath.isPresent()) {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:383: error: class, interface, or enum expected
+            return;
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:384: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:387: error: class, interface, or enum expected
+        if (!foundTimestamp.isPresent()) {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:391: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:393: error: class, interface, or enum expected
+    }
+    ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:400: error: class, interface, or enum expected
+        final int lastBlockId = (int) Math.ceil(((Files.size(segmentPath) - VERSION_SIZE) / (double) BLOCK_SIZE)) - 1;
+              ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:401: error: class, interface, or enum expected
+        byte[] eventBytes;
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:402: error: class, interface, or enum expected
+        try (RecordIOReader recordReader = new RecordIOReader(segmentPath)) {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:404: error: class, interface, or enum expected
+            do {
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:406: error: class, interface, or enum expected
+                eventBytes = recordReader.readEvent();
+                ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:407: error: class, interface, or enum expected
+                blockId--;
+                ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:408: error: class, interface, or enum expected
+            } while (eventBytes == null && blockId >= 0); // no event present in last block, try with the one before
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:409: error: class, interface, or enum expected
+        } catch (NoSuchFileException nsfex) {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:412: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:415: error: class, interface, or enum expected
+            return Optional.empty();
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:416: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:418: error: class, interface, or enum expected
+    }
+    ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:423: error: class, interface, or enum expected
+        final Optional<Path> oldestSegment = listSegmentPaths(queuePath)
+              ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:425: error: class, interface, or enum expected
+        if (oldestSegment.isPresent()) {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:426: error: class, interface, or enum expected
+            final Path beheadedSegment = oldestSegment.get();
+                  ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:427: error: class, interface, or enum expected
+            deleteTailSegment(beheadedSegment, "dead letter queue size exceeded dead_letter_queue.max_bytes size(" + maxQueueSize + ")");
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:428: error: class, interface, or enum expected
+        } else {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:430: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:432: error: class, interface, or enum expected
+    }
+    ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:442: error: class, interface, or enum expected
+    private static boolean alreadyProcessed(final Event event) {
+                                                  ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:444: error: class, interface, or enum expected
+    }
+    ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:449: error: class, interface, or enum expected
+        } catch (Exception e){
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:451: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:461: error: class, interface, or enum expected
+    }
+    ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:463: error: class, interface, or enum expected
+    private void finalizeSegment(final FinalizeWhen finalizeWhen) throws IOException {
+                                       ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:465: error: class, interface, or enum expected
+        try {
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:469: error: class, interface, or enum expected
+            if (currentWriter != null && currentWriter.hasWritten()) {
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:471: error: class, interface, or enum expected
+                Files.move(queuePath.resolve(String.format(TEMP_FILE_PATTERN, currentSegmentIndex)),
+                ^
+
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:474: error: class, interface, or enum expected
+                updateOldestSegmentReference();
+                ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:475: error: class, interface, or enum expected
+                executeAgeRetentionPolicy();
+                ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:476: error: class, interface, or enum expected
+                if (isOpen()) {
+                ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:478: error: class, interface, or enum expected
+                }
+                ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:482: error: class, interface, or enum expected
+        }
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:489: error: class, interface, or enum expected
+            t.setDaemon(true);
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:491: error: class, interface, or enum expected
+            t.setName("dlq-flush-check");
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:492: error: class, interface, or enum expected
+            return t;
+            ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:493: error: class, interface, or enum expected
+        });
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:494: error: class, interface, or enum expected
+        flushScheduler.scheduleAtFixedRate(this::flushCheck, 1L, 1L, TimeUnit.SECONDS);
+        ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:495: error: class, interface, or enum expected
+    }
+    ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:502: error: class, interface, or enum expected
+    }
+    ^
+/home/logstash/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java:507: error: class, interface, or enum expected
+        } catch (IOException e) {
+        ^
+100 errors
+> Task :markAliasDefinitions
+> Task :copyPluginAlias_java
+> Task :copyPluginAlias_ruby
+> Task :copyPluginAlias NO-SOURCE
+> Task :logstash-core:processResources
+> Task :logstash-core:copyRuntimeLibs
+> Task :markTestAliasDefinitions
+> Task :copyPluginTestAlias_java
+> Task :copyPluginTestAlias_ruby
+> Task :copyPluginTestAlias
+> Task :assemble
+> Task :benchmark-cli:assemble
+> Task :dependencies-report:assemble
+> Task :ingest-converter:assemble
+> Task :jvm-options-parser:assemble
+> Task :logstash-core-benchmarks:processResources
+> Task :logstash-integration-tests:compileJava NO-SOURCE
+> Task :logstash-integration-tests:processResources NO-SOURCE
+> Task :logstash-integration-tests:classes UP-TO-DATE
+> Task :logstash-integration-tests:jar
+> Task :logstash-integration-tests:assemble
+> Task :logstash-xpack:compileJava NO-SOURCE
+> Task :logstash-xpack:processResources NO-SOURCE
+> Task :logstash-xpack:classes UP-TO-DATE
+> Task :logstash-xpack:jar
+> Task :logstash-xpack:assemble
+> Task :logstash-core:processTestResources
+> Task :logstash-core-benchmarks:processTestResources NO-SOURCE
+> Task :logstash-integration-tests:processTestResources NO-SOURCE
+> Task :logstash-xpack:processTestResources NO-SOURCE
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':logstash-core:compileJava'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+
+56 actionable tasks: 51 executed, 5 up-to-date
+* Get more help at https://help.gradle.org
+
+BUILD FAILED in 1m 49s

@@ -1,0 +1,90 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/java_pipeline_spec.rb b/logstash-core/spec/logstash/java_pipeline_spec.rb
+index daec7162b..b83c8e8aa 100644
+--- a/logstash-core/spec/logstash/java_pipeline_spec.rb
++++ b/logstash-core/spec/logstash/java_pipeline_spec.rb
+@@ -80,64 +80,22 @@ class DummyCodec < LogStash::Codecs::Base
+   def encode(event)
+     event
+   end
+-
+-  def close
+-  end
+-end
+-
+-class DummyOutputMore < ::LogStash::Outputs::DummyOutput
+-  config_name "dummyoutputmore"
+ end
+ 
+-class DummyFilter < LogStash::Filters::Base
+-  config_name "dummyfilter"
+-  milestone 2
+-
+-  def register() end
+-
+-  def filter(event) end
+-
+-  def threadsafe?() false; end
+-
+-  def close() end
+-end
+-
+-class DummyCrashingFilter < LogStash::Filters::Base
+-  config_name "dummycrashingfilter"
+-  milestone 2
++class DummyFlushingFilter < LogStash::Filters::Base
++  config_name "dummyflushingfilter"
+ 
+-  def register; end
++  def register
++  end
+ 
+   def filter(event)
+-    raise("crashing filter")
++    filter_matched(event)
+   end
+-end
+-
+-class DummySafeFilter < LogStash::Filters::Base
+-  config_name "dummysafefilter"
+-  milestone 2
+-
+-  def register() end
+ 
+-  def filter(event) end
+-
+-  def threadsafe?() true; end
+-
+-  def close() end
+-end
+-
+-class DummyFlushingFilter < LogStash::Filters::Base
+-  config_name "dummyflushingfilter"
+-  milestone 2
+-
+-  def register() end
+-  def filter(event) end
+-  def periodic_flush
+-    true
+-  end
+-  def flush(options)
++  def flush(options = {})
+     [::LogStash::Event.new("message" => "dummy_flush")]
+   end
++
+   def close() end
+ end
+ 

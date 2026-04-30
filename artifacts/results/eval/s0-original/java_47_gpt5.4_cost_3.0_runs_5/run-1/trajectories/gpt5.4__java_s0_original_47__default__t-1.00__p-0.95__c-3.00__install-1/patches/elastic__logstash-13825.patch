@@ -1,0 +1,127 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElement.java b/logstash-core/src/main/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElement.java
+index 42541f2a5..d84a834f9 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElement.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElement.java
+@@ -170,26 +170,41 @@ public final class ComputeStepSyntaxElement<T extends Dataset> {
+     }
+ 
+     private String generateCode(final String name) {
+-        try {
+-            return REDUNDANT_SEMICOLON.matcher(new Formatter().formatSource(
+-                String.format(
+-                    "package org.logstash.generated;\npublic final class %s extends org.logstash.config.ir.compiler.BaseDataset implements %s { %s }",
+-                    name,
+-                    type.getName(),
+-                    SyntaxFactory.join(
+-                        fields.inlineAssigned().generateCode(), fieldsAndCtor(name),
+-                        combine(
+-                            StreamSupport.stream(methods.spliterator(), false)
+-                                .toArray(SyntaxElement[]::new)
+-                        )
+-                    )
++        final String source = String.format(
++            "package org.logstash.generated;\npublic final class %s extends org.logstash.config.ir.compiler.BaseDataset implements %s { %s }",
++            name,
++            type.getName(),
++            SyntaxFactory.join(
++                fields.inlineAssigned().generateCode(), fieldsAndCtor(name),
++                combine(
++                    StreamSupport.stream(methods.spliterator(), false)
++                        .toArray(SyntaxElement[]::new)
+                 )
+-            )).replaceAll("\n");
+-        } catch (final FormatterException ex) {
+-            throw new IllegalStateException(ex);
++            )
++        );
++        return formatSource(source);
++    }
++
++    @VisibleForTesting
++    static String formatSource(final String source) {
++        return formatSource(source, input -> new Formatter().formatSource(input));
++    }
++
++    @VisibleForTesting
++    static String formatSource(final String source, final SourceFormatter formatter) {
++        try {
++            return REDUNDANT_SEMICOLON.matcher(formatter.format(source)).replaceAll("\n");
++        } catch (final FormatterException | LinkageError ex) {
++            return source;
+         }
+     }
+ 
++    @FunctionalInterface
++    interface SourceFormatter {
++        String format(String source) throws FormatterException;
++    }
++
++
+     private static Path debugDir() {
+         Path sourceDir = null;
+         try {
+diff --git a/logstash-core/src/test/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElementTest.java b/logstash-core/src/test/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElementTest.java
+new file mode 100644
+index 000000000..f42973bfc
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElementTest.java
+@@ -0,0 +1,45 @@
++package org.logstash.config.ir.compiler;
++
++import com.google.googlejavaformat.java.FormatterException;
++import org.junit.Test;
++
++import static org.hamcrest.CoreMatchers.is;
++import static org.hamcrest.MatcherAssert.assertThat;
++
++public class ComputeStepSyntaxElementTest {
++
++    @Test
++    public void returnsFormattedSourceWhenFormattingSucceeds() throws FormatterException {
++        final String source = "class A {}";
++        final String formatted = "class A {\n}\n";
++
++        assertThat(
++            ComputeStepSyntaxElement.formatSource(source, input -> formatted),
++            is(formatted)
++        );
++    }
++
++    @Test
++    public void returnsOriginalSourceWhenFormattingFailsWithFormatterException() {
++        final String source = "class A {}";
++
++        assertThat(
++            ComputeStepSyntaxElement.formatSource(source, input -> {
++                throw new FormatterException("boom");
++            }),
++            is(source)
++        );
++    }
++
++    @Test
++    public void returnsOriginalSourceWhenFormattingFailsWithIllegalAccessError() {
++        final String source = "class A {}";
++
++        assertThat(
++            ComputeStepSyntaxElement.formatSource(source, input -> {
++                throw new IllegalAccessError("boom");
++            }),
++            is(source)
++        );
++    }
++}

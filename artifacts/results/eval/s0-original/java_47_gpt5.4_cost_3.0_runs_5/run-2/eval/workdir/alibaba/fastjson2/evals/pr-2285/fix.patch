@@ -1,0 +1,93 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+index f8b847de4..563445de7 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
++++ b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+@@ -54,4 +54,84 @@ public class JSONType_serializer {
+             assertEquals("{\"ID\":123}", str);
+         }
+     }
++
++    @Test
++    public void testFieldTypeJSONTypeSerializer() {
++        BeanHolder bean = new BeanHolder();
++        bean.value = new Bean();
++        bean.value.id = 123;
++
++        assertEquals("{\"value\":{\"ID\":123}}", JSON.toJSONString(bean));
++    }
++
++    @Test
++    public void testFieldTypeJSONTypeSerializerWithWriterCreators() {
++        BeanHolder bean = new BeanHolder();
++        bean.value = new Bean();
++        bean.value.id = 123;
++
++        for (ObjectWriterCreator creator : TestUtils.writerCreators()) {
++            ObjectWriter objectWriter = creator.createObjectWriter(BeanHolder.class);
++            JSONWriter jsonWriter = JSONWriter.of();
++            objectWriter.write(jsonWriter, bean);
++            String str = jsonWriter.toString();
++            assertEquals("{\"value\":{\"ID\":123}}", str);
++        }
++    }
++
++    @Test
++    public void testEnumFieldTypeJSONTypeSerializer() {
++        EnumBeanHolder bean = new EnumBeanHolder();
++        bean.value = DictEnum.B;
++
++        assertEquals("{\"value\":{\"id\":2}}", JSON.toJSONString(bean));
++    }
++
++    @Test
++    public void testEnumFieldTypeJSONTypeSerializerWithWriterCreators() {
++        EnumBeanHolder bean = new EnumBeanHolder();
++        bean.value = DictEnum.B;
++
++        for (ObjectWriterCreator creator : TestUtils.writerCreators()) {
++            ObjectWriter objectWriter = creator.createObjectWriter(EnumBeanHolder.class);
++            JSONWriter jsonWriter = JSONWriter.of();
++            objectWriter.write(jsonWriter, bean);
++            String str = jsonWriter.toString();
++            assertEquals("{\"value\":{\"id\":2}}", str);
++        }
++    }
++
++    public static class BeanHolder {
++        public Bean value;
++    }
++
++    public static class EnumBeanHolder {
++        public DictEnum value;
++    }
++
++    @JSONType(serializer = DictEnumWriter.class)
++    public enum DictEnum {
++        A(1),
++        B(2);
++
++        public final int id;
++
++        DictEnum(int id) {
++            this.id = id;
++        }
++    }
++
++    public static class DictEnumWriter
++            implements ObjectWriter<DictEnum> {
++        @Override
++        public void write(JSONWriter jsonWriter, Object object, Object fieldName, Type fieldType, long features) {
++            DictEnum e = (DictEnum) object;
++
++            jsonWriter.startObject();
++            jsonWriter.writeName("id");
++            jsonWriter.writeColon();
++            jsonWriter.writeInt32(e.id);
++            jsonWriter.endObject();
++        }
++    }
+ }

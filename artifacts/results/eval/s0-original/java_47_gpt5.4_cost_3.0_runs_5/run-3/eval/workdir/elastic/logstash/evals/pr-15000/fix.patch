@@ -1,0 +1,53 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index 81b24b68a..a5db544ef 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -251,13 +251,21 @@ public final class DeadLetterQueueWriter implements Closeable {
+             if (entryTimestamp.compareTo(lastEntryTimestamp) < 0) {
+                 entryTimestamp = lastEntryTimestamp;
+             }
+-            innerWriteEntry(entry);
++            final DLQEntry entryToWrite = new DLQEntry(
++                    entry.getEvent(),
++                    entry.getPluginType(),
++                    entry.getPluginId(),
++                    entry.getReason(),
++                    entryTimestamp
++            );
++            innerWriteEntry(entryToWrite);
+             lastEntryTimestamp = entryTimestamp;
+         } finally {
+             lock.unlock();
+         }
+     }
+ 
++
+     private void innerWriteEntry(DLQEntry entry) throws IOException {
+         Event event = entry.getEvent();
+ 
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+index 8bcfb6359..a2abeee34 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+@@ -253,6 +253,7 @@ public class DeadLetterQueueWriterAgeRetentionTest {
+                 .retentionTime(retainedPeriod)
+                 .clock(fakeClock)
+                 .build()) {
++
+             // leave it untouched
+             assertTrue(writeManager.isOpen());
+ 

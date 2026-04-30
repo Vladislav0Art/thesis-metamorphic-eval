@@ -1,0 +1,114 @@
+
+diff --git a/.gitignore b/.gitignore
+index f474a9035..9741fa517 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+index f4808b2b7..4f7219c6b 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
++++ b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+@@ -384,6 +384,8 @@ public final class ObjectReaderImplList
+         } else if (listType == CLASS_UNMODIFIABLE_LIST) {
+             list = new ArrayList();
+             builder = (Function<List, List>) ((List items) -> Collections.unmodifiableList(items));
++        } else if (listType == EnumSet.class) {
++            list = new HashSet();
+         } else if (listType != null && listType != this.listType) {
+             try {
+                 list = (Collection) listType.newInstance();
+diff --git a/core/src/main/java/com/alibaba/fastjson2/util/TypeUtils.java b/core/src/main/java/com/alibaba/fastjson2/util/TypeUtils.java
+index 38c25d8e9..ece6b4f8d 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/util/TypeUtils.java
++++ b/core/src/main/java/com/alibaba/fastjson2/util/TypeUtils.java
+@@ -1449,6 +1449,11 @@ public class TypeUtils {
+         NAME_MAPPINGS.put(HashSet.class, "HashSet");
+         NAME_MAPPINGS.put(TreeSet.class, "TreeSet");
+         NAME_MAPPINGS.put(LinkedHashSet.class, "LinkedHashSet");
++        NAME_MAPPINGS.put(EnumSet.noneOf(TimeUnit.class).getClass(), "EnumSet");
++        TYPE_MAPPINGS.put("EnumSet", EnumSet.class);
++        TYPE_MAPPINGS.put("java.util.EnumSet", EnumSet.class);
++        TYPE_MAPPINGS.put("java.util.RegularEnumSet", EnumSet.class);
++        TYPE_MAPPINGS.put("java.util.JumboEnumSet", EnumSet.class);
+         NAME_MAPPINGS.put(ConcurrentHashMap.class, "ConcurrentHashMap");
+         NAME_MAPPINGS.put(ConcurrentLinkedQueue.class, "ConcurrentLinkedQueue");
+         NAME_MAPPINGS.put(ConcurrentLinkedDeque.class, "ConcurrentLinkedDeque");
+diff --git a/core/src/test/java/com/alibaba/fastjson2/dubbo/Dubbo11775.java b/core/src/test/java/com/alibaba/fastjson2/dubbo/Dubbo11775.java
+index 7afc73fd3..ef3a326ff 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/dubbo/Dubbo11775.java
++++ b/core/src/test/java/com/alibaba/fastjson2/dubbo/Dubbo11775.java
+@@ -1,42 +1,51 @@
+ package com.alibaba.fastjson2.dubbo;
+ 
+ import com.alibaba.fastjson2.JSONB;
++import com.alibaba.fastjson2.JSONFactory;
+ import com.alibaba.fastjson2.JSONReader;
+ import com.alibaba.fastjson2.JSONWriter;
++import com.alibaba.fastjson2.filter.ContextAutoTypeBeforeHandler;
++import com.alibaba.fastjson2.writer.ObjectWriter;
+ import lombok.Data;
+ import org.junit.jupiter.api.Test;
++import org.springframework.aop.framework.AdvisedSupport;
++import org.springframework.aop.framework.DefaultAopProxyFactory;
+ 
+ import java.io.Serializable;
+-import java.util.Arrays;
+-import java.util.List;
++import java.util.EnumSet;
++import java.util.concurrent.TimeUnit;
+ 
+ import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertSame;
+ 
+ public class Dubbo11775 {
+     @Test
+     public void test() {
+         ParamsDTO paramsDTO = new ParamsDTO();
+-        ParamsItemDTO paramsItemDTO = new ParamsItemDTO();
+-        paramsItemDTO.setA("aaa");
+-        paramsDTO.setParamsItems(Arrays.asList(paramsItemDTO));
+-
+-        byte[] jsonbBytes = JSONB.toBytes(paramsDTO, writerFeatures);
+-        ParamsDTO paramsDTO1 = (ParamsDTO) JSONB.parseObject(jsonbBytes, Object.class, readerFeatures);
+-        assertEquals(paramsDTO.paramsItems.getClass(), paramsDTO1.paramsItems.getClass());
+-        assertEquals(paramsDTO.paramsItems.size(), paramsDTO1.paramsItems.size());
+-        assertEquals(paramsDTO.paramsItems.get(0).a, paramsDTO1.paramsItems.get(0).a);
+-    }
++        paramsDTO.setParamsItemSet(EnumSet.of(TimeUnit.DAYS));
+ 
+-    @Data
+-    public static class ParamsItemDTO
+-            implements Serializable {
+-        private String a;
++        AdvisedSupport config = new AdvisedSupport();
++        config.setTarget(paramsDTO);
++        DefaultAopProxyFactory factory = new DefaultAopProxyFactory();
++        Object proxy = factory.createAopProxy(config).getProxy();
++        Object proxy1 = factory.createAopProxy(config).getProxy();
++
++        ObjectWriter objectWriter = JSONFactory.getDefaultObjectWriterProvider().getObjectWriter(proxy.getClass());
++        ObjectWriter objectWriter1 = JSONFactory.getDefaultObjectWriterProvider().getObjectWriter(proxy1.getClass());
++        assertSame(objectWriter, objectWriter1);
++
++        byte[] jsonbBytes = JSONB.toBytes(proxy, writerFeatures);
++        ContextAutoTypeBeforeHandler contextAutoTypeBeforeHandler = new ContextAutoTypeBeforeHandler(true, ParamsDTO.class.getName());
++        ParamsDTO paramsDTO1 = (ParamsDTO) JSONB.parseObject(jsonbBytes, Object.class, contextAutoTypeBeforeHandler, readerFeatures);
++
++        assertEquals(paramsDTO.getParamsItemSet().size(), paramsDTO1.getParamsItemSet().size());
++        assertEquals(paramsDTO.getParamsItemSet().iterator().next(), paramsDTO1.getParamsItemSet().iterator().next());
+     }
+ 
+     @Data
+     public static class ParamsDTO
+             implements Serializable {
+-        private List<ParamsItemDTO> paramsItems;
++        private EnumSet<TimeUnit> paramsItemSet;
+     }
+ 
+     JSONWriter.Feature[] writerFeatures = {
+@@ -51,7 +60,6 @@ public class Dubbo11775 {
+     };
+ 
+     JSONReader.Feature[] readerFeatures = {
+-            JSONReader.Feature.SupportAutoType,
+             JSONReader.Feature.UseDefaultConstructorAsPossible,
+             JSONReader.Feature.ErrorOnNoneSerializable,
+             JSONReader.Feature.UseNativeObject,

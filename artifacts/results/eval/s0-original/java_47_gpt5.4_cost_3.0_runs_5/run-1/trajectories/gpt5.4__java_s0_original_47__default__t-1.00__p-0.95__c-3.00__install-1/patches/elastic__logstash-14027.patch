@@ -1,0 +1,101 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/execution/WorkerLoop.java b/logstash-core/src/main/java/org/logstash/execution/WorkerLoop.java
+index 121f0fb57..957d123dd 100644
+--- a/logstash-core/src/main/java/org/logstash/execution/WorkerLoop.java
++++ b/logstash-core/src/main/java/org/logstash/execution/WorkerLoop.java
+@@ -109,4 +109,82 @@ public final class WorkerLoop implements Runnable {
+     private boolean isDraining() {
+         return drainQueue && !readClient.isEmpty();
+     }
++}
++    @Test
++    public void downstreamInputExceptionsDoNotEscapeSendEvents() {
++        bus.registerSender(output, addresses);
++        bus.listen(new FailingPipelineInput(), address);
++
++        bus.sendEvents(output, Collections.singleton(rubyEvent()), true);
++    }
++
++    @Test
++    public void whenInDefaultNonBlockingModeInputsShutdownInstantly() throws InterruptedException {
++        // Test confirms the default. If we decide to change the default we should change this test
++        assertThat(bus.isBlockOnUnlisten()).isFalse();
++
++        bus.registerSender(output, addresses);
++        bus.listen(input, address);
++
++        bus.unlisten(input, address); // This test would block forever if this is not non-block
++        bus.unregisterSender(output, addresses);
++    }
++
++    @Test
++    public void whenInBlockingModeInputsShutdownLast() throws InterruptedException {
++        bus.registerSender(output, addresses);
++        bus.listen(input, address);
++
++        bus.setBlockOnUnlisten(true);
++
++        Thread unlistenThread = new Thread( () -> {
++            try {
++                bus.unlisten(input, address);
++            } catch (InterruptedException e) {
++                e.printStackTrace();
++            }
++        });
++        unlistenThread.start();
++
++        // This should unblock the listener thread
++        bus.unregisterSender(output, addresses);
++        unlistenThread.join();
++
++        assertThat(bus.addressStates).isEmpty();
++    }
++
++
++    private JrubyEventExtLibrary.RubyEvent rubyEvent() {
++      return JrubyEventExtLibrary.RubyEvent.newRubyEvent(RubyUtil.RUBY);
++    }
++
++    static class TestPipelineInput implements PipelineInput {
++        public LongAdder eventCount = new LongAdder();
++
++        @Override
++        public boolean internalReceive(Stream<JrubyEventExtLibrary.RubyEvent> events) {
++            eventCount.add(events.count());
++            return true;
++        }
++
++        @Override
++        public boolean isRunning() {
++            return true;
++        }
++    }
++
++    static class FailingPipelineInput implements PipelineInput {
++        @Override
++        public boolean internalReceive(final Stream<JrubyEventExtLibrary.RubyEvent> events) {
++            throw new IllegalStateException("boom");
++        }
++
++        @Override
++        public boolean isRunning() {
++            return true;
++        }
++    }
++
++    static class TestPipelineOutput implements PipelineOutput {
++    }
+ }

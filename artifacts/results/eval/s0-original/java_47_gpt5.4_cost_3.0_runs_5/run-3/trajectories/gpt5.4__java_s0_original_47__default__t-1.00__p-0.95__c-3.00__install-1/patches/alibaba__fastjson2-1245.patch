@@ -1,0 +1,69 @@
+
+diff --git a/.gitignore b/.gitignore
+index f474a9035..9741fa517 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+index f4808b2b7..0369c2fd5 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
++++ b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+@@ -378,6 +378,14 @@ public final class ObjectReaderImplList
+             list = Collections.emptySet();
+         } else if (listType == CLASS_EMPTY_LIST) {
+             list = Collections.emptyList();
++        } else if (EnumSet.class.isAssignableFrom(listType)) {
++            if (itemType instanceof Class) {
++                list = EnumSet.noneOf((Class) itemType);
++            } else if (itemClass != null && itemClass.isEnum()) {
++                list = EnumSet.noneOf((Class) itemClass);
++            } else {
++                throw new JSONException(jsonReader.info("create enumset error " + listType));
++            }
+         } else if (listType == CLASS_SINGLETON_LIST) {
+             list = new ArrayList();
+             builder = (Function<Collection, Collection>) ((Collection items) -> Collections.singletonList(items.iterator().next()));
+diff --git a/core/src/test/java/com/alibaba/fastjson2/dubbo/Dubbo11775.java b/core/src/test/java/com/alibaba/fastjson2/dubbo/Dubbo11775.java
+index 7afc73fd3..6bf9f3ab0 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/dubbo/Dubbo11775.java
++++ b/core/src/test/java/com/alibaba/fastjson2/dubbo/Dubbo11775.java
+@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Test;
+ 
+ import java.io.Serializable;
+ import java.util.Arrays;
++import java.util.EnumSet;
+ import java.util.List;
++import java.util.concurrent.TimeUnit;
+ 
+ import static org.junit.jupiter.api.Assertions.assertEquals;
+ 
+@@ -27,6 +29,18 @@ public class Dubbo11775 {
+         assertEquals(paramsDTO.paramsItems.get(0).a, paramsDTO1.paramsItems.get(0).a);
+     }
+ 
++    @Test
++    public void testEnumSet() {
++        EnumSetDTO dto = new EnumSetDTO();
++        dto.setParamsItemSet(EnumSet.of(TimeUnit.DAYS));
++
++        byte[] jsonbBytes = JSONB.toBytes(dto, writerFeatures);
++        EnumSetDTO dto1 = (EnumSetDTO) JSONB.parseObject(jsonbBytes, Object.class, readerFeatures);
++
++        assertEquals(dto.getParamsItemSet().size(), dto1.getParamsItemSet().size());
++        assertEquals(dto.getParamsItemSet().iterator().next(), dto1.getParamsItemSet().iterator().next());
++    }
++
+     @Data
+     public static class ParamsItemDTO
+             implements Serializable {
+@@ -39,6 +53,12 @@ public class Dubbo11775 {
+         private List<ParamsItemDTO> paramsItems;
+     }
+ 
++    @Data
++    public static class EnumSetDTO
++            implements Serializable {
++        private EnumSet<TimeUnit> paramsItemSet;
++    }
++
+     JSONWriter.Feature[] writerFeatures = {
+             JSONWriter.Feature.WriteClassName,
+             JSONWriter.Feature.FieldBased,

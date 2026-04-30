@@ -1,0 +1,40 @@
+[2026-04-29 13:44:11,504] [docker_util.py] [INFO]: Start building image `mswebench/fasterxml_m_jackson-databind:pr-1923`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s0-original/java_47_gpt5.4_cost_3.0_runs_5/run-1/eval/workdir/fasterxml/jackson-databind/images/pr-1923`
+[2026-04-29 13:44:12,181] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/fasterxml_m_jackson-databind:base
+[2026-04-29 13:44:12,181] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:12,196] [docker_util.py] [INFO]: ---> becb4d456fc1
+[2026-04-29 13:44:12,196] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-04-29 13:44:12,196] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:12,243] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:12,244] [docker_util.py] [INFO]: ---> e9cf4709bee3
+[2026-04-29 13:44:12,244] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-04-29 13:44:12,244] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:12,271] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:12,271] [docker_util.py] [INFO]: ---> fb73bf020db4
+[2026-04-29 13:44:12,271] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-04-29 13:44:12,271] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:12,299] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:12,299] [docker_util.py] [INFO]: ---> 7b4c04660027
+[2026-04-29 13:44:12,299] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-04-29 13:44:12,299] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:12,324] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:12,324] [docker_util.py] [INFO]: ---> 5c76807bb9b5
+[2026-04-29 13:44:12,324] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-04-29 13:44:12,324] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:12,350] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:12,350] [docker_util.py] [INFO]: ---> 79a72182df45
+[2026-04-29 13:44:12,350] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-04-29 13:44:12,350] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:12,377] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:12,377] [docker_util.py] [INFO]: ---> de78748409c8
+[2026-04-29 13:44:12,377] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-04-29 13:44:12,377] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:12,405] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:12,405] [docker_util.py] [INFO]: ---> 0512985cba54
+[2026-04-29 13:44:12,405] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-04-29 13:44:12,405] [docker_util.py] [INFO]: 
+[2026-04-29 13:44:12,438] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:44:12,438] [docker_util.py] [INFO]: ---> e05dca2f3ceb
+[2026-04-29 13:44:12,438] [docker_util.py] [INFO]: sha256:e05dca2f3ceb58df6ecab01e844c42bb184cb282372d7752031bf1db438d7903
+[2026-04-29 13:44:12,440] [docker_util.py] [INFO]: Successfully built e05dca2f3ceb
+[2026-04-29 13:44:12,456] [docker_util.py] [INFO]: Successfully tagged mswebench/fasterxml_m_jackson-databind:pr-1923
+[2026-04-29 13:44:12,456] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s0-original/java_47_gpt5.4_cost_3.0_runs_5/run-1/eval/workdir/fasterxml/jackson-databind/images/pr-1923) build success: mswebench/fasterxml_m_jackson-databind:pr-1923

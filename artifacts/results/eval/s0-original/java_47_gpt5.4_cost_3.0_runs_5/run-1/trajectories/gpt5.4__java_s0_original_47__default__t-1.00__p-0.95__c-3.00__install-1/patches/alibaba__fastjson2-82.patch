@@ -1,0 +1,134 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 32ab096bf..7a2f8770f 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -33,6 +33,14 @@ public class JSONTest {
+         assertFalse(JSON.isValidArray("{}"));
+     }
+ 
++    @Test
++    public void test_isValidObject_0() {
++        assertTrue(JSON.isValidObject("{}"));
++        assertFalse(JSON.isValidObject("[]"));
++        assertTrue(JSON.isValidObject("{}".getBytes(StandardCharsets.UTF_8)));
++        assertFalse(JSON.isValidObject("[]".getBytes(StandardCharsets.UTF_8)));
++    }
++
+     @Test
+     public void test_parseArray_0() {
+         String str = "[1,2,3]";
+@@ -589,3 +597,110 @@ public class JSONTest {
+ 
+     }
+ }
++    /**
++     * Verify that the input is a valid JSON value.
++     *
++     * @param str the JSON string to validate
++     * @return {@code true} if the input is valid; {@code false} otherwise
++     */
++    static boolean isValid(String str) {
++        if (str == null || str.isEmpty()) {
++            return false;
++        }
++
++        try (JSONReader reader = JSONReader.of(str)) {
++            reader.skipValue();
++            return true;
++        } catch (JSONException | ArrayIndexOutOfBoundsException error) {
++            return false;
++        }
++    }
++
++    /**
++     * Verify that the input is a valid JSON object.
++     *
++     * @param str the JSON string to validate
++     * @return {@code true} if the input is a valid JSON object; {@code false} otherwise
++     */
++    static boolean isValidObject(String str) {
++        if (str == null || str.isEmpty()) {
++            return false;
++        }
++
++        try (JSONReader reader = JSONReader.of(str)) {
++            if (!reader.isObject()) {
++                return false;
++            }
++            reader.skipValue();
++            return true;
++        } catch (JSONException | ArrayIndexOutOfBoundsException error) {
++            return false;
++        }
++    }
++
++    /**
++     * Verify that the input is a valid JSON array.
++     *
++     * @param str the JSON string to validate
++     * @return {@code true} if the input is valid; {@code false} otherwise
++     */
++    static boolean isValidArray(String str) {
++        if (str == null || str.isEmpty()) {
++            return false;
++        }
++
++        try (JSONReader reader = JSONReader.of(str)) {
++            if (!reader.isArray()) {
++                return false;
++            }
++            reader.skipValue();
++            return true;
++        } catch (JSONException | ArrayIndexOutOfBoundsException error) {
++            return false;
++        }
++    }
++
++    static boolean isValid(byte[] bytes) {
++        if (bytes == null || bytes.length == 0) {
++            return false;
++        }
++
++        try (JSONReader reader = JSONReader.of(bytes)) {
++            reader.skipValue();
++            return true;
++        } catch (JSONException | ArrayIndexOutOfBoundsException error) {
++            return false;
++        }
++    }
++
++    static boolean isValidObject(byte[] bytes) {
++        if (bytes == null || bytes.length == 0) {
++            return false;
++        }
++
++        try (JSONReader reader = JSONReader.of(bytes)) {
++            if (!reader.isObject()) {
++                return false;
++            }
++            reader.skipValue();
++            return true;
++        } catch (JSONException | ArrayIndexOutOfBoundsException error) {
++            return false;
++        }
++    }
++
++    static boolean isValidArray(byte[] bytes) {
++        if (bytes == null || bytes.length == 0) {
++            return false;
++        }
++
++        try (JSONReader reader = JSONReader.of(bytes)) {
++            if (!reader.isArray()) {
++                return false;
++            }
++            reader.skipValue();
++            return true;
++        } catch (JSONException | ArrayIndexOutOfBoundsException error) {
++            return false;
++        }
++    }

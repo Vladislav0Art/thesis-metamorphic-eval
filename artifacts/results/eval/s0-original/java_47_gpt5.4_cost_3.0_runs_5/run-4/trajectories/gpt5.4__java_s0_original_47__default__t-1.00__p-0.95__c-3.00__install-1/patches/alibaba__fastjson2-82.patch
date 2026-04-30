@@ -1,0 +1,123 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index b6a0ff2ce..25d749775 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -608,6 +608,28 @@ public interface JSON {
+         return true;
+     }
+ 
++    /**
++     * Verify the {@link String} is JSON Object
++     *
++     * @param text the {@link String} to validate
++     * @return T/F
++     */
++    static boolean isValidObject(String text) {
++        if (text == null || text.length() == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(text);
++        try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
++            jsonReader.skipValue();
++        } catch (JSONException error) {
++            return false;
++        }
++        return true;
++    }
++
+     /**
+      * Verify the {@link String} is JSON Array
+      *
+@@ -649,6 +671,28 @@ public interface JSON {
+         return true;
+     }
+ 
++    /**
++     * Verify the byte array is JSON Object
++     *
++     * @param bytes the byte array to validate
++     * @return T/F
++     */
++    static boolean isValidObject(byte[] bytes) {
++        if (bytes == null || bytes.length == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(bytes);
++        try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
++            jsonReader.skipValue();
++        } catch (JSONException error) {
++            return false;
++        }
++        return true;
++    }
++
+     /**
+      * Verify the byte array is JSON Array
+      *
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 32ab096bf..aa14a4425 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -33,6 +33,13 @@ public class JSONTest {
+         assertFalse(JSON.isValidArray("{}"));
+     }
+ 
++    @Test
++    public void test_isValidObject_0() {
++        assertTrue(JSON.isValidObject("{}"));
++        assertTrue(JSON.isValidObject(" \n\t{}"));
++        assertFalse(JSON.isValidObject("[]"));
++    }
++
+     @Test
+     public void test_parseArray_0() {
+         String str = "[1,2,3]";
+diff --git a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+index 7a28d61a8..121060e2a 100644
+--- a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
++++ b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+@@ -446,6 +446,10 @@ public class JSON {
+         return com.alibaba.fastjson2.JSON.isValid(str);
+     }
+ 
++    public static boolean isValidObject(String str) {
++        return com.alibaba.fastjson2.JSON.isValidObject(str);
++    }
++
+     public static boolean isValidArray(String str) {
+         return com.alibaba.fastjson2.JSON.isValidArray(str);
+     }
+diff --git a/fastjson1-compatible/src/test/java/com/alibaba/fastjson/JSONTest.java b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/JSONTest.java
+new file mode 100644
+index 000000000..0c71e8f04
+--- /dev/null
++++ b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/JSONTest.java
+@@ -0,0 +1,18 @@
++package com.alibaba.fastjson;
++
++import org.junit.jupiter.api.Test;
++
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++public class JSONTest {
++    @Test
++    public void testIsValidObject() {
++        assertTrue(JSON.isValidObject("{}"));
++        assertTrue(JSON.isValidObject(" \n\t{}"));
++        assertFalse(JSON.isValidObject("[]"));
++
++        assertTrue(JSON.isValidArray("[]"));
++        assertFalse(JSON.isValidArray("{}"));
++    }
++}

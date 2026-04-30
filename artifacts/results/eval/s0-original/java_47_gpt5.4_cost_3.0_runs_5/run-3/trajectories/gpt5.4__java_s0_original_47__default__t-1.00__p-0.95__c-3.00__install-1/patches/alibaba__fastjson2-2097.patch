@@ -1,0 +1,173 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+index 2af2137f4..1d72f4ffa 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
++++ b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+@@ -601,6 +601,10 @@ public final class ObjectReaderImplList
+             }
+         }
+ 
++        List<Integer> arrayListResolveIndexes = null;
++        List<JSONPath> arrayListResolvePaths = null;
++        boolean arraysList = listClass == CLASS_ARRAYS_LIST;
++
+         for (int i = 0; ; ++i) {
+             if (jsonReader.nextIfArrayEnd()) {
+                 break;
+@@ -614,6 +618,14 @@ public final class ObjectReaderImplList
+                     String reference = jsonReader.readReference();
+                     if ("..".equals(reference)) {
+                         item = this;
++                    } else if (arraysList) {
++                        if (arrayListResolveIndexes == null) {
++                            arrayListResolveIndexes = new ArrayList<>();
++                            arrayListResolvePaths = new ArrayList<>();
++                        }
++                        arrayListResolveIndexes.add(i);
++                        arrayListResolvePaths.add(JSONPath.of(reference));
++                        item = null;
+                     } else {
+                         jsonReader.addResolveTask(list, i, JSONPath.of(reference));
+                         continue;
+@@ -631,7 +643,14 @@ public final class ObjectReaderImplList
+         jsonReader.nextIfComma();
+ 
+         if (builder != null) {
+-            return builder.apply(list);
++            Object buildList = builder.apply(list);
++            if (arrayListResolveIndexes != null) {
++                List resolvedList = (List) buildList;
++                for (int i = 0; i < arrayListResolveIndexes.size(); i++) {
++                    jsonReader.addResolveTask(resolvedList, arrayListResolveIndexes.get(i), arrayListResolvePaths.get(i));
++                }
++            }
++            return buildList;
+         }
+ 
+         return list;
+diff --git a/core/src/test/java/com/alibaba/fastjson2/dubbo/DubboTest6.java b/core/src/test/java/com/alibaba/fastjson2/dubbo/DubboTest6.java
+index 15d6698f6..edda3f5e2 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/dubbo/DubboTest6.java
++++ b/core/src/test/java/com/alibaba/fastjson2/dubbo/DubboTest6.java
+@@ -1,61 +1,77 @@
+-package com.alibaba.fastjson2.dubbo;
++package com.alibaba.fastjson2.codec;
+ 
++import com.alibaba.fastjson2.JSON;
+ import com.alibaba.fastjson2.JSONB;
+-import com.alibaba.fastjson2.JSONFactory;
+ import com.alibaba.fastjson2.JSONReader;
+ import com.alibaba.fastjson2.JSONWriter;
+-import com.alibaba.fastjson2.filter.ContextAutoTypeBeforeHandler;
+-import com.alibaba.fastjson2.writer.ObjectWriter;
+-import org.apache.dubbo.springboot.demo.BusinessException;
+-import org.apache.dubbo.springboot.demo.ParamsDTO;
+-import org.apache.dubbo.springboot.demo.ParamsItemDTO;
+-import org.apache.dubbo.springboot.demo.ServiceException;
+ import org.junit.jupiter.api.Test;
+-import org.springframework.aop.framework.AdvisedSupport;
+-import org.springframework.aop.framework.DefaultAopProxyFactory;
+ 
+ import java.util.Arrays;
+-import java.util.Base64;
+-import java.util.EnumSet;
+-import java.util.concurrent.TimeUnit;
++import java.util.List;
+ 
+-import static org.junit.jupiter.api.Assertions.*;
++import static org.junit.jupiter.api.Assertions.assertSame;
+ 
+-public class DubboTest6 {
++public class RefTest6_list {
+     @Test
+-    public void test() {
+-        ContextAutoTypeBeforeHandler contextAutoTypeBeforeHandler = new ContextAutoTypeBeforeHandler(true, ServiceException.class.getName(), BusinessException.class.getName());
+-        byte[] jsonbBytes = Base64.getDecoder().decode(base64);
+-        System.out.println(JSONB.toJSONString(jsonbBytes));
+-        ServiceException exception = (ServiceException) JSONB.parseObject(jsonbBytes, Object.class, contextAutoTypeBeforeHandler, readerFeatures);
+-        assertNotNull(exception);
+-        StackTraceElement[] stackTrace = exception.getStackTrace();
+-        assertNotNull(stackTrace);
++    public void test_ref_0() {
++        A a = new A();
++        a.c = new C();
++        a.values = Arrays.asList(a.c);
++
++        byte[] bytes = JSONB.toBytes(a, JSONWriter.Feature.ReferenceDetection);
++
++        B b = JSONB.parseObject(bytes, B.class);
++        assertSame(b.c, b.values.get(0));
++
++        A a1 = JSONB.parseObject(bytes, (java.lang.reflect.Type) A.class);
++        assertSame(a1.c, a1.values.get(0));
+     }
+ 
+     @Test
+-    public void test1() {
+-        ParamsDTO paramsDTO = new ParamsDTO();
+-        ParamsItemDTO paramsItemDTO = new ParamsItemDTO();
+-        paramsItemDTO.setA("aaa");
+-        paramsDTO.setParamsItems(Arrays.asList(paramsItemDTO));
++    public void test_ref_0_symbol() {
++        A a = new A();
++        a.c = new C();
++        a.values = Arrays.asList(a.c);
+ 
+-        AdvisedSupport config = new AdvisedSupport();
+-        config.setTarget(paramsDTO);
+-        DefaultAopProxyFactory factory = new DefaultAopProxyFactory();
+-        Object proxy = factory.createAopProxy(config).getProxy();
+-        Object proxy1 = factory.createAopProxy(config).getProxy();
++        byte[] bytes = JSONB.toBytes(a, JSONWriter.Feature.ReferenceDetection);
+ 
+-        ObjectWriter objectWriter = JSONFactory.getDefaultObjectWriterProvider().getObjectWriter(proxy.getClass());
+-        ObjectWriter objectWriter1 = JSONFactory.getDefaultObjectWriterProvider().getObjectWriter(proxy1.getClass());
+-        assertSame(objectWriter, objectWriter1);
++        JSONB.dump(bytes);
+ 
+-        byte[] jsonbBytes = JSONB.toBytes(proxy, writerFeatures);
++        B b = JSONB.parseObject(bytes, (java.lang.reflect.Type) B.class, JSONB.symbolTable(""), JSONReader.Feature.SupportAutoType);
++        assertSame(b.c, b.values.get(0));
+ 
+-        assertEquals("{\n" +
+-                "\t\"@type\":\"org.apache.dubbo.springboot.demo.ParamsDTO#0\",\n" +
+-                "\t\"@value\":{\n" +
+-                "\t\t\"paramsItems#1\":{\n" +
++        A a1 = JSONB.parseObject(bytes, (java.lang.reflect.Type) A.class, JSONB.symbolTable(""));
++        assertSame(a1.c, a1.values.get(0));
++    }
++
++    @Test
++    public void test_ref_0_text() {
++        A a = new A();
++        a.c = new C();
++        a.values = Arrays.asList(a.c);
++
++        String str = JSON.toJSONString(a, JSONWriter.Feature.ReferenceDetection, JSONWriter.Feature.WriteClassName);
++
++        B b = JSON.parseObject(str, B.class, JSONReader.Feature.SupportAutoType);
++        assertSame(b.c, b.values.get(0));
++
++        A a1 = JSON.parseObject(str, A.class, JSONReader.Feature.SupportAutoType);
++        assertSame(a1.c, a1.values.get(0));
++    }
++
++    public static class A {
++        public C c;
++        public List<C> values;
++    }
++
++    private static class B {
++        public C c;
++        public List<C> values;
++    }
++
++    public class C {
++    }
++}
+                 "\t\t\t\"@type\":\"java.util.Arrays$ArrayList#2\",\n" +
+                 "\t\t\t\"@value\":[\n" +
+                 "\t\t\t\t{\n" +

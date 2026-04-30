@@ -1,0 +1,59 @@
+
+diff --git a/.gitignore b/.gitignore
+index 587b8bfb..70946ce8 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -23,3 +23,7 @@ syntax: glob
+ *.iws
+ /.idea/
+ dependency-reduced-pom.xml
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/Version.java b/src/main/java/com/fasterxml/jackson/core/Version.java
+index d70e5e19..be056b1d 100644
+--- a/src/main/java/com/fasterxml/jackson/core/Version.java
++++ b/src/main/java/com/fasterxml/jackson/core/Version.java
+@@ -31,7 +31,7 @@ public class Version
+     protected final String _artifactId;
+ 
+     /**
+-     * Additional information for snapshot versions; null for non-snapshot
++     * Additional information for snapshot versions; empty for non-snapshot
+      * (release) versions.
+      */
+     protected final String _snapshotInfo;
+@@ -57,7 +57,7 @@ public class Version
+         _majorVersion = major;
+         _minorVersion = minor;
+         _patchLevel = patchLevel;
+-        _snapshotInfo = snapshotInfo;
++        _snapshotInfo = (snapshotInfo == null) ? "" : snapshotInfo;
+         _groupId = (groupId == null) ? "" : groupId;
+         _artifactId = (artifactId == null) ? "" : artifactId;
+     }
+diff --git a/src/test/java/com/fasterxml/jackson/core/VersionTest.java b/src/test/java/com/fasterxml/jackson/core/VersionTest.java
+index 69123265..04bc5ac8 100644
+--- a/src/test/java/com/fasterxml/jackson/core/VersionTest.java
++++ b/src/test/java/com/fasterxml/jackson/core/VersionTest.java
+@@ -20,6 +20,19 @@ public class VersionTest
+         assertEquals(version1.hashCode(), version2.hashCode());
+     }
+ 
++    @Test
++    public void testEqualsAndHashCodeWithNullSnapshotInfo() {
++        Version version1 = new Version(1, 2, 3, null, "group", "artifact");
++        Version version2 = new Version(1, 2, 3, null, "group", "artifact");
++        Version version3 = new Version(1, 2, 3, "", "group", "artifact");
++
++        assertEquals(version1, version2);
++        assertEquals(version2, version1);
++        assertEquals(version1, version3);
++        assertEquals(version1.hashCode(), version2.hashCode());
++        assertEquals(version1.hashCode(), version3.hashCode());
++        assertFalse(version1.isSnapshot());
++    }
+   @Test
+   public void testCompareToOne() {
+       Version version = Version.unknownVersion();

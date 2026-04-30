@@ -1,0 +1,116 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..1bc2f098e 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -70,9 +70,18 @@ done
+ setup_bundled_jdk_part() {
+   OS_NAME="$(uname -s)"
+   if [ $OS_NAME = "Darwin" ]; then
+-    BUNDLED_JDK_PART="jdk.app/Contents/Home"
++    BUNDLED_JDK_DIR="jdk.app"
++    BUNDLED_JDK_PART="${BUNDLED_JDK_DIR}/Contents/Home"
+   else
+-    BUNDLED_JDK_PART="jdk"
++    BUNDLED_JDK_DIR="jdk"
++    BUNDLED_JDK_PART="${BUNDLED_JDK_DIR}"
++  fi
++}
++
++setup_bundled_jdk_version() {
++  BUNDLED_JDK_VERSION=""
++  if [ -r "${LOGSTASH_HOME}/${BUNDLED_JDK_DIR}/VERSION" ]; then
++    BUNDLED_JDK_VERSION="$(cat "${LOGSTASH_HOME}/${BUNDLED_JDK_DIR}/VERSION")"
+   fi
+ }
+ 
+@@ -94,13 +103,18 @@ setup_java() {
+   # set the path to java into JAVACMD which will be picked up by JRuby to launch itself
+   if [ -z "$JAVACMD" ]; then
+     setup_bundled_jdk_part
++    setup_bundled_jdk_version
+     JAVACMD_TEST=`command -v java`
+     if [ -n "$LS_JAVA_HOME" ]; then
+       echo "Using LS_JAVA_HOME defined java: ${LS_JAVA_HOME}."
+       if [ -x "$LS_JAVA_HOME/bin/java" ]; then
+         JAVACMD="$LS_JAVA_HOME/bin/java"
+         if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+-          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          if [ -n "$BUNDLED_JDK_VERSION" ]; then
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK (${BUNDLED_JDK_VERSION})."
++          else
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          fi
+         fi
+       else
+         echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."
+diff --git a/bin/setup.bat b/bin/setup.bat
+index 5e8acb4d1..745608fbf 100644
+--- a/bin/setup.bat
++++ b/bin/setup.bat
+@@ -20,11 +20,20 @@ for %%I in ("%LS_HOME%..") do set LS_HOME=%%~dpfI
+ 
+ rem ### 2: set java
+ 
++set BUNDLED_JDK_VERSION=
++if exist "%LS_HOME%\jdk\VERSION" (
++  set /p BUNDLED_JDK_VERSION=<"%LS_HOME%\jdk\VERSION"
++)
++
+ if defined LS_JAVA_HOME (
+   set JAVACMD=%LS_JAVA_HOME%\bin\java.exe
+   echo Using LS_JAVA_HOME defined java: %LS_JAVA_HOME%
+   if exist "%LS_HOME%\jdk" (
+-    echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK.
++    if "%BUNDLED_JDK_VERSION%" == "" (
++      echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK.
++    ) else (
++      echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK (%BUNDLED_JDK_VERSION%).
++    )
+   )
+ ) else (
+   if exist "%LS_HOME%\jdk" (
+@@ -62,4 +71,4 @@ if not exist %JRUBY_BIN% (
+   exit /b 1
+ )
+ 
+-set RUBYLIB=%LS_HOME%\lib
+\ No newline at end of file
++set RUBYLIB=%LS_HOME%\lib
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..4a952b942 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -861,6 +861,19 @@ tasks.register("copyJdk", Copy) {
+     // CLI project properties: -Pjdk_bundle_os=[windows|linux|darwin] -Pjdk_arch=[arm64|x86_64]
+     doLast {
+         System.out.println "Download location is ${project.ext.jdkDownloadLocation}, Decompressing ${project.ext.jdkDirectory} to \"${project.ext.jdkBundlingDirectory}\""
++        String osName = selectOsType()
++        String releaseFilePath = osName == "darwin" ? "${project.ext.jdkBundlingDirectory}/Contents/Home/release" : "${project.ext.jdkBundlingDirectory}/release"
++        File releaseFile = file(releaseFilePath)
++        if (releaseFile.exists()) {
++            Properties releaseProperties = new Properties()
++            releaseFile.withInputStream { input ->
++                releaseProperties.load(input)
++            }
++            String implementorVersion = releaseProperties.getProperty("IMPLEMENTOR_VERSION")
++            if (implementorVersion != null) {
++                file("${project.ext.jdkBundlingDirectory}/VERSION").text = implementorVersion.replace('"', '') + System.lineSeparator()
++            }
++        }
+     }
+ }
+ 

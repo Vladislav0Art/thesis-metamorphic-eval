@@ -1,0 +1,160 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMaker.java
+index e03d11b9e..9633a7f61 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMaker.java
+@@ -212,6 +212,8 @@ class InlineDelegateByteBuddyMockMaker
+     private final WeakConcurrentMap<Object, MockMethodInterceptor> mocks =
+             new WeakConcurrentMap<>(false);
+ 
++    private final WeakConcurrentMap<Object, Boolean> clearedMocks = new WeakConcurrentMap<>(false);
++
+     private final DetachedThreadLocal<Map<Class<?>, MockMethodInterceptor>> mockedStatics =
+             new DetachedThreadLocal<>(DetachedThreadLocal.Cleaner.MANUAL);
+ 
+@@ -341,6 +343,7 @@ class InlineDelegateByteBuddyMockMaker
+                         new InlineBytecodeGenerator(
+                                 INSTRUMENTATION,
+                                 mocks,
++                                clearedMocks,
+                                 mockedStatics,
+                                 isMockConstruction,
+                                 onConstruction),
+@@ -397,15 +400,20 @@ class InlineDelegateByteBuddyMockMaker
+             MockMethodInterceptor mockMethodInterceptor =
+                     new MockMethodInterceptor(handler, settings);
+             mocks.put(instance, mockMethodInterceptor);
++            clearedMocks.remove(instance);
+             if (instance instanceof MockAccess) {
+                 ((MockAccess) instance).setMockitoInterceptor(mockMethodInterceptor);
+             }
+             mocks.expungeStaleEntries();
++            clearedMocks.expungeStaleEntries();
+             return instance;
+         } catch (InstantiationException e) {
+             throw new MockitoException(
+                     "Unable to create mock instance of type '" + type.getSimpleName() + "'", e);
+         }
++            throw new MockitoException(
++                    "Unable to create mock instance of type '" + type.getSimpleName() + "'", e);
++        }
+     }
+ 
+     @Override
+@@ -423,66 +431,6 @@ class InlineDelegateByteBuddyMockMaker
+         }
+     }
+ 
+-    private <T> RuntimeException prettifyFailure(
+-            MockCreationSettings<T> mockFeatures, Exception generationFailed) {
+-        Class<T> typeToMock = mockFeatures.getTypeToMock();
+-        if (typeToMock.isArray()) {
+-            throw new MockitoException(
+-                    join("Arrays cannot be mocked: " + typeToMock + ".", ""), generationFailed);
+-        }
+-        if (Modifier.isFinal(typeToMock.getModifiers())) {
+-            throw new MockitoException(
+-                    join(
+-                            "Mockito cannot mock this class: " + typeToMock + ".",
+-                            "Can not mock final classes with the following settings :",
+-                            " - explicit serialization (e.g. withSettings().serializable())",
+-                            " - extra interfaces (e.g. withSettings().extraInterfaces(...))",
+-                            "",
+-                            "You are seeing this disclaimer because Mockito is configured to create inlined mocks.",
+-                            "You can learn about inline mocks and their limitations under item #39 of the Mockito class javadoc.",
+-                            "",
+-                            "Underlying exception : " + generationFailed),
+-                    generationFailed);
+-        }
+-        if (TypeSupport.INSTANCE.isSealed(typeToMock) && typeToMock.isEnum()) {
+-            throw new MockitoException(
+-                    join(
+-                            "Mockito cannot mock this class: " + typeToMock + ".",
+-                            "Sealed abstract enums can't be mocked. Since Java 15 abstract enums are declared sealed, which prevents mocking.",
+-                            "You can still return an existing enum literal from a stubbed method call."),
+-                    generationFailed);
+-        }
+-        if (Modifier.isPrivate(typeToMock.getModifiers())) {
+-            throw new MockitoException(
+-                    join(
+-                            "Mockito cannot mock this class: " + typeToMock + ".",
+-                            "Most likely it is a private class that is not visible by Mockito",
+-                            "",
+-                            "You are seeing this disclaimer because Mockito is configured to create inlined mocks.",
+-                            "You can learn about inline mocks and their limitations under item #39 of the Mockito class javadoc.",
+-                            ""),
+-                    generationFailed);
+-        }
+-        throw new MockitoException(
+-                join(
+-                        "Mockito cannot mock this class: " + typeToMock + ".",
+-                        "",
+-                        "If you're not sure why you're getting this error, please open an issue on GitHub.",
+-                        "",
+-                        Platform.warnForVM(
+-                                "IBM J9 VM",
+-                                "Early IBM virtual machine are known to have issues with Mockito, please upgrade to an up-to-date version.\n",
+-                                "Hotspot",
+-                                ""),
+-                        Platform.describe(),
+-                        "",
+-                        "You are seeing this disclaimer because Mockito is configured to create inlined mocks.",
+-                        "You can learn about inline mocks and their limitations under item #39 of the Mockito class javadoc.",
+-                        "",
+-                        "Underlying exception : " + generationFailed),
+-                generationFailed);
+-    }
+-
+     @Override
+     public MockHandler getHandler(Object mock) {
+         MockMethodInterceptor interceptor;
+@@ -518,10 +466,12 @@ class InlineDelegateByteBuddyMockMaker
+                         "Cannot reset " + mock + " which is not currently registered as a mock");
+             }
+             mocks.put(mock, mockMethodInterceptor);
++            clearedMocks.remove(mock);
+             if (mock instanceof MockAccess) {
+                 ((MockAccess) mock).setMockitoInterceptor(mockMethodInterceptor);
+             }
+             mocks.expungeStaleEntries();
++            clearedMocks.expungeStaleEntries();
+         }
+     }
+ 
+@@ -538,12 +488,23 @@ class InlineDelegateByteBuddyMockMaker
+                 entry.remove(mock);
+             }
+         } else {
++            if (mocks.containsKey(mock)) {
++                clearedMocks.put(mock, true);
++            }
+             mocks.remove(mock);
++            clearedMocks.expungeStaleEntries();
+         }
+     }
+ 
+     @Override
+     public void clearAllMocks() {
++        mockedStatics.getBackingMap().clear();
++        for (Object mock : mocks.getBackingMap().target.keySet()) {
++            clearedMocks.put(mock, true);
++        }
++        mocks.clear();
++        clearedMocks.expungeStaleEntries();
++    }
+         mockedStatics.getBackingMap().clear();
+         mocks.clear();
+     }

@@ -1,0 +1,93 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONArray.java b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONArray.java
+index f7b8345e3..8cd6ba525 100644
+--- a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONArray.java
++++ b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONArray.java
+@@ -235,6 +235,23 @@ public class JSONArray extends JSON implements List {
+         return this;
+     }
+ 
++    public static boolean isValid(String str) {
++        if (str == null || str.isEmpty()) {
++            return false;
++        }
++
++        JSONReader jsonReader = JSONReader.of(str);
++        try {
++            if (!jsonReader.isArray()) {
++                return false;
++            }
++            jsonReader.skipValue();
++            return true;
++        } catch (com.alibaba.fastjson2.JSONException error) {
++            return false;
++        }
++    }
++
+     public <T> T toJavaObject(Class<T> clazz) {
+         return com.alibaba.fastjson2.JSON.toJavaObject(this, clazz);
+     }
+diff --git a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONObject.java b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONObject.java
+index 23838fad7..b4bf13a03 100755
+--- a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONObject.java
++++ b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONObject.java
+@@ -613,6 +613,23 @@ public class JSONObject extends JSON implements Map<String, Object>, Cloneable,
+         }
+     }
+ 
++    public static boolean isValid(String str) {
++        if (str == null || str.isEmpty()) {
++            return false;
++        }
++
++        JSONReader jsonReader = JSONReader.of(str);
++        try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
++            jsonReader.skipValue();
++            return true;
++        } catch (com.alibaba.fastjson2.JSONException error) {
++            return false;
++        }
++    }
++
+     public static <T> T toJavaObject(JSON json, Class<T> clazz) {
+         return com.alibaba.fastjson2.util.TypeUtils.cast(json, clazz);
+     }
+diff --git a/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
+index 5f165ed35..76c0e9074 100644
+--- a/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
++++ b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
+@@ -5,16 +5,23 @@ import com.alibaba.fastjson.JSONArray;
+ import com.alibaba.fastjson.JSONObject;
+ import org.junit.jupiter.api.Test;
+ 
++import static org.junit.jupiter.api.Assertions.assertFalse;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ public class Issue2982 {
+     @Test
+     public void test_for_issue() {
+-        String jsonStr = "[ { \"activity_type\" : 0, \"activity_id\" : \"***\", \"activity_tip\" : \"***\", \"position\" : \"1\" }, { \"activity_type\" : 0, \"activity_id\" : \"2669\", \"activity_tip\" : \"****\", \"position\" : \"1\" }]";
+-        assertTrue(JSONArray.isValidArray(jsonStr));
+-        assertTrue(JSON.isValidArray(jsonStr));
+-        assertTrue(JSONObject.isValidArray(jsonStr));
+-    }
++        String arrayJson = "[ { \"activity_type\" : 0, \"activity_id\" : \"***\", \"activity_tip\" : \"***\", \"position\" : \"1\" }, { \"activity_type\" : 0, \"activity_id\" : \"2669\", \"activity_tip\" : \"****\", \"position\" : \"1\" }]";
++        String objectJson = "{ \"activity_type\" : 0, \"activity_id\" : \"***\", \"activity_tip\" : \"***\", \"position\" : \"1\" }";
++
++        assertTrue(JSONArray.isValidArray(arrayJson));
++        assertTrue(JSON.isValidArray(arrayJson));
++        assertTrue(JSONObject.isValidArray(arrayJson));
+ 
++        assertTrue(JSONObject.isValid(objectJson));
++        assertFalse(JSONObject.isValid(arrayJson));
+ 
++        assertTrue(JSONArray.isValid(arrayJson));
++        assertFalse(JSONArray.isValid(objectJson));
++    }
+ }

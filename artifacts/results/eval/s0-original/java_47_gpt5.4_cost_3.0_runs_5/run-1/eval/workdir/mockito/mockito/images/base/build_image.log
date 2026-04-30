@@ -1,0 +1,44 @@
+[2026-04-29 13:43:53,883] [docker_util.py] [INFO]: Start building image `mswebench/mockito_m_mockito:base`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s0-original/java_47_gpt5.4_cost_3.0_runs_5/run-1/eval/workdir/mockito/mockito/images/base`
+[2026-04-29 13:43:54,552] [docker_util.py] [INFO]: Step 1/10 : FROM ubuntu:latest
+[2026-04-29 13:43:54,552] [docker_util.py] [INFO]: 
+[2026-04-29 13:43:54,565] [docker_util.py] [INFO]: ---> 66460d557b25
+[2026-04-29 13:43:54,565] [docker_util.py] [INFO]: Step 2/10 : ENV JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai"
+[2026-04-29 13:43:54,565] [docker_util.py] [INFO]: 
+[2026-04-29 13:43:54,610] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:43:54,610] [docker_util.py] [INFO]: ---> cb167ebb7869
+[2026-04-29 13:43:54,610] [docker_util.py] [INFO]: Step 3/10 : ENV DEBIAN_FRONTEND=noninteractive
+[2026-04-29 13:43:54,610] [docker_util.py] [INFO]: 
+[2026-04-29 13:43:54,632] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:43:54,632] [docker_util.py] [INFO]: ---> 6bbe6339a6a6
+[2026-04-29 13:43:54,633] [docker_util.py] [INFO]: Step 4/10 : ENV LANG=C.UTF-8
+[2026-04-29 13:43:54,633] [docker_util.py] [INFO]: 
+[2026-04-29 13:43:54,651] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:43:54,651] [docker_util.py] [INFO]: ---> 711a0bccd6b7
+[2026-04-29 13:43:54,651] [docker_util.py] [INFO]: Step 5/10 : ENV LC_ALL=C.UTF-8
+[2026-04-29 13:43:54,651] [docker_util.py] [INFO]: 
+[2026-04-29 13:43:54,671] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:43:54,671] [docker_util.py] [INFO]: ---> 0cc1a341f1de
+[2026-04-29 13:43:54,671] [docker_util.py] [INFO]: Step 6/10 : WORKDIR /home/
+[2026-04-29 13:43:54,671] [docker_util.py] [INFO]: 
+[2026-04-29 13:43:54,694] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:43:54,694] [docker_util.py] [INFO]: ---> 4491178bad8c
+[2026-04-29 13:43:54,694] [docker_util.py] [INFO]: Step 7/10 : RUN apt update && apt install -y gnupg ca-certificates git curl
+[2026-04-29 13:43:54,694] [docker_util.py] [INFO]: 
+[2026-04-29 13:43:54,715] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:43:54,715] [docker_util.py] [INFO]: ---> 271d4555ff55
+[2026-04-29 13:43:54,715] [docker_util.py] [INFO]: Step 8/10 : RUN curl -s https://repos.azul.com/azul-repo.key | gpg --dearmor -o /usr/share/keyrings/azul.gpg     && echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | tee /etc/apt/sources.list.d/zulu.list
+[2026-04-29 13:43:54,715] [docker_util.py] [INFO]: 
+[2026-04-29 13:43:54,738] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:43:54,738] [docker_util.py] [INFO]: ---> 1e6750fad6aa
+[2026-04-29 13:43:54,738] [docker_util.py] [INFO]: Step 9/10 : RUN apt update && apt install -y zulu21-jdk
+[2026-04-29 13:43:54,738] [docker_util.py] [INFO]: 
+[2026-04-29 13:43:54,802] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:43:54,802] [docker_util.py] [INFO]: ---> d6d810d40067
+[2026-04-29 13:43:54,802] [docker_util.py] [INFO]: Step 10/10 : RUN git clone https://github.com/mockito/mockito.git /home/mockito
+[2026-04-29 13:43:54,802] [docker_util.py] [INFO]: 
+[2026-04-29 13:43:54,829] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-29 13:43:54,829] [docker_util.py] [INFO]: ---> fda52827992a
+[2026-04-29 13:43:54,829] [docker_util.py] [INFO]: sha256:fda52827992acb76d888f1123faf40aee97e83fc2fc390cc6fee8c36b802dbee
+[2026-04-29 13:43:54,834] [docker_util.py] [INFO]: Successfully built fda52827992a
+[2026-04-29 13:43:54,856] [docker_util.py] [INFO]: Successfully tagged mswebench/mockito_m_mockito:base
+[2026-04-29 13:43:54,856] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s0-original/java_47_gpt5.4_cost_3.0_runs_5/run-1/eval/workdir/mockito/mockito/images/base) build success: mswebench/mockito_m_mockito:base

@@ -1,0 +1,120 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..eabf917fe 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -462,6 +462,18 @@ public enum MapperFeature implements ConfigFeature
+      */
+     IGNORE_DUPLICATE_MODULE_REGISTRATIONS(true),
+ 
++    /**
++     * Feature that determines whether the declared base type of a polymorphic
++     * value is used as the default implementation if no explicit defaultImpl
++     * was specified via annotations and no type id is present in input.
++     * This is only applicable when the declared base type itself is concrete.
++     *<p>
++     * Feature is disabled by default for backwards compatibility.
++     *
++     * @since 2.9.6
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /**
+      * Setting that determines what happens if an attempt is made to explicitly
+      * "merge" value of a property, where value does not support merging; either
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
+index 17d5ec72f..53d8b48fe 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
+@@ -123,7 +123,12 @@ public class StdTypeResolverBuilder
+         JavaType defaultImpl;
+ 
+         if (_defaultImpl == null) {
+-            defaultImpl = null;
++            if (config.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && baseType.isConcrete()) {
++                defaultImpl = baseType;
++            } else {
++                defaultImpl = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestSubtypes.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestSubtypes.java
+index 5517a2cc4..dca9b719e 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestSubtypes.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestSubtypes.java
+@@ -10,9 +10,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
+ import com.fasterxml.jackson.annotation.JsonTypeName;
+ import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
+ import com.fasterxml.jackson.databind.JsonMappingException;
++import com.fasterxml.jackson.databind.MapperFeature;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+ import com.fasterxml.jackson.databind.SerializationFeature;
+-import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+ import com.fasterxml.jackson.databind.jsontype.NamedType;
+ import com.fasterxml.jackson.databind.module.SimpleModule;
+ 
+@@ -96,6 +96,22 @@ public class TestSubtypes extends com.fasterxml.jackson.databind.BaseMapTest
+         public AtomicWrapper(int x) { value = new ImplX(x); }
+     }
+ 
++    @JsonTypeInfo(use=JsonTypeInfo.Id.MINIMAL_CLASS, include=As.PROPERTY, property="type")
++    interface MinimalType {
++        public String getName();
++        public void setName(String name);
++    }
++
++    static class MinimalTypeImpl implements MinimalType {
++        public String name;
++
++        @Override
++        public String getName() { return name; }
++
++        @Override
++        public void setName(String name) { this.name = name; }
++    }
++
+     // Verifying limits on sub-class ids
+ 
+     static class DateWrapper {
+@@ -375,10 +391,22 @@ public class TestSubtypes extends com.fasterxml.jackson.databind.BaseMapTest
+         Issue1125Wrapper result = MAPPER.readValue(aposToQuotes("{'value':{'a':3,'def':9,'b':5}}"),
+         		Issue1125Wrapper.class);
+         assertNotNull(result.value);
+-        assertEquals(Default1125.class, result.value.getClass());
+-        Default1125 impl = (Default1125) result.value;
+-        assertEquals(3, impl.a);
+-        assertEquals(5, impl.b);
+-        assertEquals(9, impl.def);
++    public void testUseBaseTypeAsDefaultImpl() throws Exception
++    {
++        final String JSON = "{\"name\":\"name\"}";
++
++        try {
++            MAPPER.readValue(JSON, MinimalTypeImpl.class);
++            fail("Expected an exception");
++        } catch (InvalidTypeIdException e) {
++            verifyException(e, "missing type id property 'type'");
++        }
++
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++
++        MinimalTypeImpl result = mapper.readValue(JSON, MinimalTypeImpl.class);
++        assertNotNull(result);
++        assertEquals("name", result.name);
+     }
+ }

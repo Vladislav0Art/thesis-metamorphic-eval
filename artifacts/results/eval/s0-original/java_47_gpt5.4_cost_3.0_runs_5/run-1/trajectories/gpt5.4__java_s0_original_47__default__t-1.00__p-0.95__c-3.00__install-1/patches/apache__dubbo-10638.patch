@@ -1,0 +1,112 @@
+
+diff --git a/.gitignore b/.gitignore
+index 87a564393d..ee4378dd6e 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -48,3 +48,6 @@ dubbo-demo/dubbo-demo-triple/build/*
+ 
+ # global registry center
+ .tmp
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/CompatibleTypeUtils.java b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/CompatibleTypeUtils.java
+index dc113e1ae8..0860ea9c78 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/CompatibleTypeUtils.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/CompatibleTypeUtils.java
+@@ -23,6 +23,7 @@ import java.text.ParseException;
+ import java.text.SimpleDateFormat;
+ import java.time.LocalDate;
+ import java.time.LocalDateTime;
++import java.time.LocalTime;
+ import java.util.ArrayList;
+ import java.util.Collection;
+ import java.util.Date;
+@@ -128,7 +129,7 @@ public class CompatibleTypeUtils {
+                 if (StringUtils.isEmpty(string)) {
+                     return null;
+                 }
+-                return LocalDateTime.parse(string).toLocalTime();
++                return LocalTime.parse(string);
+             }
+             if (type == Class.class) {
+                 try {
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoUtils.java b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoUtils.java
+index c6e2eaeb7c..0b95485193 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoUtils.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoUtils.java
+@@ -33,6 +33,9 @@ import java.lang.reflect.Proxy;
+ import java.lang.reflect.Type;
+ import java.lang.reflect.TypeVariable;
+ import java.lang.reflect.WildcardType;
++import java.time.LocalDate;
++import java.time.LocalDateTime;
++import java.time.LocalTime;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.Collection;
+@@ -54,7 +57,6 @@ import java.util.concurrent.ConcurrentMap;
+ import java.util.concurrent.ConcurrentSkipListMap;
+ import java.util.function.Consumer;
+ import java.util.function.Supplier;
+-
+ import static org.apache.dubbo.common.utils.ClassUtils.isAssignableFrom;
+ 
+ /**
+@@ -141,6 +143,9 @@ public class PojoUtils {
+         if (ReflectUtils.isPrimitives(pojo.getClass())) {
+             return pojo;
+         }
++        if (pojo instanceof LocalDateTime || pojo instanceof LocalDate || pojo instanceof LocalTime) {
++            return pojo.toString();
++        }
+ 
+         if (pojo instanceof Class) {
+             return ((Class) pojo).getName();
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
+index e615dd97b1..dbf8a30077 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
+@@ -32,6 +32,9 @@ import org.junit.jupiter.api.Test;
+ import java.lang.reflect.Method;
+ import java.lang.reflect.Type;
+ import java.text.SimpleDateFormat;
++import java.time.LocalDate;
++import java.time.LocalDateTime;
++import java.time.LocalTime;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.Date;
+@@ -42,7 +45,6 @@ import java.util.LinkedList;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.UUID;
+-
+ import static org.hamcrest.MatcherAssert.assertThat;
+ import static org.hamcrest.Matchers.equalTo;
+ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+@@ -273,6 +275,24 @@ public class PojoUtilsTest {
+         assertEquals(((Object[]) o).length, 2);
+     }
+ 
++    @Test
++    public void testJava8Time() {
++        LocalDateTime localDateTimeValue = LocalDateTime.now();
++        Object localDateTimeGen = PojoUtils.generalize(localDateTimeValue);
++        Object localDateTime = PojoUtils.realize(localDateTimeGen, LocalDateTime.class);
++        assertEquals(localDateTimeGen, localDateTime.toString());
++
++        LocalDate localDateValue = LocalDate.now();
++        Object localDateGen = PojoUtils.generalize(localDateValue);
++        Object localDate = PojoUtils.realize(localDateGen, LocalDate.class);
++        assertEquals(localDateGen, localDate.toString());
++
++        LocalTime localTimeValue = LocalTime.now().withNano(0);
++        Object localTimeGen = PojoUtils.generalize(localTimeValue);
++        Object localTime = PojoUtils.realize(localTimeGen, LocalTime.class);
++        assertEquals(localTimeGen, localTime.toString());
++    }
++
+     @Test
+     public void testMapToInterface() throws Exception {
+         Map map = new HashMap();

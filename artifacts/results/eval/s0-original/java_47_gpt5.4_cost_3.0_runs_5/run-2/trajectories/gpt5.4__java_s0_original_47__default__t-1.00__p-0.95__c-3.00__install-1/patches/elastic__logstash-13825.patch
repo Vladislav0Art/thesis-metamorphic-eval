@@ -1,0 +1,128 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElement.java b/logstash-core/src/main/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElement.java
+index 42541f2a5..c8ae573d9 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElement.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElement.java
+@@ -73,6 +73,11 @@ public final class ComputeStepSyntaxElement<T extends Dataset> {
+ 
+     private static final Pattern CLASS_NAME_PLACEHOLDER_REGEX = Pattern.compile(CLASS_NAME_PLACEHOLDER);
+ 
++    @FunctionalInterface
++    interface SourceFormatter {
++        String formatSource(String source) throws FormatterException;
++    }
++
+     private final Iterable<MethodSyntaxElement> methods;
+ 
+     private final ClassFields fields;
+@@ -170,23 +175,27 @@ public final class ComputeStepSyntaxElement<T extends Dataset> {
+     }
+ 
+     private String generateCode(final String name) {
+-        try {
+-            return REDUNDANT_SEMICOLON.matcher(new Formatter().formatSource(
+-                String.format(
+-                    "package org.logstash.generated;\npublic final class %s extends org.logstash.config.ir.compiler.BaseDataset implements %s { %s }",
+-                    name,
+-                    type.getName(),
+-                    SyntaxFactory.join(
+-                        fields.inlineAssigned().generateCode(), fieldsAndCtor(name),
+-                        combine(
+-                            StreamSupport.stream(methods.spliterator(), false)
+-                                .toArray(SyntaxElement[]::new)
+-                        )
+-                    )
++        return generateCode(name, source -> new Formatter().formatSource(source));
++    }
++
++    @VisibleForTesting
++    String generateCode(final String name, final SourceFormatter sourceFormatter) {
++        final String source = String.format(
++            "package org.logstash.generated;\npublic final class %s extends org.logstash.config.ir.compiler.BaseDataset implements %s { %s }",
++            name,
++            type.getName(),
++            SyntaxFactory.join(
++                fields.inlineAssigned().generateCode(), fieldsAndCtor(name),
++                combine(
++                    StreamSupport.stream(methods.spliterator(), false)
++                        .toArray(SyntaxElement[]::new)
+                 )
+-            )).replaceAll("\n");
+-        } catch (final FormatterException ex) {
+-            throw new IllegalStateException(ex);
++            )
++        );
++        try {
++            return REDUNDANT_SEMICOLON.matcher(sourceFormatter.formatSource(source)).replaceAll("\n");
++        } catch (final FormatterException | LinkageError ex) {
++            return source;
+         }
+     }
+ 
+diff --git a/logstash-core/src/test/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElementTest.java b/logstash-core/src/test/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElementTest.java
+new file mode 100644
+index 000000000..280ce2075
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElementTest.java
+@@ -0,0 +1,48 @@
++/*
++ * Licensed to Elasticsearch B.V. under one or more contributor
++ * license agreements. See the NOTICE file distributed with
++ * this work for additional information regarding copyright
++ * ownership. Elasticsearch B.V. licenses this file to you under
++ * the Apache License, Version 2.0 (the "License"); you may
++ * not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *	http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied.  See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++
++package org.logstash.config.ir.compiler;
++
++import static org.hamcrest.MatcherAssert.assertThat;
++import static org.hamcrest.Matchers.equalTo;
++
++import java.util.Collections;
++import org.junit.Test;
++
++public class ComputeStepSyntaxElementTest {
++
++    @Test
++    public void fallsBackToUnformattedSourceWhenFormatterCannotAccessJdkInternals() {
++        final ComputeStepSyntaxElement<Dataset> element = ComputeStepSyntaxElement.create(
++            Collections.emptyList(),
++            new ClassFields(),
++            Dataset.class
++        );
++
++        final String expected = element.generateCode("GeneratedDataset", source -> source);
++        final String actual = element.generateCode(
++            "GeneratedDataset",
++            source -> {
++                throw new IllegalAccessError("simulated jdk module access failure");
++            }
++        );
++
++        assertThat(actual, equalTo(expected));
++    }
++}

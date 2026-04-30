@@ -1,0 +1,105 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/Plugins.java b/src/main/java/org/mockito/internal/configuration/plugins/Plugins.java
+index 20f6dc7bc..9f6204f80 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/Plugins.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/Plugins.java
+@@ -4,8 +4,8 @@
+  */
+ package org.mockito.internal.configuration.plugins;
+ 
+-import org.mockito.DoNotMock;
+ import java.util.List;
++import org.mockito.DoNotMock;
+ import org.mockito.plugins.AnnotationEngine;
+ import org.mockito.plugins.DoNotMockEnforcer;
+ import org.mockito.plugins.InstantiatorProvider2;
+@@ -22,27 +22,31 @@ public final class Plugins {
+     private static final PluginRegistry registry = new PluginRegistry();
+ 
+     /**
+-     * The implementation of the stack trace cleaner
++     * Returns the stack trace cleaner available for the current runtime.
++     *
++     * <p>Returns {@link org.mockito.internal.exceptions.stacktrace.DefaultStackTraceCleanerProvider} if no
++     * {@link org.mockito.plugins.StackTraceCleanerProvider} extension exists or is visible in the
++     * current classpath.
+      */
+     public static StackTraceCleanerProvider getStackTraceCleanerProvider() {
+         return registry.getStackTraceCleanerProvider();
+     }
+ 
+     /**
+-     * Returns the implementation of the mock maker available for the current runtime.
++     * Returns the mock maker available for the current runtime.
+      *
+-     * <p>Returns default mock maker if no
+-     * {@link org.mockito.plugins.MockMaker} extension exists or is visible in the current classpath.</p>
++     * <p>Returns {@link org.mockito.internal.creation.bytebuddy.ByteBuddyMockMaker} if no
++     * {@link org.mockito.plugins.MockMaker} extension exists or is visible in the current classpath.
+      */
+     public static MockMaker getMockMaker() {
+         return registry.getMockMaker();
+     }
+ 
+     /**
+-     * Returns the implementation of the member accessor available for the current runtime.
++     * Returns the member accessor available for the current runtime.
+      *
+-     * <p>Returns default member accessor if no
+-     * {@link org.mockito.plugins.MemberAccessor} extension exists or is visible in the current classpath.</p>
++     * <p>Returns {@link org.mockito.internal.util.reflection.ReflectionMemberAccessor} if no
++     * {@link org.mockito.plugins.MemberAccessor} extension exists or is visible in the current classpath.
+      */
+     public static MemberAccessor getMemberAccessor() {
+         return registry.getMemberAccessor();
+@@ -53,7 +57,7 @@ public final class Plugins {
+      *
+      * <p>Returns {@link org.mockito.internal.creation.instance.DefaultInstantiatorProvider} if no
+      * {@link org.mockito.plugins.InstantiatorProvider2} extension exists or is visible in the
+-     * current classpath.</p>
++     * current classpath.
+      */
+     public static InstantiatorProvider2 getInstantiatorProvider() {
+         return registry.getInstantiatorProvider();
+@@ -63,7 +67,7 @@ public final class Plugins {
+      * Returns the annotation engine available for the current runtime.
+      *
+      * <p>Returns {@link org.mockito.internal.configuration.InjectingAnnotationEngine} if no
+-     * {@link org.mockito.plugins.AnnotationEngine} extension exists or is visible in the current classpath.</p>
++     * {@link org.mockito.plugins.AnnotationEngine} extension exists or is visible in the current classpath.
+      */
+     public static AnnotationEngine getAnnotationEngine() {
+         return registry.getAnnotationEngine();
+@@ -73,7 +77,7 @@ public final class Plugins {
+      * Returns the logger available for the current runtime.
+      *
+      * <p>Returns {@link org.mockito.internal.util.ConsoleMockitoLogger} if no
+-     * {@link org.mockito.plugins.MockitoLogger} extension exists or is visible in the current classpath.</p>
++     * {@link org.mockito.plugins.MockitoLogger} extension exists or is visible in the current classpath.
+      */
+     public static MockitoLogger getMockitoLogger() {
+         return registry.getMockitoLogger();
+@@ -98,8 +102,8 @@ public final class Plugins {
+     /**
+      * Returns the {@link DoNotMock} enforcer available for the current runtime.
+      *
+-     * <p> Returns {@link org.mockito.internal.configuration.DefaultDoNotMockEnforcer} if no
+-     * {@link DoNotMockEnforcer} extension exists or is visible in the current classpath.</p>
++     * <p>Returns {@link org.mockito.internal.configuration.DefaultDoNotMockEnforcer} if no
++     * {@link DoNotMockEnforcer} extension exists or is visible in the current classpath.
+      */
+     public static DoNotMockEnforcer getDoNotMockEnforcer() {
+         return registry.getDoNotMockEnforcer();

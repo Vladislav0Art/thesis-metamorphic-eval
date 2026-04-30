@@ -1,0 +1,97 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/subprojects/java21/src/test/java/org/mockito/java21/RecordSpyWithGenericTest.java b/subprojects/java21/src/test/java/org/mockito/java21/RecordSpyWithGenericTest.java
+new file mode 100644
+index 000000000..b2787a695
+--- /dev/null
++++ b/subprojects/java21/src/test/java/org/mockito/java21/RecordSpyWithGenericTest.java
+@@ -0,0 +1,21 @@
++package org.mockito.java21;
++
++import static org.junit.Assert.assertEquals;
++
++import java.util.List;
++import org.junit.Test;
++import org.mockito.Mockito;
++
++public class RecordSpyWithGenericTest {
++
++    @Test
++    public void spyingOnGenericShouldNotBreakRecordSpy() {
++        List<String> genericSpy = Mockito.spy(List.of("item A", "item B"));
++        ExampleRecord exampleRecord = Mockito.spy(new ExampleRecord("some value"));
++
++        assertEquals(List.of("item A", "item B"), genericSpy);
++        assertEquals("some value", exampleRecord.someParameter());
++    }
++
++    private record ExampleRecord(String someParameter) {}
++}
+diff --git a/subprojects/java21/src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker b/subprojects/java21/src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker
+new file mode 100644
+index 000000000..1f0955d45
+--- /dev/null
++++ b/subprojects/java21/src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker
+@@ -0,0 +1 @@
++mock-maker-inline
+diff --git a/subprojects/junit-jupiter/src/test/java/org/mockitousage/GenericSpyFailingTest.java b/subprojects/junit-jupiter/src/test/java/org/mockitousage/GenericSpyFailingTest.java
+new file mode 100644
+index 000000000..8b1378917
+--- /dev/null
++++ b/subprojects/junit-jupiter/src/test/java/org/mockitousage/GenericSpyFailingTest.java
+@@ -0,0 +1 @@
++
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyFailingTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyFailingTest.java
+new file mode 100644
+index 000000000..4c1b0da30
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyFailingTest.java
+@@ -0,0 +1,36 @@
++package org.mockitousage;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Spy;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++@ExtendWith(MockitoExtension.class)
++class GenericSpyFailingTest {
++
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private FinalClass finalClass = new FinalClass("some value");
++
++    @Test
++    void genericSpyShouldNotBreakInlineSpyOnFinalClass() {
++        assertThat(finalClass.someParameter()).isEqualTo("some value");
++    }
++
++    private static final class FinalClass {
++        private final String someParameter;
++
++        private FinalClass(String someParameter) {
++            this.someParameter = someParameter;
++        }
++
++        String someParameter() {
++            return someParameter;
++        }
++    }
++}

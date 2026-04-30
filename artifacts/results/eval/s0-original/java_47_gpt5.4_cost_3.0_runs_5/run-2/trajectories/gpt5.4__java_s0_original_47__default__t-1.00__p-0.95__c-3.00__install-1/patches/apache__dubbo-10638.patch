@@ -1,0 +1,158 @@
+
+diff --git a/.gitignore b/.gitignore
+index 87a564393d..ee4378dd6e 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -48,3 +48,6 @@ dubbo-demo/dubbo-demo-triple/build/*
+ 
+ # global registry center
+ .tmp
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/CompatibleTypeUtils.java b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/CompatibleTypeUtils.java
+index dc113e1ae8..581a24af4d 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/CompatibleTypeUtils.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/CompatibleTypeUtils.java
+@@ -23,6 +23,7 @@ import java.text.ParseException;
+ import java.text.SimpleDateFormat;
+ import java.time.LocalDate;
+ import java.time.LocalDateTime;
++import java.time.LocalTime;
+ import java.util.ArrayList;
+ import java.util.Collection;
+ import java.util.Date;
+@@ -30,30 +31,18 @@ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Set;
+ 
+-public class CompatibleTypeUtils {
++public final class CompatibleTypeUtils {
+ 
+-    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
++    public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+ 
+     private CompatibleTypeUtils() {
+     }
+ 
+-    /**
+-     * Compatible type convert. Null value is allowed to pass in. If no conversion is needed, then the original value
+-     * will be returned.
+-     * <p>
+-     * Supported compatible type conversions include (primary types and corresponding wrappers are not listed):
+-     * <ul>
+-     * <li> String -> char, enum, Date
+-     * <li> byte, short, int, long -> byte, short, int, long
+-     * <li> float, double -> float, double
+-     * </ul>
+-     */
+     @SuppressWarnings({"unchecked", "rawtypes"})
+     public static Object compatibleTypeConvert(Object value, Class<?> type) {
+-        if (value == null || type == null || type.isAssignableFrom(value.getClass())) {
++        if (value == null || type == null || type.isInstance(value)) {
+             return value;
+         }
+-
+         if (value instanceof String) {
+             String string = (String) value;
+             if (char.class.equals(type) || Character.class.equals(type)) {
+@@ -112,23 +101,23 @@ public class CompatibleTypeUtils {
+                             + DATE_FORMAT + ", cause: " + e.getMessage(), e);
+                 }
+             }
+-            if (type == java.time.LocalDateTime.class) {
++            if (type == LocalDateTime.class) {
+                 if (StringUtils.isEmpty(string)) {
+                     return null;
+                 }
+                 return LocalDateTime.parse(string);
+             }
+-            if (type == java.time.LocalDate.class) {
++            if (type == LocalDate.class) {
+                 if (StringUtils.isEmpty(string)) {
+                     return null;
+                 }
+                 return LocalDate.parse(string);
+             }
+-            if (type == java.time.LocalTime.class) {
++            if (type == LocalTime.class) {
+                 if (StringUtils.isEmpty(string)) {
+                     return null;
+                 }
+-                return LocalDateTime.parse(string).toLocalTime();
++                return LocalTime.parse(string);
+             }
+             if (type == Class.class) {
+                 try {
+@@ -216,7 +205,7 @@ public class CompatibleTypeUtils {
+                     collection = new ArrayList<Object>(length);
+                 }
+             } else if (type == Set.class) {
+-                collection = new HashSet<Object>(Math.max((int) (length/.75f) + 1, 16));
++                collection = new HashSet<Object>(Math.max((int) (length / .75f) + 1, 16));
+             } else {
+                 collection = new ArrayList<Object>(length);
+             }
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoUtils.java b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoUtils.java
+index c6e2eaeb7c..4db316a5d6 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoUtils.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoUtils.java
+@@ -33,6 +33,9 @@ import java.lang.reflect.Proxy;
+ import java.lang.reflect.Type;
+ import java.lang.reflect.TypeVariable;
+ import java.lang.reflect.WildcardType;
++import java.time.LocalDate;
++import java.time.LocalDateTime;
++import java.time.LocalTime;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.Collection;
+@@ -141,6 +144,9 @@ public class PojoUtils {
+         if (ReflectUtils.isPrimitives(pojo.getClass())) {
+             return pojo;
+         }
++        if (pojo instanceof LocalDate || pojo instanceof LocalTime || pojo instanceof LocalDateTime) {
++            return pojo.toString();
++        }
+ 
+         if (pojo instanceof Class) {
+             return ((Class) pojo).getName();
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
+index e615dd97b1..94ffe080f6 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
+@@ -32,6 +32,9 @@ import org.junit.jupiter.api.Test;
+ import java.lang.reflect.Method;
+ import java.lang.reflect.Type;
+ import java.text.SimpleDateFormat;
++import java.time.LocalDate;
++import java.time.LocalDateTime;
++import java.time.LocalTime;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.Date;
+@@ -572,6 +575,24 @@ public class PojoUtilsTest {
+         assertEquals(int[].class, real);
+     }
+ 
++    @Test
++    public void testJava8Time() {
++        LocalDateTime localDateTimeValue = LocalDateTime.now().withNano(0);
++        Object localDateTimeGen = PojoUtils.generalize(localDateTimeValue);
++        Object localDateTime = PojoUtils.realize(localDateTimeGen, LocalDateTime.class);
++        assertEquals(localDateTimeGen, localDateTime.toString());
++
++        LocalDate localDateValue = LocalDate.now();
++        Object localDateGen = PojoUtils.generalize(localDateValue);
++        Object localDate = PojoUtils.realize(localDateGen, LocalDate.class);
++        assertEquals(localDateGen, localDate.toString());
++
++        LocalTime localTimeValue = LocalTime.now().withNano(0);
++        Object localTimeGen = PojoUtils.generalize(localTimeValue);
++        Object localTime = PojoUtils.realize(localTimeGen, LocalTime.class);
++        assertEquals(localTimeGen, localTime.toString());
++    }
++
+     @Test
+     public void testPublicField() throws Exception {
+         Parent parent = new Parent();

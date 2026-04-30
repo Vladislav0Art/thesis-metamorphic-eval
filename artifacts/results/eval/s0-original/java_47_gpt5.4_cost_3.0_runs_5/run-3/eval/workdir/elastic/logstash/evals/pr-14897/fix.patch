@@ -1,0 +1,61 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index 1aad80538..c8f5cfc28 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -204,17 +204,17 @@ public final class DeadLetterQueueWriter implements Closeable {
+         return lastError;
+     }
+ 
+-    public void writeEntry(Event event, String pluginName, String pluginId, String reason) throws IOException {
+-        writeEntry(new DLQEntry(event, pluginName, pluginId, reason));
+-    }
+-
+     @Override
+     public void close() {
+         if (open.compareAndSet(true, false)) {
++            lock.lock();
+             try {
+                 finalizeSegment(FinalizeWhen.ALWAYS);
++                executeAgeRetentionPolicy();
+             } catch (Exception e) {
+                 logger.warn("Unable to close dlq writer, ignoring", e);
++            } finally {
++                lock.unlock();
+             }
+             try {
+                 releaseFileLock();
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 5702d169a..cb076c3a0 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -25,13 +25,14 @@ import java.nio.channels.OverlappingFileLockException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.StandardOpenOption;
++import java.time.Clock;
+ import java.time.Duration;
++import java.time.Instant;
++import java.time.ZoneOffset;
+ import java.util.Arrays;
+ import java.util.Collections;
+ import java.util.List;
+ import java.util.Set;
+-import java.util.stream.Collectors;
+-import java.util.stream.Stream;
+ 
+ import org.hamcrest.CoreMatchers;
+ import org.hamcrest.Matchers;

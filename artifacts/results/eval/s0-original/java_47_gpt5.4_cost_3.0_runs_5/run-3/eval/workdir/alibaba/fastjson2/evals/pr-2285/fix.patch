@@ -1,0 +1,149 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterCreator.java b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterCreator.java
+index c70fcd52d..21c4dd3e0 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterCreator.java
++++ b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterCreator.java
+@@ -798,6 +798,9 @@ public class ObjectWriterCreator {
+                 if (objectWriter != null && !(objectWriter instanceof ObjectWriterImplEnum)) {
+                     writeEnumAsJavaBean = true;
+                 }
++                if (!writeEnumAsJavaBean && beanInfo.serializer != null) {
++                    writeEnumAsJavaBean = true;
++                }
+             }
+ 
+             Member enumValueField = BeanUtils.getEnumValueField(fieldClass, provider);
+@@ -810,19 +813,21 @@ public class ObjectWriterCreator {
+         }
+ 
+         if (fieldClass == List.class || fieldClass == ArrayList.class) {
+-            Type itemType = null;
++            Type itemType;
+             if (fieldType instanceof ParameterizedType) {
+                 itemType = ((ParameterizedType) fieldType).getActualTypeArguments()[0];
++            } else {
++                itemType = Object.class;
+             }
++
+             return new FieldWriterListField(fieldName, itemType, ordinal, features, format, label, fieldType, fieldClass, field);
+         }
+ 
+         if (fieldClass.isArray() && !fieldClass.getComponentType().isPrimitive()) {
+-            Class<?> itemClass = fieldClass.getComponentType();
+-            return new FieldWriterObjectArrayField(fieldName, itemClass, ordinal, features, format, label, itemClass, fieldClass, field);
++            return new FieldWriterObjectArrayField(fieldName, fieldClass.getComponentType(), ordinal, features, format, label, fieldType, fieldClass, field);
+         }
+ 
+-        return new FieldWriterObject(fieldName, ordinal, features, format, label, field.getGenericType(), fieldClass, field, null);
++        return new FieldWriterObject(fieldName, ordinal, features, format, label, fieldType, fieldClass, field, null);
+     }
+ 
+     public <T> FieldWriter<T> createFieldWriter(Class<T> objectType,
+@@ -916,13 +921,18 @@ public class ObjectWriterCreator {
+             return new FieldWriterBigDecimalMethod<>(fieldName, ordinal, features, format, label, field, method);
+         }
+ 
+-        if (fieldClass.isEnum()
+-                && BeanUtils.getEnumValueField(fieldClass, provider) == null
+-                && !BeanUtils.isWriteEnumAsJavaBean(fieldClass)
+-        ) {
+-            String[] enumAnnotationNames = BeanUtils.getEnumAnnotationNames(fieldClass);
+-            if (enumAnnotationNames == null) {
+-                return new FieldWriterEnumMethod(fieldName, ordinal, features, format, label, fieldClass, field, method);
++        if (fieldClass.isEnum()) {
++            BeanInfo beanInfo = new BeanInfo();
++            provider.getBeanInfo(beanInfo, fieldClass);
++
++            if (BeanUtils.getEnumValueField(fieldClass, provider) == null
++                    && !beanInfo.writeEnumAsJavaBean
++                    && beanInfo.serializer == null
++            ) {
++                String[] enumAnnotationNames = BeanUtils.getEnumAnnotationNames(fieldClass);
++                if (enumAnnotationNames == null) {
++                    return new FieldWriterEnumMethod(fieldName, ordinal, features, format, label, fieldClass, field, method);
++                }
+             }
+         }
+ 
+@@ -1119,6 +1129,9 @@ public class ObjectWriterCreator {
+                 if (objectWriter != null && !(objectWriter instanceof ObjectWriterImplEnum)) {
+                     writeEnumAsJavaBean = true;
+                 }
++                if (!writeEnumAsJavaBean && beanInfo.serializer != null) {
++                    writeEnumAsJavaBean = true;
++                }
+             }
+ 
+             if (!writeEnumAsJavaBean && BeanUtils.getEnumValueField(fieldClass, provider) == null) {
+diff --git a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+index f8b847de4..0fe9cb688 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
++++ b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+@@ -41,6 +41,40 @@ public class JSONType_serializer {
+         }
+     }
+ 
++    @JSONType(serializer = AlarmStatusWriter.class)
++    public enum AlarmStatus {
++        RUNNING("启用", 1),
++        STOP("停止", 2);
++
++        public final String text;
++        public final int value;
++
++        AlarmStatus(String text, int value) {
++            this.text = text;
++            this.value = value;
++        }
++    }
++
++    public static class AlarmStatusWriter
++            implements ObjectWriter<AlarmStatus> {
++        @Override
++        public void write(JSONWriter jsonWriter, Object object, Object fieldName, Type fieldType, long features) {
++            AlarmStatus status = (AlarmStatus) object;
++            jsonWriter.startObject();
++            jsonWriter.writeName("text");
++            jsonWriter.writeColon();
++            jsonWriter.writeString(status.text);
++            jsonWriter.writeName("value");
++            jsonWriter.writeColon();
++            jsonWriter.writeInt32(status.value);
++            jsonWriter.endObject();
++        }
++    }
++
++    public static class Bean1 {
++        public AlarmStatus alarmStatus;
++    }
++
+     @Test
+     public void test1() {
+         Bean bean = new Bean();
+@@ -54,4 +88,23 @@ public class JSONType_serializer {
+             assertEquals("{\"ID\":123}", str);
+         }
+     }
++
++    @Test
++    public void test2() {
++        Bean1 bean = new Bean1();
++        bean.alarmStatus = AlarmStatus.RUNNING;
++
++        assertEquals(
++                "{\"alarmStatus\":{\"text\":\"启用\",\"value\":1}}",
++                JSON.toJSONString(bean)
++        );
++
++        for (ObjectWriterCreator creator : TestUtils.writerCreators()) {
++            ObjectWriter objectWriter = creator.createObjectWriter(Bean1.class);
++            JSONWriter jsonWriter = JSONWriter.of();
++            objectWriter.write(jsonWriter, bean);
++            String str = jsonWriter.toString();
++            assertEquals("{\"alarmStatus\":{\"text\":\"启用\",\"value\":1}}", str);
++        }
++    }
+ }

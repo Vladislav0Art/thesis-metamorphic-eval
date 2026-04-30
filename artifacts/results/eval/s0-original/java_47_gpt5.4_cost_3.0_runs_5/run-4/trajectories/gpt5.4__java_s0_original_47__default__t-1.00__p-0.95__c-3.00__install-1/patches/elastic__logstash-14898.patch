@@ -1,0 +1,91 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index 1aad80538..787f8e669 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -204,15 +204,18 @@ public final class DeadLetterQueueWriter implements Closeable {
+         return lastError;
+     }
+ 
+-    public void writeEntry(Event event, String pluginName, String pluginId, String reason) throws IOException {
+-        writeEntry(new DLQEntry(event, pluginName, pluginId, reason));
+-    }
+-
+     @Override
+-    public void close() {
++    public void close() throws IOException {
+         if (open.compareAndSet(true, false)) {
++            lock.lock();
++            try {
++                finalizeSegment(FinalizeWhen.ONLY_IF_STALE);
++                executeAgeRetentionPolicy();
++            } finally {
++                lock.unlock();
++            }
+             try {
+-                finalizeSegment(FinalizeWhen.ALWAYS);
++                currentWriter.close();
+             } catch (Exception e) {
+                 logger.warn("Unable to close dlq writer, ignoring", e);
+             }
+@@ -230,6 +233,10 @@ public final class DeadLetterQueueWriter implements Closeable {
+         }
+     }
+ 
++    public void writeEntry(Event event, String pluginType, String pluginId, String reason) throws IOException {
++        writeEntry(new DLQEntry(event, pluginType, pluginId, reason));
++    }
++
+     @VisibleForTesting
+     void writeEntry(DLQEntry entry) throws IOException {
+         lock.lock();
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+index d5306d71b..a12810d66 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+@@ -213,4 +213,32 @@ public class DeadLetterQueueWriterAgeRetentionTest {
+             assertEquals("The number of events removed should count as expired", EVENTS_TO_FILL_A_SEGMENT * 2, writeManager.getExpiredEvents());
+         }
+     }
++
++    @Test
++    public void testRemovesOlderSegmentsOnShutdownWithoutNewWrites() throws IOException {
++        final Event event = DeadLetterQueueReaderTest.createEventWithConstantSerializationOverhead(Collections.emptyMap());
++        event.setField("message", DeadLetterQueueReaderTest.generateMessageContent(32479));
++
++        final Duration retention = Duration.ofDays(2);
++        prepareDLQWithFirstSegmentOlderThanRetainPeriod(event, fakeClock, retention);
++
++        final long queueSizeBeforeShutdown;
++        try (DeadLetterQueueWriter writeManager = DeadLetterQueueWriter
++                .newBuilder(dir, 10 * MB, 1 * GB, Duration.ofSeconds(1))
++                .retentionTime(retention)
++                .clock(fakeClock)
++                .build()) {
++            queueSizeBeforeShutdown = writeManager.getCurrentQueueSize();
++            assertEquals("Queue size is composed of one full segment file", FULL_SEGMENT_FILE_SIZE, queueSizeBeforeShutdown);
++            assertEquals("No event should be expired before shutdown cleanup", 0, writeManager.getExpiredEvents());
++        }
++
++        try (DeadLetterQueueWriter writeManager = DeadLetterQueueWriter
++                .newBuilder(dir, 10 * MB, 1 * GB, Duration.ofSeconds(1))
++                .retentionTime(retention)
++                .clock(fakeClock)
++                .build()) {
++            assertEquals("Shutdown should remove the age expired segments", VERSION_SIZE, writeManager.getCurrentQueueSize());
++        }
++    }
+ }

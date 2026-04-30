@@ -1,0 +1,98 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/expression/ExpressionSubstitution.java b/logstash-core/src/main/java/org/logstash/config/ir/expression/ExpressionSubstitution.java
+index adddd34e6..84fd4289b 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/expression/ExpressionSubstitution.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/expression/ExpressionSubstitution.java
+@@ -37,8 +37,12 @@ public class ExpressionSubstitution {
+                 }
+             } else if (expression instanceof ValueExpression && !(expression instanceof RegexValueExpression) && (((ValueExpression) expression).get() != null)) {
+                 final String key = "placeholder";
+-                Map<String, Object> args = ImmutableMap.of(key, ((ValueExpression) expression).get());
++                final Object originalValue = ((ValueExpression) expression).get();
++                Map<String, Object> args = ImmutableMap.of(key, originalValue);
+                 Map<String, Object> substitutedArgs = CompiledPipeline.expandConfigVariables(cve, args);
++                if (cve.resolvesFromSecretStore(originalValue)) {
++                    return new ValueExpression.SecretValueExpression(expression.getSourceWithMetadata(), substitutedArgs.get(key));
++                }
+                 return new ValueExpression(expression.getSourceWithMetadata(), substitutedArgs.get(key));
+             }
+ 
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/expression/ValueExpression.java b/logstash-core/src/main/java/org/logstash/config/ir/expression/ValueExpression.java
+index 2b0a6db33..075cba9ce 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/expression/ValueExpression.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/expression/ValueExpression.java
+@@ -89,4 +89,20 @@ public class ValueExpression extends Expression {
+     public String hashSource() {
+         return this.getClass().getCanonicalName() + "|" + value;
+     }
++
++    public static class SecretValueExpression extends ValueExpression {
++        public SecretValueExpression(SourceWithMetadata meta, Object value) throws InvalidIRException {
++            super(meta, value);
++        }
++
++        @Override
++        public String toRubyString() {
++            return "'" + getSourceWithMetadata().getText() + "'";
++        }
++
++        @Override
++        public String hashSource() {
++            return this.getClass().getCanonicalName() + "|" + getSourceWithMetadata().getText();
++        }
++    }
+ }
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/ConfigVariableExpander.java b/logstash-core/src/main/java/org/logstash/plugins/ConfigVariableExpander.java
+index a66037a07..ff1f21b70 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/ConfigVariableExpander.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/ConfigVariableExpander.java
+@@ -103,18 +103,27 @@ public class ConfigVariableExpander implements AutoCloseable {
+                 return defaultValue;
+             }
+ 
+-            throw new IllegalStateException(String.format(
+-                    "Cannot evaluate `%s`. Replacement variable `%s` is not defined in a Logstash " +
+-                            "secret store or an environment entry and there is no default value given.",
+-                    variable, variableName));
+-        } else {
+-            return variable;
++            throw new IllegalStateException(String.format("Cannot evaluate `%s`. Replacement variable `%s` is not defined in a Logstash secret store or as an Environment entry and there is no default value given.", variable, variableName));
+         }
++        return variable;
+     }
+ 
+-    @Override
+-    public void close() {
+-        // most keystore implementations will have close() methods
++    public boolean resolvesFromSecretStore(Object value) {
++        if (!(value instanceof String) || secretStore == null) {
++            return false;
++        }
++
++        Matcher m = substitutionPattern.matcher((String) value);
++        if (!m.matches()) {
++            return false;
++        }
++
++        String variableName = m.group("name");
++        byte[] ssValue = secretStore.retrieveSecret(new SecretIdentifier(variableName));
++        return ssValue != null;
++    }
+ 
++    @Override
++    public void close() throws Exception {
+     }
+ }

@@ -1,0 +1,115 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+index cd5194258..a9e77a953 100644
+--- a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
++++ b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+@@ -87,12 +87,12 @@ public class SpyAnnotationEngine implements AnnotationEngine {
+         return Mockito.mock(
+                 instance.getClass(),
+                 withSettings()
+-                        .genericTypeToMock(field.getGenericType())
+                         .spiedInstance(instance)
+                         .defaultAnswer(CALLS_REAL_METHODS)
+                         .name(field.getName()));
+     }
+ 
++
+     private static Object spyNewInstance(Object testInstance, Field field)
+             throws InstantiationException, IllegalAccessException, InvocationTargetException {
+         // TODO: Add mockMaker option for @Spy annotation (#2740)
+diff --git a/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyWithRecordAnnotationTest.java b/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyWithRecordAnnotationTest.java
+new file mode 100644
+index 000000000..487146193
+--- /dev/null
++++ b/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyWithRecordAnnotationTest.java
+@@ -0,0 +1,40 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockito.java21;
++
++import java.util.List;
++import org.junit.After;
++import org.junit.Test;
++import org.mockito.MockitoAnnotations;
++import org.mockito.Spy;
++import org.mockito.exceptions.base.MockitoException;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++public class GenericSpyWithRecordAnnotationTest {
++
++    @Spy private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy private ExampleRecord exampleRecord = new ExampleRecord("some value");
++
++    private AutoCloseable mocks;
++
++    @After
++    public void tearDown() throws Exception {
++        if (mocks != null) {
++            mocks.close();
++        }
++    }
++
++    @Test
++    public void generic_spy_does_not_break_record_spy() throws Exception {
++        mocks = MockitoAnnotations.openMocks(this);
++
++        assertThat(genericSpy).containsExactly("item A", "item B");
++        assertThat(exampleRecord.someParameter()).isEqualTo("some value");
++    }
++
++    record ExampleRecord(String someParameter) {}
++}
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakFinalSpyTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakFinalSpyTest.java
+new file mode 100644
+index 000000000..e6fe8b920
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakFinalSpyTest.java
+@@ -0,0 +1,31 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Spy;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++@ExtendWith(MockitoExtension.class)
++class GenericSpyDoesNotBreakFinalSpyTest {
++
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private ExampleRecord exampleRecord = new ExampleRecord("some value");
++
++    @Test
++    void initialized_generic_spy_does_not_break_initialized_record_spy() {
++        assertThat(genericSpy).containsExactly("item A", "item B");
++        assertThat(exampleRecord.someParameter()).isEqualTo("some value");
++    }
++
++    private record ExampleRecord(String someParameter) {}
++}

@@ -1,0 +1,126 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..8c6dd8706 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -286,6 +286,17 @@ public enum MapperFeature implements ConfigFeature
+      */
+     USE_STATIC_TYPING(false),
+ 
++    /**
++     * Feature that determines whether, for polymorphic deserialization, the
++     * declared target type should be used as the default implementation when
++     * no explicit {@code defaultImpl} is configured and the type id is missing.
++     * This is primarily useful when reading JSON as a known concrete subtype
++     * even though a base type or interface declares {@link JsonTypeInfo}.
++     *<p>
++     * Feature is disabled by default.
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /*
+     /******************************************************
+     /* View-related features
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java
+index 2b8e79fdf..7e5ca246a 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java
+@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
+ import com.fasterxml.jackson.databind.DeserializationFeature;
+ import com.fasterxml.jackson.databind.JavaType;
+ import com.fasterxml.jackson.databind.JsonDeserializer;
++import com.fasterxml.jackson.databind.MapperFeature;
+ import com.fasterxml.jackson.databind.deser.std.NullifyingDeserializer;
+ import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
+ import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
+@@ -204,21 +205,27 @@ public abstract class TypeDeserializerBase
+          *   {@link java.lang.Void} to mean "serialize as null"; as well as DeserializationFeature
+          *   to do swift mapping to null
+          */
+-        if (_defaultImpl == null) {
+-            if (!ctxt.isEnabled(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)) {
+-                return NullifyingDeserializer.instance;
++        JavaType defaultImpl = _defaultImpl;
++        if (defaultImpl == null) {
++            if (ctxt.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && (_baseType != null) && !_baseType.isAbstract()) {
++                defaultImpl = _baseType;
++            } else {
++                if (!ctxt.isEnabled(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)) {
++                    return NullifyingDeserializer.instance;
++                }
++                return null;
+             }
+-            return null;
+         }
+-        Class<?> raw = _defaultImpl.getRawClass();
++        Class<?> raw = defaultImpl.getRawClass();
+         if (ClassUtil.isBogusClass(raw)) {
+             return NullifyingDeserializer.instance;
+         }
+-        
+-        synchronized (_defaultImpl) {
++
++        synchronized (defaultImpl) {
+             if (_defaultImplDeserializer == null) {
+                 _defaultImplDeserializer = ctxt.findContextualValueDeserializer(
+-                        _defaultImpl, _property);
++                        defaultImpl, _property);
+             }
+             return _defaultImplDeserializer;
+         }
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestTypedDeserialization.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestTypedDeserialization.java
+index c1ea52c2e..13acadefb 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestTypedDeserialization.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestTypedDeserialization.java
+@@ -88,6 +88,13 @@ public class TestTypedDeserialization
+     @JsonTypeInfo(use=Id.CLASS, include=As.WRAPPER_ARRAY)
+     interface TypeWithArray { }
+ 
++    @JsonTypeInfo(use=Id.MINIMAL_CLASS, include=As.PROPERTY, property="type")
++    interface BaseTypeAsDefault { }
++
++    static class BaseTypeAsDefaultImpl implements BaseTypeAsDefault {
++        public String name;
++    }
++
+     static class Issue506DateBean {
+         @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type2")
+         public Date date;
+@@ -239,6 +246,23 @@ public class TestTypedDeserialization
+         Issue506NumberBean output = mapper.readValue(json, Issue506NumberBean.class);
+         assertEquals(input.number, output.number);
+     }
+-}
+ 
++    public void testUseBaseTypeAsDefaultImpl() throws Exception
++    {
++        String json = "{\"name\":\"name\"}";
++
++        ObjectMapper mapper = new ObjectMapper();
++        try {
++            mapper.readValue(json, BaseTypeAsDefaultImpl.class);
++            fail("Should not pass without type information");
++        } catch (Exception e) {
++            verifyException(e, "missing type id property");
++        }
+ 
++        mapper = new ObjectMapper();
++        mapper.configure(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL, true);
++        BaseTypeAsDefaultImpl result = mapper.readValue(json, BaseTypeAsDefaultImpl.class);
++        assertNotNull(result);
++        assertEquals("name", result.name);
++    }
++}

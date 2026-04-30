@@ -1,0 +1,103 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index b6a0ff2ce..3de8b2a9d 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -27,14 +27,16 @@ public interface JSON {
+      * @return Object
+      */
+     static Object parse(String text) {
+-        if (text == null) {
++        if (text == null || text.length() == 0) {
+             return null;
+         }
++
+         JSONReader reader = JSONReader.of(text);
+         ObjectReader<?> objectReader = reader.getObjectReader(Object.class);
+         return objectReader.readObject(reader, 0);
+     }
+ 
++
+     /**
+      * Parse JSON {@link String} into {@link JSONArray} or {@link JSONObject} with specified {@link JSONReader.Feature}s enabled
+      *
+@@ -605,7 +607,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -627,7 +629,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -646,7 +648,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -668,7 +670,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -690,7 +692,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
+     /**
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 32ab096bf..a53df3916 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -31,6 +31,27 @@ public class JSONTest {
+     public void test_isValidArray_0() {
+         assertTrue(JSON.isValidArray("[]"));
+         assertFalse(JSON.isValidArray("{}"));
++        assertFalse(JSON.isValidArray("[]1"));
++        assertFalse(JSON.isValidArray("[]x"));
++        assertFalse(JSON.isValidArray("[1] [2]"));
++        assertFalse(JSON.isValidArray("[][1]"));
++    }
++
++    @Test
++    public void test_isValid_0() {
++        assertTrue(JSON.isValid("{}"));
++        assertFalse(JSON.isValid("{}1"));
++        assertFalse(JSON.isValid("{}x"));
++        assertFalse(JSON.isValid("{\"id\":1}[]"));
++    }
++
++    @Test
++    public void test_isValid_bytes_0() {
++        assertTrue(JSON.isValid("{}".getBytes(StandardCharsets.UTF_8)));
++        assertFalse(JSON.isValid("{}1".getBytes(StandardCharsets.UTF_8)));
++        assertFalse(JSON.isValidArray("[]1".getBytes(StandardCharsets.UTF_8)));
++        byte[] utf8 = "{}1".getBytes(StandardCharsets.UTF_8);
++        assertFalse(JSON.isValid(utf8, 0, utf8.length, StandardCharsets.UTF_8));
+     }
+ 
+     @Test

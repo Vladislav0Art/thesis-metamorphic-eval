@@ -1,0 +1,47 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/config/jvm.options b/config/jvm.options
+index e1f9fb826..1c44a68f8 100644
+--- a/config/jvm.options
++++ b/config/jvm.options
+@@ -80,3 +80,9 @@
+ 11-:--add-opens=java.base/java.nio.channels=ALL-UNNAMED
+ 11-:--add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+ 11-:--add-opens=java.management/sun.management=ALL-UNNAMED
++11-:--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
++11-:--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
++11-:--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
++11-:--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
++11-:--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
++11-:--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+diff --git a/logstash-core/src/test/java/org/logstash/launchers/JvmOptionsParserTest.java b/logstash-core/src/test/java/org/logstash/launchers/JvmOptionsParserTest.java
+index 109e025b3..48fceef92 100644
+--- a/logstash-core/src/test/java/org/logstash/launchers/JvmOptionsParserTest.java
++++ b/logstash-core/src/test/java/org/logstash/launchers/JvmOptionsParserTest.java
+@@ -79,7 +79,6 @@ public class JvmOptionsParserTest {
+         res = JvmOptionsParser.parse(8, asReader("8-:-XX:+UseConcMarkSweepGC"));
+         verifyOptions("Option must be present also for Java 8", "-XX:+UseConcMarkSweepGC", res);
+     }
+-
+     @Test
+     public void testParseOptionVersionRange() throws IOException {
+         JvmOptionsParser.ParseResult res = JvmOptionsParser.parse(11, asReader("10-11:-XX:+UseConcMarkSweepGC"));
+@@ -109,4 +108,4 @@ public class JvmOptionsParserTest {
+     private BufferedReader asReader(String s) {
+         return new BufferedReader(new StringReader(s));
+     }
+-}
+\ No newline at end of file
++}
