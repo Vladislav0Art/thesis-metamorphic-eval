@@ -1,0 +1,73 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index 1aad80538..681d1c20c 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -213,6 +213,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+         if (open.compareAndSet(true, false)) {
+             try {
+                 finalizeSegment(FinalizeWhen.ALWAYS);
++                executeAgeRetentionPolicy();
+             } catch (Exception e) {
+                 logger.warn("Unable to close dlq writer, ignoring", e);
+             }
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+index d5306d71b..837cdda9a 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+@@ -168,6 +168,30 @@ public class DeadLetterQueueWriterAgeRetentionTest {
+         }
+     }
+ 
++    @Test
++    public void testRemovesExpiredCurrentSegmentOnClose() throws Exception {
++        final Event event = DeadLetterQueueReaderTest.createEventWithConstantSerializationOverhead(Collections.emptyMap());
++        event.setField("message", DeadLetterQueueReaderTest.generateMessageContent(10));
++
++        final Duration retention = Duration.ofSeconds(1);
++        try (DeadLetterQueueWriter writeManager = DeadLetterQueueWriter
++                .newBuilder(dir, 10 * MB, 1 * GB, Duration.ofSeconds(1))
++                .retentionTime(retention)
++                .clock(fakeClock)
++                .build()) {
++            DLQEntry entry = new DLQEntry(
++                    event, "", "", "00001",
++                    DeadLetterQueueReaderTest.constantSerializationLengthTimestamp(fakeClock.instant().toEpochMilli())
++            );
++            writeManager.writeEntry(entry);
++
++            fakeClock.forward(retention.plusSeconds(1));
++        }
++
++        try (DeadLetterQueueReader reader = new DeadLetterQueueReader(dir)) {
++            assertThat(reader.pollEntry(100), Matchers.nullValue());
++        }
++    }
+     @Test
+     public void testRemoveMultipleOldestSegmentsWhenRetainedAgeIsExceeded() throws IOException {
+         final Event event = DeadLetterQueueReaderTest.createEventWithConstantSerializationOverhead(Collections.emptyMap());
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 5702d169a..f417a1305 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -192,7 +192,6 @@ public class DeadLetterQueueWriterTest {
+         }
+     }
+ 
+-
+     @Test
+     public void testNotFlushed() throws Exception {
+         try (DeadLetterQueueWriter writeManager = DeadLetterQueueWriter

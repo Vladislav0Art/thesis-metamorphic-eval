@@ -1,0 +1,311 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+index 6c9bb5a02..592298544 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+@@ -1,203 +1,117 @@
+ package org.logstash.common.io;
+ 
++import org.apache.logging.log4j.LogManager;
++import org.apache.logging.log4j.Logger;
++
++import java.io.Flushable;
+ import java.io.IOException;
+-import java.nio.file.Files;
++import java.nio.channels.ClosedChannelException;
+ import java.nio.file.Path;
+ import java.time.Clock;
+ import java.time.Duration;
+ import java.time.Instant;
+-import java.time.ZoneId;
+-import java.util.Collections;
+-import java.util.Set;
+-import java.util.stream.Collectors;
+-
+-import org.awaitility.Awaitility;
+-import org.junit.Before;
+-import org.junit.Rule;
+-import org.junit.Test;
+-import org.junit.rules.TemporaryFolder;
+-import org.logstash.DLQEntry;
+-import org.logstash.Event;
+-
+-import static org.hamcrest.MatcherAssert.assertThat;
+-import static org.hamcrest.Matchers.greaterThan;
+-import static org.hamcrest.Matchers.hasItem;
+-import static org.hamcrest.Matchers.is;
+-import static org.hamcrest.Matchers.not;
+-import static org.junit.Assert.assertEquals;
+-import static org.junit.Assert.assertTrue;
+-import static org.logstash.common.io.DeadLetterQueueTestUtils.FULL_SEGMENT_FILE_SIZE;
+-import static org.logstash.common.io.DeadLetterQueueTestUtils.GB;
+-import static org.logstash.common.io.DeadLetterQueueTestUtils.MB;
+-import static org.logstash.common.io.RecordIOWriter.BLOCK_SIZE;
+-import static org.logstash.common.io.RecordIOWriter.RECORD_HEADER_SIZE;
+-import static org.logstash.common.io.RecordIOWriter.VERSION_SIZE;
+-
+-public class DeadLetterQueueWriterAgeRetentionTest {
+-
+-    // 319 events of 32Kb generates 10 Mb of data
+-    private static final int EVENTS_TO_FILL_A_SEGMENT = 319;
+-    private ForwardableClock fakeClock;
+-
+-    static class ForwardableClock extends Clock {
+-
+-        private Clock currentClock;
+-
+-        ForwardableClock(Clock clock) {
+-            this.currentClock = clock;
+-        }
+ 
+-        void forward(Duration period) {
+-            currentClock = Clock.offset(currentClock, period);
+-        }
+-
+-        @Override
+-        public ZoneId getZone() {
+-            return currentClock.getZone();
+-        }
+-
+-        @Override
+-        public Clock withZone(ZoneId zone) {
+-            return currentClock.withZone(zone);
+-        }
+-
+-        @Override
+-        public Instant instant() {
+-            return currentClock.instant();
+-        }
++/**
++ * This is a simple writer for the recordio format.
++ */
++public final class RecordIOWriter extends AbstractByteBufferPageIO<ByteWriter> implements Flushable {
++    private static final Logger logger = LogManager.getLogger(RecordIOWriter.class);
++    // We store the length of this each event in a 4-byte integer
++    static final int RECORD_HEADER_SIZE = Integer.BYTES;
++    // The version integer is currently 2 bytes (16 bits), but hard-coded to 1.
++    static final int VERSION_SIZE = Short.BYTES;
++    public static final int BLOCK_SIZE = 32768;
++
++    private Instant lastWrittenAt;
++    private final Clock clock;
++
++    public RecordIOWriter(Path path) throws IOException {
++        this(path, Clock.systemUTC());
+     }
+ 
+-    private Path dir;
+-
+-    @Rule
+-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+-
+-    @Before
+-    public void setUp() throws Exception {
+-        dir = temporaryFolder.newFolder().toPath();
+-        final Clock pointInTimeFixedClock = Clock.fixed(Instant.parse("2022-02-22T10:20:30.00Z"), ZoneId.of("Europe/Rome"));
+-        fakeClock = new ForwardableClock(pointInTimeFixedClock);
++    RecordIOWriter(Path path, Clock clock) throws IOException {
++        super(path, ByteWriter::new);
++        this.clock = clock;
+     }
+ 
+-    @Test
+-    public void testRemovesOlderSegmentsWhenWriteOnReopenedDLQContainingExpiredSegments() throws IOException {
+-        final Event event = DeadLetterQueueReaderTest.createEventWithConstantSerializationOverhead(Collections.emptyMap());
+-        event.setField("message", DeadLetterQueueReaderTest.generateMessageContent(32479));
+-
+-        final Clock pointInTimeFixedClock = Clock.fixed(Instant.parse("2022-02-22T10:20:30.00Z"), ZoneId.of("Europe/Rome"));
+-        final ForwardableClock fakeClock = new ForwardableClock(pointInTimeFixedClock);
+-        // given DLQ with first segment filled of expired events
+-        prepareDLQWithFirstSegmentOlderThanRetainPeriod(event, fakeClock, Duration.ofDays(2));
+-
+-        // Exercise
+-        final long prevQueueSize;
+-        final long beheadedQueueSize;
+-        try (DeadLetterQueueWriter writeManager = DeadLetterQueueWriter
+-                .newBuilder(dir, 10 * MB, 1 * GB, Duration.ofSeconds(1))
+-                .retentionTime(Duration.ofDays(2))
+-                .clock(fakeClock)
+-                .build()) {
+-            prevQueueSize = writeManager.getCurrentQueueSize();
+-            assertEquals("Queue size is composed of one just one empty file with version byte", VERSION_SIZE, prevQueueSize);
+-
+-            // write new entry that trigger clean of age retained segment
+-            DLQEntry entry = new DLQEntry(event, "", "", String.format("%05d", 320), DeadLetterQueueReaderTest.constantSerializationLengthTimestamp(System.currentTimeMillis()));
+-            // when a new write happens in a reopened queue
+-            writeManager.writeEntry(entry);
+-            beheadedQueueSize = writeManager.getCurrentQueueSize();
+-            assertEquals("No event is expired after reopen of DLQ", 0, writeManager.getExpiredEvents());
+-        }
+-
+-        // then the age policy must remove the expired segments
+-        assertEquals("Write should push off the age expired segments", VERSION_SIZE + BLOCK_SIZE, beheadedQueueSize);
++    @Override
++    public void write(byte[] bytes) throws IOException {
++        //note, bytes length is the actual record size, but should not include the page header byte
++        //also note, bytes should be able to fit into a java int due to max event size restrictions in the DLQ
++        writeInt(bytes.length);
++        //fixed version recordio serialisation always hard-coded to 1
++        writeShort((short) 1);
++        writeBytes(bytes);
++        this.lastWrittenAt = clock.instant();
+     }
+ 
+-    private void prepareDLQWithFirstSegmentOlderThanRetainPeriod(Event event, ForwardableClock fakeClock, Duration retainedPeriod) throws IOException {
+-        final Duration littleMoreThanRetainedPeriod = retainedPeriod.plusMinutes(1);
+-        long startTime = fakeClock.instant().minus(littleMoreThanRetainedPeriod).toEpochMilli();
+-        int messageSize = 0;
+-        try (DeadLetterQueueWriter writeManager = DeadLetterQueueWriter
+-                .newBuilder(dir, 10 * MB, 1 * GB, Duration.ofSeconds(1))
+-                .retentionTime(retainedPeriod)
+-                .clock(fakeClock)
+-                .build()) {
++    /**
++     * Returns true if any complete event records have been written.
++     *
++     * @return true if any events have been written
++     */
++    public boolean hasWritten() {
++        return position() > 0;
++    }
+ 
+-            // 320 generates 10 Mb of data
+-            for (int i = 0; i < EVENTS_TO_FILL_A_SEGMENT; i++) {
+-                DLQEntry entry = new DLQEntry(event, "", "", String.format("%05d", i), DeadLetterQueueReaderTest.constantSerializationLengthTimestamp(startTime++));
+-                final int serializationLength = entry.serialize().length;
+-                assertEquals("setup: serialized entry size...", serializationLength + RECORD_HEADER_SIZE, BLOCK_SIZE);
+-                messageSize += serializationLength;
+-                writeManager.writeEntry(entry);
+-            }
+-            assertThat(messageSize, is(greaterThan(BLOCK_SIZE)));
+-        }
++    boolean isStale(Duration duration) {
++        return lastWrittenAt != null && lastWrittenAt.isBefore(clock.instant().minus(duration));
+     }
+ 
+-    @Test
+-    public void testRemovesOlderSegmentsWhenWritesIntoDLQContainingExpiredSegments() throws IOException {
+-        final Event event = DeadLetterQueueReaderTest.createEventWithConstantSerializationOverhead(Collections.emptyMap());
+-        event.setField("message", DeadLetterQueueReaderTest.generateMessageContent(32479));
++    public int getPosition() {
++        return this.position();
++    }
+ 
+-        long startTime = fakeClock.instant().toEpochMilli();
+-        int messageSize = 0;
++    @Override
++    protected int pageCapacity() {
++        return BLOCK_SIZE;
++    }
+ 
+-        final Duration retention = Duration.ofDays(2);
+-        try (DeadLetterQueueWriter writeManager = DeadLetterQueueWriter
+-                .newBuilder(dir, 10 * MB, 1 * GB, Duration.ofSeconds(1))
+-                .retentionTime(retention)
+-                .clock(fakeClock)
+-                .build()) {
++    @Override
++    protected byte pageHeader() {
++        return RecordIO.PAGE_HEADER;
++    }
+ 
+-            // 319 generates 10 Mb of data
+-            for (int i = 0; i < EVENTS_TO_FILL_A_SEGMENT; i++) {
+-                DLQEntry entry = new DLQEntry(event, "", "", String.format("%05d", i), DeadLetterQueueReaderTest.constantSerializationLengthTimestamp(startTime++));
+-                final int serializationLength = entry.serialize().length;
+-                assertEquals("setup: serialized entry size...", serializationLength + RECORD_HEADER_SIZE, BLOCK_SIZE);
+-                messageSize += serializationLength;
+-                writeManager.writeEntry(entry);
+-            }
+-            assertThat(messageSize, is(greaterThan(BLOCK_SIZE)));
++    @Override
++    protected byte pageVersion() {
++        return RecordIO.VERSION;
++    }
+ 
+-            // Exercise
+-            // write an event that goes in second segment
+-            fakeClock.forward(retention.plusSeconds(1));
+-            final long prevQueueSize = writeManager.getCurrentQueueSize();
+-            assertEquals("Queue size is composed of one full segment files", FULL_SEGMENT_FILE_SIZE, prevQueueSize);
++    public int remaining() {
++        return this.remaining;
++    }
+ 
+-            // write new entry that trigger clean of age retained segment
+-            DLQEntry entry = new DLQEntry(event, "", "", String.format("%05d", 320), DeadLetterQueueReaderTest.constantSerializationLengthTimestamp(System.currentTimeMillis()));
+-            // when a new write happens in the same writer
+-            writeManager.writeEntry(entry);
+-            final long beheadedQueueSize = writeManager.getCurrentQueueSize();
++    protected int bufferPosition() {
++        return this.buffer.position();
++    }
+ 
+-            // then the age policy must remove the expired segments
+-            assertEquals("Write should push off the age expired segments",VERSION_SIZE + BLOCK_SIZE, beheadedQueueSize);
+-            assertEquals("The number of events removed should count as expired", EVENTS_TO_FILL_A_SEGMENT, writeManager.getExpiredEvents());
++    void writeEvent(byte[] bytes) throws IOException {
++        if (this.closed.get()) {
++            logger.error("attempted to write {} bytes to a closed file", bytes.length);
++            throw new ClosedChannelException();
++        }
++        // Assume the event is large enough to hold the entirety of the body
++        // and verify that it will fit in the remaining space in the block.
++        //
++        // Also take into account that the header itself will take up a byte
++        // from the position in the block.
++        if (bytes.length + RECORD_HEADER_SIZE + VERSION_SIZE > BLOCK_SIZE) {
++            throw new IllegalArgumentException(
++                    String.format(
++                            "Record is too large to fit in a page (%d > %d)",
++                            bytes.length + RECORD_HEADER_SIZE + VERSION_SIZE,
++                            BLOCK_SIZE
++                    )
++            );
++        }
++        lock.lock();
++        try {
++            this.write(bytes);
++        } finally {
++            lock.unlock();
+         }
+     }
+-
+-    @Test
+-    public void testRemoveMultipleOldestSegmentsWhenRetainedAgeIsExceeded() throws IOException {
+-        final Event event = DeadLetterQueueReaderTest.createEventWithConstantSerializationOverhead(Collections.emptyMap());
+-        event.setField("message", DeadLetterQueueReaderTest.generateMessageContent(32479));
+-
+-        long startTime = fakeClock.instant().toEpochMilli();
+-        int messageSize = 0;
+-
+-        final Duration retention = Duration.ofDays(2);
+-        try (DeadLetterQueueWriter writeManager = DeadLetterQueueWriter
+-                .newBuilder(dir, 10 * MB, 1 * GB, Duration.ofSeconds(1))
+-                .retentionTime(retention)
+-                .clock(fakeClock)
+-                .build()) {
+-
+-            // given DLQ with a couple of segments filled of expired events
+-            // 319 generates 10 Mb of data
+-            for (int i = 0; i < EVENTS_TO_FILL_A_SEGMENT * 2; i++) {
+-                DLQEntry entry = new DLQEntry(event, "", "", String.format("%05d", i), DeadLetterQueueReaderTest.constantSerializationLengthTimestamp(startTime++));
+-                final int serializationLength = entry.serialize().length;
+-                assertEquals("setup: serialized entry size...", serializationLength + RECORD_HEADER_SIZE, BLOCK_SIZE);
++}
+                 messageSize += serializationLength;
+                 writeManager.writeEntry(entry);
+             }

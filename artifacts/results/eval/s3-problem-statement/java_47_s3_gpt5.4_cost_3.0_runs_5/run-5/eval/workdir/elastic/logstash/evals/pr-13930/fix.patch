@@ -1,0 +1,560 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/docs/static/settings-file.asciidoc b/docs/static/settings-file.asciidoc
+index 5a973df81..12055735e 100644
+--- a/docs/static/settings-file.asciidoc
++++ b/docs/static/settings-file.asciidoc
+@@ -20,164 +20,198 @@ pipeline:
+ -------------------------------------------------------------------------------------
+ 
+ To express the same values as flat keys, you specify:
+-
+-[source,yaml]
+--------------------------------------------------------------------------------------
+-pipeline.batch.size: 125
+-pipeline.batch.delay: 50
+--------------------------------------------------------------------------------------
+-
+-The `logstash.yml` file also supports bash-style interpolation of environment variables and
+-keystore secrets in setting values.
+-
+-[source,yaml]
+--------------------------------------------------------------------------------------
+-pipeline:
+-  batch:
+-    size: ${BATCH_SIZE}
+-    delay: ${BATCH_DELAY:50}
+-node:
+-  name: "node_${LS_NODE_NAME}"
+-path:
+-   queue: "/tmp/${QUEUE_DIR:queue}"
+--------------------------------------------------------------------------------------
+-
+-Note that the `${VAR_NAME:default_value}` notation is supported, setting a default batch delay
+-of `50` and a default `path.queue` of `/tmp/queue` in the above example.
+-
+-Modules may also be specified in the `logstash.yml` file. The modules definition will have
+-this format:
+-
+-[source,yaml]
+--------------------------------------------------------------------------------------
+-modules:
+-  - name: MODULE_NAME1
+-    var.PLUGIN_TYPE1.PLUGIN_NAME1.KEY1: VALUE
+-    var.PLUGIN_TYPE1.PLUGIN_NAME1.KEY2: VALUE
+-    var.PLUGIN_TYPE2.PLUGIN_NAME2.KEY1: VALUE
+-    var.PLUGIN_TYPE3.PLUGIN_NAME3.KEY1: VALUE
+-  - name: MODULE_NAME2
+-    var.PLUGIN_TYPE1.PLUGIN_NAME1.KEY1: VALUE
+-    var.PLUGIN_TYPE1.PLUGIN_NAME1.KEY2: VALUE
+--------------------------------------------------------------------------------------
+-
+-IMPORTANT: If the <<command-line-flags,command-line flag>> `--modules` is used, any modules defined in the `logstash.yml` file will be ignored.
+-
+-The `logstash.yml` file includes the following settings. 
+-
+-[options="header"]
+-|=======================================================================
+-| Setting | Description | Default value
+-
+-| `node.name`
+-| A descriptive name for the node.
+-| Machine's hostname
+-
+-| `path.data`
+-| The directory that Logstash and its plugins use for any persistent needs.
+-|`LOGSTASH_HOME/data`
+-
+-| `pipeline.id`
+-| The ID of the pipeline.
+-| `main`
+-
+-| `pipeline.workers` 
+-| The number of workers that will, in parallel, execute the filter and output
+-stages of the pipeline. This setting uses the
+-https://docs.oracle.com/javase/7/docs/api/java/lang/Runtime.html#availableProcessors()[`java.lang.Runtime.getRuntime.availableProcessors`]
+-value as a default if not overridden by `pipeline.workers` in `pipelines.yml` or
+-`pipeline.workers` from `logstash.yml`.  If you have modified this setting and
+-see that events are backing up, or that the CPU is not saturated, consider
+-increasing this number to better utilize machine processing power. 
+-| Number of the host's CPU cores
+-
+-| `pipeline.batch.size`
+-| The maximum number of events an individual worker thread will collect from inputs
+-  before attempting to execute its filters and outputs.
+-  Larger batch sizes are generally more efficient, but come at the cost of increased memory
+-  overhead. You may need to increase JVM heap space in the `jvm.options` config file.
+-  See <<config-setting-files>> for more info.
+-| `125`
+-
+-| `pipeline.batch.delay`
+-| When creating pipeline event batches, how long in milliseconds to wait for
+-  each event before dispatching an undersized batch to pipeline workers.
+-| `50`
+-
+-| `pipeline.unsafe_shutdown`
+-| When set to `true`, forces Logstash to exit during shutdown even if there are still inflight events
+-  in memory. By default, Logstash will refuse to quit until all received events
+-  have been pushed to the outputs. Enabling this option can lead to data loss during shutdown.
+-| `false`
+-
+-| `pipeline.plugin_classloaders`
+-| (Beta) Load Java plugins in independent classloaders to isolate their dependencies.
+-| `false`
+-
+-| `pipeline.ordered`
+-a|
+-Set the pipeline event ordering. Valid options are:
+-
+-* `auto`. Automatically enables ordering if the `pipeline.workers` setting is `1`, and disables otherwise.
+-* `true`. Enforces ordering on the pipeline and prevents Logstash from starting
+-if there are multiple workers.
+-* `false`. Disables the processing required to preserve order. Ordering will not be
+-guaranteed, but you save the processing cost of preserving order.
+-
+-| `auto`
+-
+-| `pipeline.ecs_compatibility`
+-a|
+-Sets the pipeline's default value for `ecs_compatibility`, a setting that is available to plugins that implement an ECS compatibility mode for use with the Elastic Common Schema.
+-Possible values are:
+-
+-* `disabled`
+-* `v1`
+-* `v8`
+-
+-This option allows the <<ecs-ls,early opt-in (or preemptive opt-out) of ECS compatibility>> modes in plugins,
+-which is scheduled to be on-by-default in a future major release of {ls}.
+-
+-Values other than `disabled` are currently considered BETA, and may produce unintended consequences when upgrading {ls}.
+-
+-| `disabled`
+-
+-| `path.config`
+-| The path to the Logstash config for the main pipeline. If you specify a directory or wildcard,
+-  config files are read from the directory in alphabetical order.
+-| Platform-specific. See <<dir-layout>>.
+-
+-| `config.string`
+-| A string that contains the pipeline configuration to use for the main pipeline. Use the same syntax as
+-  the config file.
+-| None
+-
+-| `config.test_and_exit`
+-| When set to `true`, checks that the configuration is valid and then exits. Note that grok patterns are not checked for
+-  correctness with this setting. Logstash can read multiple config files from a directory. If you combine this
+-  setting with `log.level: debug`, Logstash will log the combined config file, annotating
+-  each config block with the source file it came from.
+-| `false`
+-
+-| `config.reload.automatic`
+-| When set to `true`, periodically checks if the configuration has changed and reloads the configuration whenever it is changed.
+-  This can also be triggered manually through the SIGHUP signal.
+-| `false`
+-
+-| `config.reload.interval`
+-| How often in seconds Logstash checks the config files for changes. Note that the unit qualifier (`s`) is required.
+-| `3s`
+-
+-| `config.debug`
+-| When set to `true`, shows the fully compiled configuration as a debug log message. You must also set `log.level: debug`.
+-  WARNING: The log message will include any 'password' options passed to plugin configs as plaintext, and may result
+-  in plaintext passwords appearing in your logs!
+-| `false`
+-
+-| `config.support_escapes`
+-| When set to `true`, quoted strings will process the following escape sequences: `\n` becomes a literal newline (ASCII 10). `\r` becomes a literal carriage return (ASCII 13). `\t` becomes a literal tab (ASCII 9). `\\` becomes a literal backslash `\`. `\"` becomes a literal double quotation mark. `\'` becomes a literal quotation mark.
+-| `false`
+-
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.nio.ByteBuffer;
++import java.nio.channels.FileChannel;
++import java.nio.file.AccessDeniedException;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.StandardCopyOption;
++import java.util.zip.CRC32;
++
++import org.apache.logging.log4j.LogManager;
++import org.apache.logging.log4j.Logger;
++import org.logstash.ackedqueue.Checkpoint;
++
++
++/**
++ * File implementation for {@link CheckpointIO}
++ * */
++public class FileCheckpointIO implements CheckpointIO {
++//    Checkpoint file structure
++//
++//    byte version;
++//    int pageNum;
++//    int firstUnackedPageNum;
++//    long firstUnackedSeqNum;
++//    long minSeqNum;
++//    int elementCount;
++
++    private static final Logger logger = LogManager.getLogger(FileCheckpointIO.class);
++
++    public static final int BUFFER_SIZE = Short.BYTES // version
++            + Integer.BYTES  // pageNum
++            + Integer.BYTES  // firstUnackedPageNum
++            + Long.BYTES     // firstUnackedSeqNum
++            + Long.BYTES     // minSeqNum
++            + Integer.BYTES  // eventCount
++            + Integer.BYTES;    // checksum
++
++    private static final int CHECKPOINT_WRITE_RETRY_ATTEMPTS = 5;
++    private static final long CHECKPOINT_WRITE_RETRY_BACKOFF_MILLIS = 10L;
++
++    /**
++     * Using {@link java.nio.DirectByteBuffer} to avoid allocations and copying in
++     * {@link FileChannel#write(ByteBuffer)} and {@link CRC32#update(ByteBuffer)} calls.
++     */
++    private final ByteBuffer buffer = ByteBuffer.allocateDirect(BUFFER_SIZE);
++
++    private final CRC32 crc32 = new CRC32();
++
++    private final boolean retry;
++
++    private static final String HEAD_CHECKPOINT = "checkpoint.head";
++    private static final String TAIL_CHECKPOINT = "checkpoint.";
++    private final Path dirPath;
++
++    public FileCheckpointIO(Path dirPath) {
++        this(dirPath, false);
++    }
++
++    public FileCheckpointIO(Path dirPath, boolean retry) {
++        this.dirPath = dirPath;
++        this.retry = retry;
++    }
++
++    @Override
++    public Checkpoint read(String fileName) throws IOException {
++        return read(
++            ByteBuffer.wrap(Files.readAllBytes(dirPath.resolve(fileName)))
++        );
++    }
++
++    @Override
++    public Checkpoint write(String fileName, int pageNum, int firstUnackedPageNum, long firstUnackedSeqNum, long minSeqNum, int elementCount) throws IOException {
++        Checkpoint checkpoint = new Checkpoint(pageNum, firstUnackedPageNum, firstUnackedSeqNum, minSeqNum, elementCount);
++        write(fileName, checkpoint);
++        return checkpoint;
++    }
++
++    @Override
++    public void write(String fileName, Checkpoint checkpoint) throws IOException {
++        write(checkpoint, buffer);
++        buffer.flip();
++        final Path tmpPath = dirPath.resolve(fileName + ".tmp");
++        final Path checkpointPath = dirPath.resolve(fileName);
++        try (FileOutputStream out = new FileOutputStream(tmpPath.toFile())) {
++            out.getChannel().write(buffer);
++            out.getFD().sync();
++        }
++
++        moveWithRetry(tmpPath, checkpointPath);
++    }
++
++    @Override
++    public void purge(String fileName) throws IOException {
++        Path path = dirPath.resolve(fileName);
++        Files.delete(path);
++    }
++
++    // @return the head page checkpoint file name
++    @Override
++    public String headFileName() {
++         return HEAD_CHECKPOINT;
++    }
++
++    // @return the tail page checkpoint file name for given page number
++    @Override
++    public String tailFileName(int pageNum) {
++        return TAIL_CHECKPOINT + pageNum;
++    }
++
++    public static Checkpoint read(ByteBuffer data) throws IOException {
++        int version = (int) data.getShort();
++        // TODO - build reader for this version
++        int pageNum = data.getInt();
++        int firstUnackedPageNum = data.getInt();
++        long firstUnackedSeqNum = data.getLong();
++        long minSeqNum = data.getLong();
++        int elementCount = data.getInt();
++        final CRC32 crc32 = new CRC32();
++        crc32.update(data.array(), 0, BUFFER_SIZE - Integer.BYTES);
++        int calcCrc32 = (int) crc32.getValue();
++        int readCrc32 = data.getInt();
++        if (readCrc32 != calcCrc32) {
++            throw new IOException(String.format("Checkpoint checksum mismatch, expected: %d, actual: %d", calcCrc32, readCrc32));
++        }
++        if (version != Checkpoint.VERSION) {
++            throw new IOException("Unknown file format version: " + version);
++        }
++
++        return new Checkpoint(pageNum, firstUnackedPageNum, firstUnackedSeqNum, minSeqNum, elementCount);
++    }
++
++    private void write(Checkpoint checkpoint, ByteBuffer buf) {
++        crc32.reset();
++        buf.clear();
++        buf.putShort((short)Checkpoint.VERSION);
++        buf.putInt(checkpoint.getPageNum());
++        buf.putInt(checkpoint.getFirstUnackedPageNum());
++        buf.putLong(checkpoint.getFirstUnackedSeqNum());
++        buf.putLong(checkpoint.getMinSeqNum());
++        buf.putInt(checkpoint.getElementCount());
++        buf.flip();
++        crc32.update(buf);
++        buf.position(BUFFER_SIZE - Integer.BYTES).limit(BUFFER_SIZE);
++        buf.putInt((int)crc32.getValue());
++    }
++
++    private void moveWithRetry(Path source, Path target) throws IOException {
++        if (!retry) {
++            tryMove(source, target);
++            return;
++        }
++
++        AccessDeniedException lastException = null;
++        long delay = CHECKPOINT_WRITE_RETRY_BACKOFF_MILLIS;
++        for (int attempt = 1; attempt <= CHECKPOINT_WRITE_RETRY_ATTEMPTS; attempt++) {
++            try {
++                tryMove(source, target);
++                return;
++            } catch (AccessDeniedException ex) {
++                lastException = ex;
++                if (attempt == CHECKPOINT_WRITE_RETRY_ATTEMPTS) {
++                    logger.error("Aborting after {} checkpoint move attempts due to AccessDeniedException: {}", attempt, ex.toString());
++                    throw ex;
++                }
++                logger.warn("Retrying checkpoint move after AccessDeniedException on attempt {}/{}: {}", attempt, CHECKPOINT_WRITE_RETRY_ATTEMPTS, ex.toString());
++                sleepBeforeRetry(delay, ex);
++                delay = delay * 2;
++            } catch (IOException ex) {
++                logger.error("Error writing checkpoint: " + ex);
++                throw ex;
++            }
++        }
++
++        throw lastException;
++    }
++
++    void tryMove(Path source, Path target) throws IOException {
++        Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
++    }
++
++    void sleepBeforeRetry(long delayInMillis, AccessDeniedException cause) throws IOException {
++        try {
++            Thread.sleep(delayInMillis);
++        } catch (InterruptedException ex) {
++            Thread.currentThread().interrupt();
++            IOException interrupted = new IOException("Interrupted while retrying checkpoint move", ex);
++            interrupted.addSuppressed(cause);
++            throw interrupted;
++        }
++    }
++}
+ | `modules`
+ | When configured, `modules` must be in the nested YAML structure described above this table.
+ | None
+diff --git a/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java b/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
+index 4e0f8866d..cfc283ec6 100644
+--- a/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
++++ b/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
+@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
+ import java.io.IOException;
+ import java.nio.ByteBuffer;
+ import java.nio.channels.FileChannel;
++import java.nio.file.AccessDeniedException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.StandardCopyOption;
+@@ -57,6 +58,9 @@ public class FileCheckpointIO implements CheckpointIO {
+             + Integer.BYTES  // eventCount
+             + Integer.BYTES;    // checksum
+ 
++    private static final int CHECKPOINT_WRITE_RETRY_ATTEMPTS = 5;
++    private static final long CHECKPOINT_WRITE_RETRY_BACKOFF_MILLIS = 10L;
++
+     /**
+      * Using {@link java.nio.DirectByteBuffer} to avoid allocations and copying in
+      * {@link FileChannel#write(ByteBuffer)} and {@link CRC32#update(ByteBuffer)} calls.
+@@ -99,28 +103,13 @@ public class FileCheckpointIO implements CheckpointIO {
+         write(checkpoint, buffer);
+         buffer.flip();
+         final Path tmpPath = dirPath.resolve(fileName + ".tmp");
++        final Path checkpointPath = dirPath.resolve(fileName);
+         try (FileOutputStream out = new FileOutputStream(tmpPath.toFile())) {
+             out.getChannel().write(buffer);
+             out.getFD().sync();
+         }
+ 
+-        try {
+-            Files.move(tmpPath, dirPath.resolve(fileName), StandardCopyOption.ATOMIC_MOVE);
+-        } catch (IOException ex) {
+-            if (retry) {
+-                try {
+-                    logger.error("Retrying after exception writing checkpoint: " + ex);
+-                    Thread.sleep(500);
+-                    Files.move(tmpPath, dirPath.resolve(fileName), StandardCopyOption.ATOMIC_MOVE);
+-                } catch (IOException | InterruptedException ex2) {
+-                    logger.error("Aborting after second exception writing checkpoint: " + ex2);
+-                    throw ex;
+-                }
+-            } else {
+-                logger.error("Error writing checkpoint: " + ex);
+-                throw ex;
+-            }
+-        }
++        moveWithRetry(tmpPath, checkpointPath);
+     }
+ 
+     @Override
+@@ -177,4 +166,46 @@ public class FileCheckpointIO implements CheckpointIO {
+         buf.position(BUFFER_SIZE - Integer.BYTES).limit(BUFFER_SIZE);
+         buf.putInt((int)crc32.getValue());
+     }
++
++    private void moveWithRetry(Path source, Path target) throws IOException {
++        if (!retry) {
++            tryMove(source, target);
++            return;
++        }
++
++        AccessDeniedException lastException = null;
++        long delay = CHECKPOINT_WRITE_RETRY_BACKOFF_MILLIS;
++        for (int attempt = 1; attempt <= CHECKPOINT_WRITE_RETRY_ATTEMPTS; attempt++) {
++            try {
++                tryMove(source, target);
++                return;
++            } catch (AccessDeniedException ex) {
++                lastException = ex;
++                if (attempt == CHECKPOINT_WRITE_RETRY_ATTEMPTS) {
++                    logger.error("Aborting after {} checkpoint move attempts due to AccessDeniedException: {}", attempt, ex.toString());
++                    throw ex;
++                }
++                logger.warn("Retrying checkpoint move after AccessDeniedException on attempt {}/{}: {}", attempt, CHECKPOINT_WRITE_RETRY_ATTEMPTS, ex.toString());
++                sleepBeforeRetry(delay, ex);
++                delay = delay * 2;
++            }
++        }
++
++        throw lastException;
++    }
++
++    void tryMove(Path source, Path target) throws IOException {
++        Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
++    }
++
++    void sleepBeforeRetry(long delayInMillis, AccessDeniedException cause) throws IOException {
++        try {
++            Thread.sleep(delayInMillis);
++        } catch (InterruptedException ex) {
++            Thread.currentThread().interrupt();
++            IOException interrupted = new IOException("Interrupted while retrying checkpoint move", ex);
++            interrupted.addSuppressed(cause);
++            throw interrupted;
++        }
++    }
+ }
+diff --git a/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java b/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
+index 2ec024e55..dd0de6ad9 100644
+--- a/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
++++ b/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
+@@ -27,13 +27,18 @@ import org.junit.rules.TemporaryFolder;
+ import org.logstash.ackedqueue.Checkpoint;
+ 
+ import java.net.URL;
++import java.nio.file.AccessDeniedException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.Paths;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
+ 
+ import static org.hamcrest.CoreMatchers.equalTo;
+ import static org.hamcrest.CoreMatchers.is;
+ import static org.hamcrest.MatcherAssert.assertThat;
++import static org.junit.Assert.fail;
+ 
+ public class FileCheckpointIOTest {
+     private Path checkpointFolder;
+@@ -69,4 +74,61 @@ public class FileCheckpointIOTest {
+         byte[] compare = Files.readAllBytes(path);
+         assertThat(contents, is(equalTo(compare)));
+     }
++
++    @Test
++    public void writeRetriesAccessDeniedExceptionWithExponentialBackoff() throws Exception {
++        RetryingFileCheckpointIO retryingIo = new RetryingFileCheckpointIO(checkpointFolder, 2);
++
++        retryingIo.write("checkpoint.head", 6, 2, 10L, 8L, 200);
++
++        assertThat(retryingIo.getMoveAttempts(), is(3));
++        assertThat(retryingIo.getSleepDelays(), is(equalTo(Arrays.asList(10L, 20L))));
++        assertThat(Files.exists(checkpointFolder.resolve("checkpoint.head")), is(true));
++    }
++
++    @Test
++    public void writeThrowsAfterRetryAttemptsAreExhausted() throws Exception {
++        RetryingFileCheckpointIO retryingIo = new RetryingFileCheckpointIO(checkpointFolder, 5);
++
++        try {
++            retryingIo.write("checkpoint.head", 6, 2, 10L, 8L, 200);
++            fail("expected AccessDeniedException");
++        } catch (AccessDeniedException ex) {
++            assertThat(retryingIo.getMoveAttempts(), is(5));
++            assertThat(retryingIo.getSleepDelays(), is(equalTo(Arrays.asList(10L, 20L, 40L, 80L))));
++        }
++    }
++
++    private static final class RetryingFileCheckpointIO extends FileCheckpointIO {
++        private final int failuresBeforeSuccess;
++        private final List<Long> sleepDelays = new ArrayList<>();
++        private int moveAttempts;
++
++        private RetryingFileCheckpointIO(Path dirPath, int failuresBeforeSuccess) {
++            super(dirPath, true);
++            this.failuresBeforeSuccess = failuresBeforeSuccess;
++        }
++
++        @Override
++        void tryMove(Path source, Path target) throws java.io.IOException {
++            moveAttempts += 1;
++            if (moveAttempts <= failuresBeforeSuccess) {
++                throw new AccessDeniedException(target.toString());
++            }
++            super.tryMove(source, target);
++        }
++
++        @Override
++        void sleepBeforeRetry(long delayInMillis, AccessDeniedException cause) {
++            sleepDelays.add(delayInMillis);
++        }
++
++        private int getMoveAttempts() {
++            return moveAttempts;
++        }
++
++        private List<Long> getSleepDelays() {
++            return sleepDelays;
++        }
++    }
+ }

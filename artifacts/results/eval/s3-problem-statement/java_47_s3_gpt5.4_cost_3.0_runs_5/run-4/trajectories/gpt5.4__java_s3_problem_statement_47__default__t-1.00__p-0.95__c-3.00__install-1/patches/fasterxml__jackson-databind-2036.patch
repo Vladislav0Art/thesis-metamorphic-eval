@@ -1,0 +1,158 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..4ca1be3aa 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -104,9 +104,9 @@ public enum MapperFeature implements ConfigFeature
+      * Feature that determines whether regular "getter" methods are
+      * automatically detected based on standard Bean naming convention
+      * or not. If yes, then all public zero-argument methods that
+-     * start with prefix "get" 
++     * start with prefix "get"
+      * are considered as getters.
+-     * If disabled, only methods explicitly  annotated are considered getters.
++     * If disabled, only methods explicitly annotated are considered getters.
+      *<p>
+      * Note that since version 1.3, this does <b>NOT</b> include
+      * "is getters" (see {@link #AUTO_DETECT_IS_GETTERS} for details)
+@@ -146,17 +146,21 @@ public enum MapperFeature implements ConfigFeature
+      * Note that this feature has lower precedence than per-class
+      * annotations, and is only used if there isn't more granular
+      * configuration available.
+-     *<P>
++     *<p>
+      * Feature is enabled by default.
+      */
+     AUTO_DETECT_SETTERS(true),
+ 
+     /**
+-     * Feature that determines whether getters (getter methods)
+-     * can be auto-detected if there is no matching mutator (setter,
+-     * constructor parameter or field) or not: if set to true,
+-     * only getters that match a mutator are auto-discovered; if
+-     * false, all auto-detectable getters can be discovered.
++     * Feature that determines whether getters can be auto-detected if there
++     * is no matching mutator (setter, constructor parameter or field) or not:
++     * if set to true, only getters that match a mutator are auto-discovered;
++     * if false, all auto-detectable getters can be discovered.
++     *<p>
++     * Note that this feature only applies to auto-detected "getter" methods,
++     * and not getters that are annotated with
++     * {@link com.fasterxml.jackson.annotation.JsonProperty} explicitly. In latter case,
++     * methods are always considered getters regardless of this feature.
+      *<p>
+      * Feature is disabled by default.
+      */
+@@ -462,6 +466,18 @@ public enum MapperFeature implements ConfigFeature
+      */
+     IGNORE_DUPLICATE_MODULE_REGISTRATIONS(true),
+ 
++    /**
++     * Feature that determines whether the declared concrete target type should be
++     * used as the default implementation during polymorphic deserialization if no
++     * explicit `defaultImpl` has been configured and the incoming JSON does not
++     * contain a type id.
++     *<p>
++     * This feature has no effect for abstract base types.
++     *<p>
++     * Feature is disabled by default.
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /**
+      * Setting that determines what happens if an attempt is made to explicitly
+      * "merge" value of a property, where value does not support merging; either
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
+index 17d5ec72f..dc406daf5 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
+@@ -123,7 +123,12 @@ public class StdTypeResolverBuilder
+         JavaType defaultImpl;
+ 
+         if (_defaultImpl == null) {
+-            defaultImpl = null;
++            if (config.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && !baseType.isAbstract()) {
++                defaultImpl = baseType;
++            } else {
++                defaultImpl = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+index 7d260c785..da3c9e3aa 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+@@ -115,13 +115,29 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
+     @JsonSubTypes({@JsonSubTypes.Type(value = Event.class, name = "event")})
+     @JsonIgnoreProperties(ignoreUnknown=true)
+-    public interface Item { }
++    interface Item { }
+ 
+     static class Event implements Item {
+         public String location;
+         public Event() {}
+     }
+ 
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
++    public static interface BaseTypeAsDefaultInterface {
++        String getName();
++        void setName(String name);
++    }
++
++    public static class BaseTypeAsDefaultImpl implements BaseTypeAsDefaultInterface {
++        private String name;
++
++        @Override
++        public String getName() { return name; }
++
++        @Override
++        public void setName(String name) { this.name = name; }
++    }
++
+     @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
+             property = "clazz")
+     abstract static class BaseClass { }    
+@@ -270,6 +286,28 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         }
+     }
+ 
++    public void testMissingTypeIdWithConcreteTargetStillFailsByDefault() throws Exception
++    {
++        try {
++            MAPPER.readValue("{\"name\":\"name\"}", BaseTypeAsDefaultImpl.class);
++            fail("Expected " + InvalidTypeIdException.class);
++        } catch (InvalidTypeIdException e) {
++            verifyException(e, "missing type id property 'type'");
++        }
++    }
++
++    public void testUseBaseTypeAsDefaultImpl() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++
++        BaseTypeAsDefaultImpl value = mapper.readValue("{\"name\":\"name\"}",
++                BaseTypeAsDefaultImpl.class);
++
++        assertNotNull(value);
++        assertEquals("name", value.getName());
++    }
++
+     // [databind#1533]
+     public void testWithEmptyStringAsNullObject1533() throws Exception
+     {

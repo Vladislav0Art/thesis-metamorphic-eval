@@ -1,0 +1,67 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderBaseModule.java b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderBaseModule.java
+index 35bdc8074..865991399 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderBaseModule.java
++++ b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderBaseModule.java
+@@ -362,32 +362,35 @@ public class ObjectReaderBaseModule
+         }
+ 
+         private void processJacksonJsonTypeInfo(BeanInfo beanInfo, Annotation annotation) {
+-            Class<? extends Annotation> annotationClass = annotation.getClass();
+-            BeanUtils.annotationMethods(annotationClass, m -> {
+-                String name = m.getName();
+-                try {
+-                    Object result = m.invoke(annotation);
+-                    if ("property".equals(name)) {
+-                        String value = (String) result;
+-                        if (!value.isEmpty()) {
+-                            beanInfo.typeKey = value;
+-                            beanInfo.readerFeatures |= JSONReader.Feature.SupportAutoType.mask;
+-                        }
++            if (fieldInfo.writeUsing == null) {
++                JSONType jsonType = field.getType().getAnnotation(JSONType.class);
++                if (jsonType != null) {
++                    Class serializer = jsonType.serializer();
++                    if (ObjectWriter.class.isAssignableFrom(serializer)) {
++                        fieldInfo.writeUsing = serializer;
+                     }
+-                } catch (Throwable ignored) {
+-                    // ignored
+                 }
+-            });
+-        }
++            }
+ 
+-        private void getBeanInfo(BeanInfo beanInfo, Annotation[] annotations) {
+-            for (Annotation annotation : annotations) {
+-                Class<? extends Annotation> annotationType = annotation.annotationType();
+-                JSONType jsonType = findAnnotation(annotation, JSONType.class);
+-                if (jsonType != null) {
+-                    getBeanInfo1x(beanInfo, annotation);
+-                    if (jsonType == annotation) {
+-                        continue;
++            if (jsonField == null) {
++                return;
++            }
++
++            loadFieldInfo(fieldInfo, jsonField);
++
++            Class writeUsing = jsonField.writeUsing();
++            if (ObjectWriter.class.isAssignableFrom(writeUsing)) {
++                fieldInfo.writeUsing = writeUsing;
++            }
++
++            Class serializeUsing = jsonField.serializeUsing();
++            if (ObjectWriter.class.isAssignableFrom(serializeUsing)) {
++                fieldInfo.writeUsing = serializeUsing;
++            }
++
++            if (jsonField.jsonDirect()) {
++                fieldInfo.features |= FieldInfo.RAW_VALUE_MASK;
++            }
+                     }
+                 }
+ 

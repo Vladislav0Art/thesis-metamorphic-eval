@@ -1,0 +1,97 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index 1aad80538..586b899c2 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -213,6 +213,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+         if (open.compareAndSet(true, false)) {
+             try {
+                 finalizeSegment(FinalizeWhen.ALWAYS);
++                executeAgeRetentionPolicy();
+             } catch (Exception e) {
+                 logger.warn("Unable to close dlq writer, ignoring", e);
+             }
+@@ -230,6 +231,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+         }
+     }
+ 
++
+     @VisibleForTesting
+     void writeEntry(DLQEntry entry) throws IOException {
+         lock.lock();
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 5702d169a..de2c82f7d 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -25,7 +25,10 @@ import java.nio.channels.OverlappingFileLockException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.StandardOpenOption;
++import java.time.Clock;
+ import java.time.Duration;
++import java.time.Instant;
++import java.time.ZoneOffset;
+ import java.util.Arrays;
+ import java.util.Collections;
+ import java.util.List;
+@@ -42,7 +45,7 @@ import org.junit.rules.TemporaryFolder;
+ import org.logstash.DLQEntry;
+ import org.logstash.Event;
+ import org.logstash.LockException;
+-
++import org.logstash.Timestamp;
+ import static junit.framework.TestCase.assertFalse;
+ import static org.hamcrest.CoreMatchers.is;
+ import static org.hamcrest.CoreMatchers.not;
+@@ -394,8 +397,37 @@ public class DeadLetterQueueWriterTest {
+ 
+             // 1.log with 2 events
+             // 2.log with 319
+-            // 3.log with 319
+             assertEquals(2, writeManager.getDroppedEvents());
+         }
+     }
++
++    @Test
++    public void testExpiredSegmentsPurgedOnShutdownWithoutNewWrites() throws Exception {
++        final Instant eventTime = Instant.parse("2023-01-23T12:48:35Z");
++        final Clock initialClock = Clock.fixed(eventTime.plusSeconds(30), ZoneOffset.UTC);
++        final Clock expiredClock = Clock.fixed(eventTime.plus(Duration.ofMinutes(2)), ZoneOffset.UTC);
++
++        Event event = DeadLetterQueueReaderTest.createEventWithConstantSerializationOverhead(Collections.emptyMap());
++        event.setField("message", "Hello world");
++
++        try (DeadLetterQueueWriter writer = DeadLetterQueueWriter
++                .newBuilder(dir, 10 * MB, 20 * MB, Duration.ofSeconds(1))
++                .retentionTime(Duration.ofMinutes(1))
++                .clock(initialClock)
++                .build()) {
++            writer.writeEntry(new DLQEntry(event, "", "", "00001", new Timestamp(eventTime)));
++        }
++
++        assertTrue(Files.exists(dir.resolve("1.log")));
++
++        try (DeadLetterQueueWriter writer = DeadLetterQueueWriter
++                .newBuilder(dir, 10 * MB, 20 * MB, Duration.ofSeconds(1))
++                .retentionTime(Duration.ofMinutes(1))
++                .clock(expiredClock)
++                .build()) {
++            assertTrue(Files.exists(dir.resolve("1.log")));
++        }
++
++        assertFalse(Files.exists(dir.resolve("1.log")));
++    }
+ }

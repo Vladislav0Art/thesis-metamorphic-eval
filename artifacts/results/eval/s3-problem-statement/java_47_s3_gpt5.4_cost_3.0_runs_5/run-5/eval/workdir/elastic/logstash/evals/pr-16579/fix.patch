@@ -1,0 +1,46 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/lib/logstash/util/buftok.rb b/logstash-core/lib/logstash/util/buftok.rb
+index dd0059212..116124e6a 100644
+--- a/logstash-core/lib/logstash/util/buftok.rb
++++ b/logstash-core/lib/logstash/util/buftok.rb
+@@ -16,3 +16,4 @@
+ # under the License.
+ 
+ # Keeping this file for backwards compatibility with plugins that include it directly.
++require "logstash/util"
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index cccb9c476..1cb78d5c9 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -43,6 +43,18 @@ describe  FileWatch::BufferedTokenizer  do
+     expect(subject.extract("\n\n\n")).to eq(["", "", ""])
+   end
+ 
++  context "with size limit" do
++    subject { FileWatch::BufferedTokenizer.new("\n", 10) }
++
++    it "drops the oversized payload and resumes after the next delimiter" do
++      expect(subject.extract("1234567")).to eq([])
++
++      expect { subject.extract("8901\nok\n") }.to raise_error(/input buffer full/)
++
++      expect(subject.extract("next\n")).to eq(["ok", "next"])
++    end
++  end
++
+   context 'with delimiter' do
+     subject { FileWatch::BufferedTokenizer.new(delimiter) }
+ 

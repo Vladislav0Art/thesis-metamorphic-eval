@@ -1,0 +1,101 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index 3d7b4b199..169e74e2a 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -77,6 +77,19 @@ describe  FileWatch::BufferedTokenizer  do
+     end
+   end
+ 
++  context "with non-UTF-8 input" do
++    let(:data) { "\xA3".dup.force_encoding("ISO-8859-1") }
++
++    it "preserves bytes and encoding through buffering and flushing" do
++      expect(subject.extract(data)).to eq([])
++
++      flushed = subject.flush
++
++      expect(flushed.bytes).to eq([0xA3])
++      expect(flushed.encoding.name).to eq("ISO-8859-1")
++    end
++  end
++
+   context 'with delimiter' do
+     subject { FileWatch::BufferedTokenizer.new(delimiter) }
+ 
+diff --git a/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+new file mode 100644
+index 000000000..4f8b6f1b5
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+@@ -0,0 +1,57 @@
++/*
++ * Licensed to Elasticsearch B.V. under one or more contributor
++ * license agreements. See the NOTICE file distributed with
++ * this work for additional information regarding copyright
++ * ownership. Elasticsearch B.V. licenses this file to you under
++ * the Apache License, Version 2.0 (the "License"); you may
++ * not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *   http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied.  See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++package org.logstash.common;
++
++import org.jruby.RubyArray;
++import org.jruby.RubyString;
++import org.jruby.runtime.ThreadContext;
++import org.jruby.runtime.builtin.IRubyObject;
++import org.junit.Before;
++import org.junit.Test;
++import org.logstash.RubyTestBase;
++import org.logstash.RubyUtil;
++import static org.junit.Assert.assertArrayEquals;
++import static org.junit.Assert.assertEquals;
++
++public class BufferedTokenizerExtTest extends RubyTestBase {
++
++    private ThreadContext context;
++    private BufferedTokenizerExt tokenizer;
++
++    @Before
++    public void setUp() {
++        context = RubyUtil.RUBY.getCurrentContext();
++        tokenizer = new BufferedTokenizerExt(RubyUtil.RUBY, RubyUtil.BUFFERED_TOKENIZER);
++        tokenizer.init(context, new IRubyObject[0]);
++    }
++
++    @Test
++    public void extractAndFlushPreservesBytesAndEncoding() {
++        RubyString rubyString = RubyString.newString(RubyUtil.RUBY, new byte[]{(byte) 0xA3});
++        RubyString iso88591 = (RubyString) rubyString.force_encoding(context, RubyUtil.RUBY.newString("ISO-8859-1"));
++
++        RubyArray<?> extracted = tokenizer.extract(context, iso88591);
++        assertEquals(0, extracted.size());
++
++        RubyString flushed = (RubyString) tokenizer.flush(context);
++
++        assertArrayEquals(new byte[]{(byte) 0xA3}, flushed.getBytes());
++        assertEquals("ISO-8859-1", flushed.getEncoding().toString());
++    }
++}

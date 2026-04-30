@@ -1,0 +1,67 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/MockitoCore.java b/src/main/java/org/mockito/internal/MockitoCore.java
+index fd39f6a4a..15c4fa409 100644
+--- a/src/main/java/org/mockito/internal/MockitoCore.java
++++ b/src/main/java/org/mockito/internal/MockitoCore.java
+@@ -131,6 +131,7 @@ public class MockitoCore {
+         }
+         MockSettingsImpl impl = MockSettingsImpl.class.cast(settings);
+         MockCreationSettings<T> creationSettings = impl.buildStatic(classToMock);
++        checkDoNotMockAnnotation(classToMock, creationSettings);
+         MockMaker.StaticMockControl<T> control = createStaticMock(classToMock, creationSettings);
+         control.enable();
+         mockingProgress().mockingStarted(classToMock, creationSettings);
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java
+index e63e5bba8..7f9fbf2fc 100644
+--- a/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java
+@@ -13,9 +13,11 @@ import static org.mockito.Mockito.times;
+ import java.util.concurrent.atomic.AtomicReference;
+ 
+ import org.junit.Test;
++import org.mockito.DoNotMock;
+ import org.mockito.MockedStatic;
+ import org.mockito.Mockito;
+ import org.mockito.exceptions.base.MockitoException;
++import org.mockito.exceptions.misusing.DoNotMockException;
+ import org.mockito.exceptions.verification.NoInteractionsWanted;
+ import org.mockito.exceptions.verification.WantedButNotInvoked;
+ 
+@@ -188,6 +190,16 @@ public final class StaticMockTest {
+                 .hasMessageContaining("static mocking is already registered in the current thread");
+     }
+ 
++    @Test
++    public void testStaticMockMustRespectDoNotMockAnnotation() {
++        assertThatThrownBy(
++                        () -> {
++                            try (MockedStatic<NotMockable> ignored =
++                                    Mockito.mockStatic(NotMockable.class)) {}
++                        })
++                .isInstanceOf(DoNotMockException.class);
++    }
++
+     @Test
+     public void testStaticMockVoid() {
+         try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
+@@ -247,4 +259,7 @@ public final class StaticMockTest {
+             return sb.toString();
+         }
+     }
++
++    @DoNotMock
++    static class NotMockable {}
+ }

@@ -1,0 +1,37 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/config/jvm.options b/config/jvm.options
+index b729fce91..c0f3704a1 100644
+--- a/config/jvm.options
++++ b/config/jvm.options
+@@ -68,6 +68,11 @@
+ # Entropy source for randomness
+ -Djava.security.egd=file:/dev/urandom
+ 
++# Restore Netty's allocator chunk size to 16MB. Netty 4.1.75 lowered
++# the default maxOrder from 11 to 9, which reduces pooled chunk size
++# from 16MB to 4MB and can increase costly unpooled direct allocations.
++-Dio.netty.allocator.maxOrder=11
++
+ # Copy the logging context from parent threads to children
+ -Dlog4j2.isThreadContextMapInheritable=true
+ 
+@@ -87,4 +92,4 @@
+ #
+ # Sets the maximum nesting depth. The depth is a count of objects and arrays that have not
+ # been closed, `{` and `[` respectively.
+-#-Dlogstash.jackson.stream-read-constraints.max-nesting-depth=1000
+\ No newline at end of file
++#-Dlogstash.jackson.stream-read-constraints.max-nesting-depth=1000

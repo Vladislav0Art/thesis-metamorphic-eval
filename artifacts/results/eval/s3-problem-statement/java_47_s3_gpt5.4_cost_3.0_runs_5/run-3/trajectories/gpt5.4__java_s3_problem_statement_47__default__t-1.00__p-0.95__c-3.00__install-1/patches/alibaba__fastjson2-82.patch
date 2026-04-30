@@ -1,0 +1,102 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index b6a0ff2ce..25d749775 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -608,6 +608,28 @@ public interface JSON {
+         return true;
+     }
+ 
++    /**
++     * Verify the {@link String} is JSON Object
++     *
++     * @param text the {@link String} to validate
++     * @return T/F
++     */
++    static boolean isValidObject(String text) {
++        if (text == null || text.length() == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(text);
++        try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
++            jsonReader.skipValue();
++        } catch (JSONException error) {
++            return false;
++        }
++        return true;
++    }
++
+     /**
+      * Verify the {@link String} is JSON Array
+      *
+@@ -649,6 +671,28 @@ public interface JSON {
+         return true;
+     }
+ 
++    /**
++     * Verify the byte array is JSON Object
++     *
++     * @param bytes the byte array to validate
++     * @return T/F
++     */
++    static boolean isValidObject(byte[] bytes) {
++        if (bytes == null || bytes.length == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(bytes);
++        try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
++            jsonReader.skipValue();
++        } catch (JSONException error) {
++            return false;
++        }
++        return true;
++    }
++
+     /**
+      * Verify the byte array is JSON Array
+      *
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 32ab096bf..efef6f7f0 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -31,6 +31,16 @@ public class JSONTest {
+     public void test_isValidArray_0() {
+         assertTrue(JSON.isValidArray("[]"));
+         assertFalse(JSON.isValidArray("{}"));
++        assertTrue(JSON.isValidArray("[]".getBytes(StandardCharsets.UTF_8)));
++        assertFalse(JSON.isValidArray("{}".getBytes(StandardCharsets.UTF_8)));
++    }
++
++    @Test
++    public void test_isValidObject_0() {
++        assertTrue(JSON.isValidObject("{}"));
++        assertFalse(JSON.isValidObject("[]"));
++        assertTrue(JSON.isValidObject("{}".getBytes(StandardCharsets.UTF_8)));
++        assertFalse(JSON.isValidObject("[]".getBytes(StandardCharsets.UTF_8)));
+     }
+ 
+     @Test
+diff --git a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+index 7a28d61a8..121060e2a 100644
+--- a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
++++ b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+@@ -446,6 +446,10 @@ public class JSON {
+         return com.alibaba.fastjson2.JSON.isValid(str);
+     }
+ 
++    public static boolean isValidObject(String str) {
++        return com.alibaba.fastjson2.JSON.isValidObject(str);
++    }
++
+     public static boolean isValidArray(String str) {
+         return com.alibaba.fastjson2.JSON.isValidArray(str);
+     }

@@ -1,0 +1,296 @@
+
+diff --git a/.gitignore b/.gitignore
+index 5bda0b93..e930bdfb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -18,3 +18,8 @@ local.properties
+ build
+ 
+ .DS_Store
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/Repro.java b/Repro.java
+new file mode 100644
+index 00000000..f164cea3
+--- /dev/null
++++ b/Repro.java
+@@ -0,0 +1,27 @@
++import com.google.gson.Gson;
++import java.util.Collection;
++import java.util.Set;
++
++public class Repro {
++  enum TestEnum { ONE, TWO, THREE }
++
++  private static class TestEnumSetCollection extends SetCollection<TestEnum> {}
++
++  private static class SetCollection<T> extends BaseCollection<T, Set<T>> {}
++
++  private static class BaseCollection<U, C extends Collection<U>> {
++    public C collection;
++  }
++
++  public static void main(String[] args) {
++    Gson gson = new Gson();
++    TestEnumSetCollection withSet =
++        gson.fromJson("{\"collection\":[\"ONE\",\"THREE\"]}", TestEnumSetCollection.class);
++
++    Object first = withSet.collection.iterator().next();
++    System.out.println(first.getClass().getName());
++
++    TestEnum firstEnum = withSet.collection.iterator().next();
++    System.out.println(firstEnum);
++  }
++}
+diff --git a/gson/src/main/java/com/google/gson/internal/$Gson$Types.java b/gson/src/main/java/com/google/gson/internal/$Gson$Types.java
+index adea605f..69e7e065 100644
+--- a/gson/src/main/java/com/google/gson/internal/$Gson$Types.java
++++ b/gson/src/main/java/com/google/gson/internal/$Gson$Types.java
+@@ -27,9 +27,6 @@ import java.lang.reflect.TypeVariable;
+ import java.lang.reflect.WildcardType;
+ import java.util.*;
+ 
+-import static com.google.gson.internal.$Gson$Preconditions.checkArgument;
+-import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
+-
+ /**
+  * Static methods for working with types.
+  *
+@@ -43,11 +40,21 @@ public final class $Gson$Types {
+     throw new UnsupportedOperationException();
+   }
+ 
++  private static <T> T checkNotNull(T object) {
++    if (object == null) {
++      throw new NullPointerException();
++    }
++    return object;
++  }
++
++  private static void checkArgument(boolean condition) {
++    if (!condition) {
++      throw new IllegalArgumentException();
++    }
++  }
+   /**
+-   * Returns a new parameterized type, applying {@code typeArguments} to
+-   * {@code rawType} and enclosed by {@code ownerType}.
+-   *
+-   * @return a {@link java.io.Serializable serializable} parameterized type.
++   * Returns a new parameterized type, applying {@code typeArguments} to {@code rawType} and
++   * enclosed by {@code ownerType}.
+    */
+   public static ParameterizedType newParameterizedTypeWithOwner(
+       Type ownerType, Type rawType, Type... typeArguments) {
+@@ -55,50 +62,35 @@ public final class $Gson$Types {
+   }
+ 
+   /**
+-   * Returns an array type whose elements are all instances of
+-   * {@code componentType}.
+-   *
+-   * @return a {@link java.io.Serializable serializable} generic array type.
++   * Returns an array type whose elements are all instances of {@code componentType}.
+    */
+   public static GenericArrayType arrayOf(Type componentType) {
+     return new GenericArrayTypeImpl(componentType);
+   }
+ 
+   /**
+-   * Returns a type that represents an unknown type that extends {@code bound}.
+-   * For example, if {@code bound} is {@code CharSequence.class}, this returns
+-   * {@code ? extends CharSequence}. If {@code bound} is {@code Object.class},
+-   * this returns {@code ?}, which is shorthand for {@code ? extends Object}.
++   * Returns a type that represents an unknown supertype of {@code bound}. For example, if
++   * {@code bound} is {@code CharSequence.class}, this returns {@code ? super CharSequence}.
+    */
+-  public static WildcardType subtypeOf(Type bound) {
+-    Type[] upperBounds;
+-    if (bound instanceof WildcardType) {
+-      upperBounds = ((WildcardType) bound).getUpperBounds();
+-    } else {
+-      upperBounds = new Type[] { bound };
+-    }
+-    return new WildcardTypeImpl(upperBounds, EMPTY_TYPE_ARRAY);
++  public static WildcardType supertypeOf(Type bound) {
++    return new WildcardTypeImpl(
++        new Type[] {Object.class},
++        bound instanceof WildcardType ? ((WildcardType) bound).getLowerBounds() : new Type[] {bound});
+   }
+ 
+   /**
+-   * Returns a type that represents an unknown supertype of {@code bound}. For
+-   * example, if {@code bound} is {@code String.class}, this returns {@code ?
+-   * super String}.
++   * Returns a type that represents an unknown subtype of {@code bound}. For example, if
++   * {@code bound} is {@code CharSequence.class}, this returns {@code ? extends CharSequence}.
+    */
+-  public static WildcardType supertypeOf(Type bound) {
+-    Type[] lowerBounds;
+-    if (bound instanceof WildcardType) {
+-      lowerBounds = ((WildcardType) bound).getLowerBounds();
+-    } else {
+-      lowerBounds = new Type[] { bound };
+-    }
+-    return new WildcardTypeImpl(new Type[] { Object.class }, lowerBounds);
++  public static WildcardType subtypeOf(Type bound) {
++    return new WildcardTypeImpl(
++        bound instanceof WildcardType ? ((WildcardType) bound).getUpperBounds() : new Type[] {bound},
++        EMPTY_TYPE_ARRAY);
+   }
+ 
+   /**
+-   * Returns a type that is functionally equal but not necessarily equal
+-   * according to {@link Object#equals(Object) Object.equals()}. The returned
+-   * type is {@link java.io.Serializable}.
++   * Returns a type that is functionally equal but not necessarily equal according to {@link
++   * Object#equals(Object)}.
+    */
+   public static Type canonicalize(Type type) {
+     if (type instanceof Class) {
+@@ -107,8 +99,7 @@ public final class $Gson$Types {
+ 
+     } else if (type instanceof ParameterizedType) {
+       ParameterizedType p = (ParameterizedType) type;
+-      return new ParameterizedTypeImpl(p.getOwnerType(),
+-          p.getRawType(), p.getActualTypeArguments());
++      return new ParameterizedTypeImpl(p.getOwnerType(), p.getRawType(), p.getActualTypeArguments());
+ 
+     } else if (type instanceof GenericArrayType) {
+       GenericArrayType g = (GenericArrayType) type;
+@@ -334,25 +325,32 @@ public final class $Gson$Types {
+   }
+ 
+   public static Type resolve(Type context, Class<?> contextRawType, Type toResolve) {
+-    return resolve(context, contextRawType, toResolve, new HashSet<TypeVariable>());
++    return resolve(context, contextRawType, toResolve, new HashMap<TypeVariable<?>, Type>());
+   }
+ 
+   private static Type resolve(Type context, Class<?> contextRawType, Type toResolve,
+-                              Collection<TypeVariable> visitedTypeVariables) {
++      Map<TypeVariable<?>, Type> visitedTypeVariables) {
+     // this implementation is made a little more complicated in an attempt to avoid object-creation
+     while (true) {
+       if (toResolve instanceof TypeVariable) {
+         TypeVariable<?> typeVariable = (TypeVariable<?>) toResolve;
+-        if (visitedTypeVariables.contains(typeVariable)) {
++        Type previouslyResolved = visitedTypeVariables.get(typeVariable);
++        if (previouslyResolved != null) {
++          return previouslyResolved;
++        }
++        if (visitedTypeVariables.containsKey(typeVariable)) {
+           // cannot reduce due to infinite recursion
+           return toResolve;
+-        } else {
+-          visitedTypeVariables.add(typeVariable);
+         }
++        visitedTypeVariables.put(typeVariable, null);
+         toResolve = resolveTypeVariable(context, contextRawType, typeVariable);
+         if (toResolve == typeVariable) {
++          visitedTypeVariables.put(typeVariable, toResolve);
+           return toResolve;
+         }
++        Type resolved = resolve(context, contextRawType, toResolve, visitedTypeVariables);
++        visitedTypeVariables.put(typeVariable, resolved);
++        return resolved;
+ 
+       } else if (toResolve instanceof Class && ((Class<?>) toResolve).isArray()) {
+         Class<?> original = (Class<?>) toResolve;
+diff --git a/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java b/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java
+index aaa577b5..4af93874 100644
+--- a/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java
++++ b/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java
+@@ -23,6 +23,8 @@ import junit.framework.TestCase;
+ 
+ import java.io.PrintStream;
+ import java.lang.ref.WeakReference;
++import java.util.Collection;
++import java.util.Set;
+ 
+ /**
+  * Test fixes for infinite recursion on {@link $Gson$Types#resolve(java.lang.reflect.Type, Class,
+@@ -30,7 +32,8 @@ import java.lang.ref.WeakReference;
+  * and similar issues.
+  * <p>
+  * These tests originally caused {@link StackOverflowError} because of infinite recursion on attempts to
+- * resolve generics on types, with an intermediate types like 'Foo2&lt;? extends ? super ? extends ... ? extends A&gt;'
++ * resolve generics on types, with an intermediate types like
++ * 'Foo2&lt;? extends ? super ? extends ... ? extends A&gt;'
+  */
+ public class RecursiveTypesResolveTest extends TestCase {
+ 
+@@ -42,6 +45,18 @@ public class RecursiveTypesResolveTest extends TestCase {
+     public Foo1<? super B> foo1;
+   }
+ 
++  private enum TestEnum {
++    ONE, TWO, THREE
++  }
++
++  private static class TestEnumSetCollection extends SetCollection<TestEnum> {}
++
++  private static class SetCollection<T> extends BaseCollection<T, Set<T>> {}
++
++  private static class BaseCollection<U, C extends Collection<U>> {
++    public C collection;
++  }
++
+   /**
+    * Test simplest case of recursion.
+    */
+@@ -68,23 +83,27 @@ public class RecursiveTypesResolveTest extends TestCase {
+   //
+ 
+   public void testDoubleSupertype() {
+-    assertEquals($Gson$Types.supertypeOf(Number.class),
+-            $Gson$Types.supertypeOf($Gson$Types.supertypeOf(Number.class)));
++    assertEquals(
++        $Gson$Types.supertypeOf(Number.class),
++        $Gson$Types.supertypeOf($Gson$Types.supertypeOf(Number.class)));
+   }
+ 
+   public void testDoubleSubtype() {
+-    assertEquals($Gson$Types.subtypeOf(Number.class),
+-            $Gson$Types.subtypeOf($Gson$Types.subtypeOf(Number.class)));
++    assertEquals(
++        $Gson$Types.subtypeOf(Number.class),
++        $Gson$Types.subtypeOf($Gson$Types.subtypeOf(Number.class)));
+   }
+ 
+   public void testSuperSubtype() {
+-    assertEquals($Gson$Types.subtypeOf(Object.class),
+-            $Gson$Types.supertypeOf($Gson$Types.subtypeOf(Number.class)));
++    assertEquals(
++        $Gson$Types.subtypeOf(Object.class),
++        $Gson$Types.supertypeOf($Gson$Types.subtypeOf(Number.class)));
+   }
+ 
+   public void testSubSupertype() {
+-    assertEquals($Gson$Types.subtypeOf(Object.class),
+-            $Gson$Types.subtypeOf($Gson$Types.supertypeOf(Number.class)));
++    assertEquals(
++        $Gson$Types.subtypeOf(Object.class),
++        $Gson$Types.subtypeOf($Gson$Types.supertypeOf(Number.class)));
+   }
+ 
+   //
+@@ -108,6 +127,16 @@ public class RecursiveTypesResolveTest extends TestCase {
+     TypeAdapter<TestType2> adapter = new Gson().getAdapter(TestType2.class);
+     assertNotNull(adapter);
+   }
++
++  public void testRepeatedTypeVariableResolve() {
++    TestEnumSetCollection withSet =
++        new Gson().fromJson("{\"collection\":[\"ONE\",\"THREE\"]}", TestEnumSetCollection.class);
++
++    assertEquals(2, withSet.collection.size());
++    assertTrue(withSet.collection.contains(TestEnum.ONE));
++    assertTrue(withSet.collection.contains(TestEnum.THREE));
++    assertEquals(TestEnum.class, withSet.collection.iterator().next().getClass());
++  }
+ }
+ 
+ 

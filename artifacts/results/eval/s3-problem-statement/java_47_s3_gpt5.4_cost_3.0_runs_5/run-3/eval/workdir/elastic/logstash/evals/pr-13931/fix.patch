@@ -1,0 +1,322 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java b/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
+index 4e0f8866d..186779b14 100644
+--- a/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
++++ b/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
+@@ -17,26 +17,25 @@
+  * under the License.
+  */
+ 
+-
+ package org.logstash.ackedqueue.io;
+ 
++import org.apache.logging.log4j.LogManager;
++import org.apache.logging.log4j.Logger;
++import org.logstash.ackedqueue.Checkpoint;
++
+ import java.io.FileOutputStream;
+ import java.io.IOException;
+ import java.nio.ByteBuffer;
+ import java.nio.channels.FileChannel;
++import java.nio.file.AccessDeniedException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.StandardCopyOption;
+ import java.util.zip.CRC32;
+ 
+-import org.apache.logging.log4j.LogManager;
+-import org.apache.logging.log4j.Logger;
+-import org.logstash.ackedqueue.Checkpoint;
+-
+-
+ /**
+  * File implementation for {@link CheckpointIO}
+- * */
++ */
+ public class FileCheckpointIO implements CheckpointIO {
+ //    Checkpoint file structure
+ //
+@@ -55,7 +54,10 @@ public class FileCheckpointIO implements CheckpointIO {
+             + Long.BYTES     // firstUnackedSeqNum
+             + Long.BYTES     // minSeqNum
+             + Integer.BYTES  // eventCount
+-            + Integer.BYTES;    // checksum
++            + Integer.BYTES; // checksum
++
++    private static final int RETRY_ATTEMPTS = 5;
++    private static final long INITIAL_RETRY_DELAY_MILLIS = 10L;
+ 
+     /**
+      * Using {@link java.nio.DirectByteBuffer} to avoid allocations and copying in
+@@ -66,6 +68,8 @@ public class FileCheckpointIO implements CheckpointIO {
+     private final CRC32 crc32 = new CRC32();
+ 
+     private final boolean retry;
++    private final int retryAttempts;
++    private final long initialRetryDelayMillis;
+ 
+     private static final String HEAD_CHECKPOINT = "checkpoint.head";
+     private static final String TAIL_CHECKPOINT = "checkpoint.";
+@@ -76,8 +80,14 @@ public class FileCheckpointIO implements CheckpointIO {
+     }
+ 
+     public FileCheckpointIO(Path dirPath, boolean retry) {
++        this(dirPath, retry, RETRY_ATTEMPTS, INITIAL_RETRY_DELAY_MILLIS);
++    }
++
++    FileCheckpointIO(Path dirPath, boolean retry, int retryAttempts, long initialRetryDelayMillis) {
+         this.dirPath = dirPath;
+         this.retry = retry;
++        this.retryAttempts = retryAttempts;
++        this.initialRetryDelayMillis = initialRetryDelayMillis;
+     }
+ 
+     @Override
+@@ -88,8 +98,16 @@ public class FileCheckpointIO implements CheckpointIO {
+     }
+ 
+     @Override
+-    public Checkpoint write(String fileName, int pageNum, int firstUnackedPageNum, long firstUnackedSeqNum, long minSeqNum, int elementCount) throws IOException {
+-        Checkpoint checkpoint = new Checkpoint(pageNum, firstUnackedPageNum, firstUnackedSeqNum, minSeqNum, elementCount);
++    public Checkpoint write(
++        String fileName,
++        int pageNum,
++        int firstUnackedPageNum,
++        long firstUnackedSeqNum,
++        long minSeqNum,
++        int elementCount
++    ) throws IOException {
++        Checkpoint checkpoint =
++            new Checkpoint(pageNum, firstUnackedPageNum, firstUnackedSeqNum, minSeqNum, elementCount);
+         write(fileName, checkpoint);
+         return checkpoint;
+     }
+@@ -99,43 +117,72 @@ public class FileCheckpointIO implements CheckpointIO {
+         write(checkpoint, buffer);
+         buffer.flip();
+         final Path tmpPath = dirPath.resolve(fileName + ".tmp");
++        final Path targetPath = dirPath.resolve(fileName);
+         try (FileOutputStream out = new FileOutputStream(tmpPath.toFile())) {
+             out.getChannel().write(buffer);
+             out.getFD().sync();
+         }
+ 
+-        try {
+-            Files.move(tmpPath, dirPath.resolve(fileName), StandardCopyOption.ATOMIC_MOVE);
+-        } catch (IOException ex) {
+-            if (retry) {
+-                try {
+-                    logger.error("Retrying after exception writing checkpoint: " + ex);
+-                    Thread.sleep(500);
+-                    Files.move(tmpPath, dirPath.resolve(fileName), StandardCopyOption.ATOMIC_MOVE);
+-                } catch (IOException | InterruptedException ex2) {
+-                    logger.error("Aborting after second exception writing checkpoint: " + ex2);
++        moveWithRetry(tmpPath, targetPath);
++    }
++
++    private void moveWithRetry(final Path source, final Path target) throws IOException {
++        long delayMillis = initialRetryDelayMillis;
++
++        for (int attempt = 0; ; attempt++) {
++            try {
++                move(source, target);
++                return;
++            } catch (AccessDeniedException ex) {
++                if (!retry || attempt == retryAttempts) {
++                    logger.error(
++                        "Error writing checkpoint after {} attempt(s): {}",
++                        attempt + 1,
++                        ex.toString()
++                    );
+                     throw ex;
+                 }
+-            } else {
+-                logger.error("Error writing checkpoint: " + ex);
+-                throw ex;
++
++                logger.warn(
++                    "Retrying checkpoint move after attempt {} of {} failed: {}",
++                    attempt + 1,
++                    retryAttempts + 1,
++                    ex.toString()
++                );
++                sleep(delayMillis);
++                delayMillis = nextDelayMillis(delayMillis);
+             }
+         }
+     }
+ 
++    protected void move(final Path source, final Path target) throws IOException {
++        Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
++    }
++
++    protected void sleep(final long millis) throws IOException {
++        try {
++            Thread.sleep(millis);
++        } catch (InterruptedException ex) {
++            Thread.currentThread().interrupt();
++            throw new IOException("Interrupted while retrying checkpoint move", ex);
++        }
++    }
++
++    private long nextDelayMillis(final long currentDelayMillis) {
++        return currentDelayMillis > Long.MAX_VALUE / 2 ? Long.MAX_VALUE : currentDelayMillis * 2;
++    }
++
+     @Override
+     public void purge(String fileName) throws IOException {
+         Path path = dirPath.resolve(fileName);
+         Files.delete(path);
+     }
+ 
+-    // @return the head page checkpoint file name
+     @Override
+     public String headFileName() {
+-         return HEAD_CHECKPOINT;
++        return HEAD_CHECKPOINT;
+     }
+ 
+-    // @return the tail page checkpoint file name for given page number
+     @Override
+     public String tailFileName(int pageNum) {
+         return TAIL_CHECKPOINT + pageNum;
+@@ -143,7 +190,6 @@ public class FileCheckpointIO implements CheckpointIO {
+ 
+     public static Checkpoint read(ByteBuffer data) throws IOException {
+         int version = (int) data.getShort();
+-        // TODO - build reader for this version
+         int pageNum = data.getInt();
+         int firstUnackedPageNum = data.getInt();
+         long firstUnackedSeqNum = data.getLong();
+@@ -154,7 +200,9 @@ public class FileCheckpointIO implements CheckpointIO {
+         int calcCrc32 = (int) crc32.getValue();
+         int readCrc32 = data.getInt();
+         if (readCrc32 != calcCrc32) {
+-            throw new IOException(String.format("Checkpoint checksum mismatch, expected: %d, actual: %d", calcCrc32, readCrc32));
++            throw new IOException(
++                String.format("Checkpoint checksum mismatch, expected: %d, actual: %d", calcCrc32, readCrc32)
++            );
+         }
+         if (version != Checkpoint.VERSION) {
+             throw new IOException("Unknown file format version: " + version);
+@@ -166,7 +214,7 @@ public class FileCheckpointIO implements CheckpointIO {
+     private void write(Checkpoint checkpoint, ByteBuffer buf) {
+         crc32.reset();
+         buf.clear();
+-        buf.putShort((short)Checkpoint.VERSION);
++        buf.putShort((short) Checkpoint.VERSION);
+         buf.putInt(checkpoint.getPageNum());
+         buf.putInt(checkpoint.getFirstUnackedPageNum());
+         buf.putLong(checkpoint.getFirstUnackedSeqNum());
+@@ -175,6 +223,6 @@ public class FileCheckpointIO implements CheckpointIO {
+         buf.flip();
+         crc32.update(buf);
+         buf.position(BUFFER_SIZE - Integer.BYTES).limit(BUFFER_SIZE);
+-        buf.putInt((int)crc32.getValue());
++        buf.putInt((int) crc32.getValue());
+     }
+ }
+diff --git a/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java b/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
+index 2ec024e55..af3357a14 100644
+--- a/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
++++ b/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
+@@ -26,14 +26,21 @@ import org.junit.Test;
+ import org.junit.rules.TemporaryFolder;
+ import org.logstash.ackedqueue.Checkpoint;
+ 
++import java.io.IOException;
+ import java.net.URL;
++import java.nio.file.AccessDeniedException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.Paths;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
+ 
+ import static org.hamcrest.CoreMatchers.equalTo;
++import static org.hamcrest.CoreMatchers.instanceOf;
+ import static org.hamcrest.CoreMatchers.is;
+ import static org.hamcrest.MatcherAssert.assertThat;
++import static org.junit.Assert.fail;
+ 
+ public class FileCheckpointIOTest {
+     private Path checkpointFolder;
+@@ -69,4 +76,64 @@ public class FileCheckpointIOTest {
+         byte[] compare = Files.readAllBytes(path);
+         assertThat(contents, is(equalTo(compare)));
+     }
++
++    @Test
++    public void writeRetriesCheckpointMoveWithExponentialBackoff() throws Exception {
++        RetryingFileCheckpointIO retryingIo = new RetryingFileCheckpointIO(checkpointFolder, 2, 5);
++
++        retryingIo.write("checkpoint.head", 6, 2, 10L, 8L, 200);
++
++        Path fullFileName = checkpointFolder.resolve("checkpoint.head");
++        assertThat(Files.exists(fullFileName), is(true));
++        assertThat(retryingIo.getMoveAttempts(), is(3));
++        assertThat(retryingIo.getSleepCalls(), is(Arrays.asList(10L, 20L)));
++    }
++
++    @Test
++    public void writeFailsAfterExhaustingCheckpointMoveRetries() throws Exception {
++        RetryingFileCheckpointIO retryingIo = new RetryingFileCheckpointIO(checkpointFolder, 6, 5);
++
++        try {
++            retryingIo.write("checkpoint.head", 6, 2, 10L, 8L, 200);
++            fail("expected write to fail");
++        } catch (IOException e) {
++            assertThat(e, instanceOf(AccessDeniedException.class));
++        }
++
++        assertThat(retryingIo.getMoveAttempts(), is(6));
++        assertThat(retryingIo.getSleepCalls(), is(Arrays.asList(10L, 20L, 40L, 80L, 160L)));
++    }
++
++    private static final class RetryingFileCheckpointIO extends FileCheckpointIO {
++        private final int failuresBeforeSuccess;
++        private int moveAttempts = 0;
++        private final List<Long> sleepCalls = new ArrayList<>();
++
++        private RetryingFileCheckpointIO(Path dirPath, int failuresBeforeSuccess, int retryAttempts) {
++            super(dirPath, true, retryAttempts, 10L);
++            this.failuresBeforeSuccess = failuresBeforeSuccess;
++        }
++
++        @Override
++        protected void move(Path source, Path target) throws IOException {
++            moveAttempts++;
++            if (moveAttempts <= failuresBeforeSuccess) {
++                throw new AccessDeniedException(target.toString());
++            }
++            Files.move(source, target);
++        }
++
++        @Override
++        protected void sleep(long millis) {
++            sleepCalls.add(millis);
++        }
++
++        private int getMoveAttempts() {
++            return moveAttempts;
++        }
++
++        private List<Long> getSleepCalls() {
++            return sleepCalls;
++        }
++    }
+ }

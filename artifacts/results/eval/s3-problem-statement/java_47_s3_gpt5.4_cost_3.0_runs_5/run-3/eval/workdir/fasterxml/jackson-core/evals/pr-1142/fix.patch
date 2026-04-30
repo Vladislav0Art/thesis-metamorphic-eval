@@ -1,0 +1,45 @@
+
+diff --git a/.gitignore b/.gitignore
+index 587b8bfb..70946ce8 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -23,3 +23,7 @@ syntax: glob
+ *.iws
+ /.idea/
+ dependency-reduced-pom.xml
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/Version.java b/src/main/java/com/fasterxml/jackson/core/Version.java
+index d70e5e19..06465ef1 100644
+--- a/src/main/java/com/fasterxml/jackson/core/Version.java
++++ b/src/main/java/com/fasterxml/jackson/core/Version.java
+@@ -57,7 +57,7 @@ public class Version
+         _majorVersion = major;
+         _minorVersion = minor;
+         _patchLevel = patchLevel;
+-        _snapshotInfo = snapshotInfo;
++        _snapshotInfo = (snapshotInfo == null) ? "" : snapshotInfo;
+         _groupId = (groupId == null) ? "" : groupId;
+         _artifactId = (artifactId == null) ? "" : artifactId;
+     }
+diff --git a/src/test/java/com/fasterxml/jackson/core/VersionTest.java b/src/test/java/com/fasterxml/jackson/core/VersionTest.java
+index 69123265..06c35e98 100644
+--- a/src/test/java/com/fasterxml/jackson/core/VersionTest.java
++++ b/src/test/java/com/fasterxml/jackson/core/VersionTest.java
+@@ -97,4 +97,14 @@ public class VersionTest
+       assertTrue(version.compareTo(versionTwo) > 0);
+       assertTrue(versionTwo.compareTo(version) < 0);
+   }
++
++  @Test
++  public void testNullSnapshotInfoIsSanitized() {
++      Version version = new Version(1, 2, 3, null, "group", "artifact");
++      Version versionTwo = new Version(1, 2, 3, null, "group", "artifact");
++
++      assertEquals(version, versionTwo);
++      assertEquals(version.hashCode(), versionTwo.hashCode());
++      assertFalse(version.isSnapshot());
++  }
+ }

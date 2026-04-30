@@ -1,0 +1,44 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index 90082ef49..2ed306754 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -84,7 +84,9 @@ public final class DeadLetterQueueWriter implements Closeable {
+     private final long maxSegmentSize;
+     private final long maxQueueSize;
+     private final QueueStorageType storageType;
+-    private LongAdder currentQueueSize;
++    private final LongAdder currentQueueSize;
++    private final LongAdder droppedEvents = new LongAdder();
++    private volatile String lastError;
+     private final Path queuePath;
+     private final FileLock fileLock;
+     private volatile RecordIOWriter currentWriter;
+@@ -137,6 +139,14 @@ public final class DeadLetterQueueWriter implements Closeable {
+         return storageType.name().toLowerCase(Locale.ROOT);
+     }
+ 
++    public long getDroppedEvents() {
++        return droppedEvents.longValue();
++    }
++
++    public String getLastError() {
++        return lastError;
++    }
++
+     public void writeEntry(Event event, String pluginName, String pluginId, String reason) throws IOException {
+         writeEntry(new DLQEntry(event, pluginName, pluginId, reason));
+     }

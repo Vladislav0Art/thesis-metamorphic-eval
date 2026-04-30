@@ -1,0 +1,71 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index 1aad80538..f8de5f865 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -102,7 +102,8 @@ public final class DeadLetterQueueWriter implements Closeable {
+     private ScheduledExecutorService flushScheduler;
+     private final LongAdder droppedEvents = new LongAdder();
+     private final LongAdder expiredEvents = new LongAdder();
+-    private String lastError = "no errors";
++    private volatile String lastError;
++
+     private final Clock clock;
+     private Optional<Timestamp> oldestSegmentTimestamp;
+     private Optional<Path> oldestSegmentPath;
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+index d5306d71b..62d3dfdb2 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+@@ -103,6 +103,38 @@ public class DeadLetterQueueWriterAgeRetentionTest {
+         assertEquals("Write should push off the age expired segments", VERSION_SIZE + BLOCK_SIZE, beheadedQueueSize);
+     }
+ 
++    @Test
++    public void testRemovesOlderSegmentsOnClose() throws IOException {
++        final Event event = DeadLetterQueueReaderTest.createEventWithConstantSerializationOverhead(Collections.emptyMap());
++        event.setField("message", DeadLetterQueueReaderTest.generateMessageContent(32479));
++
++        final Duration retention = Duration.ofDays(2);
++        long startTime = fakeClock.instant().toEpochMilli();
++
++        try (DeadLetterQueueWriter writeManager = DeadLetterQueueWriter
++                .newBuilder(dir, 10 * MB, 1 * GB, Duration.ofSeconds(1))
++                .retentionTime(retention)
++                .clock(fakeClock)
++                .build()) {
++            DLQEntry entry = new DLQEntry(event, "", "", "00000",
++                    DeadLetterQueueReaderTest.constantSerializationLengthTimestamp(startTime));
++            writeManager.writeEntry(entry);
++            assertEquals("Queue size includes the current temp segment with one block", VERSION_SIZE + BLOCK_SIZE,
++                    writeManager.getCurrentQueueSize());
++            fakeClock.forward(retention.plusSeconds(1));
++        }
++
++        try (DeadLetterQueueWriter writeManager = DeadLetterQueueWriter
++                .newBuilder(dir, 10 * MB, 1 * GB, Duration.ofSeconds(1))
++                .retentionTime(retention)
++                .clock(fakeClock)
++                .build()) {
++            assertEquals("Expired segment should be purged during reopen/shutdown cycle", VERSION_SIZE,
++                    writeManager.getCurrentQueueSize());
++        }
++    }
++
++
+     private void prepareDLQWithFirstSegmentOlderThanRetainPeriod(Event event, ForwardableClock fakeClock, Duration retainedPeriod) throws IOException {
+         final Duration littleMoreThanRetainedPeriod = retainedPeriod.plusMinutes(1);
+         long startTime = fakeClock.instant().minus(littleMoreThanRetainedPeriod).toEpochMilli();

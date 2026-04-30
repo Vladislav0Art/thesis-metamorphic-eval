@@ -1,0 +1,66 @@
+
+diff --git a/.gitignore b/.gitignore
+index b1bdb7f2..9c509136 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -14,3 +14,8 @@ release.properties
+ classes
+ 
+ .DS_Store
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/gson/src/main/java/com/google/gson/stream/JsonWriter.java b/gson/src/main/java/com/google/gson/stream/JsonWriter.java
+index e2fc1961..e19d344c 100644
+--- a/gson/src/main/java/com/google/gson/stream/JsonWriter.java
++++ b/gson/src/main/java/com/google/gson/stream/JsonWriter.java
+@@ -486,12 +486,13 @@ public class JsonWriter implements Closeable, Flushable {
+   /**
+    * Encodes {@code value}.
+    *
+-   * @param value a finite value. May not be {@link Double#isNaN() NaNs} or
+-   *     {@link Double#isInfinite() infinities}.
++   * @param value a finite value unless this writer is lenient. May not be
++   *     {@link Double#isNaN() NaNs} or {@link Double#isInfinite() infinities}
++   *     when this writer is not lenient.
+    * @return this writer.
+    */
+   public JsonWriter value(double value) throws IOException {
+-    if (Double.isNaN(value) || Double.isInfinite(value)) {
++    if (!lenient && (Double.isNaN(value) || Double.isInfinite(value))) {
+       throw new IllegalArgumentException("Numeric values must be finite, but was " + value);
+     }
+     writeDeferredName();
+diff --git a/gson/src/test/java/com/google/gson/stream/JsonWriterTest.java b/gson/src/test/java/com/google/gson/stream/JsonWriterTest.java
+index 34dc9140..312a932a 100644
+--- a/gson/src/test/java/com/google/gson/stream/JsonWriterTest.java
++++ b/gson/src/test/java/com/google/gson/stream/JsonWriterTest.java
+@@ -192,6 +192,18 @@ public final class JsonWriterTest extends TestCase {
+     }
+   }
+ 
++  public void testLenientNonFiniteDoubles() throws IOException {
++    StringWriter stringWriter = new StringWriter();
++    JsonWriter jsonWriter = new JsonWriter(stringWriter);
++    jsonWriter.setLenient(true);
++    jsonWriter.beginArray();
++    jsonWriter.value(Double.NaN);
++    jsonWriter.value(Double.NEGATIVE_INFINITY);
++    jsonWriter.value(Double.POSITIVE_INFINITY);
++    jsonWriter.endArray();
++    jsonWriter.close();
++    assertEquals("[NaN,-Infinity,Infinity]", stringWriter.toString());
++  }
+   public void testNonFiniteBoxedDoubles() throws IOException {
+     StringWriter stringWriter = new StringWriter();
+     JsonWriter jsonWriter = new JsonWriter(stringWriter);
+@@ -521,6 +533,7 @@ public final class JsonWriterTest extends TestCase {
+     assertEquals(expected, stringWriter.toString());
+   }
+ 
++
+   public void testLenientWriterPermitsMultipleTopLevelValues() throws IOException {
+     StringWriter stringWriter = new StringWriter();
+     JsonWriter writer = new JsonWriter(stringWriter);

@@ -1,0 +1,136 @@
+
+diff --git a/.gitignore b/.gitignore
+index 5030f209..f51c646a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -14,3 +14,6 @@ bin/
+ .classpath
+ .project
+ .DS_Store
++out/
++*.class
++*.jar
+diff --git a/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java b/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
+index 21b314dc..4959941d 100644
+--- a/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
++++ b/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
+@@ -530,6 +530,9 @@ public class PluginConfigurationProcessor {
+     if (isKnownJava17Image(prefixRemoved) && javaVersion > 17) {
+       throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
+     }
++    if (isKnownJava21Image(prefixRemoved) && javaVersion > 21) {
++      throw new IncompatibleBaseImageJavaVersionException(21, javaVersion);
++    }
+ 
+     ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
+     if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
+@@ -752,8 +755,8 @@ public class PluginConfigurationProcessor {
+ 
+   /**
+    * Gets the suitable value for the base image. If the raw base image parameter is null, returns
+-   * {@code "jetty"} for WAR projects, or {@code "eclipse-temurin:{8|11|17}-jre"} for non-WAR.
+-   *
++   * {@code "jetty"} for WAR projects, or {@code "eclipse-temurin:{8|11|17|21}-jre"} for
++   * non-WAR.
+    * @param projectProperties used for providing additional information
+    * @return the base image
+    * @throws IncompatibleBaseImageJavaVersionException when the Java version in the base image is
+@@ -772,8 +775,10 @@ public class PluginConfigurationProcessor {
+       return "eclipse-temurin:11-jre";
+     } else if (javaVersion <= 17) {
+       return "eclipse-temurin:17-jre";
++    } else if (javaVersion <= 21) {
++      return "eclipse-temurin:21-jre";
+     }
+-    throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
++    throw new IncompatibleBaseImageJavaVersionException(21, javaVersion);
+   }
+ 
+   /**
+@@ -1097,4 +1102,14 @@ public class PluginConfigurationProcessor {
+   private static boolean isKnownJava17Image(String imageReference) {
+     return imageReference.startsWith("eclipse-temurin:17");
+   }
++
++  /**
++   * Checks if the given image is a known Java 21 image. May return false negative.
++   *
++   * @param imageReference the image reference
++   * @return {@code true} if the image is a known Java 21 image
++   */
++  private static boolean isKnownJava21Image(String imageReference) {
++    return imageReference.startsWith("eclipse-temurin:21");
++  }
+ }
+diff --git a/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java b/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java
+index 7fd60866..7be9f59a 100644
+--- a/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java
++++ b/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java
+@@ -903,7 +903,9 @@ public class PluginConfigurationProcessorTest {
+         "9, eclipse-temurin:11-jre",
+         "11, eclipse-temurin:11-jre",
+         "13, eclipse-temurin:17-jre",
+-        "17, eclipse-temurin:17-jre"
++        "17, eclipse-temurin:17-jre",
++        "18, eclipse-temurin:21-jre",
++        "21, eclipse-temurin:21-jre"
+       })
+   public void testGetDefaultBaseImage_defaultJavaBaseImage(
+       int javaVersion, String expectedBaseImage) throws IncompatibleBaseImageJavaVersionException {
+@@ -913,16 +915,16 @@ public class PluginConfigurationProcessorTest {
+   }
+ 
+   @Test
+-  public void testGetDefaultBaseImage_projectHigherThanJava17() {
+-    when(projectProperties.getMajorJavaVersion()).thenReturn(20);
++  public void testGetDefaultBaseImage_projectHigherThanJava21() {
++    when(projectProperties.getMajorJavaVersion()).thenReturn(22);
+ 
+     IncompatibleBaseImageJavaVersionException exception =
+         assertThrows(
+             IncompatibleBaseImageJavaVersionException.class,
+             () -> PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+ 
+-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(17);
+-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(20);
++    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(21);
++    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(22);
+   }
+ 
+   @Test
+@@ -980,7 +982,9 @@ public class PluginConfigurationProcessorTest {
+         "eclipse-temurin:11, 11, 15",
+         "eclipse-temurin:11-jre, 11, 15",
+         "eclipse-temurin:17, 17, 19",
+-        "eclipse-temurin:17-jre, 17, 19"
++        "eclipse-temurin:17-jre, 17, 19",
++        "eclipse-temurin:21, 21, 22",
++        "eclipse-temurin:21-jre, 21, 22"
+       })
+   public void testGetJavaContainerBuilderWithBaseImage_incompatibleJavaBaseImage(
+       String baseImage, int baseImageJavaVersion, int appJavaVersion) {
+@@ -1010,8 +1014,8 @@ public class PluginConfigurationProcessorTest {
+   }
+ 
+   @Test
+-  public void testGetJavaContainerBuilderWithBaseImage_java19NoBaseImage() {
+-    when(projectProperties.getMajorJavaVersion()).thenReturn(19);
++  public void testGetJavaContainerBuilderWithBaseImage_java22NoBaseImage() {
++    when(projectProperties.getMajorJavaVersion()).thenReturn(22);
+     when(rawConfiguration.getFromImage()).thenReturn(Optional.empty());
+     IncompatibleBaseImageJavaVersionException exception =
+         assertThrows(
+@@ -1019,10 +1023,11 @@ public class PluginConfigurationProcessorTest {
+             () ->
+                 PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                     rawConfiguration, projectProperties, inferredAuthProvider));
+-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(17);
+-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(19);
++    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(21);
++    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(22);
+   }
+ 
++
+   @Test
+   public void testGetPlatformsSet() throws InvalidPlatformException {
+     Mockito.<List<?>>when(rawConfiguration.getPlatforms())

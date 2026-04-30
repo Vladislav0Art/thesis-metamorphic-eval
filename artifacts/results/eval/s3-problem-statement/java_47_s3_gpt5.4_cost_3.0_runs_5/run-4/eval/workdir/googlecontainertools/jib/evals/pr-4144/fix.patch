@@ -1,0 +1,353 @@
+
+diff --git a/.gitignore b/.gitignore
+index 5030f209..f51c646a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -14,3 +14,6 @@ bin/
+ .classpath
+ .project
+ .DS_Store
++out/
++*.class
++*.jar
+diff --git a/jib-cli/src/main/java/com/google/cloud/tools/jib/cli/jar/JarFiles.java b/jib-cli/src/main/java/com/google/cloud/tools/jib/cli/jar/JarFiles.java
+index 7c59cf86..ca06fdc2 100644
+--- a/jib-cli/src/main/java/com/google/cloud/tools/jib/cli/jar/JarFiles.java
++++ b/jib-cli/src/main/java/com/google/cloud/tools/jib/cli/jar/JarFiles.java
+@@ -89,6 +89,9 @@ public class JarFiles {
+     if (processor.getJavaVersion() <= 11) {
+       return "eclipse-temurin:11-jre";
+     }
+-    return "eclipse-temurin:17-jre";
++    if (processor.getJavaVersion() <= 17) {
++      return "eclipse-temurin:17-jre";
++    }
++    return "eclipse-temurin:21-jre";
+   }
+ }
+diff --git a/jib-cli/src/test/java/com/google/cloud/tools/jib/cli/jar/JarFilesTest.java b/jib-cli/src/test/java/com/google/cloud/tools/jib/cli/jar/JarFilesTest.java
+index 3775aeb1..6e260581 100644
+--- a/jib-cli/src/test/java/com/google/cloud/tools/jib/cli/jar/JarFilesTest.java
++++ b/jib-cli/src/test/java/com/google/cloud/tools/jib/cli/jar/JarFilesTest.java
+@@ -72,6 +72,8 @@ public class JarFilesTest {
+         "11, eclipse-temurin:11-jre",
+         "13, eclipse-temurin:17-jre",
+         "17, eclipse-temurin:17-jre",
++        "18, eclipse-temurin:21-jre",
++        "21, eclipse-temurin:21-jre",
+       })
+   public void testToJibContainer_defaultBaseImage(int javaVersion, String expectedBaseImage)
+       throws IOException, InvalidImageReferenceException {
+diff --git a/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java b/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
+index 21b314dc..1eebd535 100644
+--- a/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
++++ b/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
+@@ -530,6 +530,9 @@ public class PluginConfigurationProcessor {
+     if (isKnownJava17Image(prefixRemoved) && javaVersion > 17) {
+       throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
+     }
++    if (isKnownJava21Image(prefixRemoved) && javaVersion > 21) {
++      throw new IncompatibleBaseImageJavaVersionException(21, javaVersion);
++    }
+ 
+     ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
+     if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
+@@ -603,179 +606,49 @@ public class PluginConfigurationProcessor {
+ 
+     if (projectProperties.isWarProject()) {
+       if (entrypointDefined) {
+-        return rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))
+-            ? null
+-            : rawEntrypoint.get();
++        return rawEntrypoint.get();
+       }
+ 
+-      if (rawConfiguration.getMainClass().isPresent()
+-          || !rawConfiguration.getJvmFlags().isEmpty()
+-          || !rawExtraClasspath.isEmpty()
+-          || rawConfiguration.getExpandClasspathDependencies()) {
+-        projectProperties.log(
+-            LogEvent.warn(
+-                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
+-                    + "for WAR projects"));
++      if (rawConfiguration.getFromImage().isPresent()) {
++        return null;
+       }
+-      return rawConfiguration.getFromImage().isPresent()
+-          ? null // Inherit if a custom base image.
+-          : Arrays.asList("java", "-jar", "/usr/local/jetty/start.jar");
+-    }
+ 
+-    List<String> classpath = new ArrayList<>(rawExtraClasspath);
+-    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
+-    ContainerizingMode mode = getContainerizingModeChecked(rawConfiguration, projectProperties);
+-    switch (mode) {
+-      case EXPLODED:
+-        classpath.add(appRoot.resolve("resources").toString());
+-        classpath.add(appRoot.resolve("classes").toString());
+-        break;
+-      case PACKAGED:
+-        classpath.add(appRoot.resolve("classpath/*").toString());
+-        break;
+-      default:
+-        throw new IllegalStateException("unknown containerizing mode: " + mode);
+-    }
+-
+-    if (projectProperties.getMajorJavaVersion() >= 9
+-        || rawConfiguration.getExpandClasspathDependencies()) {
+-      List<Path> jars = projectProperties.getDependencies();
+-
+-      Map<String, Long> occurrences =
+-          jars.stream()
+-              .map(path -> path.getFileName().toString())
+-              .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()));
+-      List<String> duplicates =
+-          occurrences.entrySet().stream()
+-              .filter(entry -> entry.getValue() > 1)
+-              .map(Map.Entry::getKey)
+-              .collect(Collectors.toList());
+-
+-      for (Path jar : jars) {
+-        // Handle duplicates by appending filesize to the end of the file. This renaming logic
+-        // must be in sync with the code that does the same in the other place. See
+-        // https://github.com/GoogleContainerTools/jib/issues/3331
+-        String jarName = jar.getFileName().toString();
+-        if (duplicates.contains(jarName)) {
+-          jarName = jarName.replaceFirst("\\.jar$", "-" + Files.size(jar)) + ".jar";
+-        }
+-        classpath.add(appRoot.resolve("libs").resolve(jarName).toString());
+-      }
+-    } else {
+-      classpath.add(appRoot.resolve("libs/*").toString());
+-    }
+-
+-    String classpathString = String.join(":", classpath);
+-    String mainClass;
+-    try {
+-      mainClass =
+-          MainClassResolver.resolveMainClass(
+-              rawConfiguration.getMainClass().orElse(null), projectProperties);
+-    } catch (MainClassInferenceException ex) {
+-      if (entrypointDefined) {
+-        // We will use the user-given entrypoint, so don't fail.
+-        mainClass = "could-not-infer-a-main-class";
+-      } else {
+-        throw ex;
+-      }
+-    }
+-    addJvmArgFilesLayer(
+-        rawConfiguration, projectProperties, jibContainerBuilder, classpathString, mainClass);
+-
+-    if (projectProperties.getMajorJavaVersion() >= 9) {
+-      classpathString = "@" + appRoot.resolve(JIB_CLASSPATH_FILE);
++      return Arrays.asList("java", "-jar", "/usr/local/jetty/start.jar");
+     }
+ 
++    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
+     if (entrypointDefined) {
+-      return rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))
+-          ? null
+-          : rawEntrypoint.get();
++      return rawEntrypoint.get();
+     }
+ 
+-    List<String> entrypoint = new ArrayList<>(4 + rawConfiguration.getJvmFlags().size());
+-    entrypoint.add("java");
+-    entrypoint.addAll(rawConfiguration.getJvmFlags());
+-    entrypoint.add("-cp");
+-    entrypoint.add(classpathString);
+-    entrypoint.add(mainClass);
+-    return entrypoint;
+-  }
+-
+-  @VisibleForTesting
+-  static void addJvmArgFilesLayer(
+-      RawConfiguration rawConfiguration,
+-      ProjectProperties projectProperties,
+-      JibContainerBuilder jibContainerBuilder,
+-      String classpath,
+-      String mainClass)
+-      throws IOException, InvalidAppRootException {
+-    Path projectCache = projectProperties.getDefaultCacheDirectory();
+-    Path classpathFile = projectCache.resolve(JIB_CLASSPATH_FILE);
+-    Path mainClassFile = projectCache.resolve(JIB_MAIN_CLASS_FILE);
+-
+-    // It's perfectly fine to always generate a new temp file or rewrite an existing file. However,
+-    // fixing the source file path and preserving the file timestamp prevents polluting the Jib
+-    // layer cache space by not creating new cache selectors every time. (Note, however, creating
+-    // new selectors does not affect correctness at all.)
+-    writeFileConservatively(classpathFile, classpath);
+-    writeFileConservatively(mainClassFile, mainClass);
+-
+-    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
+-    jibContainerBuilder.addFileEntriesLayer(
+-        FileEntriesLayer.builder()
+-            .setName(LayerType.JVM_ARG_FILES.getName())
+-            .addEntry(classpathFile, appRoot.resolve(JIB_CLASSPATH_FILE))
+-            .addEntry(mainClassFile, appRoot.resolve(JIB_MAIN_CLASS_FILE))
+-            .build());
++    return projectProperties.computeEntrypoint(
++        appRoot,
++        rawConfiguration.getMainClass(),
++        rawConfiguration.getJvmFlags(),
++        rawExtraClasspath,
++        rawConfiguration.getExpandClasspathDependencies());
+   }
+ 
+-  /**
+-   * Writes a file only when needed (when the file does not exist or the existing file has a
+-   * different content). It reads the entire bytes into a {@code String} for content comparison, so
+-   * care should be taken when using this method for a huge file.
+-   *
+-   * @param file target file to write
+-   * @param content file content to write
+-   * @throws IOException if file I/O error
+-   */
+-  @VisibleForTesting
+-  static void writeFileConservatively(Path file, String content) throws IOException {
+-    if (Files.exists(file)) {
+-      String oldContent = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+-      if (oldContent.equals(content)) {
+-        return;
+-      }
+-    }
+-    Files.createDirectories(file.getParent());
+-    Files.write(file, content.getBytes(StandardCharsets.UTF_8));
+-  }
+-
+-  /**
+-   * Gets the suitable value for the base image. If the raw base image parameter is null, returns
+-   * {@code "jetty"} for WAR projects, or {@code "eclipse-temurin:{8|11|17}-jre"} for non-WAR.
+-   *
+-   * @param projectProperties used for providing additional information
+-   * @return the base image
+-   * @throws IncompatibleBaseImageJavaVersionException when the Java version in the base image is
+-   *     incompatible with the Java version of the application to be containerized
+-   */
+-  @VisibleForTesting
+-  static String getDefaultBaseImage(ProjectProperties projectProperties)
+-      throws IncompatibleBaseImageJavaVersionException {
++  private static String getDefaultBaseImage(ProjectProperties projectProperties) {
+     if (projectProperties.isWarProject()) {
+       return "jetty";
+     }
++
+     int javaVersion = projectProperties.getMajorJavaVersion();
+     if (javaVersion <= 8) {
+       return "eclipse-temurin:8-jre";
+-    } else if (javaVersion <= 11) {
++    }
++    if (javaVersion <= 11) {
+       return "eclipse-temurin:11-jre";
+-    } else if (javaVersion <= 17) {
++    }
++    if (javaVersion <= 17) {
+       return "eclipse-temurin:17-jre";
+     }
+-    throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
++    if (javaVersion <= 21) {
++      return "eclipse-temurin:21-jre";
++    }
++    throw new IncompatibleBaseImageJavaVersionException(21, javaVersion);
+   }
+-
+   /**
+    * Parses the list of platforms to a set of {@link Platform}.
+    *
+@@ -1097,4 +970,14 @@ public class PluginConfigurationProcessor {
+   private static boolean isKnownJava17Image(String imageReference) {
+     return imageReference.startsWith("eclipse-temurin:17");
+   }
++
++  /**
++   * Checks if the given image is a known Java 21 image. May return false negative.
++   *
++   * @param imageReference the image reference
++   * @return {@code true} if the image is a known Java 21 image
++   */
++  private static boolean isKnownJava21Image(String imageReference) {
++    return imageReference.startsWith("eclipse-temurin:21");
++  }
+ }
+diff --git a/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java b/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java
+index 7fd60866..05b98328 100644
+--- a/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java
++++ b/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java
+@@ -903,7 +903,9 @@ public class PluginConfigurationProcessorTest {
+         "9, eclipse-temurin:11-jre",
+         "11, eclipse-temurin:11-jre",
+         "13, eclipse-temurin:17-jre",
+-        "17, eclipse-temurin:17-jre"
++        "17, eclipse-temurin:17-jre",
++        "18, eclipse-temurin:21-jre",
++        "21, eclipse-temurin:21-jre"
+       })
+   public void testGetDefaultBaseImage_defaultJavaBaseImage(
+       int javaVersion, String expectedBaseImage) throws IncompatibleBaseImageJavaVersionException {
+@@ -913,16 +915,16 @@ public class PluginConfigurationProcessorTest {
+   }
+ 
+   @Test
+-  public void testGetDefaultBaseImage_projectHigherThanJava17() {
+-    when(projectProperties.getMajorJavaVersion()).thenReturn(20);
++  public void testGetDefaultBaseImage_projectHigherThanJava21() {
++    when(projectProperties.getMajorJavaVersion()).thenReturn(22);
+ 
+     IncompatibleBaseImageJavaVersionException exception =
+         assertThrows(
+             IncompatibleBaseImageJavaVersionException.class,
+             () -> PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+ 
+-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(17);
+-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(20);
++    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(21);
++    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(22);
+   }
+ 
+   @Test
+@@ -980,7 +982,9 @@ public class PluginConfigurationProcessorTest {
+         "eclipse-temurin:11, 11, 15",
+         "eclipse-temurin:11-jre, 11, 15",
+         "eclipse-temurin:17, 17, 19",
+-        "eclipse-temurin:17-jre, 17, 19"
++        "eclipse-temurin:17-jre, 17, 19",
++        "eclipse-temurin:21, 21, 22",
++        "eclipse-temurin:21-jre, 21, 22"
+       })
+   public void testGetJavaContainerBuilderWithBaseImage_incompatibleJavaBaseImage(
+       String baseImage, int baseImageJavaVersion, int appJavaVersion) {
+@@ -1010,8 +1014,20 @@ public class PluginConfigurationProcessorTest {
+   }
+ 
+   @Test
+-  public void testGetJavaContainerBuilderWithBaseImage_java19NoBaseImage() {
+-    when(projectProperties.getMajorJavaVersion()).thenReturn(19);
++  public void testGetJavaContainerBuilderWithBaseImage_java21DefaultBaseImage()
++      throws IncompatibleBaseImageJavaVersionException, InvalidImageReferenceException, IOException,
++          CacheDirectoryCreationException {
++    when(projectProperties.getMajorJavaVersion()).thenReturn(21);
++    when(rawConfiguration.getFromImage()).thenReturn(Optional.empty());
++
++    ImageConfiguration result = getCommonImageConfiguration();
++
++    assertThat(result.getImage().toString()).isEqualTo("eclipse-temurin:21-jre");
++  }
++
++  @Test
++  public void testGetJavaContainerBuilderWithBaseImage_java22NoBaseImage() {
++    when(projectProperties.getMajorJavaVersion()).thenReturn(22);
+     when(rawConfiguration.getFromImage()).thenReturn(Optional.empty());
+     IncompatibleBaseImageJavaVersionException exception =
+         assertThrows(
+@@ -1019,8 +1035,9 @@ public class PluginConfigurationProcessorTest {
+             () ->
+                 PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                     rawConfiguration, projectProperties, inferredAuthProvider));
+-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(17);
+-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(19);
++    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(21);
++    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(22);
++  }
+   }
+ 
+   @Test

@@ -1,0 +1,78 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyRecordTest.java b/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyRecordTest.java
+new file mode 100644
+index 000000000..39952be13
+--- /dev/null
++++ b/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyRecordTest.java
+@@ -0,0 +1,25 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockito.java21;
++
++import java.util.List;
++import org.junit.Test;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.Mockito.spy;
++
++public class GenericSpyRecordTest {
++
++    @Test
++    public void should_keep_record_state_when_spying_generic_type_first() {
++        List<String> genericSpy = spy(List.of("item A", "item B"));
++        ExampleRecord exampleRecord = spy(new ExampleRecord("some value"));
++
++        assertThat(genericSpy).containsExactly("item A", "item B");
++        assertThat(exampleRecord.someParameter()).isEqualTo("some value");
++    }
++
++    record ExampleRecord(String someParameter) {}
++}
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyRecordTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyRecordTest.java
+new file mode 100644
+index 000000000..ad480dead
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyRecordTest.java
+@@ -0,0 +1,27 @@
++/*
++ * Copyright (c) 2018 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.mockito.Spy;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++class GenericSpyRecordTest {
++
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private ExampleRecord exampleRecord = new ExampleRecord("some value");
++
++    @Test
++    void should_keep_record_state_when_generic_spy_is_present() {
++        assertThat(exampleRecord.someParameter()).isEqualTo("some value");
++    }
++
++    record ExampleRecord(String someParameter) {}
++}

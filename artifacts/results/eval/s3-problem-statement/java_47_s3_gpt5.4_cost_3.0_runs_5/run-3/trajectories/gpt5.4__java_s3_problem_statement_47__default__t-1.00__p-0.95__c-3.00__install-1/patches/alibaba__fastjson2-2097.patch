@@ -1,0 +1,90 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderBaseModule.java b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderBaseModule.java
+index 9a5f1b533..e4c771c6a 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderBaseModule.java
++++ b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderBaseModule.java
+@@ -180,29 +180,6 @@ public class ObjectReaderBaseModule
+             provider.registerTypeConvert(String.class, Collection.class, new StringToAny(Collection.class, null));
+             provider.registerTypeConvert(String.class, List.class, new StringToAny(List.class, null));
+             provider.registerTypeConvert(String.class, JSONArray.class, new StringToAny(JSONArray.class, null));
+-        }
+-
+-        {
+-            provider.registerTypeConvert(Boolean.class, boolean.class, o -> o);
+-        }
+-        {
+-            Function function = o -> o == null || "null".equals(o) || o.equals(0L)
+-                    ? null
+-                    : LocalDateTime.ofInstant(Instant.ofEpochMilli((Long) o), ZoneId.systemDefault());
+-            provider.registerTypeConvert(Long.class, LocalDateTime.class, function);
+-        }
+-        {
+-            Function function = o -> o == null || "null".equals(o) || "".equals(o)
+-                    ? null
+-                    : UUID.fromString((String) o);
+-            provider.registerTypeConvert(String.class, UUID.class, function);
+-        }
+-    }
+-
+-    public class ReaderAnnotationProcessor
+-            implements ObjectReaderAnnotationProcessor {
+-        @Override
+-        public void getBeanInfo(BeanInfo beanInfo, Class<?> objectClass) {
+             Class mixInSource = provider.mixInCache.get(objectClass);
+             if (mixInSource == null) {
+                 String typeName = objectClass.getName();
+diff --git a/core/src/test/java/com/alibaba/fastjson2/autoType/AutoTypeTest27.java b/core/src/test/java/com/alibaba/fastjson2/autoType/AutoTypeTest27.java
+index 910d5cfbe..0d1772227 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/autoType/AutoTypeTest27.java
++++ b/core/src/test/java/com/alibaba/fastjson2/autoType/AutoTypeTest27.java
+@@ -203,8 +203,47 @@ public class AutoTypeTest27 {
+         assertSame(bean.items.size(), bean2.items.size());
+         assertSame(bean.items.stream().findFirst().get(), bean2.items.stream().findFirst().get());
+     }
++    @Test
++    public void test_arrayList_ref_json() {
++        Bean2.Item item = new Bean2.Item();
++        item.id = 1001;
++
++        Bean2 bean = new Bean2();
++        bean.items = Arrays.asList(item, item);
++
++        String str = com.alibaba.fastjson2.JSON.toJSONString(bean,
++                JSONWriter.Feature.WriteClassName,
++                JSONWriter.Feature.FieldBased,
++                JSONWriter.Feature.ReferenceDetection,
++                JSONWriter.Feature.WriteNulls,
++                JSONWriter.Feature.NotWriteDefaultValue
++        );
++
++        Bean2 bean2 = (Bean2) com.alibaba.fastjson2.JSON.parseObject(
++                str,
++                Object.class,
++                JSONReader.Feature.SupportAutoType,
++                JSONReader.Feature.FieldBased
++        );
++
++        assertNotNull(bean2);
++        assertNotNull(bean2.items);
++        assertSame(bean.items.getClass(), bean2.items.getClass());
++        assertSame(2, bean2.items.size());
++        assertNotNull(((List) bean2.items).get(0));
++        assertNotNull(((List) bean2.items).get(1));
++        assertSame(((List) bean2.items).get(0), ((List) bean2.items).get(1));
++    }
+ 
+     public static class Bean1 {
+         Collection items;
+     }
++
++    public static class Bean2 {
++        Collection items;
++
++        public static class Item {
++            public int id;
++        }
++    }
+ }

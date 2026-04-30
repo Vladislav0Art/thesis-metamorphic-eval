@@ -1,0 +1,73 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index 3d7b4b199..76b0016dd 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -42,6 +42,15 @@ describe  FileWatch::BufferedTokenizer  do
+     expect(subject.extract("\n")).to eq([""])
+     expect(subject.extract("\n\n\n")).to eq(["", "", ""])
+   end
++  it "preserves encoding when flushing buffered non-UTF-8 data" do
++    pound = "\xA3".force_encoding("ISO-8859-1")
++
++    subject.extract(pound)
++
++    flushed = subject.flush
++    expect(flushed.encoding.name).to eq("ISO-8859-1")
++    expect(flushed.bytes).to eq([0xA3])
++  end
+ 
+   describe 'flush' do
+     let(:data) { "content without a delimiter" }
+diff --git a/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+new file mode 100644
+index 000000000..e742b00dd
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+@@ -0,0 +1,33 @@
++package org.logstash.common;
++
++import org.jruby.RubyString;
++import org.jruby.runtime.ThreadContext;
++import org.junit.Test;
++import org.logstash.RubyTestBase;
++import org.logstash.RubyUtil;
++
++import static org.junit.Assert.assertArrayEquals;
++import static org.junit.Assert.assertEquals;
++
++public class BufferedTokenizerExtTest extends RubyTestBase {
++
++    @Test
++    public void preservesEncodingWhenFlushingBufferedNonUtf8Data() {
++        final ThreadContext context = RubyUtil.RUBY.getCurrentContext();
++        final BufferedTokenizerExt tokenizer =
++            new BufferedTokenizerExt(RubyUtil.RUBY, RubyUtil.BUFFERED_TOKENIZER);
++        tokenizer.init(context, new org.jruby.runtime.builtin.IRubyObject[0]);
++
++        final RubyString rubyString = RubyString.newString(RubyUtil.RUBY, new byte[]{(byte) 0xA3});
++        final RubyString iso88591 = (RubyString) rubyString.force_encoding(
++            context, RubyUtil.RUBY.newString("ISO8859-1")
++        );
++
++        assertEquals(0, tokenizer.extract(context, iso88591).size());
++
++        final RubyString flushed = (RubyString) tokenizer.flush(context);
++
++        assertArrayEquals(new byte[]{(byte) 0xA3}, flushed.getBytes());
++        assertEquals("ISO-8859-1", flushed.getEncoding().toString());
++    }
++}

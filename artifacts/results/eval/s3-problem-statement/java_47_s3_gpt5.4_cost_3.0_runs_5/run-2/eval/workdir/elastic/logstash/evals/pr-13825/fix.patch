@@ -1,0 +1,66 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/build.gradle b/logstash-core/build.gradle
+index 112e6e0c0..320176f5b 100644
+--- a/logstash-core/build.gradle
++++ b/logstash-core/build.gradle
+@@ -179,7 +179,8 @@ dependencies {
+     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${jacksonVersion}"
+     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}"
+     implementation group: 'com.google.guava', name: 'guava', version: '31.0.1-jre'
+-    implementation('com.google.googlejavaformat:google-java-format:1.13.0') {
++    // google-java-format > 1.10.0 requires additional --add-opens/exports flags on JDK17+
++    implementation('com.google.googlejavaformat:google-java-format:1.10.0') {
+         exclude group: 'com.google.guava', module: 'guava'
+     }
+     implementation 'org.javassist:javassist:3.26.0-GA'
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElement.java b/logstash-core/src/main/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElement.java
+index 42541f2a5..336d8905e 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElement.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/compiler/ComputeStepSyntaxElement.java
+@@ -171,20 +171,22 @@ public final class ComputeStepSyntaxElement<T extends Dataset> {
+ 
+     private String generateCode(final String name) {
+         try {
+-            return REDUNDANT_SEMICOLON.matcher(new Formatter().formatSource(
+-                String.format(
+-                    "package org.logstash.generated;\npublic final class %s extends org.logstash.config.ir.compiler.BaseDataset implements %s { %s }",
+-                    name,
+-                    type.getName(),
+-                    SyntaxFactory.join(
+-                        fields.inlineAssigned().generateCode(), fieldsAndCtor(name),
+-                        combine(
+-                            StreamSupport.stream(methods.spliterator(), false)
+-                                .toArray(SyntaxElement[]::new)
++            return REDUNDANT_SEMICOLON.matcher(
++                new Formatter().formatSource(
++                    String.format(
++                        "package org.logstash.generated;\npublic final class %s extends org.logstash.config.ir.compiler.BaseDataset implements %s { %s }",
++                        name,
++                        type.getName(),
++                        SyntaxFactory.join(
++                            fields.inlineAssigned().generateCode(), fieldsAndCtor(name),
++                            combine(
++                                StreamSupport.stream(methods.spliterator(), false)
++                                    .toArray(SyntaxElement[]::new)
++                            )
+                         )
+                     )
+                 )
+-            )).replaceAll("\n");
++            ).replaceAll("\n");
+         } catch (final FormatterException ex) {
+             throw new IllegalStateException(ex);
+         }

@@ -1,0 +1,100 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index 1aad80538..a06219620 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -102,7 +102,8 @@ public final class DeadLetterQueueWriter implements Closeable {
+     private ScheduledExecutorService flushScheduler;
+     private final LongAdder droppedEvents = new LongAdder();
+     private final LongAdder expiredEvents = new LongAdder();
+-    private String lastError = "no errors";
++
++
+     private final Clock clock;
+     private Optional<Timestamp> oldestSegmentTimestamp;
+     private Optional<Path> oldestSegmentPath;
+@@ -211,10 +212,14 @@ public final class DeadLetterQueueWriter implements Closeable {
+     @Override
+     public void close() {
+         if (open.compareAndSet(true, false)) {
++            lock.lock();
+             try {
+                 finalizeSegment(FinalizeWhen.ALWAYS);
++                executeAgeRetentionPolicy();
+             } catch (Exception e) {
+                 logger.warn("Unable to close dlq writer, ignoring", e);
++            } finally {
++                lock.unlock();
+             }
+             try {
+                 releaseFileLock();
+@@ -230,6 +235,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+         }
+     }
+ 
++
+     @VisibleForTesting
+     void writeEntry(DLQEntry entry) throws IOException {
+         lock.lock();
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+index d5306d71b..7347f0713 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+@@ -102,6 +102,44 @@ public class DeadLetterQueueWriterAgeRetentionTest {
+         // then the age policy must remove the expired segments
+         assertEquals("Write should push off the age expired segments", VERSION_SIZE + BLOCK_SIZE, beheadedQueueSize);
+     }
++    @Test
++    public void testRemovesExpiredSegmentsOnCloseWhenCurrentWriterIsEmpty() throws Exception {
++        final Event event = DeadLetterQueueReaderTest.createEventWithConstantSerializationOverhead(Collections.emptyMap());
++        event.setField("message", DeadLetterQueueReaderTest.generateMessageContent(1024));
++        final Duration retention = Duration.ofDays(2);
++
++        final Path expiredSegmentPath;
++        try (DeadLetterQueueWriter writeManager = DeadLetterQueueWriter
++                .newBuilder(dir, 10 * MB, 1 * GB, Duration.ofSeconds(1))
++                .retentionTime(retention)
++                .clock(fakeClock)
++                .build()) {
++            long expiredTimestamp = fakeClock.instant().minus(retention.plusMinutes(1)).toEpochMilli();
++            DLQEntry entry = new DLQEntry(
++                    event,
++                    "",
++                    "",
++                    "expired",
++                    DeadLetterQueueReaderTest.constantSerializationLengthTimestamp(expiredTimestamp)
++            );
++            writeManager.writeEntry(entry);
++
++            Thread.sleep(3000);
++
++            expiredSegmentPath = dir.resolve("1.log");
++            assertThat(
++                    "stale flush should finalize the written segment before shutdown",
++                    expiredSegmentPath.toFile().exists(),
++                    Matchers.is(true)
++            );
++        }
++
++        assertThat(
++                "shutdown should purge expired finalized segments",
++                expiredSegmentPath.toFile().exists(),
++                Matchers.is(false)
++        );
++    }
+ 
+     private void prepareDLQWithFirstSegmentOlderThanRetainPeriod(Event event, ForwardableClock fakeClock, Duration retainedPeriod) throws IOException {
+         final Duration littleMoreThanRetainedPeriod = retainedPeriod.plusMinutes(1);

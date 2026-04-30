@@ -1,0 +1,98 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java b/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java
+index 531e7f41b..d479f2986 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java
+@@ -42,7 +42,8 @@ public class IfVertex extends Vertex {
+     }
+ 
+     public String toString() {
+-        return "[if " + booleanExpression.toString(0) + "]";
++        String expression = humanReadableExpression();
++        return expression.startsWith("if ") ? "[" + expression + "]" : "[if " + expression + "]";
+     }
+ 
+     @Override
+diff --git a/logstash-core/src/test/java/org/logstash/config/ir/graph/IfVertexTest.java b/logstash-core/src/test/java/org/logstash/config/ir/graph/IfVertexTest.java
+index 59e07f4dd..16d4a67e0 100644
+--- a/logstash-core/src/test/java/org/logstash/config/ir/graph/IfVertexTest.java
++++ b/logstash-core/src/test/java/org/logstash/config/ir/graph/IfVertexTest.java
+@@ -21,11 +21,19 @@
+ package org.logstash.config.ir.graph;
+ 
+ import org.junit.Test;
++import org.logstash.common.SourceWithMetadata;
+ import org.logstash.config.ir.InvalidIRException;
++import org.logstash.config.ir.expression.EventValueExpression;
++import org.logstash.config.ir.expression.ValueExpression;
++import org.logstash.config.ir.expression.binary.Eq;
+ 
+-import static org.hamcrest.CoreMatchers.*;
++import static org.hamcrest.CoreMatchers.containsString;
++import static org.hamcrest.CoreMatchers.is;
++import static org.hamcrest.CoreMatchers.not;
+ import static org.junit.Assert.assertThat;
+-import static org.logstash.config.ir.IRHelpers.*;
++import static org.logstash.config.ir.IRHelpers.createTestExpression;
++import static org.logstash.config.ir.IRHelpers.createTestVertex;
++import static org.logstash.config.ir.IRHelpers.randMeta;
+ 
+ public class IfVertexTest {
+     @Test
+@@ -42,7 +50,7 @@ public class IfVertexTest {
+     }
+ 
+     @Test
+-    public void testEdgeTypeHandling() throws InvalidIRException {
++    public void testAcceptsBooleanEdges() throws InvalidIRException {
+         Graph graph = Graph.empty();
+         IfVertex ifV = testIfVertex();
+         graph.addVertex(ifV);
+@@ -69,15 +77,32 @@ public class IfVertexTest {
+         assertThat(ifV.hasEdgeType(false), is(true));
+         assertThat(ifV.getUnusedOutgoingEdgeFactories().isEmpty(), is(true));
+ 
+-
+         BooleanEdge trueEdge = ifV.outgoingBooleanEdgesByType(true).findAny().get();
+         BooleanEdge falseEdge = ifV.outgoingBooleanEdgesByType(false).findAny().get();
+         assertThat(trueEdge.getEdgeType(), is(true));
+         assertThat(falseEdge.getEdgeType(), is(false));
+     }
+ 
++    @Test
++    public void testToStringUsesOriginalSourceText() throws Exception {
++        SourceWithMetadata meta = new SourceWithMetadata(
++                "test",
++                "id",
++                "if [header][auth] == \"${secret}\""
++        );
++        Eq expression = new Eq(
++                meta,
++                new EventValueExpression(meta, "[header][auth]"),
++                new ValueExpression(meta, "supersecret")
++        );
++
++        String rendered = new IfVertex(meta, expression).toString();
++
++        assertThat(rendered, containsString("${secret}"));
++        assertThat(rendered, not(containsString("supersecret")));
++    }
++
+     public IfVertex testIfVertex() throws InvalidIRException {
+         return new IfVertex(randMeta(), createTestExpression());
+     }
+-
+ }

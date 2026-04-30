@@ -1,0 +1,171 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+index 0500f4b83..b1f0b6c6d 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+@@ -271,14 +271,6 @@ public abstract class JSONReader
+         return false;
+     }
+ 
+-    public boolean nextIfName4Match21(long name1, long name2, int name3) {
+-        return false;
+-    }
+-
+-    public boolean nextIfName4Match22(long name1, long name2, int name3) {
+-        return false;
+-    }
+-
+     public boolean nextIfName4Match23(long name1, long name2, int name3) {
+         return false;
+     }
+@@ -644,6 +636,19 @@ public abstract class JSONReader
+         resolveTasks.add(new ResolveTask(null, object, i, reference));
+     }
+ 
++    public final void replaceResolveTaskObject(Object from, Object to) {
++        if (resolveTasks == null || from == to) {
++            return;
++        }
++
++        for (int i = 0; i < resolveTasks.size(); i++) {
++            ResolveTask resolveTask = resolveTasks.get(i);
++            if (resolveTask.object == from) {
++                resolveTask.object = to;
++            }
++        }
++    }
++
+     public boolean isArray() {
+         return this.ch == '[';
+     }
+diff --git a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+index 2af2137f4..876475f9b 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
++++ b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+@@ -524,7 +524,11 @@ public final class ObjectReaderImplList
+         }
+ 
+         if (builder != null) {
+-            return builder.apply(list);
++            Object built = builder.apply(list);
++            if (built != list) {
++                jsonReader.replaceResolveTaskObject(list, built);
++            }
++            return built;
+         }
+ 
+         return list;
+@@ -581,7 +585,11 @@ public final class ObjectReaderImplList
+                 Object item = itemObjectReader.readObject(jsonReader, itemType, 0, 0);
+                 list.add(item);
+                 if (builder != null) {
+-                    list = (Collection) builder.apply(list);
++                    Object built = builder.apply(list);
++                    if (built != list) {
++                        jsonReader.replaceResolveTaskObject(list, built);
++                    }
++                    return built;
+                 }
+                 return list;
+             }
+@@ -592,46 +600,44 @@ public final class ObjectReaderImplList
+         ObjectReader itemObjectReader = this.itemObjectReader;
+         Type itemType = this.itemType;
+         if ((fieldType != listType) && (fieldType instanceof ParameterizedType)) {
+-            Type[] actualTypeArguments = ((ParameterizedType) fieldType).getActualTypeArguments();
++            ParameterizedType parameterizedType = (ParameterizedType) fieldType;
++            Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+             if (actualTypeArguments.length == 1) {
+                 itemType = actualTypeArguments[0];
+                 if (itemType != this.itemType) {
+-                    itemObjectReader = jsonReader.getObjectReader(itemType);
++                    itemObjectReader = context.getObjectReader(itemType);
+                 }
+             }
+         }
+ 
+-        for (int i = 0; ; ++i) {
+-            if (jsonReader.nextIfArrayEnd()) {
+-                break;
+-            }
+-
++        int i = 0;
++        while (!jsonReader.nextIfArrayEnd()) {
+             Object item;
+-            if (itemType == String.class) {
+-                item = jsonReader.readString();
+-            } else if (itemObjectReader != null) {
+-                if (jsonReader.isReference()) {
+-                    String reference = jsonReader.readReference();
+-                    if ("..".equals(reference)) {
+-                        item = this;
+-                    } else {
+-                        jsonReader.addResolveTask(list, i, JSONPath.of(reference));
+-                        continue;
+-                    }
++            if (jsonReader.isReference()) {
++                String reference = jsonReader.readReference();
++                if ("..".equals(reference)) {
++                    item = list;
+                 } else {
+-                    item = itemObjectReader.readObject(jsonReader, itemType, i, 0);
++                    jsonReader.addResolveTask(list, i, JSONPath.of(reference));
++                    item = null;
+                 }
+             } else {
+-                throw new JSONException(jsonReader.info("TODO : " + itemType));
++                item = itemObjectReader.readObject(jsonReader, itemType, i, features);
+             }
+-
+             list.add(item);
++
++            jsonReader.nextIfComma();
++            ++i;
+         }
+ 
+         jsonReader.nextIfComma();
+ 
+         if (builder != null) {
+-            return builder.apply(list);
++            Object built = builder.apply(list);
++            if (built != list) {
++                jsonReader.replaceResolveTaskObject(list, built);
++            }
++            return built;
+         }
+ 
+         return list;
+diff --git a/core/src/test/java/com/alibaba/fastjson2/codec/RefTest6_list.java b/core/src/test/java/com/alibaba/fastjson2/codec/RefTest6_list.java
+index 27baf545e..22f4b3e8a 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/codec/RefTest6_list.java
++++ b/core/src/test/java/com/alibaba/fastjson2/codec/RefTest6_list.java
+@@ -42,6 +42,26 @@ public class RefTest6_list {
+         A a1 = JSONB.parseObject(bytes, (java.lang.reflect.Type) A.class, JSONB.symbolTable(""));
+         assertSame(a1.c, a1.values.get(0));
+     }
++    @Test
++    public void test_ref_arrays_list_auto_type() {
++        C c = new C();
++        List<C> values = Arrays.asList(c, c);
++
++        byte[] bytes = JSONB.toBytes(
++                values,
++                JSONWriter.Feature.WriteClassName,
++                JSONWriter.Feature.ReferenceDetection
++        );
++
++        List<C> parsed = (List<C>) JSONB.parseObject(
++                bytes,
++                Object.class,
++                JSONReader.Feature.SupportAutoType
++        );
++
++        assertSame(values.getClass(), parsed.getClass());
++        assertSame(parsed.get(0), parsed.get(1));
++    }
+ 
+     public static class A {
+         public C c;

@@ -1,0 +1,325 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/docs/static/settings-file.asciidoc b/docs/static/settings-file.asciidoc
+index 9ee0ea894..e5fa3dc8c 100644
+--- a/docs/static/settings-file.asciidoc
++++ b/docs/static/settings-file.asciidoc
+@@ -20,15 +20,14 @@ pipeline:
+ -------------------------------------------------------------------------------------
+ 
+ To express the same values as flat keys, you specify:
+-
+ [source,yaml]
+ -------------------------------------------------------------------------------------
+ pipeline.batch.size: 125
+ pipeline.batch.delay: 50
+ -------------------------------------------------------------------------------------
+ 
+-The `logstash.yml` file also supports bash-style interpolation of environment variables and
+-keystore secrets in setting values.
++The `logstash.yml` file also supports bash-style interpolation of environment variables and keystore
++secrets in setting values. For example:
+ 
+ [source,yaml]
+ -------------------------------------------------------------------------------------
+@@ -39,88 +38,44 @@ pipeline:
+ node:
+   name: "node_${LS_NODE_NAME}"
+ path:
+-   queue: "/tmp/${QUEUE_DIR:queue}"
+--------------------------------------------------------------------------------------
+-
+-Note that the `${VAR_NAME:default_value}` notation is supported, setting a default batch delay
+-of `50` and a default `path.queue` of `/tmp/queue` in the above example.
+-
+-Modules may also be specified in the `logstash.yml` file. The modules definition will have
+-this format:
+-
+-[source,yaml]
+--------------------------------------------------------------------------------------
+-modules:
+-  - name: MODULE_NAME1
+-    var.PLUGIN_TYPE1.PLUGIN_NAME1.KEY1: VALUE
+-    var.PLUGIN_TYPE1.PLUGIN_NAME1.KEY2: VALUE
+-    var.PLUGIN_TYPE2.PLUGIN_NAME2.KEY1: VALUE
+-    var.PLUGIN_TYPE3.PLUGIN_NAME3.KEY1: VALUE
+-  - name: MODULE_NAME2
+-    var.PLUGIN_TYPE1.PLUGIN_NAME1.KEY1: VALUE
+-    var.PLUGIN_TYPE1.PLUGIN_NAME1.KEY2: VALUE
++  queue: "/tmp/${QUEUE_DIR:queue}"
+ -------------------------------------------------------------------------------------
+ 
+-IMPORTANT: If the <<command-line-flags,command-line flag>> `--modules` is used, any modules defined in the `logstash.yml` file will be ignored.
++The syntax is `${VAR_NAME:default_value}`.
+ 
+-The `logstash.yml` file includes the following settings. 
++Logstash provides several options for controlling pipeline execution. The following table lists these options:
+ 
+-[options="header"]
++[cols="<,<,<",options="header",]
+ |=======================================================================
+-| Setting | Description | Default value
++|Setting |Description |Default
+ 
+ | `node.name`
+-| A descriptive name for the node.
+-| Machine's hostname
++| A descriptive name for the node. Machine hostname is used by default.
++| _machine hostname_
+ 
+ | `path.data`
+ | The directory that Logstash and its plugins use for any persistent needs.
+-|`LOGSTASH_HOME/data`
++| `LOGSTASH_HOME/data`
+ 
+ | `pipeline.id`
+-| The ID of the pipeline.
++| The ID of the main pipeline.
+ | `main`
+ 
+-| `pipeline.java_execution`
+-| Use the Java execution engine.
+-| true
+-
+-| `pipeline.workers` 
+-| The number of workers that will, in parallel, execute the filter and output
+-stages of the pipeline. This setting uses the
+-https://docs.oracle.com/javase/7/docs/api/java/lang/Runtime.html#availableProcessors()[`java.lang.Runtime.getRuntime.availableProcessors`]
+-value as a default if not overridden by `pipeline.workers` in `pipelines.yml` or
+-`pipeline.workers` from `logstash.yml`.  If you have modified this setting and
+-see that events are backing up, or that the CPU is not saturated, consider
+-increasing this number to better utilize machine processing power. 
+-| Number of the host's CPU cores
++| `pipeline.workers`
++| The number of workers that will, in parallel, execute the filter and output stages of the pipeline. By default, this is set to the number of the host's CPU cores.
++| _number of host's CPU cores_
+ 
+ | `pipeline.batch.size`
+-| The maximum number of events an individual worker thread will collect from inputs
+-  before attempting to execute its filters and outputs.
+-  Larger batch sizes are generally more efficient, but come at the cost of increased memory
+-  overhead. You may need to increase JVM heap space in the `jvm.options` config file.
+-  See <<config-setting-files>> for more info.
++| The maximum number of events an individual worker thread collects from the input queue before attempting to execute filters and outputs. Larger batch sizes are generally more efficient, but come at the cost of increased memory overhead. You may need to increase JVM heap space in the `jvm.options` config file.
+ | `125`
+ 
+ | `pipeline.batch.delay`
+-| When creating pipeline event batches, how long in milliseconds to wait for
+-  each event before dispatching an undersized batch to pipeline workers.
++| The maximum amount of time in milliseconds that a pipeline worker waits for each new event while its current batch is not yet full before dispatching the batch to filters and outputs.
+ | `50`
+ 
+-| `pipeline.unsafe_shutdown`
+-| When set to `true`, forces Logstash to exit during shutdown even if there are still inflight events
+-  in memory. By default, Logstash will refuse to quit until all received events
+-  have been pushed to the outputs. Enabling this option can lead to data loss during shutdown.
+-| `false`
+-
+-| `pipeline.plugin_classloaders`
+-| (Beta) Load Java plugins in independent classloaders to isolate their dependencies.
+-| `false`
+-
+ | `pipeline.ordered`
+ a|
+-Set the pipeline event ordering.Valid options are:
++Pipeline event ordering. Valid options are:
+ 
+ * `auto`
+ * `true`
+@@ -219,7 +174,7 @@ Values other than `disabled` are currently considered BETA, and may produce unin
+ | 1024
+ 
+ | `queue.checkpoint.retry`
+-| When enabled, Logstash will retry once per attempted checkpoint write for any checkpoint writes that fail. Any subsequent errors are not retried. This is a workaround for failed checkpoint writes that have been seen only on filesystems with non-standard behavior such as SANs and is not recommended except in those specific circumstances.
++| When enabled, Logstash will retry failed checkpoint writes multiple times using an exponential backoff. This is a workaround for failed checkpoint writes that have been seen only on filesystems with non-standard behavior such as SANs and is not recommended except in those specific circumstances.
+ | `false`
+ 
+ | `queue.drain`
+diff --git a/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java b/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
+index 4e0f8866d..e911ad187 100644
+--- a/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
++++ b/logstash-core/src/main/java/org/logstash/ackedqueue/io/FileCheckpointIO.java
+@@ -22,6 +22,7 @@ package org.logstash.ackedqueue.io;
+ 
+ import java.io.FileOutputStream;
+ import java.io.IOException;
++import java.io.InterruptedIOException;
+ import java.nio.ByteBuffer;
+ import java.nio.channels.FileChannel;
+ import java.nio.file.Files;
+@@ -49,6 +50,9 @@ public class FileCheckpointIO implements CheckpointIO {
+ 
+     private static final Logger logger = LogManager.getLogger(FileCheckpointIO.class);
+ 
++    static final int CHECKPOINT_WRITE_MAX_RETRIES = 5;
++    static final long CHECKPOINT_WRITE_INITIAL_RETRY_DELAY_MILLIS = 10L;
++
+     public static final int BUFFER_SIZE = Short.BYTES // version
+             + Integer.BYTES  // pageNum
+             + Integer.BYTES  // firstUnackedPageNum
+@@ -99,26 +103,55 @@ public class FileCheckpointIO implements CheckpointIO {
+         write(checkpoint, buffer);
+         buffer.flip();
+         final Path tmpPath = dirPath.resolve(fileName + ".tmp");
++        final Path checkpointPath = dirPath.resolve(fileName);
+         try (FileOutputStream out = new FileOutputStream(tmpPath.toFile())) {
+             out.getChannel().write(buffer);
+             out.getFD().sync();
+         }
+ 
+-        try {
+-            Files.move(tmpPath, dirPath.resolve(fileName), StandardCopyOption.ATOMIC_MOVE);
+-        } catch (IOException ex) {
+-            if (retry) {
+-                try {
+-                    logger.error("Retrying after exception writing checkpoint: " + ex);
+-                    Thread.sleep(500);
+-                    Files.move(tmpPath, dirPath.resolve(fileName), StandardCopyOption.ATOMIC_MOVE);
+-                } catch (IOException | InterruptedException ex2) {
+-                    logger.error("Aborting after second exception writing checkpoint: " + ex2);
++        moveWithRetry(tmpPath, checkpointPath);
++    }
++
++    protected void atomicMove(Path source, Path target) throws IOException {
++        Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
++    }
++
++    protected void sleepForRetry(long millis) throws InterruptedException {
++        Thread.sleep(millis);
++    }
++
++    private void moveWithRetry(Path source, Path target) throws IOException {
++        final int maxAttempts = retry ? CHECKPOINT_WRITE_MAX_RETRIES + 1 : 1;
++        long retryDelayMillis = CHECKPOINT_WRITE_INITIAL_RETRY_DELAY_MILLIS;
++
++        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
++            try {
++                atomicMove(source, target);
++                return;
++            } catch (IOException ex) {
++                if (attempt == maxAttempts) {
++                    logger.error("Error writing checkpoint after {} attempt(s)", attempt, ex);
+                     throw ex;
+                 }
+-            } else {
+-                logger.error("Error writing checkpoint: " + ex);
+-                throw ex;
++
++                logger.warn(
++                    "Failed writing checkpoint on attempt {} of {}. Retrying in {} ms.",
++                    attempt,
++                    maxAttempts,
++                    retryDelayMillis,
++                    ex
++                );
++                try {
++                    sleepForRetry(retryDelayMillis);
++                } catch (InterruptedException interrupted) {
++                    Thread.currentThread().interrupt();
++                    final InterruptedIOException interruptedIOException =
++                        new InterruptedIOException("Interrupted while retrying checkpoint write");
++                    interruptedIOException.initCause(interrupted);
++                    interruptedIOException.addSuppressed(ex);
++                    throw interruptedIOException;
++                }
++                retryDelayMillis *= 2;
+             }
+         }
+     }
+diff --git a/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java b/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
+index 2ec024e55..c6e088c73 100644
+--- a/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
++++ b/logstash-core/src/test/java/org/logstash/ackedqueue/io/FileCheckpointIOTest.java
+@@ -26,14 +26,20 @@ import org.junit.Test;
+ import org.junit.rules.TemporaryFolder;
+ import org.logstash.ackedqueue.Checkpoint;
+ 
++import java.io.IOException;
+ import java.net.URL;
++import java.nio.file.AccessDeniedException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.Paths;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
+ 
+ import static org.hamcrest.CoreMatchers.equalTo;
+ import static org.hamcrest.CoreMatchers.is;
+ import static org.hamcrest.MatcherAssert.assertThat;
++import static org.junit.Assert.fail;
+ 
+ public class FileCheckpointIOTest {
+     private Path checkpointFolder;
+@@ -69,4 +75,59 @@ public class FileCheckpointIOTest {
+         byte[] compare = Files.readAllBytes(path);
+         assertThat(contents, is(equalTo(compare)));
+     }
++
++    @Test
++    public void writeRetriesMultipleTimesWithExponentialBackoff() throws Exception {
++        final List<Long> retryDelays = new ArrayList<>();
++        final int[] moveAttempts = new int[1];
++
++        io = new FileCheckpointIO(checkpointFolder, true) {
++            @Override
++            protected void atomicMove(Path source, Path target) throws IOException {
++                moveAttempts[0]++;
++                if (moveAttempts[0] <= 4) {
++                    throw new AccessDeniedException(target.toString());
++                }
++                super.atomicMove(source, target);
++            }
++
++            @Override
++            protected void sleepForRetry(long millis) {
++                retryDelays.add(millis);
++            }
++        };
++
++        io.write("checkpoint.head", 6, 2, 10L, 8L, 200);
++
++        assertThat(moveAttempts[0], is(5));
++        assertThat(retryDelays, is(equalTo(Arrays.asList(10L, 20L, 40L, 80L))));
++        assertThat(Files.exists(checkpointFolder.resolve("checkpoint.head")), is(true));
++    }
++
++    @Test
++    public void writeFailsAfterExhaustingRetries() throws Exception {
++        final List<Long> retryDelays = new ArrayList<>();
++        final int[] moveAttempts = new int[1];
++
++        io = new FileCheckpointIO(checkpointFolder, true) {
++            @Override
++            protected void atomicMove(Path source, Path target) throws IOException {
++                moveAttempts[0]++;
++                throw new AccessDeniedException(target.toString());
++            }
++
++            @Override
++            protected void sleepForRetry(long millis) {
++                retryDelays.add(millis);
++            }
++        };
++
++        try {
++            io.write("checkpoint.head", 6, 2, 10L, 8L, 200);
++            fail("expected write to fail after exhausting retries");
++        } catch (AccessDeniedException e) {
++            assertThat(moveAttempts[0], is(FileCheckpointIO.CHECKPOINT_WRITE_MAX_RETRIES + 1));
++            assertThat(retryDelays, is(equalTo(Arrays.asList(10L, 20L, 40L, 80L, 160L))));
++        }
++    }
+ }

@@ -1,0 +1,86 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/log/CustomLogEventSerializer.java b/logstash-core/src/main/java/org/logstash/log/CustomLogEventSerializer.java
+index b52c14a6f..0389f31d5 100644
+--- a/logstash-core/src/main/java/org/logstash/log/CustomLogEventSerializer.java
++++ b/logstash-core/src/main/java/org/logstash/log/CustomLogEventSerializer.java
+@@ -72,6 +72,10 @@ public class CustomLogEventSerializer extends JsonSerializer<CustomLogEvent> {
+             final String paramName = entry.getKey().toString();
+             final Object paramValue = entry.getValue();
+ 
++            if ("message".equals(paramName)) {
++                continue;
++            }
++
+             try {
+                 if (isValueSafeToWrite(paramValue)) {
+                     generator.writeObjectField(paramName, paramValue);
+diff --git a/logstash-core/src/main/java/org/logstash/log/StructuredMessage.java b/logstash-core/src/main/java/org/logstash/log/StructuredMessage.java
+index 9c0feee05..12a087802 100644
+--- a/logstash-core/src/main/java/org/logstash/log/StructuredMessage.java
++++ b/logstash-core/src/main/java/org/logstash/log/StructuredMessage.java
+@@ -98,4 +98,6 @@ public class StructuredMessage implements Message {
+     public Throwable getThrowable() {
+         return null;
+     }
++
++
+ }
+diff --git a/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java b/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java
+index c340fb921..db8a43cd0 100644
+--- a/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java
++++ b/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java
+@@ -44,7 +44,10 @@ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
+ 
++import com.fasterxml.jackson.core.JsonFactory;
++import com.fasterxml.jackson.core.JsonParser;
+ import com.fasterxml.jackson.core.JsonProcessingException;
++import com.fasterxml.jackson.databind.JsonNode;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ import org.apache.logging.log4j.junit.LoggerContextRule;
+@@ -139,6 +142,30 @@ public class CustomLogEventTests {
+         assertEquals(logEvent, fifthMessage.get("logEvent"));
+     }
+ 
++    @Test
++    public void testJSONLayoutIgnoresStructuredMessageFieldNamedMessage() throws Exception {
++        final ListAppender appender = CTX.getListAppender("JSONEventLogger").clear();
++        final Logger logger = LogManager.getLogger("JSONEventLogger");
++
++        final Map<String, Object> arguments = new HashMap<>();
++        arguments.put("message", "message from params");
++        arguments.put("foo", "bar");
++
++        logger.warn("message from event", arguments);
++
++        final List<String> loggedMessages = appender.getMessages();
++        assertEquals(1, loggedMessages.size());
++        final JsonFactory jsonFactory = new JsonFactory()
++            .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);
++        final JsonNode message = ObjectMappers.JSON_MAPPER.readTree(
++            jsonFactory.createParser(loggedMessages.get(0))
++        );
++        final JsonNode logEvent = message.get("logEvent");
++
++        assertEquals("message from event", logEvent.get("message").textValue());
++        assertEquals("bar", logEvent.get("foo").textValue());
++    }
++
+     @Test
+     @SuppressWarnings("unchecked")
+     public void testJSONLayoutWithRubyObjectArgument() throws JsonProcessingException {

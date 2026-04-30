@@ -1,0 +1,54 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+index 5de0b264b..92436752b 100644
+--- a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
++++ b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+@@ -141,6 +141,14 @@ public class PipelineBusTest {
+         bus.sendEvents(output, Collections.emptyList(), true);
+     }
+ 
++    @Test
++    public void downstreamReceiveExceptionsDoNotEscapeToSender() {
++        bus.registerSender(output, addresses);
++        bus.listen(new ExplodingPipelineInput(), address);
++
++        bus.sendEvents(output, Collections.singleton(rubyEvent()), false);
++    }
++
+     @Test
+     public void missingInputEventuallySucceeds() throws InterruptedException {
+         bus.registerSender(output, addresses);
+@@ -225,6 +233,18 @@ public class PipelineBusTest {
+         }
+     }
+ 
++    static class ExplodingPipelineInput implements PipelineInput {
++        @Override
++        public boolean internalReceive(Stream<JrubyEventExtLibrary.RubyEvent> events) {
++            throw new IllegalStateException("boom");
++        }
++
++        @Override
++        public boolean isRunning() {
++            return true;
++        }
++    }
++
+     static class TestPipelineOutput implements PipelineOutput {
+     }
+-}
+\ No newline at end of file
++}

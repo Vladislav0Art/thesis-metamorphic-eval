@@ -1,0 +1,185 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..f2cb9cc2b 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -286,6 +286,8 @@ public enum MapperFeature implements ConfigFeature
+      */
+     USE_STATIC_TYPING(false),
+ 
++
++
+     /*
+     /******************************************************
+     /* View-related features
+@@ -474,18 +476,29 @@ public enum MapperFeature implements ConfigFeature
+      *
+      * @since 2.9
+      */
+-    IGNORE_MERGE_FOR_UNMERGEABLE(true)
++    IGNORE_MERGE_FOR_UNMERGEABLE(true),
+ 
+-    ;
++    /**
++     * Feature that determines whether declared base type of a polymorphic value
++     * is to be used as the default implementation, if no explicit default class
++     * is specified via {@link com.fasterxml.jackson.annotation.JsonTypeInfo#defaultImpl()}.
++     *<p>
++     * When enabled, deserialization of a concrete declared target type may proceed
++     * without a type id even if the target type itself carries {@link JsonTypeInfo}
++     * metadata.
++     *<p>
++     * Feature is disabled by default.
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false);
+ 
+     private final boolean _defaultState;
+     private final int _mask;
+-    
++
+     private MapperFeature(boolean defaultState) {
+         _defaultState = defaultState;
+         _mask = (1 << ordinal());
+     }
+-    
++
+     @Override
+     public boolean enabledByDefault() { return _defaultState; }
+ 
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
+index 17d5ec72f..d1e491778 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
+@@ -123,7 +123,12 @@ public class StdTypeResolverBuilder
+         JavaType defaultImpl;
+ 
+         if (_defaultImpl == null) {
+-            defaultImpl = null;
++            if (config.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && baseType.isConcrete()) {
++                defaultImpl = baseType;
++            } else {
++                defaultImpl = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+@@ -131,32 +136,30 @@ public class StdTypeResolverBuilder
+             // 20-Mar-2016, tatu: Can finally add a check for type compatibility BUT
+             //   if so, need to add explicit checks for marker types. Not ideal, but
+             //   seems like a reasonable compromise.
+-            if ((_defaultImpl == Void.class)
+-                     || (_defaultImpl == NoClass.class)) {
++            if ((_defaultImpl == Void.class) || (_defaultImpl == NoClass.class)) {
+                 defaultImpl = config.getTypeFactory().constructType(_defaultImpl);
++            } else if (baseType.hasRawClass(_defaultImpl)) { // common enough to check
++                defaultImpl = baseType;
++            } else if (baseType.isTypeOrSuperTypeOf(_defaultImpl)) {
++                // most common case with proper base type...
++                defaultImpl = config.getTypeFactory()
++                        .constructSpecializedType(baseType, _defaultImpl);
+             } else {
+-                if (baseType.hasRawClass(_defaultImpl)) { // common enough to check
+-                    defaultImpl = baseType;
+-                } else if (baseType.isTypeOrSuperTypeOf(_defaultImpl)) {
+-                    // most common case with proper base type...
+-                    defaultImpl = config.getTypeFactory()
+-                            .constructSpecializedType(baseType, _defaultImpl);
+-                } else {
+-                    // 05-Apr-2018, tatu: As [databind#1565] and [databind#1861] need to allow
+-                    //    some cases of seemingly incompatible `defaultImpl`. Easiest to just clear
+-                    //    the setting.
++                // 05-Apr-2018, tatu: As [databind#1565] and [databind#1861] need to allow
++                //    some cases of seemingly incompatible `defaultImpl`. Easiest to just clear
++                //    the setting.
+ 
+-                    /*
+-                    throw new IllegalArgumentException(
+-                            String.format("Invalid \"defaultImpl\" (%s): not a subtype of basetype (%s)",
+-                                    ClassUtil.nameOf(_defaultImpl), ClassUtil.nameOf(baseType.getRawClass()))
+-                            );
+-                            */
+-                    defaultImpl = null;
+-                }
++                /*
++                throw new IllegalArgumentException(
++                        String.format("Invalid \"defaultImpl\" (%s): not a subtype of basetype (%s)",
++                                ClassUtil.nameOf(_defaultImpl), ClassUtil.nameOf(baseType.getRawClass()))
++                        );
++                        */
++                defaultImpl = null;
+             }
+         }
+ 
++
+         // First, method for converting type info to type id:
+         switch (_includeAs) {
+         case WRAPPER_ARRAY:
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+index 7d260c785..d57efd3d9 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+@@ -96,6 +96,22 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+ 
+     }
+ 
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
++    public static interface Base1565 {
++        public String getName();
++        public void setName(String name);
++    }
++
++    public static class Impl1565 implements Base1565 {
++        private String name;
++
++        @Override
++        public String getName() { return name; }
++
++        @Override
++        public void setName(String name) { this.name = name; }
++    }
++
+     // for [databind#656]
+     @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include= JsonTypeInfo.As.WRAPPER_OBJECT, defaultImpl=ImplFor656.class)
+     static abstract class BaseFor656 { }
+@@ -206,6 +222,28 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         assertNull(ob);
+     }
+ 
++    public void testMissingTypeIdUsesDeclaredConcreteTargetWhenFeatureDisabled() throws Exception
++    {
++        try {
++            MAPPER.readValue(aposToQuotes("{'name':'name'}"), Impl1565.class);
++            fail("Should not pass");
++        } catch (InvalidTypeIdException e) {
++            verifyException(e, "missing type id property 'type'");
++        }
++    }
++
++    public void testMissingTypeIdUsesDeclaredConcreteTargetWhenFeatureEnabled() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper()
++                .enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++
++        Impl1565 result = mapper.readValue(aposToQuotes("{'name':'name'}"), Impl1565.class);
++        assertNotNull(result);
++        assertEquals("name", result.getName());
++    }
++
++    // [databind#511]
++
+     // [databind#511]
+     public void testInvalidTypeId511() throws Exception {
+         ObjectReader reader = MAPPER.reader().without(

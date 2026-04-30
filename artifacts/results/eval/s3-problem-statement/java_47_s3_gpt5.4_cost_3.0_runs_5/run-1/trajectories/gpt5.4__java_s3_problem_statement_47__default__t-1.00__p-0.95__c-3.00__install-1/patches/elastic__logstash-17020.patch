@@ -1,0 +1,59 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+new file mode 100644
+index 000000000..cc94fe823
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+@@ -0,0 +1,39 @@
++package org.logstash.common;
++
++import org.jcodings.specific.ISO8859_1Encoding;
++import org.jruby.RubyArray;
++import org.jruby.RubyString;
++import org.jruby.runtime.ThreadContext;
++import org.junit.Before;
++import org.junit.Test;
++import org.logstash.RubyTestBase;
++import org.logstash.RubyUtil;
++
++import static org.junit.Assert.assertArrayEquals;
++import static org.junit.Assert.assertEquals;
++
++public class BufferedTokenizerExtTest extends RubyTestBase {
++
++    private BufferedTokenizerExt subject;
++    private ThreadContext context;
++
++    @Before
++    public void setUpTokenizer() {
++        context = RubyUtil.RUBY.getCurrentContext();
++        subject = new BufferedTokenizerExt(RubyUtil.RUBY, RubyUtil.BUFFERED_TOKENIZER);
++        subject.init(context, new RubyString[0]);
++    }
++
++    @Test
++    @SuppressWarnings("rawtypes")
++    public void preservesOriginalBytesWhenFlushingBufferedIso88591Input() {
++        final RubyString rubyInput = RubyString.newString(RubyUtil.RUBY, new byte[]{(byte) 0xA3});
++        rubyInput.setEncoding(ISO8859_1Encoding.INSTANCE);
++
++        final RubyArray extracted = subject.extract(context, rubyInput);
++        assertEquals(0, extracted.size());
++
++        final RubyString flushed = (RubyString) subject.flush(context);
++        assertArrayEquals(new byte[]{(byte) 0xA3}, flushed.getBytes());
++    }
++}

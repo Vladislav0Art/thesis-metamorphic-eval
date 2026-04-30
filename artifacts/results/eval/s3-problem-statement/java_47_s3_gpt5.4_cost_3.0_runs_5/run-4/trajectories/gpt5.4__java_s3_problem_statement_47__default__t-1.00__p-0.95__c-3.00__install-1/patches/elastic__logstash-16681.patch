@@ -1,0 +1,172 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+index 6626641a1..b2cdf281b 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+@@ -60,10 +60,8 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+                                  final Iterable<String> addresses) {
+         Objects.requireNonNull(sender, "sender must not be null");
+         Objects.requireNonNull(addresses, "addresses must not be null");
+-        addressStatesBySender.compute(sender, (po, existing) -> {
+-            addresses.forEach((addr) -> addressStates.mutate(addr, (as) -> as.removeOutput(po)));
+-            return null;
+-        });
++        addressStatesBySender.remove(sender);
++        addresses.forEach((addr) -> addressStates.mutate(addr, (as) -> as.removeOutput(sender)));
+     }
+ 
+     @Override
+@@ -134,25 +132,29 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+ 
+         public AddressState.ReadOnly mutate(final String address,
+                                             final Consumer<AddressState> consumer) {
++            final PipelineInput[] listenerToNotify = new PipelineInput[1];
+             final AddressState result = mapping.compute(address, (a, addressState) -> {
+                 if (addressState == null) {
+                     addressState = new AddressState(address);
+                 }
+ 
+                 consumer.accept(addressState);
+-
+-                // If this addressState has a listener, ensure that any waiting
+-                // threads get notified so that they can resume immediately
+-                final PipelineInput currentInput = addressState.getInput();
+-                if (currentInput != null) {
+-                    synchronized (currentInput) { currentInput.notifyAll(); }
+-                }
++                listenerToNotify[0] = addressState.getInput();
+ 
+                 return addressState.isEmpty() ? null : addressState;
+             });
++
++            final PipelineInput currentInput = listenerToNotify[0];
++            if (currentInput != null) {
++                synchronized (currentInput) {
++                    currentInput.notifyAll();
++                }
++            }
++
+             return result == null ? null : result.getReadOnlyView();
+         }
+ 
++
+         private AddressState.ReadOnly get(final String address) {
+             final AddressState result = mapping.get(address);
+             return result == null ? null : result.getReadOnlyView();
+diff --git a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusV2Test.java b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusV2Test.java
+new file mode 100644
+index 000000000..a8f915a4f
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusV2Test.java
+@@ -0,0 +1,98 @@
++/*
++ * Licensed to Elasticsearch B.V. under one or more contributor
++ * license agreements. See the NOTICE file distributed with
++ * this work for additional information regarding copyright
++ * ownership. Elasticsearch B.V. licenses this file to you under
++ * the Apache License, Version 2.0 (the "License"); you may
++ * not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *	http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied.  See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++
++package org.logstash.plugins.pipeline;
++
++import org.junit.Test;
++import org.logstash.ext.JrubyEventExtLibrary;
++
++import java.time.Duration;
++import java.util.concurrent.CountDownLatch;
++import java.util.concurrent.atomic.LongAdder;
++import java.util.stream.Stream;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++public class PipelineBusV2Test {
++
++    @Test
++    public void addressStateMutateDoesNotHoldAddressLockWhileNotifyingListener() throws Exception {
++        final PipelineBusV2.AddressStateMapping mapping = new PipelineBusV2.AddressStateMapping();
++        final TestPipelineInput listener = new TestPipelineInput();
++        final String address = "addr";
++
++        mapping.mutate(address, (addressState) -> addressState.assignInputIfMissing(listener));
++
++        final CountDownLatch firstMutationEntered = new CountDownLatch(1);
++        final CountDownLatch secondThreadHoldingListener = new CountDownLatch(1);
++        final CountDownLatch allowFirstMutationToContinue = new CountDownLatch(1);
++
++        final Thread firstMutation = new Thread(() -> mapping.mutate(address, (addressState) -> {
++            firstMutationEntered.countDown();
++            try {
++                allowFirstMutationToContinue.await();
++            } catch (InterruptedException e) {
++                throw new AssertionError(e);
++            }
++        }), "first-mutation");
++        firstMutation.setDaemon(true);
++
++        final Thread secondMutation = new Thread(() -> {
++            synchronized (listener) {
++                secondThreadHoldingListener.countDown();
++                mapping.mutate(address, (addressState) -> { });
++            }
++        }, "second-mutation");
++        secondMutation.setDaemon(true);
++
++        firstMutation.start();
++        assertThat(firstMutationEntered.await(Duration.ofSeconds(5).toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS)).isTrue();
++
++        secondMutation.start();
++        assertThat(secondThreadHoldingListener.await(Duration.ofSeconds(5).toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS)).isTrue();
++
++        allowFirstMutationToContinue.countDown();
++
++        firstMutation.join(Duration.ofSeconds(5).toMillis());
++        secondMutation.join(Duration.ofSeconds(5).toMillis());
++
++        assertThat(firstMutation.isAlive()).isFalse();
++        assertThat(secondMutation.isAlive()).isFalse();
++    }
++
++    static class TestPipelineInput implements PipelineInput {
++        public LongAdder eventCount = new LongAdder();
++
++        @Override
++        public ReceiveResponse internalReceive(Stream<JrubyEventExtLibrary.RubyEvent> events) {
++            eventCount.add(events.count());
++            return ReceiveResponse.completed();
++        }
++
++        @Override
++        public String getId() {
++            return "anonymous";
++        }
++
++        @Override
++        public boolean isRunning() {
++            return true;
++        }
++    }
++}

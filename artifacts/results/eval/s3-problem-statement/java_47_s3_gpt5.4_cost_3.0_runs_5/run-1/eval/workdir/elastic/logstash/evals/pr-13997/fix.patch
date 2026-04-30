@@ -1,0 +1,140 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/ConfigVariableExpander.java b/logstash-core/src/main/java/org/logstash/plugins/ConfigVariableExpander.java
+index a66037a07..1c65645d6 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/ConfigVariableExpander.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/ConfigVariableExpander.java
+@@ -16,8 +16,6 @@
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+-
+-
+ package org.logstash.plugins;
+ 
+ import org.logstash.common.EnvironmentVariableProvider;
+@@ -28,50 +26,41 @@ import java.nio.charset.StandardCharsets;
+ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
+ 
+-/**
+- * Expand the configuration variables used in pipeline configuration, bringing them from secret store or from the
+- * environment.
+- * */
+-public class ConfigVariableExpander implements AutoCloseable {
++public class ConfigVariableExpander {
++    private final EnvironmentVariableProvider envVarProvider;
++    private final SecretStore secretStore;
++    private final Pattern substitutionPattern = Pattern.compile("\\$\\{(?<name>[^}:]+)(?::(?<default>[^}]+))?}");
+ 
+-    private static String SUBSTITUTION_PLACEHOLDER_REGEX = "\\$\\{(?<name>[a-zA-Z_.][a-zA-Z0-9_.]*)(:(?<default>[^}]*))?}";
++    public ConfigVariableExpander(EnvironmentVariableProvider envVarProvider, SecretStore secretStore) {
++        this.envVarProvider = envVarProvider;
++        this.secretStore = secretStore;
++    }
+ 
+-    private Pattern substitutionPattern = Pattern.compile(SUBSTITUTION_PLACEHOLDER_REGEX);
+-    private SecretStore secretStore;
+-    private EnvironmentVariableProvider envVarProvider;
++    public static ConfigVariableExpander withDefaultProvider() {
++        return new ConfigVariableExpander(EnvironmentVariableProvider.defaultProvider(), null);
++    }
+ 
+-    /**
+-     * Creates a ConfigVariableExpander that doesn't lookup any secreted placeholder.
+-     *
+-     * @param envVarProvider EnvironmentVariableProvider to use as source of substitutions
+-     * @return an variable expander that uses envVarProvider as source
+-     * */
+     public static ConfigVariableExpander withoutSecret(EnvironmentVariableProvider envVarProvider) {
+-        return new ConfigVariableExpander(null, envVarProvider);
++        return new ConfigVariableExpander(envVarProvider, null);
+     }
+ 
+-    public ConfigVariableExpander(SecretStore secretStore, EnvironmentVariableProvider envVarProvider) {
+-        this.secretStore = secretStore;
+-        this.envVarProvider = envVarProvider;
++    public boolean isSecretStoreReference(Object value) {
++        String variable;
++        if (value instanceof String) {
++            variable = (String) value;
++        } else {
++            return false;
++        }
++
++        Matcher matcher = substitutionPattern.matcher(variable);
++        if (matcher.matches() && secretStore != null) {
++            String variableName = matcher.group("name");
++            return secretStore.retrieveSecret(new SecretIdentifier(variableName)) != null;
++        }
++
++        return false;
+     }
+ 
+-    /**
+-     * Replace all substitution variable references and returns the substituted value or the original value
+-     * if a substitution cannot be made.
+-     *
+-     * Substitution variables have the patterns: <code>${VAR}</code> or <code>${VAR:defaultValue}</code>
+-     *
+-     * If a substitution variable is found, the following precedence applies:
+-     *   Secret store value
+-     *   Environment entry value
+-     *   Default value if provided in the pattern
+-     *   Exception raised
+-     *
+-     * If a substitution variable is not found, the value is return unchanged
+-     *
+-     * @param value Config value in which substitution variables, if any, should be replaced.
+-     * @return Config value with any substitution variables replaced
+-     */
+     public Object expand(Object value) {
+         String variable;
+         if (value instanceof String) {
+@@ -104,17 +93,11 @@ public class ConfigVariableExpander implements AutoCloseable {
+             }
+ 
+             throw new IllegalStateException(String.format(
+-                    "Cannot evaluate `%s`. Replacement variable `%s` is not defined in a Logstash " +
+-                            "secret store or an environment entry and there is no default value given.",
+-                    variable, variableName));
++                "Cannot evaluate `%s`. Replacement variable `%s` is not defined in a Logstash " +
++                    "secret store or an environment entry and there is no default value given.",
++                variable, variableName));
+         } else {
+             return variable;
+         }
+     }
+-
+-    @Override
+-    public void close() {
+-        // most keystore implementations will have close() methods
+-
+-    }
+ }
+diff --git a/logstash-core/src/test/java/org/logstash/config/ir/IRHelpers.java b/logstash-core/src/test/java/org/logstash/config/ir/IRHelpers.java
+index 5d784aff3..5a82fc1a7 100644
+--- a/logstash-core/src/test/java/org/logstash/config/ir/IRHelpers.java
++++ b/logstash-core/src/test/java/org/logstash/config/ir/IRHelpers.java
+@@ -35,9 +35,7 @@ import org.logstash.config.ir.expression.unary.Truthy;
+ import org.logstash.config.ir.graph.Edge;
+ import org.logstash.config.ir.graph.Graph;
+ import org.logstash.config.ir.graph.Vertex;
+-import org.logstash.config.ir.graph.algorithms.GraphDiff;
+ import org.logstash.plugins.ConfigVariableExpander;
+-
+ import java.io.File;
+ import java.io.IOException;
+ import java.net.URL;

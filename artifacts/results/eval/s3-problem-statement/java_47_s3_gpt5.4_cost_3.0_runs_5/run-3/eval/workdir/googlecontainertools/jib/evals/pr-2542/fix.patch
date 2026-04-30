@@ -1,0 +1,97 @@
+
+diff --git a/.gitignore b/.gitignore
+index a414d36d..942beea0 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -13,3 +13,6 @@ bin/
+ .classpath
+ .project
+ .DS_Store
++out/
++*.class
++*.jar
+diff --git a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointCaller.java b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointCaller.java
+index eb010f00..d0920b48 100644
+--- a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointCaller.java
++++ b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointCaller.java
+@@ -189,9 +189,21 @@ class RegistryEndpointCaller<T> {
+         new RegistryErrorExceptionBuilder(
+             registryEndpointProvider.getActionDescription(), responseException);
+ 
++    String responseContent = responseException.getContent();
++
++    if (responseContent == null) {
++      registryErrorExceptionBuilder.addReason(
++          "registry returned error code "
++              + responseException.getStatusCode()
++              + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
++              + responseContent
++              + "\n");
++      return registryErrorExceptionBuilder.build();
++    }
++
+     try {
+       ErrorResponseTemplate errorResponse =
+-          JsonTemplateMapper.readJson(responseException.getContent(), ErrorResponseTemplate.class);
++          JsonTemplateMapper.readJson(responseContent, ErrorResponseTemplate.class);
+       for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
+         registryErrorExceptionBuilder.addReason(errorEntry);
+       }
+@@ -200,7 +212,7 @@ class RegistryEndpointCaller<T> {
+           "registry returned error code "
+               + responseException.getStatusCode()
+               + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
+-              + responseException.getContent()
++              + responseContent
+               + "\n");
+     }
+ 
+diff --git a/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryEndpointCallerTest.java b/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryEndpointCallerTest.java
+index 90319810..23ef7338 100644
+--- a/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryEndpointCallerTest.java
++++ b/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryEndpointCallerTest.java
+@@ -187,17 +187,17 @@ public class RegistryEndpointCallerTest {
+ 
+   @Test
+   public void testCall_credentialsForcedOverHttp() throws IOException, RegistryException {
++    System.setProperty(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP, "true");
++
+     ResponseException unauthorizedException =
+         mockResponseException(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED);
++    Mockito.when(unauthorizedException.requestAuthorizationCleared()).thenReturn(false);
+     setUpRegistryResponse(unauthorizedException);
+-    System.setProperty(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP, "true");
+ 
+     try {
+       endpointCaller.call();
+       Assert.fail("Call should have failed");
+ 
+-    } catch (RegistryCredentialsNotSentException ex) {
+-      throw new AssertionError("should have sent credentials", ex);
+     } catch (RegistryUnauthorizedException ex) {
+       Assert.assertEquals("Unauthorized for serverUrl/imageName", ex.getMessage());
+     }
+@@ -434,6 +434,23 @@ public class RegistryEndpointCallerTest {
+             + "https://github.com/GoogleContainerTools/jib/issues/new",
+         registryException.getMessage());
+   }
++  @Test
++  public void testNewRegistryErrorException_nullErrorOutput() {
++    ResponseException httpException = Mockito.mock(ResponseException.class);
++    Mockito.when(httpException.getContent()).thenReturn(null);
++    Mockito.when(httpException.getStatusCode()).thenReturn(404);
++
++    RegistryErrorException registryException =
++        endpointCaller.newRegistryErrorException(httpException);
++    Assert.assertSame(httpException, registryException.getCause());
++    Assert.assertEquals(
++        "Tried to actionDescription but failed because: registry returned error code 404; "
++            + "possible causes include invalid or wrong reference. Actual error output follows:\n"
++            + "null\n"
++            + " | If this is a bug, please file an issue at "
++            + "https://github.com/GoogleContainerTools/jib/issues/new",
++        registryException.getMessage());
++  }
+ 
+   /**
+    * Verifies that a response with {@code httpStatusCode} throws {@link

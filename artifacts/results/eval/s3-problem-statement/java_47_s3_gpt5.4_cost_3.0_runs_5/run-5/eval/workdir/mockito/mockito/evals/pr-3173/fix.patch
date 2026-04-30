@@ -1,0 +1,88 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/subprojects/java21/src/test/java/org/mockito/java21/RecordSpyWithGenericSpyTest.java b/subprojects/java21/src/test/java/org/mockito/java21/RecordSpyWithGenericSpyTest.java
+new file mode 100644
+index 000000000..8b1378917
+--- /dev/null
++++ b/subprojects/java21/src/test/java/org/mockito/java21/RecordSpyWithGenericSpyTest.java
+@@ -0,0 +1 @@
++
+diff --git a/subprojects/junit-jupiter/src/test/java/org/mockitousage/GenericTypeMockTest.java b/subprojects/junit-jupiter/src/test/java/org/mockitousage/GenericTypeMockTest.java
+index cb3b835c7..dad342350 100644
+--- a/subprojects/junit-jupiter/src/test/java/org/mockitousage/GenericTypeMockTest.java
++++ b/subprojects/junit-jupiter/src/test/java/org/mockitousage/GenericTypeMockTest.java
+@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+ import org.mockito.InjectMocks;
+ import org.mockito.Mock;
++import org.mockito.Spy;
+ import org.mockito.junit.jupiter.MockitoExtension;
+ 
+ /**
+@@ -370,7 +371,7 @@ public class GenericTypeMockTest {
+         public void testNoNpe() {
+             assertSame(innerList, spiedImpl.changes);
+         }
+-
+     }
++
+ }
+ 
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotCorruptInlineSpyTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotCorruptInlineSpyTest.java
+new file mode 100644
+index 000000000..93381abcc
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotCorruptInlineSpyTest.java
+@@ -0,0 +1,40 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Spy;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++
++@ExtendWith(MockitoExtension.class)
++class GenericSpyDoesNotCorruptInlineSpyTest {
++
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private FinalClassWithParameter finalClassWithParameter = new FinalClassWithParameter("some value");
++
++    @Test
++    void should_keep_state_of_inline_spy_when_generic_spy_exists() {
++        assertEquals("some value", finalClassWithParameter.someParameter());
++    }
++
++    static final class FinalClassWithParameter {
++        private final String someParameter;
++
++        FinalClassWithParameter(String someParameter) {
++            this.someParameter = someParameter;
++        }
++
++        String someParameter() {
++            return someParameter;
++        }
++    }
++}

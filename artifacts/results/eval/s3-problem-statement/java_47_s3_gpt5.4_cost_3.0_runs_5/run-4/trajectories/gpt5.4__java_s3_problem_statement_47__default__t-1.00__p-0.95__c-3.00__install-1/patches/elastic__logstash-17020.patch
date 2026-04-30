@@ -1,0 +1,30 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index 3d7b4b199..a969d56df 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -58,6 +58,11 @@ describe  FileWatch::BufferedTokenizer  do
+       expect(subject).to be_empty
+     end
+ 
++    it "preserves the original encoding bytes" do
++      subject.extract("\xA3".force_encoding("ISO-8859-1"))
++      expect(subject.flush.bytes).to eq([0xA3])
++    end
++
+     context 'with decode_size_limit_bytes' do
+       subject { FileWatch::BufferedTokenizer.new("\n", 100) }
+ 

@@ -1,0 +1,96 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/lib/logstash/settings.rb b/logstash-core/lib/logstash/settings.rb
+index 7d4b2b606..249c85686 100644
+--- a/logstash-core/lib/logstash/settings.rb
++++ b/logstash-core/lib/logstash/settings.rb
+@@ -543,6 +543,34 @@ module LogStash
+       end
+     end
+ 
++    class ComplexPassword < Password
++      MINIMUM_PASSWORD_LENGTH = 8
++      REQUIRED_PATTERNS = [
++        /[[:lower:]]/,
++        /[[:upper:]]/,
++        /\d/,
++        /[^[:alnum:]]/
++      ].freeze
++
++      def validate(value)
++        super(value)
++
++        password_value = value.value
++        return if password_value.nil?
++
++        unless password_value.length >= MINIMUM_PASSWORD_LENGTH &&
++               REQUIRED_PATTERNS.all? { |pattern| password_value.match?(pattern) }
++          raise(ArgumentError, complexity_requirements_message)
++        end
++      end
++
++      private
++
++      def complexity_requirements_message
++        "Password for `#{name}` must be at least #{MINIMUM_PASSWORD_LENGTH} characters long and include at least one lowercase letter, one uppercase letter, one digit, and one special character."
++      end
++    end
++
+     # The CoercibleString allows user to enter any value which coerces to a String.
+     # For example for true/false booleans; if the possible_strings are ["foo", "true", "false"]
+     # then these options in the config file or command line will be all valid: "foo", true, false, "true", "false"
+diff --git a/logstash-core/spec/logstash/settings/password_spec.rb b/logstash-core/spec/logstash/settings/password_spec.rb
+index ca90bc4f9..44a4bb1c1 100644
+--- a/logstash-core/spec/logstash/settings/password_spec.rb
++++ b/logstash-core/spec/logstash/settings/password_spec.rb
+@@ -61,3 +61,38 @@ describe LogStash::Setting::Password do
+     end
+   end
+ end
++
++describe LogStash::Setting::ComplexPassword do
++  let(:setting_name) { "secure" }
++  subject(:password_setting) { described_class.new(setting_name, nil, true) }
++
++  context 'when unset' do
++    it 'is valid' do
++      expect { password_setting.validate_value }.to_not raise_error
++      expect(password_setting.value).to be_a_kind_of LogStash::Util::Password
++      expect(password_setting.value.value).to be_nil
++    end
++  end
++
++  context 'when set to a complex password' do
++    let(:setting_value) { "s3cUr3p4$$w0rd" }
++
++    it 'is valid' do
++      expect { password_setting.set(setting_value) }.to_not raise_error
++      expect { password_setting.validate_value }.to_not raise_error
++      expect(password_setting.value.value).to eq setting_value
++    end
++  end
++
++  context 'when set to a password without sufficient complexity' do
++    let(:setting_value) { "stashy" }
++
++    it 'rejects the invalid value' do
++      expect { password_setting.set(setting_value) }.to raise_error(
++        ArgumentError,
++        "Password for `#{setting_name}` must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one digit, and one special character."
++      )
++      expect(password_setting).to_not be_set
++    end
++  end
++end

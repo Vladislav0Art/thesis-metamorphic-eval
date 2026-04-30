@@ -1,0 +1,135 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/docs/static/monitoring/monitoring-apis.asciidoc b/docs/static/monitoring/monitoring-apis.asciidoc
+index 2538df26c..97050e765 100644
+--- a/docs/static/monitoring/monitoring-apis.asciidoc
++++ b/docs/static/monitoring/monitoring-apis.asciidoc
+@@ -58,7 +58,7 @@ You can also require HTTP Basic authentication by setting `api.auth.type: basic`
+ --------------------------------------------------
+ api.auth.type: basic
+ api.auth.basic.username: "logstash"
+-api.auth.basic.password: "stashy"
++api.auth.basic.password: "s3cUreP4$$w0rD"
+ --------------------------------------------------
+ 
+ NOTE: Usage of Keystore or Environment or variable replacements is encouraged for password-type fields to avoid storing them in plain text.
+diff --git a/logstash-core/lib/logstash/environment.rb b/logstash-core/lib/logstash/environment.rb
+index c94ddfa5d..39f7a0b46 100644
+--- a/logstash-core/lib/logstash/environment.rb
++++ b/logstash-core/lib/logstash/environment.rb
+@@ -76,7 +76,7 @@ module LogStash
+             Setting::String.new("api.environment", "production").with_deprecated_alias("http.environment"),
+             Setting::String.new("api.auth.type", "none", true, %w(none basic)),
+             Setting::String.new("api.auth.basic.username", nil, false).nullable,
+-          Setting::Password.new("api.auth.basic.password", nil, false).nullable,
++          Setting::PasswordWithComplexity.new("api.auth.basic.password", nil, false).nullable,
+            Setting::Boolean.new("api.ssl.enabled", false),
+   Setting::ExistingFilePath.new("api.ssl.keystore.path", nil, false).nullable,
+           Setting::Password.new("api.ssl.keystore.password", nil, false).nullable,
+diff --git a/logstash-core/lib/logstash/settings.rb b/logstash-core/lib/logstash/settings.rb
+index 7d4b2b606..32cfce044 100644
+--- a/logstash-core/lib/logstash/settings.rb
++++ b/logstash-core/lib/logstash/settings.rb
+@@ -527,19 +527,27 @@ module LogStash
+       def initialize(name, default=nil, strict=true)
+         super(name, LogStash::Util::Password, default, strict)
+       end
++    end
+ 
+-      def coerce(value)
+-        return value if value.kind_of?(LogStash::Util::Password)
+-
+-        if value && !value.kind_of?(::String)
+-          raise(ArgumentError, "Setting `#{name}` could not coerce non-string value to password")
+-        end
+-
+-        LogStash::Util::Password.new(value)
+-      end
++    class PasswordWithComplexity < Password
++      COMPLEXITY_REQUIREMENTS_MESSAGE = "must be at least 8 characters and include at least one lowercase letter, one uppercase letter, one digit, and one special character".freeze
+ 
+       def validate(value)
+         super(value)
++
++        password = value.value
++        return if password.nil?
++
++        meets_complexity =
++          password.length >= 8 &&
++          password.match?(/[[:lower:]]/) &&
++          password.match?(/[[:upper:]]/) &&
++          password.match?(/\d/) &&
++          password.match?(/[^[:alnum:]]/)
++
++        unless meets_complexity
++          raise ArgumentError.new("Setting \"#{@name}\" #{COMPLEXITY_REQUIREMENTS_MESSAGE}")
++        end
+       end
+     end
+ 
+diff --git a/logstash-core/spec/logstash/settings/password_spec.rb b/logstash-core/spec/logstash/settings/password_spec.rb
+index ca90bc4f9..5ddd06abc 100644
+--- a/logstash-core/spec/logstash/settings/password_spec.rb
++++ b/logstash-core/spec/logstash/settings/password_spec.rb
+@@ -61,3 +61,49 @@ describe LogStash::Setting::Password do
+     end
+   end
+ end
++
++describe LogStash::Setting::PasswordWithComplexity do
++  let(:setting_name) { "secure" }
++  subject(:password_setting) { described_class.new(setting_name, nil, true) }
++
++  context "when set with a complex password" do
++    let(:setting_value) { "Str0ng!Pass" }
++
++    it "accepts the value" do
++      expect { password_setting.set(setting_value) }.to_not raise_error
++      expect(password_setting.value).to be_a_kind_of LogStash::Util::Password
++      expect(password_setting.value.value).to eq(setting_value)
++    end
++  end
++
++  context "when set with a password that does not meet complexity requirements" do
++    it "rejects a password that is too short" do
++      expect { password_setting.set("S1!aa") }.to raise_error(ArgumentError, /must be at least 8 characters/)
++    end
++
++    it "rejects a password without an uppercase letter" do
++      expect { password_setting.set("strong1!pass") }.to raise_error(ArgumentError, /must be at least 8 characters/)
++    end
++
++    it "rejects a password without a lowercase letter" do
++      expect { password_setting.set("STRONG1!PASS") }.to raise_error(ArgumentError, /must be at least 8 characters/)
++    end
++
++    it "rejects a password without a digit" do
++      expect { password_setting.set("Strong!Pass") }.to raise_error(ArgumentError, /must be at least 8 characters/)
++    end
++
++    it "rejects a password without a special character" do
++      expect { password_setting.set("Strong1Pass") }.to raise_error(ArgumentError, /must be at least 8 characters/)
++    end
++  end
++
++  context "when nullable and set to nil" do
++    subject(:password_setting) { described_class.new(setting_name, nil, true).nullable }
++
++    it "accepts nil" do
++      expect { password_setting.set(nil) }.to_not raise_error
++      expect(password_setting.value).to be_nil
++    end
++  end
++end

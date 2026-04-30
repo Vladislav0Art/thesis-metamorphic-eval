@@ -1,0 +1,125 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index 1aad80538..4dea6ddd1 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -213,6 +213,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+         if (open.compareAndSet(true, false)) {
+             try {
+                 finalizeSegment(FinalizeWhen.ALWAYS);
++                executeAgeRetentionPolicy();
+             } catch (Exception e) {
+                 logger.warn("Unable to close dlq writer, ignoring", e);
+             }
+@@ -235,39 +236,32 @@ public final class DeadLetterQueueWriter implements Closeable {
+         lock.lock();
+         try {
+             Timestamp entryTimestamp = Timestamp.now();
+-            if (entryTimestamp.compareTo(lastEntryTimestamp) < 0) {
+-                entryTimestamp = lastEntryTimestamp;
++            if (entryTimestamp.isAfter(lastEntryTimestamp)) {
++                lastEntryTimestamp = entryTimestamp;
++            }
++            if (entryTimestamp.isBefore(lastEntryTimestamp.minus(this.retentionTime))) {
++                this.expiredEvents.incrementAndGet();
++                return;
++            }
++            byte[] record = entry.serialize();
++            int eventPayloadSize = RECORD_HEADER_SIZE + record.length;
++            executeAgeRetentionPolicy();
++            boolean skipWrite = executeStoragePolicy(eventPayloadSize);
++            if (skipWrite) {
++                return;
+             }
+-            innerWriteEntry(entry);
+-            lastEntryTimestamp = entryTimestamp;
++
++            if (exceedSegmentSize(eventPayloadSize)) {
++                finalizeSegment(FinalizeWhen.ALWAYS);
++            }
++            long writtenBytes = currentWriter.writeEvent(record);
++            currentQueueSize.getAndAdd(writtenBytes);
++            lastWrite = Instant.now();
+         } finally {
+             lock.unlock();
+         }
+     }
+ 
+-    private void innerWriteEntry(DLQEntry entry) throws IOException {
+-        Event event = entry.getEvent();
+-
+-        if (alreadyProcessed(event)) {
+-            logger.warn("Event previously submitted to dead letter queue. Skipping...");
+-            return;
+-        }
+-        byte[] record = entry.serialize();
+-        int eventPayloadSize = RECORD_HEADER_SIZE + record.length;
+-        executeAgeRetentionPolicy();
+-        boolean skipWrite = executeStoragePolicy(eventPayloadSize);
+-        if (skipWrite) {
+-            return;
+-        }
+-
+-        if (exceedSegmentSize(eventPayloadSize)) {
+-            finalizeSegment(FinalizeWhen.ALWAYS);
+-        }
+-        long writtenBytes = currentWriter.writeEvent(record);
+-        currentQueueSize.getAndAdd(writtenBytes);
+-        lastWrite = Instant.now();
+-    }
+-
+     private boolean exceedSegmentSize(int eventPayloadSize) throws IOException {
+         return currentWriter.getPosition() + eventPayloadSize > maxSegmentSize;
+     }
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 5702d169a..23ddec39d 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -228,6 +228,34 @@ public class DeadLetterQueueWriterTest {
+             assertThat(reader.pollEntry(100).getReason(), is("1"));
+         }
+     }
++    @Test
++    public void testClosePurgesExpiredSegmentsWithoutNewWrites() throws Exception {
++        final Duration retention = Duration.ofMinutes(1);
++        final java.time.Instant initialNow = java.time.Instant.parse("2023-01-23T12:48:35Z");
++        final java.time.Clock initialClock = java.time.Clock.fixed(initialNow, java.time.ZoneOffset.UTC);
++        final java.time.Instant expiredNow = initialNow.plus(retention).plusSeconds(1);
++        final java.time.Clock expiredClock = java.time.Clock.fixed(expiredNow, java.time.ZoneOffset.UTC);
++
++        try (DeadLetterQueueWriter writer = DeadLetterQueueWriter
++                .newBuilder(dir, 1_000, 1_000_000, Duration.ofHours(1))
++                .retentionTime(retention)
++                .clock(initialClock)
++                .build()) {
++            writer.writeEntry(new DLQEntry(new Event(), "type", "id", "1"));
++        }
++
++        assertTrue(Files.exists(dir.resolve("1.log")));
++
++        try (DeadLetterQueueWriter writer = DeadLetterQueueWriter
++                .newBuilder(dir, 1_000, 1_000_000, Duration.ofHours(1))
++                .retentionTime(retention)
++                .clock(expiredClock)
++                .build()) {
++            assertTrue(Files.exists(dir.resolve("1.log")));
++        }
++
++        assertFalse(Files.exists(dir.resolve("1.log")));
++    }
+ 
+     private void sleep(long millis) throws InterruptedException {
+         Thread.sleep(millis);

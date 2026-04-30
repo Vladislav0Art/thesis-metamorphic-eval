@@ -1,0 +1,114 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+index cd5194258..b926c0c2c 100644
+--- a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
++++ b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+@@ -87,7 +87,6 @@ public class SpyAnnotationEngine implements AnnotationEngine {
+         return Mockito.mock(
+                 instance.getClass(),
+                 withSettings()
+-                        .genericTypeToMock(field.getGenericType())
+                         .spiedInstance(instance)
+                         .defaultAnswer(CALLS_REAL_METHODS)
+                         .name(field.getName()));
+diff --git a/subprojects/java21/src/test/java/org/mockito/java21/SpyAnnotationOnGenericTypeTest.java b/subprojects/java21/src/test/java/org/mockito/java21/SpyAnnotationOnGenericTypeTest.java
+new file mode 100644
+index 000000000..d98cbe887
+--- /dev/null
++++ b/subprojects/java21/src/test/java/org/mockito/java21/SpyAnnotationOnGenericTypeTest.java
+@@ -0,0 +1,36 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockito.java21;
++
++import static org.junit.Assert.assertNotNull;
++
++import java.util.List;
++import org.junit.Test;
++import org.mockito.Mockito;
++import org.mockito.MockitoAnnotations;
++import org.mockito.Spy;
++
++public class SpyAnnotationOnGenericTypeTest {
++
++    @Spy private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy private ExampleRecord exampleRecord = new ExampleRecord("some value");
++
++    @Test
++    public void should_keep_preexisting_record_state_when_generic_spy_is_present() throws Exception {
++        try (AutoCloseable ignored = MockitoAnnotations.openMocks(this)) {
++            assertNotNull(exampleRecord.someParameter());
++        }
++    }
++    @Test
++    public void should_keep_preexisting_record_state_when_spying_directly() {
++        Mockito.spy(List.<String>of("item A", "item B"));
++        ExampleRecord exampleRecord = Mockito.spy(new ExampleRecord("some value"));
++
++        assertNotNull(exampleRecord.someParameter());
++    }
++
++    private record ExampleRecord(String someParameter) {}
++}
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakRecordSpyTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakRecordSpyTest.java
+new file mode 100644
+index 000000000..fbea17bfb
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakRecordSpyTest.java
+@@ -0,0 +1,40 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Spy;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import static org.junit.jupiter.api.Assertions.assertNotNull;
++
++@ExtendWith(MockitoExtension.class)
++class GenericSpyDoesNotBreakRecordSpyTest {
++
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private FinalClass finalClass = new FinalClass("some value");
++
++    @Test
++    void generic_spy_does_not_reset_preexisting_inline_spy() {
++        assertNotNull(finalClass.someParameter());
++    }
++
++    static final class FinalClass {
++        private final String someParameter;
++
++        FinalClass(String someParameter) {
++            this.someParameter = someParameter;
++        }
++
++        String someParameter() {
++            return someParameter;
++        }
++    }
++}

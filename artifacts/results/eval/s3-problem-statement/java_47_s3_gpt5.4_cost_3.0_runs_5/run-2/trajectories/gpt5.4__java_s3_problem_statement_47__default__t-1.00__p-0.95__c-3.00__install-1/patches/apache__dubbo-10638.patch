@@ -1,0 +1,1158 @@
+
+diff --git a/.gitignore b/.gitignore
+index 87a564393d..ee4378dd6e 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -48,3 +48,6 @@ dubbo-demo/dubbo-demo-triple/build/*
+ 
+ # global registry center
+ .tmp
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
+index e615dd97b1..f929ad0d4e 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
+@@ -21,673 +21,539 @@ import org.apache.dubbo.common.model.SerializablePerson;
+ import org.apache.dubbo.common.model.User;
+ import org.apache.dubbo.common.model.person.BigPerson;
+ import org.apache.dubbo.common.model.person.FullAddress;
+-import org.apache.dubbo.common.model.person.PersonInfo;
+-import org.apache.dubbo.common.model.person.PersonStatus;
+-import org.apache.dubbo.common.model.person.Phone;
+-
+-import com.alibaba.fastjson.JSONObject;
+-import org.junit.jupiter.api.Assertions;
+-import org.junit.jupiter.api.Test;
+-
++import java.lang.reflect.Array;
++import java.lang.reflect.Constructor;
++import java.lang.reflect.Field;
++import java.lang.reflect.GenericArrayType;
++import java.lang.reflect.InvocationHandler;
+ import java.lang.reflect.Method;
++import java.lang.reflect.Modifier;
++import java.lang.reflect.ParameterizedType;
++import java.lang.reflect.Proxy;
+ import java.lang.reflect.Type;
+-import java.text.SimpleDateFormat;
++import java.lang.reflect.TypeVariable;
++import java.lang.reflect.WildcardType;
++import java.time.LocalDate;
++import java.time.LocalDateTime;
++import java.time.LocalTime;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+-import java.util.Date;
++import java.util.Collection;
++import java.util.Collections;
++import java.util.Comparator;
+ import java.util.HashMap;
+ import java.util.HashSet;
++import java.util.Hashtable;
++import java.util.IdentityHashMap;
+ import java.util.LinkedHashMap;
+-import java.util.LinkedList;
+ import java.util.List;
+ import java.util.Map;
+-import java.util.UUID;
+-
+-import static org.hamcrest.MatcherAssert.assertThat;
+-import static org.hamcrest.Matchers.equalTo;
+-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+-import static org.junit.jupiter.api.Assertions.assertEquals;
+-import static org.junit.jupiter.api.Assertions.assertFalse;
+-import static org.junit.jupiter.api.Assertions.assertNotNull;
+-import static org.junit.jupiter.api.Assertions.assertSame;
+-import static org.junit.jupiter.api.Assertions.assertTrue;
+-
+-public class PojoUtilsTest {
+-
+-    BigPerson bigPerson;
+-
+-    {
+-        bigPerson = new BigPerson();
+-        bigPerson.setPersonId("id1");
+-        bigPerson.setLoginName("name1");
+-        bigPerson.setStatus(PersonStatus.ENABLED);
+-        bigPerson.setEmail("abc@123.com");
+-        bigPerson.setPenName("pname");
+-
+-        ArrayList<Phone> phones = new ArrayList<Phone>();
+-        Phone phone1 = new Phone("86", "0571", "11223344", "001");
+-        Phone phone2 = new Phone("86", "0571", "11223344", "002");
+-        phones.add(phone1);
+-        phones.add(phone2);
+-
+-        PersonInfo pi = new PersonInfo();
+-        pi.setPhones(phones);
+-        Phone fax = new Phone("86", "0571", "11223344", null);
+-        pi.setFax(fax);
+-        FullAddress addr = new FullAddress("CN", "zj", "1234", "Road1", "333444");
+-        pi.setFullAddress(addr);
+-        pi.setMobileNo("1122334455");
+-        pi.setMale(true);
+-        pi.setDepartment("b2b");
+-        pi.setHomepageUrl("www.abc.com");
+-        pi.setJobTitle("dev");
+-        pi.setName("name2");
+-
+-        bigPerson.setInfoProfile(pi);
+-    }
+-
+-    private static Child newChild(String name, int age) {
+-        Child result = new Child();
+-        result.setName(name);
+-        result.setAge(age);
+-        return result;
+-    }
+-
+-    public void assertObject(Object data) {
+-        assertObject(data, null);
+-    }
+-
+-    public void assertObject(Object data, Type type) {
+-        Object generalize = PojoUtils.generalize(data);
+-        Object realize = PojoUtils.realize(generalize, data.getClass(), type);
+-        assertEquals(data, realize);
+-    }
+-
+-    public <T> void assertArrayObject(T[] data) {
+-        Object generalize = PojoUtils.generalize(data);
+-        @SuppressWarnings("unchecked")
+-        T[] realize = (T[]) PojoUtils.realize(generalize, data.getClass());
+-        assertArrayEquals(data, realize);
+-    }
+-
+-    @Test
+-    public void test_primitive() throws Exception {
+-        assertObject(Boolean.TRUE);
+-        assertObject(Boolean.FALSE);
+-
+-        assertObject(Byte.valueOf((byte) 78));
+-
+-        assertObject('a');
+-        assertObject('中');
++import java.util.Objects;
++import java.util.Properties;
++import java.util.TreeMap;
++import java.util.WeakHashMap;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.concurrent.ConcurrentMap;
++import java.util.concurrent.ConcurrentSkipListMap;
++import java.util.function.Consumer;
++import java.util.function.Supplier;
++
++import static org.apache.dubbo.common.utils.ClassUtils.isAssignableFrom;
++
++/**
++ * PojoUtils. Travel object deeply, and convert complex type to simple type.
++ * <p/>
++ * Simple type below will be remained:
++ * <ul>
++ * <li> Primitive Type, also include <b>String</b>, <b>Number</b>(Integer, Long), <b>Date</b>
++ * <li> Array of Primitive Type
++ * <li> Collection, eg: List, Map, Set etc.
++ * </ul>
++ * <p/>
++ * Other type will be covert to a map which contains the attributes and value pair of object.
++ *
++ * TODO: exact PojoUtils to scope bean
++ */
++public class PojoUtils {
+ 
+-        assertObject(Short.valueOf((short) 37));
++    private static final Logger logger = LoggerFactory.getLogger(PojoUtils.class);
++    private static final ConcurrentMap<String, Method> NAME_METHODS_CACHE = new ConcurrentHashMap<String, Method>();
++    private static final ConcurrentMap<Class<?>, ConcurrentMap<String, Field>> CLASS_FIELD_CACHE = new ConcurrentHashMap<Class<?>, ConcurrentMap<String, Field>>();
+ 
+-        assertObject(78);
++    private static final ConcurrentMap<String, Object> CLASS_NOT_FOUND_CACHE = new ConcurrentHashMap<String, Object>();
+ 
+-        assertObject(123456789L);
++    private static final Object NOT_FOUND_VALUE = new Object();
++    private static final boolean GENERIC_WITH_CLZ = Boolean.parseBoolean(ConfigurationUtils.getProperty(CommonConstants.GENERIC_WITH_CLZ_KEY, "true"));
++    private static final List<Class<?>> CLASS_CAN_BE_STRING = Arrays.asList(Byte.class, Short.class, Integer.class,
++        Long.class, Float.class, Double.class, Boolean.class, Character.class);
+ 
+-        assertObject(3.14F);
+-        assertObject(3.14D);
++    public static Object[] generalize(Object[] objs) {
++        Object[] dests = new Object[objs.length];
++        for (int i = 0; i < objs.length; i++) {
++            dests[i] = generalize(objs[i]);
++        }
++        return dests;
+     }
+ 
+-    @Test
+-    public void test_pojo() throws Exception {
+-        assertObject(new Person());
+-        assertObject(new BasicTestData(false, '\0', (byte) 0, (short) 0, 0, 0L, 0F, 0D));
+-        assertObject(new SerializablePerson(Character.MIN_VALUE, false));
+-    }
++    public static Object[] realize(Object[] objs, Class<?>[] types) {
++        if (objs.length != types.length) {
++            throw new IllegalArgumentException("args.length != types.length");
++        }
+ 
+-    @Test
+-    public void test_has_no_nullary_constructor_pojo() {
+-        assertObject(new User(1, "fibbery"));
++        Object[] dests = new Object[objs.length];
++        for (int i = 0; i < objs.length; i++) {
++            dests[i] = realize(objs[i], types[i]);
++        }
++        return dests;
+     }
+ 
+-    @Test
+-    public void test_Map_List_pojo() throws Exception {
+-        Map<String, List<Object>> map = new HashMap<String, List<Object>>();
+-
+-        List<Object> list = new ArrayList<Object>();
+-        list.add(new Person());
+-        list.add(new SerializablePerson(Character.MIN_VALUE, false));
+-
+-        map.put("k", list);
+-
+-        Object generalize = PojoUtils.generalize(map);
+-        Object realize = PojoUtils.realize(generalize, Map.class);
+-        assertEquals(map, realize);
++    @SuppressWarnings("unchecked")
++    public static Object generalize(Object pojo) {
++        return generalize(pojo, new IdentityHashMap<Object, Object>());
+     }
+ 
+-    @Test
+-    public void test_PrimitiveArray() throws Exception {
+-        assertObject(new boolean[]{true, false});
+-        assertObject(new Boolean[]{true, false, true});
+-
+-        assertObject(new byte[]{1, 12, 28, 78});
+-        assertObject(new Byte[]{1, 12, 28, 78});
+-
+-        assertObject(new char[]{'a', '中', '无'});
+-        assertObject(new Character[]{'a', '中', '无'});
+-
+-        assertObject(new short[]{37, 39, 12});
+-        assertObject(new Short[]{37, 39, 12});
+-
+-        assertObject(new int[]{37, -39, 12456});
+-        assertObject(new Integer[]{37, -39, 12456});
+-
+-        assertObject(new long[]{37L, -39L, 123456789L});
+-        assertObject(new Long[]{37L, -39L, 123456789L});
+-
+-        assertObject(new float[]{37F, -3.14F, 123456.7F});
+-        assertObject(new Float[]{37F, -39F, 123456.7F});
+-
+-        assertObject(new double[]{37D, -3.14D, 123456.7D});
+-        assertObject(new Double[]{37D, -39D, 123456.7D});
+-
+-
+-        assertArrayObject(new Boolean[]{true, false, true});
+-
+-        assertArrayObject(new Byte[]{1, 12, 28, 78});
+-
+-        assertArrayObject(new Character[]{'a', '中', '无'});
+-
+-        assertArrayObject(new Short[]{37, 39, 12});
+-
+-        assertArrayObject(new Integer[]{37, -39, 12456});
++    @SuppressWarnings({"unchecked", "rawtypes"})
++    private static Object generalize(Object pojo, Map<Object, Object> history) {
++        if (pojo == null) {
++            return null;
++        }
+ 
+-        assertArrayObject(new Long[]{37L, -39L, 123456789L});
++        if (pojo instanceof Enum<?>) {
++            return ((Enum<?>) pojo).name();
++        }
+ 
+-        assertArrayObject(new Float[]{37F, -39F, 123456.7F});
++        if (ReflectUtils.isPrimitives(pojo.getClass())
++            || isJava8TimeType(pojo.getClass())) {
++            return pojo;
++        }
+ 
+-        assertArrayObject(new Double[]{37D, -39D, 123456.7D});
++        if (pojo instanceof String && pojo.getClass() == String.class) {
++            return pojo;
++        }
+ 
+-        assertObject(new int[][]{{37, -39, 12456}});
+-        assertObject(new Integer[][][]{{{37, -39, 12456}}});
++        if (history.containsKey(pojo)) {
++            return history.get(pojo);
++        }
+ 
+-        assertArrayObject(new Integer[]{37, -39, 12456});
+-    }
++        history.put(pojo, pojo);
+ 
+-    @Test
+-    public void test_PojoArray() throws Exception {
+-        Person[] array = new Person[2];
+-        array[0] = new Person();
+-        {
+-            Person person = new Person();
+-            person.setName("xxxx");
+-            array[1] = person;
++        if (pojo.getClass().isArray()) {
++            int len = Array.getLength(pojo);
++            Object[] dest = new Object[len];
++            history.put(pojo, dest);
++            for (int i = 0; i < len; i++) {
++                dest[i] = generalize(Array.get(pojo, i), history);
++            }
++            return dest;
++        }
++        if (pojo instanceof Collection<?>) {
++            Collection<Object> src = (Collection<Object>) pojo;
++            Collection<Object> dest = (pojo instanceof List<?>) ? new ArrayList<Object>(src.size()) : new HashSet<Object>(src.size());
++            history.put(pojo, dest);
++            for (Object obj : src) {
++                dest.add(generalize(obj, history));
++            }
++            return dest;
++        }
++        if (pojo instanceof Map<?, ?>) {
++            Map<Object, Object> src = (Map<Object, Object>) pojo;
++            Map<Object, Object> dest = createMap(src);
++            history.put(pojo, dest);
++            for (Map.Entry<Object, Object> entry : src.entrySet()) {
++                dest.put(generalize(entry.getKey(), history), generalize(entry.getValue(), history));
++            }
++            return dest;
++        }
++        if (pojo instanceof Throwable) {
++            return exceptionToMap((Throwable) pojo, history);
+         }
+-        assertArrayObject(array);
++        Map<String, Object> map = new HashMap<String, Object>();
++        history.put(pojo, map);
++        if (GENERIC_WITH_CLZ) {
++            map.put("class", pojo.getClass().getName());
++        }
++        for (Method method : pojo.getClass().getMethods()) {
++            if (ReflectUtils.isBeanPropertyReadMethod(method)) {
++                try {
++                    map.put(ReflectUtils.getPropertyNameFromBeanReadMethod(method), generalize(method.invoke(pojo), history));
++                } catch (Exception e) {
++                    logger.warn(e.getMessage(), e);
++                }
++            }
++        }
++        if (pojo.getClass().isEnum()) {
++            map.put("name", ((Enum) pojo).name());
++        }
++        return map;
+     }
+ 
+-    @Test
+-    public void testArrayToCollection() throws Exception {
+-        Person[] array = new Person[2];
+-        Person person1 = new Person();
+-        person1.setName("person1");
+-        Person person2 = new Person();
+-        person2.setName("person2");
+-        array[0] = person1;
+-        array[1] = person2;
+-        Object o = PojoUtils.realize(PojoUtils.generalize(array), LinkedList.class);
+-        assertTrue(o instanceof LinkedList);
+-        assertEquals(((List) o).get(0), person1);
+-        assertEquals(((List) o).get(1), person2);
++    private static Map<Object, Object> createMap(Map<Object, Object> src) {
++        Map<Object, Object> dest;
++        if (src instanceof ConcurrentSkipListMap) {
++            dest = new ConcurrentSkipListMap<Object, Object>();
++        } else if (src instanceof ConcurrentHashMap) {
++            dest = new ConcurrentHashMap<Object, Object>();
++        } else if (src instanceof TreeMap) {
++            if (((TreeMap<Object, Object>) src).comparator() == null) {
++                dest = new TreeMap<Object, Object>();
++            } else {
++                dest = new TreeMap<Object, Object>(((TreeMap<Object, Object>) src).comparator());
++            }
++        } else if (src instanceof LinkedHashMap) {
++            dest = new LinkedHashMap<Object, Object>();
++        } else if (src instanceof Hashtable) {
++            dest = new Hashtable<Object, Object>();
++        } else if (src instanceof WeakHashMap) {
++            dest = new WeakHashMap<Object, Object>();
++        } else {
++            dest = new HashMap<Object, Object>();
++        }
++        return dest;
+     }
+ 
+-    @Test
+-    public void testCollectionToArray() throws Exception {
+-        Person person1 = new Person();
+-        person1.setName("person1");
+-        Person person2 = new Person();
+-        person2.setName("person2");
+-        List<Person> list = new LinkedList<Person>();
+-        list.add(person1);
+-        list.add(person2);
+-        Object o = PojoUtils.realize(PojoUtils.generalize(list), Person[].class);
+-        assertTrue(o instanceof Person[]);
+-        assertEquals(((Person[]) o)[0], person1);
+-        assertEquals(((Person[]) o)[1], person2);
++    private static Object exceptionToMap(Throwable e, Map<Object, Object> history) {
++        Map<String, Object> map;
++        if (history.containsKey(e)) {
++            map = (Map<String, Object>) history.get(e);
++        } else {
++            map = new HashMap<String, Object>();
++            history.put(e, map);
++        }
++        map.put("class", e.getClass().getName());
++        map.put("message", e.getMessage());
++        map.put("stackTrace", generalize(e.getStackTrace(), history));
++        Throwable cause = e.getCause();
++        if (cause != null) {
++            map.put("cause", generalize(cause, history));
++        }
++        return map;
+     }
+ 
+-    @Test
+-    public void testMapToEnum() throws Exception {
+-        Map map = new HashMap();
+-        map.put("name", "MONDAY");
+-        Object o = PojoUtils.realize(map, Day.class);
+-        assertEquals(o, Day.MONDAY);
++    public static Object realize(Object pojo, Class<?> type) {
++        return realize(pojo, type, null);
+     }
+ 
+-    @Test
+-    public void testGeneralizeEnumArray() throws Exception {
+-        Object days = new Enum[]{Day.FRIDAY, Day.SATURDAY};
+-        Object o = PojoUtils.generalize(days);
+-        assertTrue(o instanceof String[]);
+-        assertEquals(((String[]) o)[0], "FRIDAY");
+-        assertEquals(((String[]) o)[1], "SATURDAY");
++    public static Object realize(Object pojo, Class<?> type, Type genericType) {
++        return realize0(pojo, type, genericType, new HashMap<Object, Object>());
+     }
+ 
+-    @Test
+-    public void testGeneralizePersons() throws Exception {
+-        Object persons = new Person[]{new Person(), new Person()};
+-        Object o = PojoUtils.generalize(persons);
+-        assertTrue(o instanceof Object[]);
+-        assertEquals(((Object[]) o).length, 2);
+-    }
++    @SuppressWarnings({"unchecked", "rawtypes"})
++    private static Object realize0(Object pojo, Class<?> type, Type genericType, final Map<Object, Object> history) {
++        if (pojo == null) {
++            return null;
++        }
+ 
+-    @Test
+-    public void testMapToInterface() throws Exception {
+-        Map map = new HashMap();
+-        map.put("content", "greeting");
+-        map.put("from", "dubbo");
+-        map.put("urgent", true);
+-        Object o = PojoUtils.realize(map, Message.class);
+-        Message message = (Message) o;
+-        assertThat(message.getContent(), equalTo("greeting"));
+-        assertThat(message.getFrom(), equalTo("dubbo"));
+-        assertTrue(message.isUrgent());
+-    }
++        if (type != null && type.isEnum() && pojo.getClass() == String.class) {
++            return Enum.valueOf((Class<Enum>) type, (String) pojo);
++        }
+ 
+-    @Test
+-    public void testJsonObjectToMap() throws Exception {
+-        Method method = PojoUtilsTest.class.getMethod("setMap", Map.class);
+-        assertNotNull(method);
+-        JSONObject jsonObject = new JSONObject();
+-        jsonObject.put("1", "test");
+-        @SuppressWarnings("unchecked")
+-        Map<Integer, Object> value = (Map<Integer, Object>) PojoUtils.realize(jsonObject,
+-                method.getParameterTypes()[0],
+-                method.getGenericParameterTypes()[0]);
+-        method.invoke(new PojoUtilsTest(), value);
+-        assertEquals("test", value.get(1));
+-    }
++        if (ReflectUtils.isPrimitives(type) && !type.isArray()) {
++            return CompatibleTypeUtils.compatibleTypeConvert(pojo, type);
++        }
+ 
+-    @Test
+-    public void testListJsonObjectToListMap() throws Exception {
+-        Method method = PojoUtilsTest.class.getMethod("setListMap", List.class);
+-        assertNotNull(method);
+-        JSONObject jsonObject = new JSONObject();
+-        jsonObject.put("1", "test");
+-        List<JSONObject> list = new ArrayList<>(1);
+-        list.add(jsonObject);
+-        @SuppressWarnings("unchecked")
+-        List<Map<Integer, Object>> result = (List<Map<Integer, Object>>) PojoUtils.realize(
+-                list,
+-                method.getParameterTypes()[0],
+-                method.getGenericParameterTypes()[0]);
+-        method.invoke(new PojoUtilsTest(), result);
+-        assertEquals("test", result.get(0).get(1));
+-    }
++        if (type.isArray()) {
++            if (pojo.getClass().isArray()) {
++                int len = Array.getLength(pojo);
++                Object dest = Array.newInstance(type.getComponentType(), len);
++                history.put(pojo, dest);
++                for (int i = 0; i < len; i++) {
++                    Array.set(dest, i, realize0(Array.get(pojo, i), type.getComponentType(), null, history));
++                }
++                return dest;
++            } else if (pojo instanceof Collection<?>) {
++                Collection<?> src = (Collection<?>) pojo;
++                Object dest = Array.newInstance(type.getComponentType(), src.size());
++                history.put(pojo, dest);
++                int i = 0;
++                for (Object obj : src) {
++                    Array.set(dest, i, realize0(obj, type.getComponentType(), null, history));
++                    i++;
++                }
++                return dest;
++            }
++        }
++        if (pojo.getClass().isArray()) {
++            Object[] src = (Object[]) pojo;
++            int len = src.length;
++            Collection dest = createCollection(type, len);
++            history.put(pojo, dest);
++            for (Object obj : src) {
++                dest.add(realize0(obj, getGenericClassByIndex(genericType, 0), null, history));
++            }
++            return dest;
++        }
++        if (pojo instanceof Collection<?>) {
++            Collection<?> src = (Collection<?>) pojo;
++            int len = src.size();
++            Collection dest = createCollection(type, len);
++            history.put(pojo, dest);
++            for (Object obj : src) {
++                dest.add(realize0(obj, getGenericClassByIndex(genericType, 0), null, history));
++            }
++            return dest;
++        }
++        if (pojo instanceof Map<?, ?> && type != null && !type.isAssignableFrom(pojo.getClass())) {
++            Object className = ((Map<Object, Object>) pojo).get("class");
++            if (className instanceof String) {
++                if (type.isAssignableFrom(Map.class)) {
++                    try {
++                        type = ReflectUtils.forName((String) className);
++                    } catch (ClassNotFoundException e) {
++                        // ignore
++                    }
++                } else if (!type.getName().equals((String) className)) {
++                    throw new IllegalArgumentException("Failed to realize type " + type + " from " + pojo);
++                }
++            }
+ 
+-    public void setMap(Map<Integer, Object> map) {
++            Map<Object, Object> map = (Map<Object, Object>) pojo;
++            Map dest = createMap(type);
++            history.put(pojo, dest);
++            for (Map.Entry<Object, Object> entry : map.entrySet()) {
++                Object key = realize0(entry.getKey(), getGenericClassByIndex(genericType, 0), null, history);
++                Object value = realize0(entry.getValue(), getGenericClassByIndex(genericType, 1), null, history);
++                dest.put(key, value);
++            }
++            return dest;
++        }
++        if (pojo instanceof Map<?, ?> && type != null && isPojo(type)) {
++            Map<Object, Object> map = (Map<Object, Object>) pojo;
++            Object dest = newInstance(type);
++            history.put(pojo, dest);
++            for (Map.Entry<Object, Object> entry : map.entrySet()) {
++                String key = String.valueOf(entry.getKey());
++                if (map.containsKey(key)) {
++                    Object value = entry.getValue();
++                    Method method = getSetterMethod(dest.getClass(), key, value);
++                    if (method != null) {
++                        if (!method.isAccessible()) {
++                            method.setAccessible(true);
++                        }
++                        try {
++                            Type[] ptypes = method.getGenericParameterTypes();
++                            method.invoke(dest, realize0(value, method.getParameterTypes()[0], ptypes.length == 0 ? null : ptypes[0], history));
++                        } catch (Exception e) {
++                            throw new RuntimeException(e.getMessage(), e);
++                        }
++                    } else {
++                        Field field = getField(dest.getClass(), key);
++                        if (field != null) {
++                            if (!field.isAccessible()) {
++                                field.setAccessible(true);
++                            }
++                            try {
++                                field.set(dest, realize0(value, field.getType(), field.getGenericType(), history));
++                            } catch (Exception e) {
++                                throw new RuntimeException(e.getMessage(), e);
++                            }
++                        }
++                    }
++                }
++            }
++            return dest;
++        }
++        return pojo;
++    }
++
++    private static Collection createCollection(Class<?> type, int len) {
++        Collection dest;
++        if (type.isAssignableFrom(ArrayList.class)) {
++            dest = new ArrayList(len);
++        } else if (type.isAssignableFrom(HashSet.class)) {
++            dest = new HashSet(len);
++        } else if (type.isAssignableFrom(LinkedList.class)) {
++            dest = new LinkedList();
++        } else {
++            try {
++                dest = (Collection) type.newInstance();
++            } catch (Throwable e) {
++                dest = new ArrayList(len);
++            }
++        }
++        return dest;
+     }
+ 
+-    public void setListMap(List<Map<Integer, Object>> list) {
++    private static Map createMap(Class<?> type) {
++        Map dest;
++        if (type.isAssignableFrom(ConcurrentSkipListMap.class)) {
++            dest = new ConcurrentSkipListMap();
++        } else if (type.isAssignableFrom(ConcurrentHashMap.class)) {
++            dest = new ConcurrentHashMap();
++        } else if (type.isAssignableFrom(TreeMap.class)) {
++            dest = new TreeMap();
++        } else if (type.isAssignableFrom(LinkedHashMap.class)) {
++            dest = new LinkedHashMap();
++        } else if (type.isAssignableFrom(Hashtable.class)) {
++            dest = new Hashtable();
++        } else if (type.isAssignableFrom(WeakHashMap.class)) {
++            dest = new WeakHashMap();
++        } else {
++            dest = new HashMap();
++        }
++        return dest;
+     }
+ 
+-    @Test
+-    public void testException() throws Exception {
+-        Map map = new HashMap();
+-        map.put("message", "dubbo exception");
+-        Object o = PojoUtils.realize(map, RuntimeException.class);
+-        assertEquals(((Throwable) o).getMessage(), "dubbo exception");
+-    }
++    public static Object[] realize(Object[] objs, Class<?>[] types, Type[] gtypes) {
++        if (objs.length != types.length || objs.length != gtypes.length) {
++            throw new IllegalArgumentException("args.length != types.length");
++        }
+ 
+-    @Test
+-    public void testIsPojo() throws Exception {
+-        assertFalse(PojoUtils.isPojo(boolean.class));
+-        assertFalse(PojoUtils.isPojo(Map.class));
+-        assertFalse(PojoUtils.isPojo(List.class));
+-        assertTrue(PojoUtils.isPojo(Person.class));
++        Object[] dests = new Object[objs.length];
++        for (int i = 0; i < objs.length; i++) {
++            dests[i] = realize(objs[i], types[i], gtypes[i]);
++        }
++        return dests;
+     }
+ 
+-    public List<Person> returnListPersonMethod() {
+-        return null;
++    private static Class<?> getGenericClassByIndex(Type genericType, int index) {
++        if (genericType instanceof ParameterizedType) {
++            return (Class<?>) ((ParameterizedType) genericType).getActualTypeArguments()[index];
++        }
++        return Object.class;
+     }
+ 
+-    public BigPerson returnBigPersonMethod() {
++    @SuppressWarnings({"unchecked", "rawtypes"})
++    private static Object newInstance(Class<?> cls) {
++        Constructor<?> defaultConstructor;
++        Object inst;
++        try {
++            defaultConstructor = cls.getDeclaredConstructor();
++            if (!defaultConstructor.isAccessible()) {
++                defaultConstructor.setAccessible(true);
++            }
++            inst = defaultConstructor.newInstance();
++        } catch (Throwable e) {
++            throw new RuntimeException("Create class " + cls + " instance failed.", e);
++        }
++        return inst;
++    }
++
++    private static Method getSetterMethod(Class<?> cls, String property, Object value) {
++        String name = "set" + property.substring(0, 1).toUpperCase() + property.substring(1);
++        Method method = NAME_METHODS_CACHE.get(name);
++        if (method != null) {
++            return method;
++        }
++        for (Method m : cls.getMethods()) {
++            if (m.getName().equals(name)
++                && m.getParameterTypes().length == 1
++                && Modifier.isPublic(m.getModifiers())
++                && (value == null || ReflectUtils.isInstance(value, m.getParameterTypes()[0]))) {
++                NAME_METHODS_CACHE.put(name, m);
++                return m;
++            }
++        }
+         return null;
+     }
+ 
+-    public Type getType(String methodName) {
+-        Method method;
++    private static Field getField(Class<?> cls, String fieldName) {
++        Field result = null;
++        if (CLASS_FIELD_CACHE.containsKey(cls) && CLASS_FIELD_CACHE.get(cls).containsKey(fieldName)) {
++            return CLASS_FIELD_CACHE.get(cls).get(fieldName);
++        }
+         try {
+-            method = getClass().getDeclaredMethod(methodName, new Class<?>[]{});
+-        } catch (Exception e) {
+-            throw new IllegalStateException(e);
++            result = cls.getDeclaredField(fieldName);
++            result.setAccessible(true);
++        } catch (NoSuchFieldException e) {
++            for (Field field : cls.getFields()) {
++                if (fieldName.equals(field.getName()) && ReflectUtils.isPublicInstanceField(field)) {
++                    result = field;
++                    break;
++                }
++            }
+         }
+-        Type gtype = method.getGenericReturnType();
+-        return gtype;
+-    }
+-
+-    @Test
+-    public void test_simpleCollection() throws Exception {
+-        Type gtype = getType("returnListPersonMethod");
+-        List<Person> list = new ArrayList<Person>();
+-        list.add(new Person());
+-        {
+-            Person person = new Person();
+-            person.setName("xxxx");
+-            list.add(person);
++        if (result != null) {
++            ConcurrentMap<String, Field> fields = CLASS_FIELD_CACHE.computeIfAbsent(cls, k -> new ConcurrentHashMap<>());
++            fields.putIfAbsent(fieldName, result);
+         }
+-        assertObject(list, gtype);
+-    }
+-
+-    @Test
+-    public void test_total() throws Exception {
+-        Object generalize = PojoUtils.generalize(bigPerson);
+-        Type gtype = getType("returnBigPersonMethod");
+-        Object realize = PojoUtils.realize(generalize, BigPerson.class, gtype);
+-        assertEquals(bigPerson, realize);
+-    }
+-
+-    @Test
+-    public void test_total_Array() throws Exception {
+-        Object[] persons = new Object[]{bigPerson, bigPerson, bigPerson};
+-
+-        Object generalize = PojoUtils.generalize(persons);
+-        Object[] realize = (Object[]) PojoUtils.realize(generalize, Object[].class);
+-        assertArrayEquals(persons, realize);
+-    }
+-
+-    @Test
+-    public void test_Loop_pojo() throws Exception {
+-        Parent p = new Parent();
+-        p.setAge(10);
+-        p.setName("jerry");
+-
+-        Child c = new Child();
+-        c.setToy("haha");
+-
+-        p.setChild(c);
+-        c.setParent(p);
+-
+-        Object generalize = PojoUtils.generalize(p);
+-        Parent parent = (Parent) PojoUtils.realize(generalize, Parent.class);
+-
+-        assertEquals(10, parent.getAge());
+-        assertEquals("jerry", parent.getName());
+-
+-        assertEquals("haha", parent.getChild().getToy());
+-        assertSame(parent, parent.getChild().getParent());
+-    }
+-
+-    @Test
+-    public void test_Loop_Map() throws Exception {
+-        Map<String, Object> map = new HashMap<String, Object>();
+-
+-        map.put("k", "v");
+-        map.put("m", map);
+-        assertSame(map, map.get("m"));
+-        System.out.println(map);
+-        Object generalize = PojoUtils.generalize(map);
+-        System.out.println(generalize);
+-        @SuppressWarnings("unchecked")
+-        Map<String, Object> ret = (Map<String, Object>) PojoUtils.realize(generalize, Map.class);
+-        System.out.println(ret);
+-
+-        assertEquals("v", ret.get("k"));
+-        assertSame(ret, ret.get("m"));
+-    }
+-
+-    @Test
+-    public void test_LoopPojoInMap() throws Exception {
+-        Parent p = new Parent();
+-        p.setAge(10);
+-        p.setName("jerry");
+-
+-        Child c = new Child();
+-        c.setToy("haha");
+-
+-        p.setChild(c);
+-        c.setParent(p);
+-
+-        Map<String, Object> map = new HashMap<String, Object>();
+-        map.put("k", p);
+-
+-        Object generalize = PojoUtils.generalize(map);
+-        @SuppressWarnings("unchecked")
+-        Map<String, Object> realize = (Map<String, Object>) PojoUtils.realize(generalize, Map.class, getType("getMapGenericType"));
+-
+-        Parent parent = (Parent) realize.get("k");
+-
+-        assertEquals(10, parent.getAge());
+-        assertEquals("jerry", parent.getName());
+-
+-        assertEquals("haha", parent.getChild().getToy());
+-        assertSame(parent, parent.getChild().getParent());
+-    }
+-
+-    @Test
+-    public void test_LoopPojoInList() throws Exception {
+-        Parent p = new Parent();
+-        p.setAge(10);
+-        p.setName("jerry");
+-
+-        Child c = new Child();
+-        c.setToy("haha");
+-
+-        p.setChild(c);
+-        c.setParent(p);
+-
+-        List<Object> list = new ArrayList<Object>();
+-        list.add(p);
+-
+-        Object generalize = PojoUtils.generalize(list);
+-        @SuppressWarnings("unchecked")
+-        List<Object> realize = (List<Object>) PojoUtils.realize(generalize, List.class, getType("getListGenericType"));
+-
+-        Parent parent = (Parent) realize.get(0);
+-
+-        assertEquals(10, parent.getAge());
+-        assertEquals("jerry", parent.getName());
+-
+-        assertEquals("haha", parent.getChild().getToy());
+-        assertSame(parent, parent.getChild().getParent());
+-
+-        Object[] objects = PojoUtils.realize(new Object[]{generalize}, new Class[]{List.class}, new Type[]{getType("getListGenericType")});
+-        assertTrue(((List) objects[0]).get(0) instanceof Parent);
+-    }
+-
+-    @Test
+-    public void test_PojoInList() throws Exception {
+-        Parent p = new Parent();
+-        p.setAge(10);
+-        p.setName("jerry");
+-
+-        List<Object> list = new ArrayList<Object>();
+-        list.add(p);
+-
+-        Object generalize = PojoUtils.generalize(list);
+-        @SuppressWarnings("unchecked")
+-        List<Object> realize = (List<Object>) PojoUtils.realize(generalize, List.class, getType("getListGenericType"));
+-
+-        Parent parent = (Parent) realize.get(0);
+-
+-        assertEquals(10, parent.getAge());
+-        assertEquals("jerry", parent.getName());
+-    }
+-
+-    public void setLong(long l) {
+-    }
+-
+-    public void setInt(int l) {
+-    }
+-
+-    public List<Parent> getListGenericType() {
+-        return null;
+-    }
+-
+-    public Map<String, Parent> getMapGenericType() {
+-        return null;
+-    }
+-
+-    // java.lang.IllegalArgumentException: argument type mismatch
+-    @Test
+-    public void test_realize_LongPararmter_IllegalArgumentException() throws Exception {
+-        Method method = PojoUtilsTest.class.getMethod("setLong", long.class);
+-        assertNotNull(method);
+-
+-        Object value = PojoUtils.realize("563439743927993", method.getParameterTypes()[0], method.getGenericParameterTypes()[0]);
+-
+-        method.invoke(new PojoUtilsTest(), value);
+-    }
+-
+-    // java.lang.IllegalArgumentException: argument type mismatch
+-    @Test
+-    public void test_realize_IntPararmter_IllegalArgumentException() throws Exception {
+-        Method method = PojoUtilsTest.class.getMethod("setInt", int.class);
+-        assertNotNull(method);
+-
+-        Object value = PojoUtils.realize("123", method.getParameterTypes()[0], method.getGenericParameterTypes()[0]);
+-
+-        method.invoke(new PojoUtilsTest(), value);
+-    }
+-
+-    @Test
+-    public void testStackOverflow() throws Exception {
+-        Parent parent = Parent.getNewParent();
+-        parent.setAge(Integer.MAX_VALUE);
+-        String name = UUID.randomUUID().toString();
+-        parent.setName(name);
+-        Object generalize = PojoUtils.generalize(parent);
+-        assertTrue(generalize instanceof Map);
+-        Map map = (Map) generalize;
+-        assertEquals(Integer.MAX_VALUE, map.get("age"));
+-        assertEquals(name, map.get("name"));
+-
+-        Parent realize = (Parent) PojoUtils.realize(generalize, Parent.class);
+-        assertEquals(Integer.MAX_VALUE, realize.getAge());
+-        assertEquals(name, realize.getName());
+-    }
+-
+-    @Test
+-    public void testGenerializeAndRealizeClass() throws Exception {
+-        Object generalize = PojoUtils.generalize(Integer.class);
+-        assertEquals(Integer.class.getName(), generalize);
+-        Object real = PojoUtils.realize(generalize, Integer.class.getClass());
+-        assertEquals(Integer.class, real);
+-
+-        generalize = PojoUtils.generalize(int[].class);
+-        assertEquals(int[].class.getName(), generalize);
+-        real = PojoUtils.realize(generalize, int[].class.getClass());
+-        assertEquals(int[].class, real);
++        return result;
+     }
+ 
+-    @Test
+-    public void testPublicField() throws Exception {
+-        Parent parent = new Parent();
+-        parent.gender = "female";
+-        parent.email = "email@host.com";
+-        parent.setEmail("securityemail@host.com");
+-        Child child = new Child();
+-        parent.setChild(child);
+-        child.gender = "male";
+-        child.setAge(20);
+-        child.setParent(parent);
+-        Object obj = PojoUtils.generalize(parent);
+-        Parent realizedParent = (Parent) PojoUtils.realize(obj, Parent.class);
+-        Assertions.assertEquals(parent.gender, realizedParent.gender);
+-        Assertions.assertEquals(child.gender, parent.getChild().gender);
+-        Assertions.assertEquals(child.age, realizedParent.getChild().getAge());
+-        Assertions.assertEquals(parent.getEmail(), realizedParent.getEmail());
+-        Assertions.assertNull(realizedParent.email);
+-    }
++    public static boolean isPojo(Class<?> cls) {
++        return !ReflectUtils.isPrimitives(cls)
++            && !Collection.class.isAssignableFrom(cls)
++            && !Map.class.isAssignableFrom(cls)
++            && !isJava8TimeType(cls);
++    }
++
++    private static boolean isJava8TimeType(Class<?> cls) {
++        return LocalDate.class == cls
++            || LocalTime.class == cls
++            || LocalDateTime.class == cls;
++    }
++
++    /**
++     * Update the property if absent
++     *
++     * @param getterMethod the getter method
++     * @param setterMethod the setter method
++     * @param newValue     the new value
++     * @param <T>          the value type
++     * @since 2.7.8
++     */
++    public static <T> void updatePropertyIfAbsent(Supplier<T> getterMethod, Consumer<T> setterMethod, T newValue) {
++        if (newValue != null && getterMethod.get() == null) {
++            setterMethod.accept(newValue);
++        }
++    }
++
++    /**
++     * convert map to a specific class instance
++     *
++     * @param map map wait for convert
++     * @param cls the specified class
++     * @param <T> the type of {@code cls}
++     * @return class instance declare in param {@code cls}
++     * @throws ReflectiveOperationException if the instance creation is failed
++     * @since 2.7.10
++     */
++    public static <T> T mapToPojo(Map<String, Object> map, Class<T> cls) throws ReflectiveOperationException {
++        T instance = cls.getDeclaredConstructor().newInstance();
++        Map<String, Field> beanPropertyFields = ReflectUtils.getBeanPropertyFields(cls);
++        for (Map.Entry<String, Field> entry : beanPropertyFields.entrySet()) {
++            String name = entry.getKey();
++            Field field = entry.getValue();
++            Object mapObject = map.get(name);
++            if (mapObject == null) {
++                continue;
++            }
+ 
+-    @Test
+-    public void testMapField() throws Exception {
+-        TestData data = new TestData();
+-        Child child = newChild("first", 1);
+-        data.addChild(child);
+-        child = newChild("second", 2);
+-        data.addChild(child);
+-        child = newChild("third", 3);
+-        data.addChild(child);
+-
+-        data.setList(Arrays.asList(newChild("forth", 4)));
+-
+-        Object obj = PojoUtils.generalize(data);
+-        Assertions.assertEquals(3, data.getChildren().size());
+-        assertSame(data.getChildren().get("first").getClass(), Child.class);
+-        Assertions.assertEquals(1, data.getList().size());
+-        assertSame(data.getList().get(0).getClass(), Child.class);
+-
+-        TestData realizadData = (TestData) PojoUtils.realize(obj, TestData.class);
+-        Assertions.assertEquals(data.getChildren().size(), realizadData.getChildren().size());
+-        Assertions.assertEquals(data.getChildren().keySet(), realizadData.getChildren().keySet());
+-        for (Map.Entry<String, Child> entry : data.getChildren().entrySet()) {
+-            Child c = realizadData.getChildren().get(entry.getKey());
+-            Assertions.assertNotNull(c);
+-            Assertions.assertEquals(entry.getValue().getName(), c.getName());
+-            Assertions.assertEquals(entry.getValue().getAge(), c.getAge());
+-        }
+-
+-        Assertions.assertEquals(1, realizadData.getList().size());
+-        Assertions.assertEquals(data.getList().get(0).getName(), realizadData.getList().get(0).getName());
+-        Assertions.assertEquals(data.getList().get(0).getAge(), realizadData.getList().get(0).getAge());
+-    }
++            Type type = field.getGenericType();
++            Object fieldObject = getFieldObject(mapObject, type);
++            field.set(instance, fieldObject);
++        }
+ 
+-    @Test
+-    public void testRealize() throws Exception {
+-        Map<String, String> map = new LinkedHashMap<String, String>();
+-        map.put("key", "value");
+-        Object obj = PojoUtils.generalize(map);
+-        assertTrue(obj instanceof LinkedHashMap);
+-        Object outputObject = PojoUtils.realize(map, LinkedHashMap.class);
+-        assertTrue(outputObject instanceof LinkedHashMap);
+-        Object[] objects = PojoUtils.realize(new Object[]{map}, new Class[]{LinkedHashMap.class});
+-        assertTrue(objects[0] instanceof LinkedHashMap);
+-        assertEquals(objects[0], outputObject);
++        return instance;
+     }
+ 
+-    @Test
+-    public void testRealizeLinkedList() throws Exception {
+-        LinkedList<Person> input = new LinkedList<Person>();
+-        Person person = new Person();
+-        person.setAge(37);
+-        input.add(person);
+-        Object obj = PojoUtils.generalize(input);
+-        assertTrue(obj instanceof List);
+-        assertTrue(input.get(0) instanceof Person);
+-        Object output = PojoUtils.realize(obj, LinkedList.class);
+-        assertTrue(output instanceof LinkedList);
++    private static Object getFieldObject(Object mapObject, Type fieldType) throws ReflectiveOperationException {
++        if (fieldType instanceof Class<?>) {
++            return convertClassType(mapObject, (Class<?>) fieldType);
++        } else if (fieldType instanceof ParameterizedType) {
++            return convertParameterizedType(mapObject, (ParameterizedType) fieldType);
++        } else if (fieldType instanceof GenericArrayType || fieldType instanceof TypeVariable<?> || fieldType instanceof WildcardType) {
++            // ignore these type currently
++            return null;
++        } else {
++            throw new IllegalArgumentException("Unrecognized Type: " + fieldType.toString());
++        }
+     }
+ 
+-    @Test
+-    public void testPojoList() throws Exception {
+-        ListResult<Parent> result = new ListResult<Parent>();
+-        List<Parent> list = new ArrayList<Parent>();
+-        Parent parent = new Parent();
+-        parent.setAge(Integer.MAX_VALUE);
+-        parent.setName("zhangsan");
+-        list.add(parent);
+-        result.setResult(list);
+-
+-        Object generializeObject = PojoUtils.generalize(result);
+-        Object realizeObject = PojoUtils.realize(generializeObject, ListResult.class);
+-        assertTrue(realizeObject instanceof ListResult);
+-        ListResult listResult = (ListResult) realizeObject;
+-        List l = listResult.getResult();
+-        assertEquals(1, l.size());
+-        assertTrue(l.get(0) instanceof Parent);
+-        Parent realizeParent = (Parent) l.get(0);
+-        Assertions.assertEquals(parent.getName(), realizeParent.getName());
+-        Assertions.assertEquals(parent.getAge(), realizeParent.getAge());
++    @SuppressWarnings("unchecked")
++    private static Object convertClassType(Object mapObject, Class<?> type) throws ReflectiveOperationException {
++        if (type.isPrimitive() || isAssignableFrom(type, mapObject.getClass())) {
++            return mapObject;
++        } else if (Objects.equals(type, String.class) && CLASS_CAN_BE_STRING.contains(mapObject.getClass())) {
++            // auto convert specified type to string
++            return mapObject.toString();
++        } else if (mapObject instanceof Map) {
++            return mapToPojo((Map<String, Object>) mapObject, type);
++        } else {
++            // type didn't match and mapObject is not another Map struct.
++            // we just ignore this situation.
++            return null;
++        }
+     }
+-
+-    @Test
+-    public void testListPojoListPojo() throws Exception {
+-        InnerPojo<Parent> parentList = new InnerPojo<Parent>();
+-        Parent parent = new Parent();
+-        parent.setName("zhangsan");
+-        parent.setAge(Integer.MAX_VALUE);
+-        parentList.setList(Arrays.asList(parent));
+-
+-        ListResult<InnerPojo<Parent>> list = new ListResult<InnerPojo<Parent>>();
+-        list.setResult(Arrays.asList(parentList));
+-
+-        Object generializeObject = PojoUtils.generalize(list);
+-        Object realizeObject = PojoUtils.realize(generializeObject, ListResult.class);
+-
+-        assertTrue(realizeObject instanceof ListResult);
+         ListResult realizeList = (ListResult) realizeObject;
+         List realizeInnerList = realizeList.getResult();
+         Assertions.assertEquals(1, realizeInnerList.size());

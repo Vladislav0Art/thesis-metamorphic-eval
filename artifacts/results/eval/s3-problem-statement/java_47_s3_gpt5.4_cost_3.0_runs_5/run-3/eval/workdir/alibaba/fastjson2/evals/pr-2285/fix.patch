@@ -1,0 +1,670 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
+index b921de01f..748f68ed6 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
++++ b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
+@@ -286,23 +286,31 @@ public class ObjectWriterBaseModule
+             int modifiers = field.getModifiers();
+             boolean isTransient = Modifier.isTransient(modifiers);
+             if (isTransient) {
+-                fieldInfo.ignore = true;
++        public void getFieldInfo(BeanInfo beanInfo, FieldInfo fieldInfo, Class objectClass, Field field) {
++            Class mixInSource = provider.mixInCache.get(objectClass);
++            if (mixInSource != null && mixInSource != objectClass) {
++                Field mixInField = BeanUtils.getDeclaredField(mixInSource, field.getName());
++                if (mixInField != null) {
++                    getFieldInfo(beanInfo, fieldInfo, mixInSource, mixInField);
++                }
+             }
+ 
+-            JSONField jsonField = null;
+             Annotation[] annotations = getAnnotations(field);
++            JSONField jsonField = null;
+             for (Annotation annotation : annotations) {
+-                Class<? extends Annotation> annotationType = annotation.annotationType();
++                if (annotation.annotationType() == JSONCompiler.class) {
++                    JSONCompiler compiler = (JSONCompiler) annotation;
++                    if (compiler.value() == JSONCompiler.CompilerOption.LAMBDA) {
++                        fieldInfo.features |= FieldInfo.JIT;
++                    }
++                }
++
+                 if (jsonField == null) {
+                     jsonField = findAnnotation(annotation, JSONField.class);
+-                    if (jsonField == annotation) {
+-                        continue;
+-                    }
+                 }
+ 
+-                String annotationTypeName = annotationType.getName();
+                 boolean useJacksonAnnotation = JSONFactory.isUseJacksonAnnotation();
+-                switch (annotationTypeName) {
++                switch (annotation.annotationType().getName()) {
+                     case "com.fasterxml.jackson.annotation.JsonIgnore":
+                     case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonIgnore":
+                         if (useJacksonAnnotation) {
+@@ -315,37 +323,36 @@ public class ObjectWriterBaseModule
+                             fieldInfo.features |= FieldInfo.UNWRAPPED_MASK;
+                         }
+                         break;
+-                    case "com.fasterxml.jackson.annotation.JsonValue":
+-                    case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonValue":
+-                        if (useJacksonAnnotation) {
+-                            fieldInfo.features |= FieldInfo.VALUE_MASK;
+-                        }
+-                        break;
+-                    case "com.fasterxml.jackson.annotation.JsonRawValue":
+-                    case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonRawValue":
+-                        if (useJacksonAnnotation) {
+-                            fieldInfo.features |= FieldInfo.RAW_VALUE_MASK;
+-                        }
+-                        break;
+                     case "com.alibaba.fastjson.annotation.JSONField":
+                         processJSONField1x(fieldInfo, annotation);
+                         break;
+-                    case "com.fasterxml.jackson.annotation.JsonProperty":
++                    case "java.beans.Transient":
++                        fieldInfo.ignore = true;
++                        fieldInfo.isTransient = true;
++                        break;
+                     case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonProperty":
++                    case "com.fasterxml.jackson.annotation.JsonProperty": {
+                         if (useJacksonAnnotation) {
+                             processJacksonJsonProperty(fieldInfo, annotation);
+                         }
+                         break;
++                    }
+                     case "com.fasterxml.jackson.annotation.JsonFormat":
+                     case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonFormat":
+                         if (useJacksonAnnotation) {
+                             processJacksonJsonFormat(fieldInfo, annotation);
+                         }
+                         break;
+-                    case "com.fasterxml.jackson.annotation.JsonInclude":
+-                    case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonInclude":
++                    case "com.fasterxml.jackson.annotation.JsonValue":
++                    case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonValue":
+                         if (useJacksonAnnotation) {
+-                            processJacksonJsonInclude(beanInfo, annotation);
++                            fieldInfo.features |= FieldInfo.VALUE_MASK;
++                        }
++                        break;
++                    case "com.fasterxml.jackson.annotation.JsonRawValue":
++                    case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonRawValue":
++                        if (useJacksonAnnotation) {
++                            fieldInfo.features |= FieldInfo.RAW_VALUE_MASK;
+                         }
+                         break;
+                     case "com.alibaba.fastjson2.adapter.jackson.databind.annotation.JsonSerialize":
+@@ -354,351 +361,16 @@ public class ObjectWriterBaseModule
+                             processJacksonJsonSerialize(fieldInfo, annotation);
+                         }
+                         break;
+-                    case "com.google.gson.annotations.SerializedName":
+-                        processGsonSerializedName(fieldInfo, annotation);
+-                        break;
+                     default:
+                         break;
+                 }
+             }
+ 
+-            if (jsonField == null) {
+-                return;
+-            }
+-
+-            loadFieldInfo(fieldInfo, jsonField);
+-
+-            Class writeUsing = jsonField.writeUsing();
+-            if (ObjectWriter.class.isAssignableFrom(writeUsing)) {
+-                fieldInfo.writeUsing = writeUsing;
+-            }
+-
+-            Class serializeUsing = jsonField.serializeUsing();
+-            if (ObjectWriter.class.isAssignableFrom(serializeUsing)) {
+-                fieldInfo.writeUsing = serializeUsing;
+-            }
+-
+-            if (jsonField.jsonDirect()) {
+-                fieldInfo.features |= FieldInfo.RAW_VALUE_MASK;
+-            }
+-
+-            if ((fieldInfo.features & JSONWriter.Feature.WriteNonStringValueAsString.mask) != 0
+-                    && !String.class.equals(field.getType())
+-                    && fieldInfo.writeUsing == null
+-            ) {
+-                fieldInfo.writeUsing = ObjectWriterImplToString.class;
+-            }
+-        }
+-
+-        private void processJacksonJsonSubTypes(BeanInfo beanInfo, Annotation annotation) {
+-            Class<? extends Annotation> annotationClass = annotation.getClass();
+-            BeanUtils.annotationMethods(annotationClass, m -> {
+-                String name = m.getName();
+-                try {
+-                    Object result = m.invoke(annotation);
+-                    if ("value".equals(name)) {
+-                        Annotation[] value = (Annotation[]) result;
+-                        if (value.length != 0) {
+-                            beanInfo.seeAlso = new Class[value.length];
+-                            beanInfo.seeAlsoNames = new String[value.length];
+-                            for (int i = 0; i < value.length; i++) {
+-                                Annotation item = value[i];
+-                                processJacksonJsonSubTypesType(beanInfo, i, item);
+-                            }
+-                        }
+-                    }
+-                } catch (Throwable ignored) {
+-                    // ignored
+-                }
+-            });
+-        }
+-
+-        private void processJacksonJsonSerialize(BeanInfo beanInfo, Annotation annotation) {
+-            Class<? extends Annotation> annotationClass = annotation.getClass();
+-            BeanUtils.annotationMethods(annotationClass, m -> {
+-                String name = m.getName();
+-                try {
+-                    Object result = m.invoke(annotation);
+-                    switch (name) {
+-                        case "using": {
+-                            Class using = processUsing((Class) result);
+-                            if (using != null) {
+-                                beanInfo.serializer = using;
+-                            }
+-                            break;
+-                        }
+-                        case "keyUsing":
+-                            Class keyUsing = processUsing((Class) result);
+-                            if (keyUsing != null) {
+-                                beanInfo.serializer = keyUsing;
+-                            }
+-                            break;
+-                        default:
+-                            break;
+-                    }
+-                } catch (Throwable ignored) {
+-                    // ignored
+-                }
+-            });
+-        }
+-
+-        private Class processUsing(Class result) {
+-            String usingName = result.getName();
+-            String noneClassName1 = "com.fasterxml.jackson.databind.JsonSerializer$None";
+-            if (!noneClassName1.equals(usingName)
+-                    && ObjectWriter.class.isAssignableFrom(result)
+-            ) {
+-                return result;
+-            }
+-
+-            if ("com.fasterxml.jackson.databind.ser.std.ToStringSerializer".equals(usingName)) {
+-                return ObjectWriterImplToString.class;
++            if (jsonField != null) {
++                loadFieldInfo(fieldInfo, jsonField);
+             }
+-            return null;
+-        }
+-
+-        private void processJacksonJsonTypeInfo(BeanInfo beanInfo, Annotation annotation) {
+-            Class<? extends Annotation> annotationClass = annotation.getClass();
+-            BeanUtils.annotationMethods(annotationClass, m -> {
+-                String name = m.getName();
+-                try {
+-                    Object result = m.invoke(annotation);
+-                    if ("property".equals(name)) {
+-                        String value = (String) result;
+-                        if (!value.isEmpty()) {
+-                            beanInfo.typeKey = value;
+-                            beanInfo.writerFeatures |= JSONWriter.Feature.WriteClassName.mask;
+-                        }
+-                    }
+-                } catch (Throwable ignored) {
+-                    // ignored
+-                }
+-            });
+-        }
+-
+-        private void processJacksonJsonPropertyOrder(BeanInfo beanInfo, Annotation annotation) {
+-            Class<? extends Annotation> annotationClass = annotation.getClass();
+-            BeanUtils.annotationMethods(annotationClass, m -> {
+-                String name = m.getName();
+-                try {
+-                    Object result = m.invoke(annotation);
+-                    if ("value".equals(name)) {
+-                        String[] value = (String[]) result;
+-                        if (value.length != 0) {
+-                            beanInfo.orders = value;
+-                        }
+-                    }
+-                } catch (Throwable ignored) {
+-                    // ignored
+-                }
+-            });
+-        }
+-
+-        private void processJacksonJsonSerialize(FieldInfo fieldInfo, Annotation annotation) {
+-            Class<? extends Annotation> annotationClass = annotation.getClass();
+-            BeanUtils.annotationMethods(annotationClass, m -> {
+-                String name = m.getName();
+-                try {
+-                    Object result = m.invoke(annotation);
+-                    switch (name) {
+-                        case "using":
+-                            Class using = processUsing((Class) result);
+-                            if (using != null) {
+-                                fieldInfo.writeUsing = using;
+-                            }
+-                            break;
+-                        case "keyUsing":
+-                            Class keyUsing = processUsing((Class) result);
+-                            if (keyUsing != null) {
+-                                fieldInfo.keyUsing = keyUsing;
+-                            }
+-                            break;
+-                        case "valueUsing":
+-                            Class valueUsing = processUsing((Class) result);
+-                            if (valueUsing != null) {
+-                                fieldInfo.valueUsing = valueUsing;
+-                            }
+-                            break;
+-                        default:
+-                            break;
+-                    }
+-                } catch (Throwable ignored) {
+-                    // ignored
+-                }
+-            });
+-        }
+-
+-        private void processJacksonJsonProperty(FieldInfo fieldInfo, Annotation annotation) {
+-            Class<? extends Annotation> annotationClass = annotation.getClass();
+-            BeanUtils.annotationMethods(annotationClass, m -> {
+-                String name = m.getName();
+-                try {
+-                    Object result = m.invoke(annotation);
+-                    switch (name) {
+-                        case "value":
+-                            String value = (String) result;
+-                            if (!value.isEmpty()) {
+-                                fieldInfo.fieldName = value;
+-                            }
+-                            break;
+-                        case "access": {
+-                            String access = ((Enum) result).name();
+-                            fieldInfo.ignore = "WRITE_ONLY".equals(access);
+-                            break;
+-                        }
+-                        default:
+-                            break;
+-                    }
+-                } catch (Throwable ignored) {
+-                    // ignored
+-                }
+-            });
+-        }
+ 
+-        private void processJacksonJsonIgnoreProperties(BeanInfo beanInfo, Annotation annotation) {
+-            Class<? extends Annotation> annotationClass = annotation.getClass();
+-            BeanUtils.annotationMethods(annotationClass, m -> {
+-                String name = m.getName();
+-                try {
+-                    Object result = m.invoke(annotation);
+-                    if ("value".equals(name)) {
+-                        String[] value = (String[]) result;
+-                        if (value.length != 0) {
+-                            beanInfo.ignores = value;
+-                        }
+-                    }
+-                } catch (Throwable ignored) {
+-                    // ignored
+-                }
+-            });
+-        }
+-
+-        private void processJSONField1x(FieldInfo fieldInfo, Annotation annotation) {
+-            Class<? extends Annotation> annotationClass = annotation.getClass();
+-            BeanUtils.annotationMethods(annotationClass, m -> {
+-                String name = m.getName();
+-                try {
+-                    Object result = m.invoke(annotation);
+-                    switch (name) {
+-                        case "name": {
+-                            String value = (String) result;
+-                            if (!value.isEmpty()) {
+-                                fieldInfo.fieldName = value;
+-                            }
+-                            break;
+-                        }
+-                        case "format": {
+-                            loadJsonFieldFormat(fieldInfo, (String) result);
+-                            break;
+-                        }
+-                        case "label": {
+-                            String value = (String) result;
+-                            if (!value.isEmpty()) {
+-                                fieldInfo.label = value;
+-                            }
+-                            break;
+-                        }
+-                        case "defaultValue": {
+-                            String value = (String) result;
+-                            if (!value.isEmpty()) {
+-                                fieldInfo.defaultValue = value;
+-                            }
+-                            break;
+-                        }
+-                        case "ordinal": {
+-                            int ordinal = (Integer) result;
+-                            if (ordinal != 0) {
+-                                fieldInfo.ordinal = ordinal;
+-                            }
+-                            break;
+-                        }
+-                        case "serialize": {
+-                            boolean serialize = (Boolean) result;
+-                            if (!serialize) {
+-                                fieldInfo.ignore = true;
+-                            }
+-                            break;
+-                        }
+-                        case "unwrapped": {
+-                            if ((Boolean) result) {
+-                                fieldInfo.features |= FieldInfo.UNWRAPPED_MASK;
+-                            }
+-                            break;
+-                        }
+-                        case "serialzeFeatures": {
+-                            Enum[] features = (Enum[]) result;
+-                            applyFeatures(fieldInfo, features);
+-                            break;
+-                        }
+-                        case "serializeUsing": {
+-                            Class writeUsing = (Class) result;
+-                            if (ObjectWriter.class.isAssignableFrom(writeUsing)) {
+-                                fieldInfo.writeUsing = writeUsing;
+-                            }
+-                            break;
+-                        }
+-                        case "jsonDirect": {
+-                            Boolean jsonDirect = (Boolean) result;
+-                            if (jsonDirect) {
+-                                fieldInfo.features |= FieldInfo.RAW_VALUE_MASK;
+-                            }
+-                            break;
+-                        }
+-                        default:
+-                            break;
+-                    }
+-                } catch (Throwable ignored) {
+-                    // ignored
+-                }
+-            });
+-        }
+-
+-        private void applyFeatures(FieldInfo fieldInfo, Enum[] features) {
+-            for (Enum feature : features) {
+-                switch (feature.name()) {
+-                    case "UseISO8601DateFormat":
+-                        fieldInfo.format = "iso8601";
+-                        break;
+-                    case "WriteMapNullValue":
+-                        fieldInfo.features |= JSONWriter.Feature.WriteNulls.mask;
+-                        break;
+-                    case "WriteNullListAsEmpty":
+-                        fieldInfo.features |= JSONWriter.Feature.WriteNullListAsEmpty.mask;
+-                        break;
+-                    case "WriteNullStringAsEmpty":
+-                        fieldInfo.features |= JSONWriter.Feature.WriteNullStringAsEmpty.mask;
+-                        break;
+-                    case "WriteNullNumberAsZero":
+-                        fieldInfo.features |= JSONWriter.Feature.WriteNullNumberAsZero.mask;
+-                        break;
+-                    case "WriteNullBooleanAsFalse":
+-                        fieldInfo.features |= JSONWriter.Feature.WriteNullBooleanAsFalse.mask;
+-                        break;
+-                    case "BrowserCompatible":
+-                        fieldInfo.features |= JSONWriter.Feature.BrowserCompatible.mask;
+-                        break;
+-                    case "WriteClassName":
+-                        fieldInfo.features |= JSONWriter.Feature.WriteClassName.mask;
+-                        break;
+-                    case "WriteNonStringValueAsString":
+-                        fieldInfo.features |= JSONWriter.Feature.WriteNonStringValueAsString.mask;
+-                        break;
+-                    case "WriteEnumUsingToString":
+-                        fieldInfo.features |= JSONWriter.Feature.WriteEnumUsingToString.mask;
+-                        break;
+-                    case "NotWriteRootClassName":
+-                        fieldInfo.features |= JSONWriter.Feature.NotWriteRootClassName.mask;
+-                        break;
+-                    case "IgnoreErrorGetter":
+-                        fieldInfo.features |= JSONWriter.Feature.IgnoreErrorGetter.mask;
+-                        break;
+-                    case "WriteBigDecimalAsPlain":
+-                        fieldInfo.features |= JSONWriter.Feature.WriteBigDecimalAsPlain.mask;
+-                        break;
+-                    default:
+-                        break;
+-                }
+-            }
++            applyTypeWriter(fieldInfo, field.getType());
+         }
+ 
+         @Override
+@@ -787,6 +459,8 @@ public class ObjectWriterBaseModule
+                     }
+                 }
+             }
++
++            applyTypeWriter(fieldInfo, method.getReturnType());
+         }
+ 
+         private void processAnnotations(FieldInfo fieldInfo, Annotation[] annotations) {
+@@ -864,6 +538,101 @@ public class ObjectWriterBaseModule
+             }
+         }
+ 
++        private void applyTypeWriter(FieldInfo fieldInfo, Class fieldClass) {
++            if (fieldInfo.writeUsing != null || fieldClass == null) {
++                return;
++            }
++
++            Annotation[] annotations = getAnnotations(fieldClass);
++            for (Annotation annotation : annotations) {
++                JSONType jsonType = findAnnotation(annotation, JSONType.class);
++                if (jsonType == null) {
++                    continue;
++                }
++
++                Class<?> serializer = jsonType.serializer();
++                if (ObjectWriter.class.isAssignableFrom(serializer)) {
++                    fieldInfo.writeUsing = serializer;
++                }
++                break;
++            }
++        }
++
++        /**
++            for (Annotation annotation : annotations) {
++                Class<? extends Annotation> annotationType = annotation.annotationType();
++                JSONField jsonField = findAnnotation(annotation, JSONField.class);
++                if (Objects.nonNull(jsonField)) {
++                    loadFieldInfo(fieldInfo, jsonField);
++                    continue;
++                }
++
++                if (annotationType == JSONCompiler.class) {
++                    JSONCompiler compiler = (JSONCompiler) annotation;
++                    if (compiler.value() == JSONCompiler.CompilerOption.LAMBDA) {
++                        fieldInfo.features |= FieldInfo.JIT;
++                    }
++                }
++
++                boolean useJacksonAnnotation = JSONFactory.isUseJacksonAnnotation();
++                String annotationTypeName = annotationType.getName();
++                switch (annotationTypeName) {
++                    case "com.fasterxml.jackson.annotation.JsonIgnore":
++                    case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonIgnore":
++                        if (useJacksonAnnotation) {
++                            processJacksonJsonIgnore(fieldInfo, annotation);
++                        }
++                        break;
++                    case "com.fasterxml.jackson.annotation.JsonAnyGetter":
++                    case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonAnyGetter":
++                        if (useJacksonAnnotation) {
++                            fieldInfo.features |= FieldInfo.UNWRAPPED_MASK;
++                        }
++                        break;
++                    case "com.alibaba.fastjson.annotation.JSONField":
++                        processJSONField1x(fieldInfo, annotation);
++                        break;
++                    case "java.beans.Transient":
++                        fieldInfo.ignore = true;
++                        fieldInfo.isTransient = true;
++                        break;
++                    case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonProperty":
++                    case "com.fasterxml.jackson.annotation.JsonProperty": {
++                        if (useJacksonAnnotation) {
++                            processJacksonJsonProperty(fieldInfo, annotation);
++                        }
++                        break;
++                    }
++                    case "com.fasterxml.jackson.annotation.JsonFormat":
++                    case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonFormat":
++                        if (useJacksonAnnotation) {
++                            processJacksonJsonFormat(fieldInfo, annotation);
++                        }
++                        break;
++                    case "com.fasterxml.jackson.annotation.JsonValue":
++                    case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonValue":
++                        if (useJacksonAnnotation) {
++                            fieldInfo.features |= FieldInfo.VALUE_MASK;
++                        }
++                        break;
++                    case "com.fasterxml.jackson.annotation.JsonRawValue":
++                    case "com.alibaba.fastjson2.adapter.jackson.annotation.JsonRawValue":
++                        if (useJacksonAnnotation) {
++                            fieldInfo.features |= FieldInfo.RAW_VALUE_MASK;
++                        }
++                        break;
++                    case "com.alibaba.fastjson2.adapter.jackson.databind.annotation.JsonSerialize":
++                    case "com.fasterxml.jackson.databind.annotation.JsonSerialize":
++                        if (useJacksonAnnotation) {
++                            processJacksonJsonSerialize(fieldInfo, annotation);
++                        }
++                        break;
++                    default:
++                        break;
++                }
++            }
++        }
++
+         /**
+          * load {@link JSONField} into {@link FieldInfo} params
+          *
+diff --git a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_fieldType.java b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_fieldType.java
+new file mode 100644
+index 000000000..d0167d70b
+--- /dev/null
++++ b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_fieldType.java
+@@ -0,0 +1,97 @@
++package com.alibaba.fastjson2.annotation;
++
++import com.alibaba.fastjson2.JSON;
++import com.alibaba.fastjson2.JSONReader;
++import com.alibaba.fastjson2.JSONWriter;
++import com.alibaba.fastjson2.reader.ObjectReader;
++import com.alibaba.fastjson2.writer.ObjectWriter;
++import org.junit.jupiter.api.Test;
++
++import java.lang.reflect.Type;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++
++public class JSONType_fieldType {
++    @Test
++    public void testFieldTypeSerializer() {
++        AppDto app = new AppDto();
++        app.alarmStatus = AlarmStatus.RUNNING;
++
++        assertEquals(
++                "{\"alarmStatus\":{\"code\":1}}",
++                JSON.toJSONString(app)
++        );
++    }
++
++    @Test
++    public void testFieldTypeDeserializer() {
++        AppDto app = JSON.parseObject(
++                "{\"alarmStatus\":{\"code\":2}}",
++                AppDto.class
++        );
++
++        assertEquals(AlarmStatus.STOP, app.alarmStatus);
++    }
++
++    public static class AppDto {
++        public AlarmStatus alarmStatus;
++    }
++
++    @JSONType(serializer = AlarmStatusWriter.class, deserializer = AlarmStatusReader.class)
++    public enum AlarmStatus {
++        RUNNING(1),
++        STOP(2);
++
++        public final int code;
++
++        AlarmStatus(int code) {
++            this.code = code;
++        }
++
++        public static AlarmStatus of(int code) {
++            for (AlarmStatus status : values()) {
++                if (status.code == code) {
++                    return status;
++                }
++            }
++            return null;
++        }
++    }
++
++    public static class AlarmStatusWriter
++            implements ObjectWriter<AlarmStatus> {
++        @Override
++        public void write(JSONWriter jsonWriter, Object object, Object fieldName, Type fieldType, long features) {
++            AlarmStatus status = (AlarmStatus) object;
++            jsonWriter.startObject();
++            jsonWriter.writeName("code");
++            jsonWriter.writeColon();
++            jsonWriter.writeInt32(status.code);
++            jsonWriter.endObject();
++        }
++    }
++
++    public static class AlarmStatusReader
++            implements ObjectReader<AlarmStatus> {
++        @Override
++        public AlarmStatus readObject(JSONReader jsonReader, Type fieldType, Object fieldName, long features) {
++            jsonReader.nextIfObjectStart();
++            Integer code = null;
++            for (; ; ) {
++                if (jsonReader.nextIfObjectEnd()) {
++                    break;
++                }
++
++                String name = jsonReader.readFieldName();
++                if ("code".equals(name)) {
++                    code = jsonReader.readInt32();
++                } else {
++                    jsonReader.skipValue();
++                }
++            }
++            jsonReader.nextIfMatch(',');
++
++            return AlarmStatus.of(code);
++        }
++    }
++}

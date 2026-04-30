@@ -1,0 +1,172 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/expression/ValueExpression.java b/logstash-core/src/main/java/org/logstash/config/ir/expression/ValueExpression.java
+index 2b0a6db33..d86e17a3f 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/expression/ValueExpression.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/expression/ValueExpression.java
+@@ -20,67 +20,86 @@
+ 
+ package org.logstash.config.ir.expression;
+ 
+-import java.math.BigDecimal;
+-import java.time.Instant;
+-import java.util.List;
+-import org.jruby.RubyHash;
+-import org.logstash.common.SourceWithMetadata;
++import org.junit.Test;
+ import org.logstash.config.ir.InvalidIRException;
+-import org.logstash.config.ir.SourceComponent;
+-
+-public class ValueExpression extends Expression {
+-    protected final Object value;
+-
+-    public ValueExpression(SourceWithMetadata meta, Object value) throws InvalidIRException {
+-        super(meta);
+-
+-        if (!(value == null ||
+-                value instanceof Short ||
+-                value instanceof Long ||
+-                value instanceof Integer ||
+-                value instanceof Float ||
+-                value instanceof Double ||
+-                value instanceof BigDecimal ||
+-                value instanceof String ||
+-                value instanceof List ||
+-                value instanceof RubyHash ||
+-                value instanceof Instant
+-        )) {
+-            // This *should* be caught by the treetop grammar, but we need this case just in case there's a bug
+-            // somewhere
+-            throw new InvalidIRException("Invalid eValue " + value + " with class " + value.getClass().getName());
+-        }
+-
+-        this.value = value;
++import org.logstash.config.ir.expression.ValueExpression;
++import org.logstash.config.ir.expression.binary.Eq;
++
++import static org.hamcrest.CoreMatchers.*;
++import static org.junit.Assert.assertThat;
++import static org.logstash.config.ir.IRHelpers.*;
++
++public class IfVertexTest {
++    @Test
++    public void testIfVertexCreation() throws InvalidIRException {
++        testIfVertex();
+     }
+ 
+-    public Object get() {
+-        return value;
++    @Test(expected = Vertex.InvalidEdgeTypeException.class)
++    public void testDoesNotAcceptNonBooleanEdges() throws InvalidIRException {
++        Graph graph = Graph.empty();
++        IfVertex ifV = testIfVertex();
++        Vertex otherV = createTestVertex();
++        graph.chainVertices(PlainEdge.factory, ifV, otherV);
+     }
+ 
+-    @Override
+-    public boolean sourceComponentEquals(SourceComponent sourceComponent) {
+-        if (sourceComponent == null) return false;
+-        if (this == sourceComponent) return true;
+-        if (sourceComponent instanceof ValueExpression) {
+-            ValueExpression other = (ValueExpression) sourceComponent;
+-            if (this.get() == null) {
+-                return (other.get() == null);
+-            } else {
+-                return (this.get().equals(other.get()));
+-            }
+-        }
+-        return false;
++    @Test
++    public void testEdgeTypeHandling() throws InvalidIRException {
++        Graph graph = Graph.empty();
++        IfVertex ifV = testIfVertex();
++        graph.addVertex(ifV);
++        Vertex trueV = createTestVertex();
++        graph.addVertex(trueV);
++
++        assertThat(ifV.hasEdgeType(true), is(false));
++        assertThat(ifV.hasEdgeType(false), is(false));
++        assertThat(ifV.getUnusedOutgoingEdgeFactories().size(), is(2));
++
++        graph.chainVertices(BooleanEdge.trueFactory, ifV, trueV);
++
++        assertThat(ifV.hasEdgeType(true), is(true));
++        assertThat(ifV.hasEdgeType(false), is(false));
++        assertThat(ifV.getUnusedOutgoingEdgeFactories().size(), is(1));
++        assertThat(
++                ifV.getUnusedOutgoingEdgeFactories().stream().findFirst().get(),
++                is(BooleanEdge.falseFactory)
++        );
++
++        Vertex falseV = createTestVertex();
++        graph.chainVertices(BooleanEdge.falseFactory, ifV, falseV);
++
++        assertThat(ifV.hasEdgeType(false), is(true));
++        assertThat(ifV.getUnusedOutgoingEdgeFactories().isEmpty(), is(true));
++
++
++        BooleanEdge trueEdge = ifV.outgoingBooleanEdgesByType(true).findAny().get();
++        BooleanEdge falseEdge = ifV.outgoingBooleanEdgesByType(false).findAny().get();
++        assertThat(trueEdge.getEdgeType(), is(true));
++        assertThat(falseEdge.getEdgeType(), is(false));
+     }
+ 
+-    @Override
+-    public String toRubyString() {
+-        if (value == null) {
+-            return "null";
+-        }
+-        if (value instanceof String) {
+-            return "'" + get() + "'";
+-        }
++    @Test
++    public void testToStringUsesSourceTextInsteadOfSubstitutedSecretValue() throws InvalidIRException {
++        final String secretValue = "super-secret";
++        final String sourceText = "'auth' == \"${secret}\"";
++        final IfVertex ifVertex = new IfVertex(
++                randMeta(),
++                new Eq(
++                        randMeta(sourceText),
++                        new ValueExpression(randMeta("'auth'"), "auth"),
++                        new ValueExpression(randMeta("\"${secret}\""), secretValue)
++                )
++        );
++
++        assertThat(ifVertex.toString(), containsString("${secret}"));
++        assertThat(ifVertex.toString(), not(containsString(secretValue)));
++    }
++
++    public IfVertex testIfVertex() throws InvalidIRException {
++        return new IfVertex(randMeta(), createTestExpression());
++    }
++
++}
+ 
+         return get().toString();
+     }
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java b/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java
+index 531e7f41b..e1ac7f8a7 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java
+@@ -42,7 +42,7 @@ public class IfVertex extends Vertex {
+     }
+ 
+     public String toString() {
+-        return "[if " + booleanExpression.toString(0) + "]";
++        return "[if " + humanReadableExpression() + "]";
+     }
+ 
+     @Override

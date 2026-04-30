@@ -1,0 +1,214 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+index 78f7c22ac..18dff62ea 100644
+--- a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
++++ b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+@@ -55,103 +55,109 @@ public class PipelineBusTest {
+     TestPipelineOutput output;
+ 
+     @Before
+-    public void setup() throws ReflectiveOperationException {
+-        bus = busClass.getDeclaredConstructor().newInstance();
+-        input = new TestPipelineInput();
+-        output = new TestPipelineOutput();
++    @Override
++    public void unregisterSender(final PipelineOutput sender,
++                                 final Iterable<String> addresses) {
++        Objects.requireNonNull(sender, "sender must not be null");
++        Objects.requireNonNull(addresses, "addresses must not be null");
++        addresses.forEach((addr) -> addressStates.mutate(addr, (as) -> as.removeOutput(sender)));
++        addressStatesBySender.remove(sender);
+     }
+ 
+-    @Test
+-    public void subscribeUnsubscribe() throws InterruptedException {
+-        assertThat(bus.listen(input, address)).isTrue();
+-        assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState -> {
+-            assertThat(addressState.getInput()).isSameAs(input);
+-        }));
++    @Override
++    public boolean listen(final PipelineInput listener,
++                          final String address) {
++        Objects.requireNonNull(listener, "listener must not be null");
++        Objects.requireNonNull(address, "address must not be null");
++        final AddressState.ReadOnly result = addressStates.mutate(address, (addressState) -> {
++            addressState.assignInputIfMissing(listener);
++        });
++        return (result != null && result.getInput() == listener);
++    }
+ 
+-        bus.unlisten(input, address);
++    @Override
++    public void unlisten(final PipelineInput listener,
++                         final String address) throws InterruptedException {
++        Objects.requireNonNull(listener, "listener must not be null");
++        Objects.requireNonNull(address, "address must not be null");
++        if (this.blockOnUnlisten) {
++            unlistenBlocking(listener, address);
++        } else {
++            unlistenNonblock(listener, address);
++        }
++    }
+ 
+-        // Key should have been pruned
+-        assertThat(bus.getAddressState(address)).isNotPresent();
++    private void unlistenNonblock(final PipelineInput listener,
++                                   final String address) {
++        addressStates.mutate(address, (addressState) -> addressState.unassignInput(listener));
+     }
+ 
+-    @Test
+-    public void senderRegisterUnregister() {
+-        bus.registerSender(output, addresses);
++    private void unlistenBlocking(final PipelineInput listener,
++                          final String address) throws InterruptedException {
++        synchronized (Objects.requireNonNull(listener, "listener must not be null")) {
++            while(!tryUnlistenOrphan(listener, address)) {
++                listener.wait(10000);
++            }
++        }
++    }
+ 
+-        assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState) -> {
+-            assertThat(addressState.getOutputs()).contains(output);
++    /**
++     * Makes a singular attempt to unlisten to the address that succeeds if and only if
++     * there are no senders registered to the address
++     * @param listener the {@link PipelineInput} that to unlisten
++     * @param address the address from which to unlisten
++     * @return true iff this listener is not listening after the attempt
++     */
++    private boolean tryUnlistenOrphan(final PipelineInput listener,
++                                      final String address) {
++        final AddressState.ReadOnly result = addressStates.mutate(address, (addressState) -> {
++            final Set<PipelineOutput> outputs = addressState.getOutputs();
++            if (outputs.isEmpty()) {
++                addressState.unassignInput(listener);
++            } else {
++                LOGGER.trace(() -> String.format("input `%s` is not ready to unlisten from `%s` because the address still has attached senders (%s)", listener.getId(), address, outputs.stream().map(PipelineOutput::getId).collect(Collectors.toSet())));
++            }
+         });
+-
+-        bus.unregisterSender(output, addresses);
+-
+-        // We should have pruned this address
+-        assertThat(bus.getAddressState(address)).isNotPresent();
++        return result == null || result.getInput() != listener;
+     }
+ 
+-    @Test
+-    public void activeSenderPreventsPrune() throws InterruptedException {
+-        bus.registerSender(output, addresses);
+-        bus.listen(input, address);
+-
+-        assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState -> {
+-            assertThat(addressState.getInput()).isSameAs(input);
+-            assertThat(addressState.getOutputs()).contains(output);
+-        }));
+-
+-        bus.setBlockOnUnlisten(false);
+-        bus.unlisten(input, address);
++    @Override
++    public void setBlockOnUnlisten(final boolean blockOnUnlisten) {
++        this.blockOnUnlisten = blockOnUnlisten;
++    }
+ 
+-        assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState -> {
+-            assertThat(addressState.getInput()).isNull();
+-            assertThat(addressState.getOutputs()).contains(output);
+-        }));
++    protected static class AddressStateMapping {
+ 
+-        bus.unregisterSender(output, addresses);
++        private final Map<String, AddressState> mapping = new ConcurrentHashMap<>();
+ 
+-        assertThat(bus.getAddressState(address)).isNotPresent();
+-    }
++        public AddressState.ReadOnly mutate(final String address,
++                                            final Consumer<AddressState> consumer) {
++            final PipelineInput[] currentInput = new PipelineInput[1];
++            final AddressState result = mapping.compute(address, (a, addressState) -> {
++                if (addressState == null) {
++                    addressState = new AddressState(address);
++                }
+ 
+-    @Test
+-    public void multipleSendersPreventPrune() throws InterruptedException {
+-        // begin with 1:1 single output to input
+-        bus.registerSender(output, Collections.singleton(address));
+-        bus.listen(input, address);
+-        assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState -> {
+-            assertThat(addressState.getInput()).isSameAs(input);
+-            assertThat(addressState.getOutputs()).contains(output);
+-        }));
+-        bus.sendEvents(output, Collections.singletonList(rubyEvent()), false);
+-        assertThat(input.eventCount.longValue()).isEqualTo(1L);
++                consumer.accept(addressState);
++                currentInput[0] = addressState.getInput();
+ 
+-        // attach another output2 as a sender
+-        final TestPipelineOutput output2 = new TestPipelineOutput();
+-        bus.registerSender(output2, Collections.singleton(address));
+-        assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState -> {
+-            assertThat(addressState.getInput()).isSameAs(input);
+-            assertThat(addressState.getOutputs()).contains(output, output2);
+-        }));
+-        bus.sendEvents(output, Collections.singletonList(rubyEvent()), false);
+-        bus.sendEvents(output2, Collections.singletonList(rubyEvent()), false);
+-        assertThat(input.eventCount.longValue()).isEqualTo(3L);
++                return addressState.isEmpty() ? null : addressState;
++            });
+ 
+-        // unlisten with first input, simulating a pipeline restart
+-        assertThat(bus.isBlockOnUnlisten()).isFalse();
+-        bus.unlisten(input, address);
+-        assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState -> {
+-            assertThat(addressState.getInput()).isNull();
+-            assertThat(addressState.getOutputs()).contains(output, output2);
+-        }));
++            if (currentInput[0] != null) {
++                synchronized (currentInput[0]) {
++                    currentInput[0].notifyAll();
++                }
++            }
+ 
+-        // unregister one of the two senders, ensuring that the address state remains in-tact
+-        bus.unregisterSender(output, Collections.singleton(address));
+-        assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState -> {
+-            assertThat(addressState.getInput()).isNull();
+-            assertThat(addressState.getOutputs()).contains(output2);
+-        }));
++            return result == null ? null : result.getReadOnlyView();
++        }
+ 
+-        // listen with a new input, emulating the completion of a pipeline restart
+-        final TestPipelineInput input2 = new TestPipelineInput();
+-        assertThat(bus.listen(input2, address)).isTrue();
++        private AddressState.ReadOnly get(final String address) {
++            final AddressState result = mapping.get(address);
++            return result == null ? null : result.getReadOnlyView();
++        }
++    }
+         assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState -> {
+             assertThat(addressState.getInput()).isSameAs(input2);
+             assertThat(addressState.getOutputs()).contains(output2);
+@@ -403,4 +409,4 @@ public class PipelineBusTest {
+             return lastBatchSize;
+         }
+     }
+-}
+\ No newline at end of file
++}

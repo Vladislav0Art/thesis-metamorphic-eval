@@ -1,0 +1,64 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/ReproGoogleJavaFormat.java b/ReproGoogleJavaFormat.java
+new file mode 100644
+index 000000000..fa5b72b65
+--- /dev/null
++++ b/ReproGoogleJavaFormat.java
+@@ -0,0 +1,10 @@
++import com.google.googlejavaformat.java.Formatter;
++
++public class ReproGoogleJavaFormat {
++    public static void main(String[] args) throws Exception {
++        String input = "class Test{int x(){return 1;}}";
++        String formatted = new Formatter().formatSource(input);
++        System.out.println(formatted);
++        System.out.println("Script completed successfully, no errors.");
++    }
++}
+diff --git a/config/jvm.options b/config/jvm.options
+index e1f9fb826..4f7ddb062 100644
+--- a/config/jvm.options
++++ b/config/jvm.options
+@@ -80,3 +80,9 @@
+ 11-:--add-opens=java.base/java.nio.channels=ALL-UNNAMED
+ 11-:--add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+ 11-:--add-opens=java.management/sun.management=ALL-UNNAMED
++17-:--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
++17-:--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
++17-:--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
++17-:--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
++17-:--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
++17-:--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+diff --git a/docs/static/troubleshoot/ts-logstash.asciidoc b/docs/static/troubleshoot/ts-logstash.asciidoc
+index f030348b5..8aa7b778d 100644
+--- a/docs/static/troubleshoot/ts-logstash.asciidoc
++++ b/docs/static/troubleshoot/ts-logstash.asciidoc
+@@ -61,8 +61,14 @@ Try adding these values to the `jvm.options` file.
+ --add-opens=java.base/java.security=ALL-UNNAMED
+ --add-opens=java.base/java.io=ALL-UNNAMED
+ --add-opens=java.base/java.nio.channels=ALL-UNNAMED
+---add-opens=java.base/sun.nio.ch=org.ALL-UNNAMED
++--add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+ --add-opens=java.management/sun.management=ALL-UNNAMED
++--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
++--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
++--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
++--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
++--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
++--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+ -----
+ 
+ *Notes:*

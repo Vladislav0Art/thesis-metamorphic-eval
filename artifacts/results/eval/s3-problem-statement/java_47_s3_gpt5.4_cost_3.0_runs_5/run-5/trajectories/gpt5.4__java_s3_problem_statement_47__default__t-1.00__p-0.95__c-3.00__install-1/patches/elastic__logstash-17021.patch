@@ -1,0 +1,96 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+index be1c64d23..2cb7b574e 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+@@ -34,6 +34,7 @@ import org.logstash.RubyUtil;
+ @JRubyClass(name = "BufferedTokenizer")
+ public class BufferedTokenizerExt extends RubyObject {
+ 
++
+     private static final long serialVersionUID = 1L;
+ 
+     private static final RubyString NEW_LINE = (RubyString) RubyUtil.RUBY.newString("\n").
+@@ -88,6 +89,10 @@ public class BufferedTokenizerExt extends RubyObject {
+             }
+             this.inputSize = inputSize + entitiesSize;
+         }
++        // NOTE: use RubyArray#append with the original RubyString instances here.
++        // Bulk Java collection operations such as addAll() can re-wrap RubyString
++        // values through JRuby's Java conversion layer and corrupt their bytes by
++        // re-encoding them.
+         input.append(entities.shift(context));
+         if (entities.isEmpty()) {
+             return RubyUtil.RUBY.newArray();
+diff --git a/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+new file mode 100644
+index 000000000..3a65d27aa
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+@@ -0,0 +1,53 @@
++/*
++ * Licensed to Elasticsearch B.V. under one or more contributor
++ * license agreements. See the NOTICE file distributed with
++ * this work for additional information regarding copyright
++ * ownership. Elasticsearch B.V. licenses this file to you under
++ * the Apache License, Version 2.0 (the "License"); you may
++ * not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *	http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied.  See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++
++package org.logstash.common;
++
++import org.jruby.RubyString;
++import org.jruby.runtime.ThreadContext;
++import org.jruby.runtime.builtin.IRubyObject;
++import org.junit.Before;
++import org.junit.Test;
++
++import static org.junit.Assert.assertArrayEquals;
++import static org.logstash.RubyUtil.RUBY;
++
++public class BufferedTokenizerExtTest {
++
++    private ThreadContext context;
++    private BufferedTokenizerExt tokenizer;
++
++    @Before
++    public void setUp() {
++        context = RUBY.getCurrentContext();
++        tokenizer = new BufferedTokenizerExt(RUBY, RUBY.getClass("BufferedTokenizer"));
++        tokenizer.init(context, new IRubyObject[0]);
++    }
++
++    @Test
++    public void preservesEncodingWhenFlushingBufferedData() {
++        final RubyString rubyString = RubyString.newString(RUBY, new byte[]{(byte) 0xA3});
++        final IRubyObject rubyInput = rubyString.force_encoding(context, RUBY.newString("ISO8859-1"));
++
++        tokenizer.extract(context, rubyInput);
++        final RubyString flushed = (RubyString) tokenizer.flush(context);
++
++        assertArrayEquals(new byte[]{(byte) 0xA3}, flushed.getBytes());
++    }
++}

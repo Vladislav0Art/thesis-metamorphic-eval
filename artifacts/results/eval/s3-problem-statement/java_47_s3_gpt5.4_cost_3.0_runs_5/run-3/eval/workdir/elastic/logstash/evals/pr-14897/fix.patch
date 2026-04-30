@@ -1,0 +1,117 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index 1aad80538..10eff5a45 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -108,6 +108,10 @@ public final class DeadLetterQueueWriter implements Closeable {
+     private Optional<Path> oldestSegmentPath;
+     private final TemporalAmount retentionTime;
+ 
++    public static Builder newBuilder(Path queuePath, long maxSegmentSize, long maxQueueSize, Duration flushInterval) {
++        return new Builder(queuePath, maxSegmentSize, maxQueueSize, flushInterval);
++    }
++
+     public static final class Builder {
+ 
+         private final Path queuePath;
+@@ -146,11 +150,6 @@ public final class DeadLetterQueueWriter implements Closeable {
+         }
+     }
+ 
+-    public static Builder newBuilder(final Path queuePath, final long maxSegmentSize, final long maxQueueSize,
+-                                     final Duration flushInterval) {
+-        return new Builder(queuePath, maxSegmentSize, maxQueueSize, flushInterval);
+-    }
+-
+     private DeadLetterQueueWriter(final Path queuePath, final long maxSegmentSize, final long maxQueueSize,
+                           final Duration flushInterval, final QueueStorageType storageType, final Duration retentionTime,
+                           final Clock clock) throws IOException {
+@@ -213,6 +212,12 @@ public final class DeadLetterQueueWriter implements Closeable {
+         if (open.compareAndSet(true, false)) {
+             try {
+                 finalizeSegment(FinalizeWhen.ALWAYS);
++                lock.lock();
++                try {
++                    executeAgeRetentionPolicy();
++                } finally {
++                    lock.unlock();
++                }
+             } catch (Exception e) {
+                 logger.warn("Unable to close dlq writer, ignoring", e);
+             }
+@@ -230,6 +235,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+         }
+     }
+ 
++
+     @VisibleForTesting
+     void writeEntry(DLQEntry entry) throws IOException {
+         lock.lock();
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 5702d169a..53a3e3b4d 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -25,7 +25,10 @@ import java.nio.channels.OverlappingFileLockException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.StandardOpenOption;
++import java.time.Clock;
+ import java.time.Duration;
++import java.time.Instant;
++import java.time.ZoneOffset;
+ import java.util.Arrays;
+ import java.util.Collections;
+ import java.util.List;
+@@ -127,6 +130,39 @@ public class DeadLetterQueueWriterTest {
+         writer.close();
+     }
+ 
++    @Test
++    public void testExpiredSegmentsArePurgedOnShutdownWithoutNewWrites() throws Exception {
++        final Duration retention = Duration.ofMinutes(1);
++        final Instant firstRun = Instant.parse("2023-01-23T12:48:35Z");
++        final Instant secondRun = firstRun.plus(retention).plusSeconds(1);
++
++        try (DeadLetterQueueWriter writer = DeadLetterQueueWriter
++                .newBuilder(dir, 1_000, 100_000, Duration.ofSeconds(1))
++                .retentionTime(retention)
++                .clock(Clock.fixed(firstRun, ZoneOffset.UTC))
++                .build()) {
++            writer.writeEntry(new DLQEntry(new Event(), "type", "id", "reason", new org.logstash.Timestamp(firstRun)));
++        }
++
++        assertTrue(Files.exists(dir.resolve("1.log")));
++
++        try (DeadLetterQueueWriter writer = DeadLetterQueueWriter
++                .newBuilder(dir, 1_000, 100_000, Duration.ofSeconds(1))
++                .retentionTime(retention)
++                .clock(Clock.fixed(secondRun, ZoneOffset.UTC))
++                .build()) {
++            assertTrue(writer.isOpen());
++        }
++
++        final Set<String> segments = Files.list(dir)
++                .map(Path::getFileName)
++                .map(Path::toString)
++                .filter(s -> !s.endsWith(".tmp"))
++                .filter(s -> !".lock".equals(s))
++                .collect(Collectors.toSet());
++        assertTrue(segments.isEmpty());
++    }
++
+     @Test
+     public void testDoesNotWriteMessagesAlreadyRoutedThroughDLQ() throws Exception {
+         Event dlqEvent = new Event();

@@ -1,0 +1,96 @@
+
+diff --git a/.gitignore b/.gitignore
+index b1bdb7f2..9c509136 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -14,3 +14,8 @@ release.properties
+ classes
+ 
+ .DS_Store
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/gson/src/main/java/com/google/gson/internal/bind/JsonTreeWriter.java b/gson/src/main/java/com/google/gson/internal/bind/JsonTreeWriter.java
+index 51dc1f3a..14e01f71 100644
+--- a/gson/src/main/java/com/google/gson/internal/bind/JsonTreeWriter.java
++++ b/gson/src/main/java/com/google/gson/internal/bind/JsonTreeWriter.java
+@@ -206,3 +206,4 @@ public final class JsonTreeWriter extends JsonWriter {
+     stack.add(SENTINEL_CLOSED);
+   }
+ }
++
+diff --git a/gson/src/main/java/com/google/gson/stream/JsonWriter.java b/gson/src/main/java/com/google/gson/stream/JsonWriter.java
+index e2fc1961..fa8b933d 100644
+--- a/gson/src/main/java/com/google/gson/stream/JsonWriter.java
++++ b/gson/src/main/java/com/google/gson/stream/JsonWriter.java
+@@ -206,16 +206,14 @@ public class JsonWriter implements Closeable, Flushable {
+    * in the encoded document. If {@code indent.isEmpty()} the encoded document
+    * will be compact. Otherwise the encoded document will be more
+    * human-readable.
+-   *
+-   * @param indent a string containing only whitespace.
+    */
+   public final void setIndent(String indent) {
+     if (indent.length() == 0) {
+       this.indent = null;
+-      this.separator = ":";
++      separator = ":";
+     } else {
+       this.indent = indent;
+-      this.separator = ": ";
++      separator = ": ";
+     }
+   }
+ 
+@@ -486,12 +484,12 @@ public class JsonWriter implements Closeable, Flushable {
+   /**
+    * Encodes {@code value}.
+    *
+-   * @param value a finite value. May not be {@link Double#isNaN() NaNs} or
+-   *     {@link Double#isInfinite() infinities}.
++   * @param value a value to encode. May not be {@link Double#isNaN() NaNs} or
++   *     {@link Double#isInfinite() infinities} if this writer is not lenient.
+    * @return this writer.
+    */
+   public JsonWriter value(double value) throws IOException {
+-    if (Double.isNaN(value) || Double.isInfinite(value)) {
++    if (!lenient && (Double.isNaN(value) || Double.isInfinite(value))) {
+       throw new IllegalArgumentException("Numeric values must be finite, but was " + value);
+     }
+     writeDeferredName();
+@@ -515,8 +513,8 @@ public class JsonWriter implements Closeable, Flushable {
+   /**
+    * Encodes {@code value}.
+    *
+-   * @param value a finite value. May not be {@link Double#isNaN() NaNs} or
+-   *     {@link Double#isInfinite() infinities}.
++   * @param value a value to encode. May not be {@link Double#isNaN() NaNs} or
++   *     {@link Double#isInfinite() infinities} if this writer is not lenient.
+    * @return this writer.
+    */
+   public JsonWriter value(Number value) throws IOException {
+diff --git a/gson/src/test/java/com/google/gson/stream/JsonWriterTest.java b/gson/src/test/java/com/google/gson/stream/JsonWriterTest.java
+index 34dc9140..67a487b2 100644
+--- a/gson/src/test/java/com/google/gson/stream/JsonWriterTest.java
++++ b/gson/src/test/java/com/google/gson/stream/JsonWriterTest.java
+@@ -213,6 +213,18 @@ public final class JsonWriterTest extends TestCase {
+     }
+   }
+ 
++  public void testLenientNonFiniteDoubles() throws IOException {
++    StringWriter stringWriter = new StringWriter();
++    JsonWriter jsonWriter = new JsonWriter(stringWriter);
++    jsonWriter.setLenient(true);
++    jsonWriter.beginArray();
++    jsonWriter.value(Double.NaN);
++    jsonWriter.value(Double.NEGATIVE_INFINITY);
++    jsonWriter.value(Double.POSITIVE_INFINITY);
++    jsonWriter.endArray();
++    jsonWriter.close();
++    assertEquals("[NaN,-Infinity,Infinity]", stringWriter.toString());
++  }
+   public void testDoubles() throws IOException {
+     StringWriter stringWriter = new StringWriter();
+     JsonWriter jsonWriter = new JsonWriter(stringWriter);

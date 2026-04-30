@@ -1,0 +1,48 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakFinalSpyTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakFinalSpyTest.java
+new file mode 100644
+index 000000000..b021e8cb1
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakFinalSpyTest.java
+@@ -0,0 +1,28 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Spy;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++@ExtendWith(MockitoExtension.class)
++class GenericSpyDoesNotBreakFinalSpyTest {
++
++    @Spy private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy private ExampleRecord exampleRecord = new ExampleRecord("some value");
++
++    @Test
++    void keepsPreinitializedRecordSpyState() {
++        assertThat(exampleRecord.someParameter()).isEqualTo("some value");
++    }
++
++    private record ExampleRecord(String someParameter) {}
++}

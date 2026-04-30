@@ -1,0 +1,218 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+index 0500f4b83..0ba657aae 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+@@ -547,94 +547,29 @@ public abstract class JSONReader
+             case 'v': // 11
+                 return '\u000B';
+             case 'f': // 12
+-            case 'F':
+                 return '\f';
+             case 'r': // 13
+                 return '\r';
+-            case '"': // 34
+-            case '\'': // 39
+-            case '/': // 47
+-            case '.': // 47
+-            case '\\': // 92
+-            case '#':
+-            case '&':
+-            case '[':
+-            case ']':
+-            case '@':
+-            case '(':
+-            case ')':
+-            case '_':
+-            case ',':
++            case '"':
++            case '\'':
++            case '/':
++            case '\\':
+                 return (char) c;
++            case 'x': {
++                int c1 = char2(chars[offset++]);
++                int c2 = char2(chars[offset++]);
++                return (char) ((c1 << 4) + c2);
++            }
++            case 'u': {
++                int c1 = char4(chars[offset++]);
++                int c2 = char4(chars[offset++]);
++                int c3 = char4(chars[offset++]);
++                int c4 = char4(chars[offset++]);
++                return (char) ((c1 << 12) + (c2 << 8) + (c3 << 4) + c4);
++            }
+             default:
+-                throw new JSONException(info("unclosed.str '\\" + (char) c));
+-        }
+-    }
+-
+-    static char char2(int c1, int c2) {
+-        return (char) (DIGITS2[c1] * 0x10
+-                + DIGITS2[c2]);
+-    }
+-
+-    static char char4(int c1, int c2, int c3, int c4) {
+-        return (char) (DIGITS2[c1] * 0x1000
+-                + DIGITS2[c2] * 0x100
+-                + DIGITS2[c3] * 0x10
+-                + DIGITS2[c4]);
+-    }
+-
+-    public abstract boolean nextIfObjectStart();
+-
+-    public abstract boolean nextIfNullOrEmptyString();
+-
+-    public abstract boolean nextIfObjectEnd();
+-
+-    public int startArray() {
+-        if (!nextIfArrayStart()) {
+-            throw new JSONException(info("illegal input, expect '[', but " + ch));
+-        }
+-        return Integer.MAX_VALUE;
+-    }
+-
+-    public abstract boolean isReference();
+-
+-    public abstract String readReference();
+-
+-    public boolean readReference(List list, int i) {
+-        if (!isReference()) {
+-            return false;
+-        }
+-        String path = readReference();
+-        if ("..".equals(path)) {
+-            list.add(list);
+-        } else {
+-            addResolveTask(list, i, JSONPath.of(path));
+-        }
+-        return true;
+-    }
+-
+-    public final void addResolveTask(FieldReader fieldReader, Object object, JSONPath path) {
+-        if (resolveTasks == null) {
+-            resolveTasks = new ArrayList<>();
+-        }
+-        resolveTasks.add(new ResolveTask(fieldReader, object, fieldReader.fieldName, path));
+-    }
+-
+-    public final void addResolveTask(Map object, Object key, JSONPath reference) {
+-        if (resolveTasks == null) {
+-            resolveTasks = new ArrayList<>();
+-        }
+-        if (object instanceof LinkedHashMap) {
+-            object.put(key, null);
+-        }
+-        resolveTasks.add(new ResolveTask(null, object, key, reference));
+-    }
+-
+-    public final void addResolveTask(Collection object, int i, JSONPath reference) {
+-        if (resolveTasks == null) {
+-            resolveTasks = new ArrayList<>();
++                return (char) c;
+         }
+-        resolveTasks.add(new ResolveTask(null, object, i, reference));
+     }
+ 
+     public final void addResolveTask(Object[] object, int i, JSONPath reference) {
+diff --git a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+index 2af2137f4..9acfdf752 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
++++ b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+@@ -601,6 +601,55 @@ public final class ObjectReaderImplList
+             }
+         }
+ 
++        if (listClass == CLASS_ARRAYS_LIST) {
++            Object[] values = new Object[16];
++            int size = 0;
++            for (int i = 0; ; ++i) {
++                if (jsonReader.nextIfArrayEnd()) {
++                    break;
++                }
++
++                if (size == values.length) {
++                    values = Arrays.copyOf(values, values.length + 16);
++                }
++
++                Object item;
++                if (itemType == String.class) {
++                    item = jsonReader.readString();
++                } else if (itemObjectReader != null) {
++                    if (jsonReader.isReference()) {
++                        String reference = jsonReader.readReference();
++                        if ("..".equals(reference)) {
++                            item = this;
++                        } else {
++                            item = null;
++                        }
++                    } else {
++                        item = itemObjectReader.readObject(jsonReader, itemType, i, 0);
++                    }
++                } else {
++                    throw new JSONException(jsonReader.info("TODO : " + itemType));
++                }
++
++                values[size++] = item;
++            }
++
++            if (size != values.length) {
++                values = Arrays.copyOf(values, size);
++            }
++
++            List arrayList = Arrays.asList(values);
++            jsonReader.nextIfComma();
++
++            for (int i = 0; i < values.length; i++) {
++                if (values[i] == null) {
++                    jsonReader.addResolveTask(arrayList, i, arrayList);
++                }
++            }
++
++            return arrayList;
++        }
++
+         for (int i = 0; ; ++i) {
+             if (jsonReader.nextIfArrayEnd()) {
+                 break;
+@@ -615,8 +664,8 @@ public final class ObjectReaderImplList
+                     if ("..".equals(reference)) {
+                         item = this;
+                     } else {
++                        item = null;
+                         jsonReader.addResolveTask(list, i, JSONPath.of(reference));
+-                        continue;
+                     }
+                 } else {
+                     item = itemObjectReader.readObject(jsonReader, itemType, i, 0);
+diff --git a/core/src/test/java/com/alibaba/fastjson2/codec/RefTest7_arraysList.java b/core/src/test/java/com/alibaba/fastjson2/codec/RefTest7_arraysList.java
+new file mode 100644
+index 000000000..c6a7fac58
+--- /dev/null
++++ b/core/src/test/java/com/alibaba/fastjson2/codec/RefTest7_arraysList.java
+@@ -0,0 +1,22 @@
++package com.alibaba.fastjson2.codec;
++
++import com.alibaba.fastjson2.JSON;
++import org.junit.jupiter.api.Test;
++
++import java.util.Arrays;
++import java.util.List;
++
++import static org.junit.jupiter.api.Assertions.assertSame;
++
++public class RefTest7_arraysList {
++    @Test
++    public void test_ref_arraysList() {
++        String str = "[{\"id\":1},{\"$ref\":\"$[0]\"}]";
++
++        Class<? extends List> arrayListClass = Arrays.asList(1).getClass();
++        List list = JSON.parseObject(str, arrayListClass);
++
++        assertSame(arrayListClass, list.getClass());
++        assertSame(list.get(0), list.get(1));
++    }
++}

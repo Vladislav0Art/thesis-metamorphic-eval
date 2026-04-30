@@ -1,0 +1,74 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1271c273b..1077e3bcb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeValidator.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeValidator.java
+index 45a76169f..85a81fc84 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeValidator.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeValidator.java
+@@ -80,7 +80,7 @@ public class SubTypeValidator
+             // 18-Dec-2017, tatu: As per [databind#1855], need bit more sophisticated handling
+             //    for some Spring framework types
+             if (full.startsWith(PREFIX_STRING)) {
+-                for (Class<?> cls = raw; cls != Object.class; cls = cls.getSuperclass()) {
++                for (Class<?> cls = raw; (cls != null) && (cls != Object.class); cls = cls.getSuperclass()) {
+                     String name = cls.getSimpleName();
+                     // looking for "AbstractBeanFactoryPointcutAdvisor" but no point to allow any is there?
+                     if ("AbstractPointcutAdvisor".equals(name)
+diff --git a/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java b/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
+index 87ee570da..73c753fba 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
++++ b/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
+@@ -22,6 +22,10 @@ public class IllegalTypesCheckTest extends BaseMapTest
+                 include = JsonTypeInfo.As.WRAPPER_ARRAY)
+         public Object v;
+     }
++
++    static class Authentication1855 {
++        public java.util.List<org.springframework.jacksontest.GrantedAuthority> authorities;
++    }
+     
+     /*
+     /**********************************************************
+@@ -75,6 +79,21 @@ public class IllegalTypesCheckTest extends BaseMapTest
+         _testIllegalType(BogusPointcutAdvisor.class);
+         _testIllegalType(BogusApplicationContext.class);
+     }
++    public void testSpringInterface1855() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
++
++        String json = aposToQuotes(
++                "{'@class':'"+Authentication1855.class.getName()+"',"
++                +"'authorities':['java.util.ArrayList',[]]}"
++        );
++
++        Authentication1855 authentication = mapper.readValue(json, Authentication1855.class);
++        assertNotNull(authentication);
++        assertNotNull(authentication.authorities);
++        assertEquals(0, authentication.authorities.size());
++    }
+ 
+     // 17-Aug-2017, tatu: Ideally would test handling of 3rd party types, too,
+     //    but would require adding dependencies. This may be practical when
+diff --git a/src/test/java/org/springframework/jacksontest/GrantedAuthority.java b/src/test/java/org/springframework/jacksontest/GrantedAuthority.java
+new file mode 100644
+index 000000000..8677928db
+--- /dev/null
++++ b/src/test/java/org/springframework/jacksontest/GrantedAuthority.java
+@@ -0,0 +1,5 @@
++package org.springframework.jacksontest;
++
++public interface GrantedAuthority {
++    String getAuthority();
++}

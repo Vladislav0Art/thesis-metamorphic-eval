@@ -1,0 +1,66 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+index be1c64d23..461f3f790 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+@@ -88,6 +88,7 @@ public class BufferedTokenizerExt extends RubyObject {
+             }
+             this.inputSize = inputSize + entitiesSize;
+         }
++        // Append RubyString instances directly; using addAll can re-wrap them and corrupt their encoding.
+         input.append(entities.shift(context));
+         if (entities.isEmpty()) {
+             return RubyUtil.RUBY.newArray();
+diff --git a/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+new file mode 100644
+index 000000000..57c136529
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+@@ -0,0 +1,34 @@
++package org.logstash.common;
++
++import org.jruby.RubyArray;
++import org.jruby.RubyString;
++import org.jruby.runtime.ThreadContext;
++import org.junit.Test;
++import org.logstash.RubyTestBase;
++import org.logstash.RubyUtil;
++
++import static org.junit.Assert.assertArrayEquals;
++import static org.junit.Assert.assertTrue;
++
++public class BufferedTokenizerExtTest extends RubyTestBase {
++
++    @Test
++    public void testExtractAndFlushPreserveInputEncodingBytes() {
++        final ThreadContext context = RubyUtil.RUBY.getCurrentContext();
++        final BufferedTokenizerExt tokenizer = new BufferedTokenizerExt(
++            RubyUtil.RUBY, RubyUtil.BUFFERED_TOKENIZER
++        );
++        tokenizer.init(context, new org.jruby.runtime.builtin.IRubyObject[0]);
++
++        final RubyString rubyString = RubyString.newString(RubyUtil.RUBY, new byte[]{(byte) 0xA3});
++        final RubyString encoded = (RubyString) rubyString.force_encoding(
++            context, RubyUtil.RUBY.newString("ISO8859-1")
++        );
++
++        final RubyArray<?> extracted = tokenizer.extract(context, encoded);
++        assertTrue(extracted.isEmpty());
++
++        final RubyString flushed = (RubyString) tokenizer.flush(context);
++        assertArrayEquals(new byte[]{(byte) 0xA3}, flushed.getBytes());
++    }
++}

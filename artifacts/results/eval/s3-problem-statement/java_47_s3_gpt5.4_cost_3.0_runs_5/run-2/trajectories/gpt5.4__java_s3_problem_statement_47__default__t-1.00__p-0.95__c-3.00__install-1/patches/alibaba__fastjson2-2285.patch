@@ -1,0 +1,177 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
+index b921de01f..9f5c25ae2 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
++++ b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
+@@ -363,6 +363,7 @@ public class ObjectWriterBaseModule
+             }
+ 
+             if (jsonField == null) {
++                applyTypeSerializer(fieldInfo, field.getType());
+                 return;
+             }
+ 
+@@ -378,15 +379,20 @@ public class ObjectWriterBaseModule
+                 fieldInfo.writeUsing = serializeUsing;
+             }
+ 
+-            if (jsonField.jsonDirect()) {
+-                fieldInfo.features |= FieldInfo.RAW_VALUE_MASK;
++            applyTypeSerializer(fieldInfo, field.getType());
++        }
++
++        private void applyTypeSerializer(FieldInfo fieldInfo, Class fieldClass) {
++            if (fieldInfo.writeUsing != null) {
++                return;
+             }
+ 
+-            if ((fieldInfo.features & JSONWriter.Feature.WriteNonStringValueAsString.mask) != 0
+-                    && !String.class.equals(field.getType())
+-                    && fieldInfo.writeUsing == null
+-            ) {
+-                fieldInfo.writeUsing = ObjectWriterImplToString.class;
++            JSONType jsonType = BeanUtils.findAnnotation(fieldClass, JSONType.class);
++            if (jsonType != null) {
++                Class<?> serializer = jsonType.serializer();
++                if (ObjectWriter.class.isAssignableFrom(serializer)) {
++                    fieldInfo.writeUsing = serializer;
++                }
+             }
+         }
+ 
+@@ -762,9 +768,11 @@ public class ObjectWriterBaseModule
+             Annotation[] annotations = getAnnotations(method);
+             processAnnotations(fieldInfo, annotations);
+ 
++            boolean fieldMatched = false;
+             if (!objectClass.getName().startsWith("java.lang") && !BeanUtils.isRecord(objectClass)) {
+                 Field methodField = getField(objectClass, method);
+                 if (methodField != null) {
++                    fieldMatched = true;
+                     fieldInfo.features |= FieldInfo.FIELD_MASK;
+                     getFieldInfo(beanInfo, fieldInfo, objectClass, methodField);
+                 }
+@@ -787,6 +795,10 @@ public class ObjectWriterBaseModule
+                     }
+                 }
+             }
++
++            if (!fieldMatched) {
++                applyTypeSerializer(fieldInfo, method.getReturnType());
++            }
+         }
+ 
+         private void processAnnotations(FieldInfo fieldInfo, Annotation[] annotations) {
+diff --git a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_deserializer.java b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_deserializer.java
+index a04d49637..daf9be693 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_deserializer.java
++++ b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_deserializer.java
+@@ -60,4 +60,49 @@ public class JSONType_deserializer {
+             assertEquals(123, bean.id);
+         }
+     }
++
++    @Test
++    public void testFieldTypeDeserializer() {
++        BeanContainer bean = JSON.parseObject("{\"item\":102}", BeanContainer.class);
++        assertEquals(Item.B, bean.item);
++    }
++
++    @Test
++    public void testFieldTypeDeserializerReaderCreators() {
++        String str = "{\"item\":102}";
++
++        for (ObjectReaderCreator creator : TestUtils.readerCreators()) {
++            ObjectReader<BeanContainer> objectReader = creator.createObjectReader(BeanContainer.class);
++
++            JSONReader jsonReader = JSONReader.of(str);
++            BeanContainer bean = objectReader.readObject(jsonReader);
++
++            assertEquals(Item.B, bean.item);
++        }
++    }
++
++    public static class BeanContainer {
++        public Item item;
++    }
++
++    @JSONType(deserializer = ItemReader.class)
++    public enum Item {
++        A(101),
++        B(102);
++
++        public final int id;
++
++        Item(int id) {
++            this.id = id;
++        }
++    }
++
++    public static class ItemReader
++            implements ObjectReader<Item> {
++        @Override
++        public Item readObject(JSONReader jsonReader, Type fieldType, Object fieldName, long features) {
++            int id = jsonReader.readInt32Value();
++            return id == 102 ? Item.B : Item.A;
++        }
++    }
+ }
+diff --git a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+index f8b847de4..f58c945f9 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
++++ b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+@@ -54,4 +54,51 @@ public class JSONType_serializer {
+             assertEquals("{\"ID\":123}", str);
+         }
+     }
++
++    @Test
++    public void testFieldTypeSerializer() {
++        BeanContainer bean = new BeanContainer();
++        bean.item = Item.B;
++
++        assertEquals("{\"item\":102}", JSON.toJSONString(bean));
++    }
++
++    @Test
++    public void testFieldTypeSerializerWriterCreators() {
++        BeanContainer bean = new BeanContainer();
++        bean.item = Item.B;
++
++        for (ObjectWriterCreator creator : TestUtils.writerCreators()) {
++            ObjectWriter objectWriter = creator.createObjectWriter(BeanContainer.class);
++            JSONWriter jsonWriter = JSONWriter.of();
++            objectWriter.write(jsonWriter, bean);
++            String str = jsonWriter.toString();
++            assertEquals("{\"item\":102}", str);
++        }
++    }
++
++    public static class BeanContainer {
++        public Item item;
++    }
++
++    @JSONType(serializer = ItemWriter.class)
++    public enum Item {
++        A(101),
++        B(102);
++
++        public final int id;
++
++        Item(int id) {
++            this.id = id;
++        }
++    }
++
++    public static class ItemWriter
++            implements ObjectWriter<Item> {
++        @Override
++        public void write(JSONWriter jsonWriter, Object object, Object fieldName, Type fieldType, long features) {
++            Item item = (Item) object;
++            jsonWriter.writeInt32(item.id);
++        }
++    }
+ }

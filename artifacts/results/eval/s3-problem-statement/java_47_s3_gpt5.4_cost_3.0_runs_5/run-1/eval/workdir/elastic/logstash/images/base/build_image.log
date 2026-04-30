@@ -1,0 +1,44 @@
+[2026-04-30 19:55:43,480] [docker_util.py] [INFO]: Start building image `mswebench/elastic_m_logstash:base`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_47_s3_gpt5.4_cost_3.0_runs_5/run-1/eval/workdir/elastic/logstash/images/base`
+[2026-04-30 19:55:44,182] [docker_util.py] [INFO]: Step 1/10 : FROM ubuntu:latest
+[2026-04-30 19:55:44,182] [docker_util.py] [INFO]: 
+[2026-04-30 19:55:44,197] [docker_util.py] [INFO]: ---> 66460d557b25
+[2026-04-30 19:55:44,197] [docker_util.py] [INFO]: Step 2/10 : ENV JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai"
+[2026-04-30 19:55:44,197] [docker_util.py] [INFO]: 
+[2026-04-30 19:55:44,250] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-30 19:55:44,250] [docker_util.py] [INFO]: ---> cb167ebb7869
+[2026-04-30 19:55:44,250] [docker_util.py] [INFO]: Step 3/10 : ENV DEBIAN_FRONTEND=noninteractive
+[2026-04-30 19:55:44,250] [docker_util.py] [INFO]: 
+[2026-04-30 19:55:44,276] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-30 19:55:44,276] [docker_util.py] [INFO]: ---> 6bbe6339a6a6
+[2026-04-30 19:55:44,276] [docker_util.py] [INFO]: Step 4/10 : ENV LANG=C.UTF-8
+[2026-04-30 19:55:44,276] [docker_util.py] [INFO]: 
+[2026-04-30 19:55:44,299] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-30 19:55:44,299] [docker_util.py] [INFO]: ---> 711a0bccd6b7
+[2026-04-30 19:55:44,299] [docker_util.py] [INFO]: Step 5/10 : ENV LC_ALL=C.UTF-8
+[2026-04-30 19:55:44,299] [docker_util.py] [INFO]: 
+[2026-04-30 19:55:44,326] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-30 19:55:44,327] [docker_util.py] [INFO]: ---> 0cc1a341f1de
+[2026-04-30 19:55:44,327] [docker_util.py] [INFO]: Step 6/10 : WORKDIR /home/
+[2026-04-30 19:55:44,327] [docker_util.py] [INFO]: 
+[2026-04-30 19:55:44,348] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-30 19:55:44,348] [docker_util.py] [INFO]: ---> 4491178bad8c
+[2026-04-30 19:55:44,348] [docker_util.py] [INFO]: Step 7/10 : RUN apt update && apt install -y gnupg ca-certificates git curl
+[2026-04-30 19:55:44,348] [docker_util.py] [INFO]: 
+[2026-04-30 19:55:44,367] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-30 19:55:44,367] [docker_util.py] [INFO]: ---> 271d4555ff55
+[2026-04-30 19:55:44,367] [docker_util.py] [INFO]: Step 8/10 : RUN curl -s https://repos.azul.com/azul-repo.key | gpg --dearmor -o /usr/share/keyrings/azul.gpg     && echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | tee /etc/apt/sources.list.d/zulu.list
+[2026-04-30 19:55:44,367] [docker_util.py] [INFO]: 
+[2026-04-30 19:55:44,399] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-30 19:55:44,399] [docker_util.py] [INFO]: ---> 1e6750fad6aa
+[2026-04-30 19:55:44,399] [docker_util.py] [INFO]: Step 9/10 : RUN apt update && apt install -y zulu11-jdk
+[2026-04-30 19:55:44,399] [docker_util.py] [INFO]: 
+[2026-04-30 19:55:44,470] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-30 19:55:44,470] [docker_util.py] [INFO]: ---> fa720dca7ea8
+[2026-04-30 19:55:44,470] [docker_util.py] [INFO]: Step 10/10 : RUN git clone https://github.com/elastic/logstash.git /home/logstash
+[2026-04-30 19:55:44,470] [docker_util.py] [INFO]: 
+[2026-04-30 19:55:44,526] [docker_util.py] [INFO]: ---> Using cache
+[2026-04-30 19:55:44,526] [docker_util.py] [INFO]: ---> 177a0c933542
+[2026-04-30 19:55:44,526] [docker_util.py] [INFO]: sha256:177a0c933542972b60a1af6b73e70eb64a259a255ffc19519e830aa5387106a7
+[2026-04-30 19:55:44,527] [docker_util.py] [INFO]: Successfully built 177a0c933542
+[2026-04-30 19:55:44,552] [docker_util.py] [INFO]: Successfully tagged mswebench/elastic_m_logstash:base
+[2026-04-30 19:55:44,552] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_47_s3_gpt5.4_cost_3.0_runs_5/run-1/eval/workdir/elastic/logstash/images/base) build success: mswebench/elastic_m_logstash:base

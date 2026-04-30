@@ -1,0 +1,81 @@
+
+diff --git a/.gitignore b/.gitignore
+index a414d36d..942beea0 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -13,3 +13,6 @@ bin/
+ .classpath
+ .project
+ .DS_Store
++out/
++*.class
++*.jar
+diff --git a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointCaller.java b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointCaller.java
+index eb010f00..c11d0261 100644
+--- a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointCaller.java
++++ b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointCaller.java
+@@ -189,19 +189,27 @@ class RegistryEndpointCaller<T> {
+         new RegistryErrorExceptionBuilder(
+             registryEndpointProvider.getActionDescription(), responseException);
+ 
+-    try {
+-      ErrorResponseTemplate errorResponse =
+-          JsonTemplateMapper.readJson(responseException.getContent(), ErrorResponseTemplate.class);
+-      for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
+-        registryErrorExceptionBuilder.addReason(errorEntry);
+-      }
+-    } catch (IOException ex) {
++    String content = responseException.getContent();
++    if (content == null || content.isEmpty()) {
+       registryErrorExceptionBuilder.addReason(
+           "registry returned error code "
+               + responseException.getStatusCode()
+-              + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
+-              + responseException.getContent()
+-              + "\n");
++              + "; possible causes include invalid or wrong reference. No error details provided.");
++    } else {
++      try {
++        ErrorResponseTemplate errorResponse =
++            JsonTemplateMapper.readJson(content, ErrorResponseTemplate.class);
++        for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
++          registryErrorExceptionBuilder.addReason(errorEntry);
++        }
++      } catch (IOException ex) {
++        registryErrorExceptionBuilder.addReason(
++            "registry returned error code "
++                + responseException.getStatusCode()
++                + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
++                + content
++                + "\n");
++      }
+     }
+ 
+     return registryErrorExceptionBuilder.build();
+diff --git a/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryEndpointCallerTest.java b/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryEndpointCallerTest.java
+index 90319810..1a80bf8e 100644
+--- a/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryEndpointCallerTest.java
++++ b/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryEndpointCallerTest.java
+@@ -434,6 +434,22 @@ public class RegistryEndpointCallerTest {
+             + "https://github.com/GoogleContainerTools/jib/issues/new",
+         registryException.getMessage());
+   }
++  @Test
++  public void testNewRegistryErrorException_nullErrorOutput() {
++    ResponseException httpException = Mockito.mock(ResponseException.class);
++    Mockito.when(httpException.getContent()).thenReturn(null);
++    Mockito.when(httpException.getStatusCode()).thenReturn(404);
++
++    RegistryErrorException registryException =
++        endpointCaller.newRegistryErrorException(httpException);
++    Assert.assertSame(httpException, registryException.getCause());
++    Assert.assertEquals(
++        "Tried to actionDescription but failed because: registry returned error code 404; "
++            + "possible causes include invalid or wrong reference. No error details provided. "
++            + "| If this is a bug, please file an issue at "
++            + "https://github.com/GoogleContainerTools/jib/issues/new",
++        registryException.getMessage());
++  }
+ 
+   /**
+    * Verifies that a response with {@code httpStatusCode} throws {@link

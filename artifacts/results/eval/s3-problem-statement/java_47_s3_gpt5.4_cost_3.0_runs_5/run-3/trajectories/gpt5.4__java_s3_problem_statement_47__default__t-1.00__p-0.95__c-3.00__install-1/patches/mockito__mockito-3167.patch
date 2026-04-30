@@ -1,0 +1,98 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+index 5e39714cf..f8a1c07e9 100644
+--- a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
++++ b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+@@ -71,13 +71,27 @@ public class DeepStubbingTest extends TestBase {
+ 
+     static final class FinalClass {}
+ 
++    enum PieceType {
++        SQUARE;
++
++        double getCostPerPieceSpace() {
++            return 2.5d;
++        }
++    }
++
++    interface Piece {
++        PieceType getPiece();
++    }
++
+     interface First {
+         Second getSecond();
+ 
+         String getString();
+     }
+ 
+-    interface Second extends List<String> {}
++    interface Second {
++        String get(int index);
++    }
+ 
+     class BaseClassGenerics<A, B> {}
+ 
+@@ -368,6 +382,13 @@ public class DeepStubbingTest extends TestBase {
+         assertNull(first.getSecond().get(0));
+     }
+ 
++    @Test
++    public void deep_stub_does_not_try_to_mock_enum_with_unsupported_settings() {
++        Piece piece = mock(Piece.class, RETURNS_DEEP_STUBS);
++
++        assertNull(piece.getPiece());
++    }
++
+     @Test
+     public void deep_stub_does_not_stack_overflow_on_reversed_generics() {
+         SuperOfReversedGenerics mock = mock(SuperOfReversedGenerics.class, RETURNS_DEEP_STUBS);
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+index a418aab7a..dee98898d 100644
+--- a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+@@ -20,6 +20,15 @@ public class EnumMockingTest {
+         assertThat(a.name(), nullValue(String.class));
+     }
+ 
++    @Test
++    public void testDeepStubCanMockEnum() {
++        Piece piece = Mockito.mock(Piece.class, Mockito.RETURNS_DEEP_STUBS);
++
++        Mockito.when(piece.getPiece().getCostPerPieceSpace()).thenReturn(2.5d);
++
++        assertThat(piece.getPiece().getCostPerPieceSpace(), is(2.5d));
++    }
++
+     enum Animal {
+         CAT {
+             @Override
+@@ -30,4 +39,16 @@ public class EnumMockingTest {
+ 
+         public abstract String sound();
+     }
++
++    interface Piece {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE;
++
++        double getCostPerPieceSpace() {
++            return 1d;
++        }
++    }
+ }

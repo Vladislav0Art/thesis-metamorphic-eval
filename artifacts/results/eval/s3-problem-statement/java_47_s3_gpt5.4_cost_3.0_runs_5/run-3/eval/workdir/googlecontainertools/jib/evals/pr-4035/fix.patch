@@ -1,0 +1,71 @@
+
+diff --git a/.gitignore b/.gitignore
+index 5030f209..f51c646a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -14,3 +14,6 @@ bin/
+ .classpath
+ .project
+ .DS_Store
++out/
++*.class
++*.jar
+diff --git a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticator.java b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticator.java
+index 1b4acde6..db0a2742 100644
+--- a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticator.java
++++ b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticator.java
+@@ -72,16 +72,16 @@ public class RegistryAuthenticator {
+       @Nullable String userAgent,
+       FailoverHttpClient httpClient)
+       throws RegistryAuthenticationFailedException {
+-    // If the authentication method starts with 'basic ' (case insensitive), no registry
++    // If the authentication method is 'basic' (case insensitive), no registry
+     // authentication is needed.
+-    if (authenticationMethod.matches("^(?i)(basic) .*")) {
++    if (authenticationMethod.matches("^(?i)(basic)( .*)?$")) {
+       return Optional.empty();
+     }
+ 
+     String registryUrl = registryEndpointRequestProperties.getServerUrl();
+     String imageName = registryEndpointRequestProperties.getImageName();
+-    // Checks that the authentication method starts with 'bearer ' (case insensitive).
+-    if (!authenticationMethod.matches("^(?i)(bearer) .*")) {
++    // Checks that the authentication method is 'bearer' (case insensitive).
++    if (!authenticationMethod.matches("^(?i)(bearer)( .*)?$")) {
+       throw newRegistryAuthenticationFailedException(
+           registryUrl, imageName, authenticationMethod, "Bearer");
+     }
+@@ -163,7 +163,7 @@ public class RegistryAuthenticator {
+   }
+ 
+   /**
+-   * Authenticates permissions to pull.
++   * Authenticates for pulls.
+    *
+    * @param credential the credential used to authenticate
+    * @return an {@code Authorization} authenticating the pull
+@@ -177,7 +177,7 @@ public class RegistryAuthenticator {
+   }
+ 
+   /**
+-   * Authenticates permission to pull and push.
++   * Authenticates for pushes.
+    *
+    * @param credential the credential used to authenticate
+    * @return an {@code Authorization} authenticating the push
+diff --git a/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryAuthenticatorTest.java b/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryAuthenticatorTest.java
+index fad7c41f..808e9d78 100644
+--- a/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryAuthenticatorTest.java
++++ b/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryAuthenticatorTest.java
+@@ -178,6 +178,11 @@ public class RegistryAuthenticatorTest {
+                 "user-agent",
+                 httpClient)
+             .isPresent());
++
++    Assert.assertFalse(
++        RegistryAuthenticator.fromAuthenticationMethod(
++                "Basic", registryEndpointRequestProperties, "user-agent", httpClient)
++            .isPresent());
+   }
+ 
+   @Test

@@ -1,0 +1,158 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index cccb9c476..603fdcc10 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -57,4 +57,17 @@ describe  FileWatch::BufferedTokenizer  do
+       expect(subject.extract("foo||bar")).to eq(["foo"])
+     end
+   end
++
++  context "with size limit" do
++    subject { FileWatch::BufferedTokenizer.new("\n", limit) }
++
++    let(:limit) { 10 }
++
++    it "drops the oversized buffered token and resumes after the next delimiter" do
++      expect(subject.extract("12345")).to eq([])
++      expect { subject.extract("678901\nabc\n") }.to raise_error(IllegalStateException, "input buffer full")
++      expect(subject.extract("def\n")).to eq(["abc", "def"])
++    end
++
++  end
+ end
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+index 2d7b90bba..be33925fa 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+@@ -40,10 +40,12 @@ public class BufferedTokenizerExt extends RubyObject {
+                                                                 freeze(RubyUtil.RUBY.getCurrentContext());
+ 
+     private @SuppressWarnings("rawtypes") RubyArray input = RubyUtil.RUBY.newArray();
++    private @SuppressWarnings("rawtypes") RubyArray pending = RubyUtil.RUBY.newArray();
+     private RubyString delimiter = NEW_LINE;
+     private int sizeLimit;
+     private boolean hasSizeLimit;
+     private int inputSize;
++    private boolean discarding;
+ 
+     public BufferedTokenizerExt(final Ruby runtime, final RubyClass metaClass) {
+         super(runtime, metaClass);
+@@ -58,7 +60,10 @@ public class BufferedTokenizerExt extends RubyObject {
+             this.sizeLimit = args[1].convertToInteger().getIntValue();
+             this.hasSizeLimit = true;
+         }
++        this.input.clear();
++        this.pending.clear();
+         this.inputSize = 0;
++        this.discarding = false;
+         return this;
+     }
+ 
+@@ -76,23 +81,68 @@ public class BufferedTokenizerExt extends RubyObject {
+     @JRubyMethod
+     @SuppressWarnings("rawtypes")
+     public RubyArray extract(final ThreadContext context, IRubyObject data) {
++        final RubyArray ready = pending;
++        pending = RubyUtil.RUBY.newArray();
++        final RubyArray extracted = RubyUtil.RUBY.newArray();
+         final RubyArray entities = data.convertToString().split(delimiter, -1);
+-        if (hasSizeLimit) {
+-            final int entitiesSize = ((RubyString) entities.first()).size();
+-            if (inputSize + entitiesSize > sizeLimit) {
+-                throw new IllegalStateException("input buffer full");
++
++        if (process(context, entities, extracted)) {
++            appendAll(context, pending, ready);
++            appendAll(context, pending, extracted);
++            throw new IllegalStateException("input buffer full");
++        }
++
++        appendAll(context, ready, extracted);
++        return ready;
++    }
++
++    @SuppressWarnings("rawtypes")
++    private boolean process(final ThreadContext context, final RubyArray entities, final RubyArray extracted) {
++        boolean overflowed = false;
++
++        while (!entities.isEmpty()) {
++            final RubyString entity = (RubyString) entities.shift(context);
++            final boolean terminated = !entities.isEmpty();
++
++            if (discarding) {
++                if (terminated) {
++                    discarding = false;
++                }
++                continue;
++            }
++
++            final int entitySize = entity.size();
++            if (hasSizeLimit && inputSize + entitySize > sizeLimit) {
++                overflowed = true;
++                resetInput();
++                if (!terminated) {
++                    discarding = true;
++                    break;
++                }
++                continue;
++            }
++
++            input.append(entity);
++            inputSize += entitySize;
++            if (terminated) {
++                extracted.append(input.join(context));
++                resetInput();
+             }
+-            this.inputSize = inputSize + entitiesSize;
+         }
+-        input.append(entities.shift(context));
+-        if (entities.isEmpty()) {
+-            return RubyUtil.RUBY.newArray();
++
++        return overflowed;
++    }
++
++    @SuppressWarnings("rawtypes")
++    private static void appendAll(final ThreadContext context, final RubyArray destination, final RubyArray source) {
++        while (!source.isEmpty()) {
++            destination.append(source.shift(context));
+         }
+-        entities.unshift(input.join(context));
++    }
++
++    private void resetInput() {
+         input.clear();
+-        input.append(entities.pop(context));
+-        inputSize = ((RubyString) input.first()).size();
+-        return entities;
++        inputSize = 0;
+     }
+ 
+     /**
+@@ -105,10 +155,11 @@ public class BufferedTokenizerExt extends RubyObject {
+     @JRubyMethod
+     public IRubyObject flush(final ThreadContext context) {
+         final IRubyObject buffer = input.join(context);
+-        input.clear();
++        resetInput();
+         return buffer;
+     }
+ 
++
+     @JRubyMethod(name = "empty?")
+     public IRubyObject isEmpty(final ThreadContext context) {
+         return input.empty_p();

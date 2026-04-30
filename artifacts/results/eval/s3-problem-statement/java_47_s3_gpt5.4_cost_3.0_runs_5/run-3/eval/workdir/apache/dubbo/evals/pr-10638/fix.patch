@@ -1,0 +1,91 @@
+
+diff --git a/.gitignore b/.gitignore
+index 87a564393d..ee4378dd6e 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -48,3 +48,6 @@ dubbo-demo/dubbo-demo-triple/build/*
+ 
+ # global registry center
+ .tmp
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/CompatibleTypeUtils.java b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/CompatibleTypeUtils.java
+index dc113e1ae8..71faf3685b 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/CompatibleTypeUtils.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/CompatibleTypeUtils.java
+@@ -128,7 +128,7 @@ public class CompatibleTypeUtils {
+                 if (StringUtils.isEmpty(string)) {
+                     return null;
+                 }
+-                return LocalDateTime.parse(string).toLocalTime();
++                return java.time.LocalTime.parse(string);
+             }
+             if (type == Class.class) {
+                 try {
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoUtils.java b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoUtils.java
+index c6e2eaeb7c..70e1b90e4a 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoUtils.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoUtils.java
+@@ -141,6 +141,12 @@ public class PojoUtils {
+         if (ReflectUtils.isPrimitives(pojo.getClass())) {
+             return pojo;
+         }
++        if (pojo instanceof java.time.LocalDate
++                || pojo instanceof java.time.LocalTime
++                || pojo instanceof java.time.LocalDateTime) {
++            return pojo.toString();
++        }
++
+ 
+         if (pojo instanceof Class) {
+             return ((Class) pojo).getName();
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
+index e615dd97b1..b29cd4b270 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
+@@ -32,6 +32,9 @@ import org.junit.jupiter.api.Test;
+ import java.lang.reflect.Method;
+ import java.lang.reflect.Type;
+ import java.text.SimpleDateFormat;
++import java.time.LocalDate;
++import java.time.LocalDateTime;
++import java.time.LocalTime;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.Date;
+@@ -141,7 +144,6 @@ public class PojoUtilsTest {
+     public void test_has_no_nullary_constructor_pojo() {
+         assertObject(new User(1, "fibbery"));
+     }
+-
+     @Test
+     public void test_Map_List_pojo() throws Exception {
+         Map<String, List<Object>> map = new HashMap<String, List<Object>>();
+@@ -835,6 +837,26 @@ public class PojoUtilsTest {
+         }
+ 
+     }
++    @Test
++    public void testJava8Time() {
++        LocalDateTime localDateTimeValue = LocalDateTime.of(2022, 9, 19, 10, 11, 12, 123456789);
++        Object localDateTimeGen = PojoUtils.generalize(localDateTimeValue);
++        Object localDateTime = PojoUtils.realize(localDateTimeGen, LocalDateTime.class);
++        assertEquals(localDateTimeValue.toString(), localDateTimeGen);
++        assertEquals(localDateTimeValue, localDateTime);
++
++        LocalDate localDateValue = LocalDate.of(2022, 9, 19);
++        Object localDateGen = PojoUtils.generalize(localDateValue);
++        Object localDate = PojoUtils.realize(localDateGen, LocalDate.class);
++        assertEquals(localDateValue.toString(), localDateGen);
++        assertEquals(localDateValue, localDate);
++
++        LocalTime localTimeValue = LocalTime.of(10, 11, 12, 123456789);
++        Object localTimeGen = PojoUtils.generalize(localTimeValue);
++        Object localTime = PojoUtils.realize(localTimeGen, LocalTime.class);
++        assertEquals(localTimeValue.toString(), localTimeGen);
++        assertEquals(localTimeValue, localTime);
++    }
+ 
+     public static class Parent {
+         public String gender;

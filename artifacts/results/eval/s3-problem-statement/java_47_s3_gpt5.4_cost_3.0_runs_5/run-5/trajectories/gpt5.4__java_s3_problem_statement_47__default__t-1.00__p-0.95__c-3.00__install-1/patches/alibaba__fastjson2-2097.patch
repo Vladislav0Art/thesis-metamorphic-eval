@@ -1,0 +1,54 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+index 2af2137f4..498cbbe3b 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
++++ b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+@@ -601,6 +601,8 @@ public final class ObjectReaderImplList
+             }
+         }
+ 
++        List<Integer> resolveIndexes = null;
++        List<JSONPath> resolvePaths = null;
+         for (int i = 0; ; ++i) {
+             if (jsonReader.nextIfArrayEnd()) {
+                 break;
+@@ -615,8 +617,19 @@ public final class ObjectReaderImplList
+                     if ("..".equals(reference)) {
+                         item = this;
+                     } else {
+-                        jsonReader.addResolveTask(list, i, JSONPath.of(reference));
+-                        continue;
++                        JSONPath path = JSONPath.of(reference);
++                        if (listClass == CLASS_ARRAYS_LIST) {
++                            if (resolveIndexes == null) {
++                                resolveIndexes = new ArrayList<>();
++                                resolvePaths = new ArrayList<>();
++                            }
++                            resolveIndexes.add(i);
++                            resolvePaths.add(path);
++                            item = null;
++                        } else {
++                            jsonReader.addResolveTask(list, i, path);
++                            continue;
++                        }
+                     }
+                 } else {
+                     item = itemObjectReader.readObject(jsonReader, itemType, i, 0);
+@@ -631,7 +644,13 @@ public final class ObjectReaderImplList
+         jsonReader.nextIfComma();
+ 
+         if (builder != null) {
+-            return builder.apply(list);
++            Collection buildList = (Collection) builder.apply(list);
++            if (listClass == CLASS_ARRAYS_LIST && resolveIndexes != null) {
++                for (int i = 0; i < resolveIndexes.size(); i++) {
++                    jsonReader.addResolveTask(buildList, resolveIndexes.get(i), resolvePaths.get(i));
++                }
++            }
++            return buildList;
+         }
+ 
+         return list;

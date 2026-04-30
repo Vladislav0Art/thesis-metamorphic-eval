@@ -1,0 +1,62 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index cccb9c476..0cf1f8fef 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -57,4 +57,18 @@ describe  FileWatch::BufferedTokenizer  do
+       expect(subject.extract("foo||bar")).to eq(["foo"])
+     end
+   end
++
++  context "with size limit" do
++    subject { FileWatch::BufferedTokenizer.new("\n", size_limit) }
++
++    let(:size_limit) { 9 }
++
++    it "resets to after the next delimiter when an overflow chunk contains a complete token" do
++      expect(subject.extract("abcde")).to eq([])
++
++      expect { subject.extract("fghij\nok\n") }.to raise_error(IllegalStateException, "input buffer full")
++
++      expect(subject.extract("next\n")).to eq(["ok", "next"])
++    end
++  end
+ end
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+index 2d7b90bba..2c0bb3a97 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+@@ -80,6 +80,12 @@ public class BufferedTokenizerExt extends RubyObject {
+         if (hasSizeLimit) {
+             final int entitiesSize = ((RubyString) entities.first()).size();
+             if (inputSize + entitiesSize > sizeLimit) {
++                if (entities.getLength() > 1) {
++                    entities.shift(context);
++                    input.clear();
++                    input.append(entities.pop(context));
++                    inputSize = ((RubyString) input.first()).size();
++                }
+                 throw new IllegalStateException("input buffer full");
+             }
+             this.inputSize = inputSize + entitiesSize;
+@@ -94,6 +100,7 @@ public class BufferedTokenizerExt extends RubyObject {
+         inputSize = ((RubyString) input.first()).size();
+         return entities;
+     }
++    }
+ 
+     /**
+      * Flush the contents of the input buffer, i.e. return the input buffer even though

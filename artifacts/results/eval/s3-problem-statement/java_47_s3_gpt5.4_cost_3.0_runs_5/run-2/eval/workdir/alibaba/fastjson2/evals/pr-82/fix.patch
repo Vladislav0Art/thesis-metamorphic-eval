@@ -1,0 +1,156 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index b6a0ff2ce..e43b96990 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -590,7 +590,7 @@ public interface JSON {
+     }
+ 
+     /**
+-     * Verify the {@link String} is JSON Object
++     * Verify the {@link String} is valid JSON
+      *
+      * @param text the {@link String} to validate
+      * @return T/F
+@@ -602,10 +602,32 @@ public interface JSON {
+         JSONReader jsonReader = JSONReader.of(text);
+         try {
+             jsonReader.skipValue();
++            return jsonReader.current() == EOI;
++        } catch (JSONException error) {
++            return false;
++        }
++    }
++
++    /**
++     * Verify the {@link String} is JSON Object
++     *
++     * @param text the {@link String} to validate
++     * @return T/F
++     */
++    static boolean isValidObject(String text) {
++        if (text == null || text.length() == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(text);
++        try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
++            jsonReader.skipValue();
++            return jsonReader.current() == EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -624,14 +646,14 @@ public interface JSON {
+                 return false;
+             }
+             jsonReader.skipValue();
++            return jsonReader.current() == EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+-     * Verify the byte array is JSON Object
++     * Verify the byte array is valid JSON
+      *
+      * @param bytes the byte array to validate
+      * @return T/F
+@@ -643,10 +665,32 @@ public interface JSON {
+         JSONReader jsonReader = JSONReader.of(bytes);
+         try {
+             jsonReader.skipValue();
++            return jsonReader.current() == EOI;
++        } catch (JSONException error) {
++            return false;
++        }
++    }
++
++    /**
++     * Verify the byte array is JSON Object
++     *
++     * @param bytes the byte array to validate
++     * @return T/F
++     */
++    static boolean isValidObject(byte[] bytes) {
++        if (bytes == null || bytes.length == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(bytes);
++        try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
++            jsonReader.skipValue();
++            return jsonReader.current() == EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -665,14 +709,14 @@ public interface JSON {
+                 return false;
+             }
+             jsonReader.skipValue();
++            return jsonReader.current() == EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+-     * Verify the byte array is JSON Object
++     * Verify the byte array is valid JSON
+      *
+      * @param bytes   the byte array to validate
+      * @param offset  the index of the first byte to validate
+@@ -687,10 +731,35 @@ public interface JSON {
+         JSONReader jsonReader = JSONReader.of(bytes, offset, length, charset);
+         try {
+             jsonReader.skipValue();
++            return jsonReader.current() == EOI;
++        } catch (JSONException error) {
++            return false;
++        }
++    }
++
++    /**
++     * Verify the byte array is JSON Object
++     *
++     * @param bytes   the byte array to validate
++     * @param offset  the index of the first byte to validate
++     * @param length  the number of bytes to validate
++     * @param charset specify {@link Charset} to validate
++     * @return T/F
++     */
++    static boolean isValidObject(byte[] bytes, int offset, int length, Charset charset) {
++        if (bytes == null || bytes.length == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(bytes, offset, length, charset);
++        try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
++            jsonReader.skipValue();
++            return jsonReader.current() == EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**

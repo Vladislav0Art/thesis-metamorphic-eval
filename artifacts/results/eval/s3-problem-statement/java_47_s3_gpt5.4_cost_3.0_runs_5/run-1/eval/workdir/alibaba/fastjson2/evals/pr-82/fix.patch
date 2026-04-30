@@ -1,0 +1,259 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+index af3a042cd..eee11e9d7 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+@@ -595,102 +595,112 @@ public abstract class JSONReader implements Closeable {
+         }
+         return number == null ? null : number.floatValue();
+     }
+-
+-    public double readDoubleValue() {
+-        readNumber();
+-        Number number = getNumber();
+-        return number == null ? 0 : number.doubleValue();
+-    }
+-
+-    public Double readDouble() {
+-        readNumber();
+-        Number number = getNumber();
+-        if (number instanceof Double) {
+-            return (Double) number;
++    static boolean isValid(String text) {
++        if (text == null || text.length() == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(text);
++        try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
++            jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
++        } catch (JSONException error) {
++            return false;
+         }
+-        return number == null ? null : number.doubleValue();
+-    }
+-
+-    public Number readNumber() {
+-        readNumber0();
+-        return getNumber();
+     }
+ 
+-    public BigInteger readBigInteger() {
+-        readNumber0();
+-        return getBigInteger();
++    /**
++     * Verify the {@link String} is JSON Array
++     *
++     * @param text the {@link String} to validate
++     * @return T/F
++     */
++    static boolean isValidArray(String text) {
++        if (text == null || text.length() == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(text);
++        try {
++            if (!jsonReader.isArray()) {
++                return false;
++            }
++            jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
++        } catch (JSONException error) {
++            return false;
++        }
+     }
+ 
+-    public BigDecimal readBigDecimal() {
+-        readNumber0();
+-        return getBigDecimal();
++    /**
++     * Verify the byte array is JSON Object
++     *
++     * @param bytes the byte array to validate
++     * @return T/F
++     */
++    static boolean isValid(byte[] bytes) {
++        if (bytes == null || bytes.length == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(bytes);
++        try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
++            jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
++        } catch (JSONException error) {
++            return false;
++        }
+     }
+ 
+-    public abstract UUID readUUID();
+-
+-    public LocalDate readLocalDate() {
+-        int len = getStringLength();
+-        switch (len) {
+-            case 8:
+-                return readLocalDate8()
+-                        .toLocalDate();
+-            case 9:
+-                return readLocalDate9()
+-                        .toLocalDate();
+-            case 10: {
+-                return readLocalDate10()
+-                        .toLocalDate();
++    /**
++     * Verify the byte array is JSON Array
++     *
++     * @param bytes the byte array to validate
++     * @return T/F
++     */
++    static boolean isValidArray(byte[] bytes) {
++        if (bytes == null || bytes.length == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(bytes);
++        try {
++            if (!jsonReader.isArray()) {
++                return false;
+             }
+-            case 11:
+-                return readLocalDate11()
+-                        .toLocalDate();
+-            default:
+-                break;
++            jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
++        } catch (JSONException error) {
++            return false;
+         }
+-        throw new JSONException("TODO : " + len + ", " + readString());
+     }
+ 
+-    public LocalDateTime readLocalDateTime() {
+-        int len = getStringLength();
+-        switch (len) {
+-            case 8:
+-                return readLocalDate8();
+-            case 9:
+-                return readLocalDate9();
+-            case 10:
+-                return readLocalDate10();
+-            case 11:
+-                return readLocalDate11();
+-            case 16:
+-                return readLocalDateTime16();
+-            case 17:
+-                return readLocalDateTime17();
+-            case 18:
+-                return readLocalDateTime18();
+-            case 19:
+-                return readLocalDateTime19();
+-            case 21:
+-            case 22:
+-            case 23:
+-            case 24:
+-            case 25:
+-            case 26:
+-            case 27:
+-            case 28:
+-            case 29:
+-                return readLocalDateTimeX(len);
+-            default:
+-                break;
++    /**
++     * Verify the byte array is JSON Object
++     *
++     * @param bytes   the byte array to validate
++     * @param offset  the index of the first byte to validate
++     * @param length  the number of bytes to validate
++     * @param charset specify {@link Charset} to validate
++     * @return T/F
++     */
++    static boolean isValid(byte[] bytes, int offset, int length, Charset charset) {
++        if (bytes == null || bytes.length == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(bytes, offset, length, charset);
++        try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
++            jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
++        } catch (JSONException error) {
++            return false;
+         }
+-        throw new JSONException("TODO : " + len + ", " + readString());
+     }
+-
+-    public ZonedDateTime readZonedDateTime() {
+-        if (ch == '"') {
+-            int len = getStringLength();
+-            ZonedDateTime zdt = readZonedDateTimeX(len);
+-            if (zdt != null) {
+-                return zdt;
+             }
+ 
+             String str = readString();
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 32ab096bf..52e6ac483 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -30,9 +30,17 @@ public class JSONTest {
+     @Test
+     public void test_isValidArray_0() {
+         assertTrue(JSON.isValidArray("[]"));
++        assertTrue(JSON.isValidArray(" \n\t[]"));
+         assertFalse(JSON.isValidArray("{}"));
+     }
+ 
++    @Test
++    public void test_isValid_0() {
++        assertTrue(JSON.isValid("{}"));
++        assertTrue(JSON.isValid(" \n\t{}"));
++        assertFalse(JSON.isValid("[]"));
++    }
++
+     @Test
+     public void test_parseArray_0() {
+         String str = "[1,2,3]";
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
+index 69d05702f..28a051d2d 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
+@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
+ import java.nio.charset.StandardCharsets;
+ 
+ import static org.junit.Assert.assertFalse;
++import static org.junit.Assert.assertTrue;
+ 
+ public class JSONValidatorTest {
+     @Test
+@@ -15,4 +16,20 @@ public class JSONValidatorTest {
+         assertFalse(JSON.isValid(utf8, 0, utf8.length, StandardCharsets.UTF_8));
+         assertFalse(JSON.isValid(utf8, 0, utf8.length, StandardCharsets.US_ASCII));
+     }
++
++    @Test
++    public void test_isValidArray_0() {
++        assertTrue(JSON.isValidArray("[]"));
++        assertTrue(JSON.isValidArray(" \n\t[]"));
++        assertFalse(JSON.isValidArray("{}"));
++        assertFalse(JSON.isValidArray("[]abc"));
++    }
++
++    @Test
++    public void test_isValid_0() {
++        assertTrue(JSON.isValid("{}"));
++        assertTrue(JSON.isValid(" \n\t{}"));
++        assertFalse(JSON.isValid("[]"));
++        assertFalse(JSON.isValid("{}abc"));
++    }
+ }

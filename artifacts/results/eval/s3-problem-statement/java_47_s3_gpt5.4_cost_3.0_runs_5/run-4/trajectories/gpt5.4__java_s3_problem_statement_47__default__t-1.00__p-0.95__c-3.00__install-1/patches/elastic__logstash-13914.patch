@@ -1,0 +1,117 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..367c6ea39 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -2,12 +2,6 @@
+ # runtime environment of logstash. It sets to following env variables:
+ #   LOGSTASH_HOME & LS_HOME
+ #   SINCEDB_DIR
+-#   JAVACMD
+-#   JAVA_OPTS
+-#   GEM_HOME & GEM_PATH
+-#   DEBUG
+-#
+-# These functions are provided for the calling script:
+ #   setup() to setup the environment
+ #   ruby_exec() to execute a ruby script with using the setup runtime environment
+ #
+@@ -101,6 +95,9 @@ setup_java() {
+         JAVACMD="$LS_JAVA_HOME/bin/java"
+         if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+           echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          if [ -f "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION" ]; then
++            echo "WARNING: Bundled JDK version: $(cat "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION")"
++          fi
+         fi
+       else
+         echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."
+diff --git a/bin/setup.bat b/bin/setup.bat
+index 5e8acb4d1..796b2237c 100644
+--- a/bin/setup.bat
++++ b/bin/setup.bat
+@@ -25,6 +25,10 @@ if defined LS_JAVA_HOME (
+   echo Using LS_JAVA_HOME defined java: %LS_JAVA_HOME%
+   if exist "%LS_HOME%\jdk" (
+     echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK.
++    if exist "%LS_HOME%\jdk\VERSION" (
++      set /p BUNDLED_JDK_VERSION=<"%LS_HOME%\jdk\VERSION"
++      echo WARNING: Bundled JDK version: !BUNDLED_JDK_VERSION!
++    )
+   )
+ ) else (
+   if exist "%LS_HOME%\jdk" (
+@@ -62,4 +66,4 @@ if not exist %JRUBY_BIN% (
+   exit /b 1
+ )
+ 
+-set RUBYLIB=%LS_HOME%\lib
+\ No newline at end of file
++set RUBYLIB=%LS_HOME%\lib
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..b0ecce3e3 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -95,20 +95,8 @@ allprojects {
+         events "started", "passed", "skipped", "failed", "standardOut", "standardError"
+         exceptionFormat "full"
+       }
+-      info.events = debug.events
+-      info.exceptionFormat = debug.exceptionFormat
+-
+-      afterSuite { desc, result ->
+-        if (!desc.parent) { // will match the outermost suite
+-          def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+-          def startItem = '|  ', endItem = '  |'
+-          def repeatLength = startItem.length() + output.length() + endItem.length()
+-          println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+-        }
+-      }
+     }
+   }
+-}
+ 
+ subprojects {
+     repositories {
+@@ -716,6 +704,7 @@ class JDKDetails {
+     final String revision
+     final String build
+     final String vendor
++    final String version
+     final int major
+     private final String osName
+     private final String extension
+@@ -727,6 +716,7 @@ class JDKDetails {
+         revision = versionYml.bundled_jdk.revision
+         build = versionYml.bundled_jdk.build
+         vendor = versionYml.bundled_jdk.vendor
++        version = "${revision}+${build}"
+         major = revision.split('\\.').first() as int
+         this.osName = osName
+ 
+@@ -860,6 +850,12 @@ tasks.register("copyJdk", Copy) {
+     description = "Download, unpack and copy the JDK"
+     // CLI project properties: -Pjdk_bundle_os=[windows|linux|darwin] -Pjdk_arch=[arm64|x86_64]
+     doLast {
++        def releaseFile = new File("${project.ext.jdkBundlingDirectory}/release")
++        def matcher = releaseFile.text =~ /(?m)^IMPLEMENTOR_VERSION="([^"]+)"$/
++        if (!matcher.find()) {
++            throw new GradleException("Could not determine bundled JDK version from ${releaseFile}")
++        }
++        new File("${project.ext.jdkBundlingDirectory}/VERSION").text = "${matcher.group(1)}\n"
+         System.out.println "Download location is ${project.ext.jdkDownloadLocation}, Decompressing ${project.ext.jdkDirectory} to \"${project.ext.jdkBundlingDirectory}\""
+     }
+ }

@@ -1,0 +1,77 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+new file mode 100644
+index 000000000..c833cd8f9
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+@@ -0,0 +1,57 @@
++package org.logstash.common;
++
++import org.jruby.RubyArray;
++import org.jruby.RubyString;
++import org.jruby.runtime.Block;
++import org.jruby.runtime.ThreadContext;
++import org.jruby.runtime.builtin.IRubyObject;
++import org.junit.Test;
++import org.logstash.RubyTestBase;
++import org.logstash.RubyUtil;
++
++import static org.junit.Assert.assertArrayEquals;
++import static org.junit.Assert.assertEquals;
++
++public class BufferedTokenizerExtTest extends RubyTestBase {
++
++    private static RubyString iso88591String(final ThreadContext context, final byte[] bytes) {
++        final RubyString rubyString = RubyString.newString(RubyUtil.RUBY, bytes);
++        return (RubyString) rubyString.force_encoding(context, RubyUtil.RUBY.newString("ISO8859-1"));
++    }
++
++    private static void assertBytes(final byte[] expected, final IRubyObject actual) {
++        assertArrayEquals(expected, ((RubyString) actual).getBytes());
++    }
++
++    @Test
++    @SuppressWarnings("unchecked")
++    public void testFlushPreservesInputEncodingBytes() {
++        final ThreadContext context = RubyUtil.RUBY.getCurrentContext();
++        final BufferedTokenizerExt tokenizer =
++            (BufferedTokenizerExt) RubyUtil.BUFFERED_TOKENIZER.newInstance(context, Block.NULL_BLOCK);
++
++        final RubyArray<IRubyObject> extracted = tokenizer.extract(
++            context,
++            iso88591String(context, new byte[]{(byte) 0xA3})
++        );
++
++        assertEquals(0, extracted.size());
++        assertBytes(new byte[]{(byte) 0xA3}, tokenizer.flush(context));
++    }
++
++    @Test
++    @SuppressWarnings("unchecked")
++    public void testExtractPreservesInputEncodingBytesBeforeDelimiter() {
++        final ThreadContext context = RubyUtil.RUBY.getCurrentContext();
++        final BufferedTokenizerExt tokenizer =
++            (BufferedTokenizerExt) RubyUtil.BUFFERED_TOKENIZER.newInstance(context, Block.NULL_BLOCK);
++
++        final RubyString data = iso88591String(context, new byte[]{(byte) 0xA3, (byte) '\n'});
++        final RubyArray<IRubyObject> extracted = tokenizer.extract(context, data);
++
++        assertEquals(1, extracted.size());
++        assertBytes(new byte[]{(byte) 0xA3}, extracted.eltInternal(0));
++    }
++
++
++}

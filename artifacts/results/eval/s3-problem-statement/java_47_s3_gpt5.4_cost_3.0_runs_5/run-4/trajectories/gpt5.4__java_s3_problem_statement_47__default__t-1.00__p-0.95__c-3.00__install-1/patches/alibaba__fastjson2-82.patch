@@ -1,0 +1,33 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/ReproJSONValidator.java b/ReproJSONValidator.java
+new file mode 100644
+index 000000000..a9d3ab62d
+--- /dev/null
++++ b/ReproJSONValidator.java
+@@ -0,0 +1,23 @@
++import com.alibaba.fastjson.JSONValidator;
++
++public class ReproJSONValidator {
++    public static void main(String[] args) {
++        String[] inputs = {
++                "{}",
++                "[]",
++                " {}",
++                " []",
++                "\n{}",
++                "\n[]",
++                "{\"a\":1}",
++                "[1,2,3]"
++        };
++
++        for (String input : inputs) {
++            JSONValidator validator = JSONValidator.from(input);
++            System.out.println("input=" + input.replace("\n", "\\n")
++                    + ", type=" + validator.getType()
++                    + ", valid=" + validator.validate());
++        }
++    }
++}

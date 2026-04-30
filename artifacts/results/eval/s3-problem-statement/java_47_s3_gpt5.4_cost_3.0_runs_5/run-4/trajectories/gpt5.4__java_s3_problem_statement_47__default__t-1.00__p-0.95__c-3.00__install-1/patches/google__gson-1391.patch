@@ -1,0 +1,91 @@
+
+diff --git a/.gitignore b/.gitignore
+index 5bda0b93..e930bdfb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -18,3 +18,8 @@ local.properties
+ build
+ 
+ .DS_Store
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/gson/src/main/java/com/google/gson/internal/$Gson$Types.java b/gson/src/main/java/com/google/gson/internal/$Gson$Types.java
+index adea605f..43d57925 100644
+--- a/gson/src/main/java/com/google/gson/internal/$Gson$Types.java
++++ b/gson/src/main/java/com/google/gson/internal/$Gson$Types.java
+@@ -346,12 +346,17 @@ public final class $Gson$Types {
+         if (visitedTypeVariables.contains(typeVariable)) {
+           // cannot reduce due to infinite recursion
+           return toResolve;
+-        } else {
+-          visitedTypeVariables.add(typeVariable);
+         }
+-        toResolve = resolveTypeVariable(context, contextRawType, typeVariable);
+-        if (toResolve == typeVariable) {
+-          return toResolve;
++
++        visitedTypeVariables.add(typeVariable);
++        try {
++          Type resolved = resolveTypeVariable(context, contextRawType, typeVariable);
++          if (resolved == typeVariable) {
++            return resolved;
++          }
++          return resolve(context, contextRawType, resolved, visitedTypeVariables);
++        } finally {
++          visitedTypeVariables.remove(typeVariable);
+         }
+ 
+       } else if (toResolve instanceof Class && ((Class<?>) toResolve).isArray()) {
+diff --git a/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java b/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java
+index aaa577b5..c83856e2 100644
+--- a/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java
++++ b/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java
+@@ -23,6 +23,9 @@ import junit.framework.TestCase;
+ 
+ import java.io.PrintStream;
+ import java.lang.ref.WeakReference;
++import java.util.Collection;
++import java.util.EnumSet;
++import java.util.Set;
+ 
+ /**
+  * Test fixes for infinite recursion on {@link $Gson$Types#resolve(java.lang.reflect.Type, Class,
+@@ -99,6 +102,20 @@ public class RecursiveTypesResolveTest extends TestCase {
+     TestType2<? super Y, ? super X> superReversedType;
+   }
+ 
++  private static class SetCollection<T> extends BaseCollection<T, Set<T>> {}
++
++  private static class BaseCollection<U, C extends Collection<U>> {
++    C collection;
++  }
++
++  private static class TestEnumSetCollection extends SetCollection<TestEnum> {}
++
++  private enum TestEnum {
++    ONE,
++    TWO,
++    THREE
++  }
++
+   public void testRecursiveTypeVariablesResolve1() throws Exception {
+     TypeAdapter<TestType> adapter = new Gson().getAdapter(TestType.class);
+     assertNotNull(adapter);
+@@ -108,7 +125,12 @@ public class RecursiveTypesResolveTest extends TestCase {
+     TypeAdapter<TestType2> adapter = new Gson().getAdapter(TestType2.class);
+     assertNotNull(adapter);
+   }
+-}
+-
+ 
++  public void testRepeatedTypeVariableResolve() {
++    Gson gson = new Gson();
++    TestEnumSetCollection actual =
++        gson.fromJson("{\"collection\":[\"ONE\",\"THREE\"]}", TestEnumSetCollection.class);
+ 
++    assertEquals(EnumSet.of(TestEnum.ONE, TestEnum.THREE), actual.collection);
++  }
++}

@@ -1,0 +1,56 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
+index e6f1cbc5..a4e49f42 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
+@@ -301,10 +301,10 @@ public final class TextBuffer
+         if (_inputStart >= 0) return _inputBuffer;
+         if (_resultArray != null)  return _resultArray;
+         if (_resultString != null) {
+-            return (_resultArray = _resultString.toCharArray());
++            return (_resultArray = (_resultString.length() == 0) ? NO_CHARS : _resultString.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!_hasSegments)  return _currentSegment;
++        if (!_hasSegments)  return (_currentSegment == null) ? NO_CHARS : _currentSegment;
+         // Nope, need to have/create a non-segmented array and return it
+         return contentsAsArray();
+     }
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 878224ef..95076ebc 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -77,4 +77,21 @@ public class TestTextBuffer
+               }
+           }
+       }
++
++      public void testEmptyTextBufferConsistency()
++      {
++          TextBuffer tb = new TextBuffer(new BufferRecycler());
++          tb.resetWithEmpty();
++
++          char[] first = tb.getTextBuffer();
++          assertNotNull(first);
++          assertEquals(0, first.length);
++
++          assertEquals("", tb.contentsAsString());
++
++          char[] second = tb.getTextBuffer();
++          assertNotNull(second);
++          assertEquals(0, second.length);
++          assertSame(first, second);
++      }
+ }

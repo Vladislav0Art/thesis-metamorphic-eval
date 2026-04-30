@@ -1,0 +1,110 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_deserializer.java b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_deserializer.java
+index a04d49637..913906e94 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_deserializer.java
++++ b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_deserializer.java
+@@ -60,4 +60,25 @@ public class JSONType_deserializer {
+             assertEquals(123, bean.id);
+         }
+     }
++
++    @Test
++    public void testNestedBean() {
++        String str = "{\"value\":{\"beanId\":123}}";
++
++        BeanHolder beanHolder = JSON.parseObject(str, BeanHolder.class);
++        assertEquals(123, beanHolder.value.id);
++
++        for (ObjectReaderCreator creator : TestUtils.readerCreators()) {
++            ObjectReader<BeanHolder> objectReader = creator.createObjectReader(BeanHolder.class);
++
++            JSONReader jsonReader = JSONReader.of(str);
++            BeanHolder holder = objectReader.readObject(jsonReader);
++
++            assertEquals(123, holder.value.id);
++        }
++    }
++
++    public static class BeanHolder {
++        public Bean value;
++    }
+ }
+diff --git a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+index f8b847de4..c50325581 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
++++ b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+@@ -54,4 +54,71 @@ public class JSONType_serializer {
+             assertEquals("{\"ID\":123}", str);
+         }
+     }
++
++    @Test
++    public void testNestedBean() {
++        Bean bean = new Bean();
++        bean.id = 123;
++
++        BeanHolder holder = new BeanHolder();
++        holder.value = bean;
++
++        assertEquals("{\"value\":{\"ID\":123}}", JSON.toJSONString(holder));
++
++        for (ObjectWriterCreator creator : TestUtils.writerCreators()) {
++            ObjectWriter<BeanHolder> objectWriter = creator.createObjectWriter(BeanHolder.class);
++            JSONWriter jsonWriter = JSONWriter.of();
++            objectWriter.write(jsonWriter, holder);
++            assertEquals("{\"value\":{\"ID\":123}}", jsonWriter.toString());
++        }
++    }
++
++    public static class BeanHolder {
++        public Bean value;
++    }
++
++    @Test
++    public void testNestedEnum() {
++        EnumHolder holder = new EnumHolder();
++        holder.status = Status.ON;
++
++        assertEquals("{\"status\":{\"code\":1}}", JSON.toJSONString(holder));
++
++        for (ObjectWriterCreator creator : TestUtils.writerCreators()) {
++            ObjectWriter<EnumHolder> objectWriter = creator.createObjectWriter(EnumHolder.class);
++            JSONWriter jsonWriter = JSONWriter.of();
++            objectWriter.write(jsonWriter, holder);
++            assertEquals("{\"status\":{\"code\":1}}", jsonWriter.toString());
++        }
++    }
++
++    @JSONType(serializer = StatusWriter.class)
++    public enum Status {
++        ON(1),
++        OFF(2);
++
++        public final int code;
++
++        Status(int code) {
++            this.code = code;
++        }
++    }
++
++    public static class StatusWriter
++            implements ObjectWriter<Status> {
++        @Override
++        public void write(JSONWriter jsonWriter, Object object, Object fieldName, Type fieldType, long features) {
++            Status status = (Status) object;
++
++            jsonWriter.startObject();
++            jsonWriter.writeName("code");
++            jsonWriter.writeColon();
++            jsonWriter.writeInt32(status.code);
++            jsonWriter.endObject();
++        }
++    }
++
++    public static class EnumHolder {
++        public Status status;
++    }
+ }

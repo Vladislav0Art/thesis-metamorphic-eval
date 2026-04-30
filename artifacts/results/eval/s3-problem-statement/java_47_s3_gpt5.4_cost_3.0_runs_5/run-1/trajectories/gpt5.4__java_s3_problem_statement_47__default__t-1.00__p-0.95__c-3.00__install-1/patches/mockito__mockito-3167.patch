@@ -1,0 +1,126 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java b/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
+index 27faed9d9..d4672d54d 100644
+--- a/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
++++ b/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
+@@ -77,6 +77,7 @@ public class ReturnsDeepStubs implements Answer<Object>, Serializable {
+             return null;
+         }
+ 
++
+         return deepStub(invocation, returnTypeGenericMetadata);
+     }
+ 
+diff --git a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+index 5e39714cf..52abd977c 100644
+--- a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
++++ b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+@@ -361,6 +361,8 @@ public class DeepStubbingTest extends TestBase {
+         assertEquals(value, person.getFinalClass());
+     }
+ 
++
++
+     @Test
+     public void deep_stub_does_not_try_to_mock_generic_final_classes() {
+         First first = mock(First.class, RETURNS_DEEP_STUBS);
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+index a418aab7a..0a4cc59b4 100644
+--- a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+@@ -9,6 +9,8 @@ import org.mockito.Mockito;
+ 
+ import static org.hamcrest.CoreMatchers.*;
+ import static org.hamcrest.MatcherAssert.assertThat;
++import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
++import static org.mockito.Mockito.when;
+ 
+ public class EnumMockingTest {
+ 
+@@ -20,6 +22,27 @@ public class EnumMockingTest {
+         assertThat(a.name(), nullValue(String.class));
+     }
+ 
++    @Test
++    public void testDeepStubCanMockEnum() {
++        Piece piece = Mockito.mock(Piece.class, RETURNS_DEEP_STUBS);
++
++        when(piece.getPiece().getCostPerPieceSpace()).thenReturn(2.5d);
++
++        assertThat(piece.getPiece().getCostPerPieceSpace(), is(2.5d));
++    }
++
++    interface Piece {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE;
++
++        double getCostPerPieceSpace() {
++            return 2d;
++        }
++    }
++
+     enum Animal {
+         CAT {
+             @Override
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubEnumMockTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubEnumMockTest.java
+new file mode 100644
+index 000000000..543c796fa
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubEnumMockTest.java
+@@ -0,0 +1,40 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Mock;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.Answers.RETURNS_DEEP_STUBS;
++import static org.mockito.Mockito.when;
++
++@ExtendWith(MockitoExtension.class)
++class DeepStubEnumMockTest {
++
++    @Mock(answer = RETURNS_DEEP_STUBS)
++    Piece piece;
++
++    @Test
++    void deep_stub_can_mock_enum() {
++        when(piece.getPiece().getCostPerPieceSpace()).thenReturn(2.5d);
++
++        assertThat(piece.getPiece().getCostPerPieceSpace()).isEqualTo(2.5d);
++    }
++
++    interface Piece {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE;
++
++        double getCostPerPieceSpace() {
++            return 2d;
++        }
++    }
++}
