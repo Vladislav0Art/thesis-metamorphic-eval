@@ -1,0 +1,64 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/build.gradle b/logstash-core/build.gradle
+index 8cb891418..228868a24 100644
+--- a/logstash-core/build.gradle
++++ b/logstash-core/build.gradle
+@@ -64,7 +64,6 @@ String jrubyVersion = versionMap['jruby']['version']
+ String log4jVersion = '2.17.2'
+ 
+ tasks.register("sourcesJar", Jar) {
+-    dependsOn classes
+     from sourceSets.main.allSource
+     archiveClassifier = 'sources'
+     archiveExtension = 'jar'
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index cccb9c476..958213496 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -57,4 +57,21 @@ describe  FileWatch::BufferedTokenizer  do
+       expect(subject.extract("foo||bar")).to eq(["foo"])
+     end
+   end
++
++  context 'with size limit' do
++    subject { FileWatch::BufferedTokenizer.new(delimiter, size_limit) }
++
++    let(:delimiter) { "\n" }
++    let(:size_limit) { 10 }
++
++    it "drops buffered data until the next delimiter after buffer full" do
++      expect(subject.extract("12345")).to eq([])
++
++      expect { subject.extract("678901\nok\n") }
++        .to raise_error(Java::JavaLang::IllegalStateException, "input buffer full")
++
++      expect(subject.extract("next\n")).to eq(["ok", "next"])
++    end
++
++  end
+ end
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+index 2d7b90bba..4ffc0da98 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+@@ -62,6 +62,7 @@ public class BufferedTokenizerExt extends RubyObject {
+         return this;
+     }
+ 
++
+     /**
+      * Extract takes an arbitrary string of input data and returns an array of
+      * tokenized entities, provided there were any available to extract.  This

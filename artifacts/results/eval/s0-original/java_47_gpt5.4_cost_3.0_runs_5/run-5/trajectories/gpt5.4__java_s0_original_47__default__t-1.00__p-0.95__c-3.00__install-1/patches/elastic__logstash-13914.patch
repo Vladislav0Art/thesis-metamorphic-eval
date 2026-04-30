@@ -1,0 +1,148 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..93649154c 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -25,10 +25,10 @@ if [ -L "$0" ]; then
+   RL="$(command -v readlink)"
+   if [ $? -eq 0 ]; then
+     # readlink exists
+-    SOURCEPATH="$($RL $0)"
++    SOURCEPATH="$($RL "$0")"
+   else
+     # readlink not found, attempt to parse the output of stat
+-    SOURCEPATH="$(stat -c %N $0 | awk '{print $3}' | sed -e 's/\‘//' -e 's/\’//')"
++    SOURCEPATH="$(stat -c %N "$0" | awk '{print $3}' | tr -d \')"
+     if [ $? -ne 0 ]; then
+       # Failed to execute or parse stat
+       echo "Failed to set LOGSTASH_HOME from $(cd `dirname $0`/..; pwd)/bin/logstash.lib.sh"
+@@ -41,7 +41,7 @@ else
+   SOURCEPATH="$0"
+ fi
+ 
+-LOGSTASH_HOME="$(cd `dirname $SOURCEPATH`/..; pwd)"
++LOGSTASH_HOME="$(cd `dirname "$SOURCEPATH"`/..; pwd)"
+ export LOGSTASH_HOME
+ export LS_HOME="${LOGSTASH_HOME}"
+ SINCEDB_DIR="${LOGSTASH_HOME}"
+@@ -76,6 +76,14 @@ setup_bundled_jdk_part() {
+   fi
+ }
+ 
++setup_bundled_jdk_version() {
++  if [ -r "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION" ]; then
++    BUNDLED_JDK_VERSION="$(cat "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION")"
++  else
++    BUNDLED_JDK_VERSION=""
++  fi
++}
++
+ # Accepts 1 parameter which is the path the directory where logstash jar are contained.
+ setup_classpath() {
+   local classpath="${1?classpath (and jar_directory) required}"
+@@ -94,13 +102,14 @@ setup_java() {
+   # set the path to java into JAVACMD which will be picked up by JRuby to launch itself
+   if [ -z "$JAVACMD" ]; then
+     setup_bundled_jdk_part
++    setup_bundled_jdk_version
+     JAVACMD_TEST=`command -v java`
+     if [ -n "$LS_JAVA_HOME" ]; then
+       echo "Using LS_JAVA_HOME defined java: ${LS_JAVA_HOME}."
+       if [ -x "$LS_JAVA_HOME/bin/java" ]; then
+         JAVACMD="$LS_JAVA_HOME/bin/java"
+         if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+-          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK${BUNDLED_JDK_VERSION:+ ${BUNDLED_JDK_VERSION}}."
+         fi
+       else
+         echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."
+diff --git a/bin/setup.bat b/bin/setup.bat
+index 5e8acb4d1..28e7329b5 100644
+--- a/bin/setup.bat
++++ b/bin/setup.bat
+@@ -17,35 +17,37 @@ if not "%DIRNAME%" == "bin" (
+   goto ls_home_loop
+ )
+ for %%I in ("%LS_HOME%..") do set LS_HOME=%%~dpfI
++# This unwieldy bit of scripting is to try to catch instances where Logstash
++# was launched from a symlink, rather than a full path to the Logstash binary
++if [ -L "$0" ]; then
++  # Launched from a symlink
++  # --Test for the readlink binary
++  RL="$(command -v readlink)"
++  if [ $? -eq 0 ]; then
++    # readlink exists
++    SOURCEPATH="$($RL $0)"
++  else
++    # readlink not found, attempt to parse the output of stat
++    SOURCEPATH="$(stat -c %N $0 | awk '{print $3}' | sed -e 's/\‘//' -e 's/\’//')"
++    if [ $? -ne 0 ]; then
++      # Failed to execute or parse stat
++      echo "Failed to set LOGSTASH_HOME from $(cd `dirname $0`/..; pwd)/bin/logstash.lib.sh"
++      echo "You may need to launch Logstash with a full path instead of a symlink."
++      exit 1
++    fi
++  fi
++else
++  # Not a symlink
++  SOURCEPATH="$0"
++fi
+ 
+-rem ### 2: set java
+-
+-if defined LS_JAVA_HOME (
+-  set JAVACMD=%LS_JAVA_HOME%\bin\java.exe
+-  echo Using LS_JAVA_HOME defined java: %LS_JAVA_HOME%
+-  if exist "%LS_HOME%\jdk" (
+-    echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK.
+-  )
+-) else (
+-  if exist "%LS_HOME%\jdk" (
+-    set JAVACMD=%LS_HOME%\jdk\bin\java.exe
+-    echo "Using bundled JDK: !JAVACMD!"
+-  ) else (
+-    for %%I in (java.exe) do set JAVACMD="%%~$PATH:I"
+-    echo "Using system java: !JAVACMD!"
+-  )
+-)
+-
+-if not exist "%JAVACMD%" (
+-  echo could not find java; set JAVA_HOME or ensure java is in PATH 1>&2
+-  exit /b 1
+-)
+-
+-rem do not let JAVA_TOOL_OPTIONS slip in (as the JVM does by default)
+-if not "%JAVA_TOOL_OPTIONS%" == "" (
+-  echo "warning: ignoring JAVA_TOOL_OPTIONS=$JAVA_TOOL_OPTIONS"
+-  set JAVA_TOOL_OPTIONS=
+-)
++LOGSTASH_HOME="$(cd `dirname $SOURCEPATH`/..; pwd)"
++export LOGSTASH_HOME
++export LS_HOME="${LOGSTASH_HOME}"
++SINCEDB_DIR="${LOGSTASH_HOME}"
++export SINCEDB_DIR
++LOGSTASH_JARS=${LOGSTASH_HOME}/logstash-core/lib/jars
++JRUBY_HOME="${LOGSTASH_HOME}/vendor/jruby"
+ 
+ rem JAVA_OPTS is not a built-in JVM mechanism but some people think it is so we
+ rem warn them that we are not observing the value of %JAVA_OPTS%
+@@ -62,4 +64,4 @@ if not exist %JRUBY_BIN% (
+   exit /b 1
+ )
+ 
+-set RUBYLIB=%LS_HOME%\lib
+\ No newline at end of file
++set RUBYLIB=%LS_HOME%\lib

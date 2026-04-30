@@ -1,0 +1,82 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/MockitoCore.java b/src/main/java/org/mockito/internal/MockitoCore.java
+index fd39f6a4a..15c4fa409 100644
+--- a/src/main/java/org/mockito/internal/MockitoCore.java
++++ b/src/main/java/org/mockito/internal/MockitoCore.java
+@@ -131,6 +131,7 @@ public class MockitoCore {
+         }
+         MockSettingsImpl impl = MockSettingsImpl.class.cast(settings);
+         MockCreationSettings<T> creationSettings = impl.buildStatic(classToMock);
++        checkDoNotMockAnnotation(classToMock, creationSettings);
+         MockMaker.StaticMockControl<T> control = createStaticMock(classToMock, creationSettings);
+         control.enable();
+         mockingProgress().mockingStarted(classToMock, creationSettings);
+diff --git a/src/test/java/org/mockitousage/annotation/DoNotMockTest.java b/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
+index 936434536..9e4b882f1 100644
+--- a/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
++++ b/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
+@@ -6,6 +6,7 @@ package org.mockitousage.annotation;
+ 
+ import static org.assertj.core.api.Assertions.assertThatThrownBy;
+ import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.mockStatic;
+ 
+ import org.junit.Test;
+ import org.mockito.DoNotMock;
+@@ -94,6 +95,15 @@ public class DoNotMockTest {
+                 .hasMessageContaining("Special reason");
+     }
+ 
++    @Test
++    public void can_not_mock_static_class_annotated_with_donotmock() {
++        assertThatThrownBy(
++                        () -> {
++                            mockStatic(NotMockable.class);
++                        })
++                .isInstanceOf(DoNotMockException.class);
++    }
++
+     @Test
+     public void can_not_mock_class_with_custom_donotmock_annotation() {
+         assertThatThrownBy(
+diff --git a/subprojects/extTest/src/test/java/org/mockitousage/plugins/donotmockenforcer/DoNotmockEnforcerTest.java b/subprojects/extTest/src/test/java/org/mockitousage/plugins/donotmockenforcer/DoNotmockEnforcerTest.java
+index 4c631e609..7fb27093e 100644
+--- a/subprojects/extTest/src/test/java/org/mockitousage/plugins/donotmockenforcer/DoNotmockEnforcerTest.java
++++ b/subprojects/extTest/src/test/java/org/mockitousage/plugins/donotmockenforcer/DoNotmockEnforcerTest.java
+@@ -6,6 +6,7 @@ package org.mockitousage.plugins.donotmockenforcer;
+ 
+ import static org.assertj.core.api.Assertions.assertThatThrownBy;
+ import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.mockStatic;
+ 
+ import org.junit.Test;
+ import org.mockito.DoNotMock;
+@@ -37,6 +38,15 @@ public class DoNotmockEnforcerTest {
+                 .hasMessage("Custom message!");
+     }
+ 
++    @Test
++    public void uses_custom_enforcer_disallows_static_mocks_of_types_in_this_package() {
++        assertThatThrownBy(
++                        () -> {
++                            mockStatic(NotMockable.class);
++                        })
++                .isInstanceOf(DoNotMockException.class);
++    }
++
+     static class NotMockable {}
+ 
+     @DoNotMock

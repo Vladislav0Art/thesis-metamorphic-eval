@@ -1,0 +1,181 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
+index e6f1cbc5..3facd4d0 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
+@@ -7,38 +7,32 @@ import java.util.Arrays;
+ import com.fasterxml.jackson.core.io.NumberInput;
+ 
+ /**
+- * TextBuffer is a class similar to {@link StringBuffer}, with
++ * TextBuffer is a class similar to {@link java.lang.StringBuffer}, with
+  * following differences:
+  *<ul>
+- *  <li>TextBuffer uses segments character arrays, to avoid having
+- *     to do additional array copies when array is not big enough.
+- *     This means that only reallocating that is necessary is done only once:
+- *     if and when caller
+- *     wants to access contents in a linear array (char[], String).
+- *    </li>
+-*  <li>TextBuffer can also be initialized in "shared mode", in which
+-*     it will just act as a wrapper to a single char array managed
+-*     by another object (like parser that owns it)
+- *    </li>
+- *  <li>TextBuffer is not synchronized.
+- *    </li>
+- * </ul>
++ * <li>TextBuffer uses segmented character arrays, to avoid having to do
++ *   additional array copies when array is not big enough. This means that
++ *   only reallocating that is necessary is done only once: if and when
++ *   caller wants to access contents in a linear array (char[], String).
++ *  </li>
++ * <li>TextBuffer can also be initialized in "shared mode", in which it will
++ *   just act as a wrapper to a single char array managed by another object.
++ *  </li>
++ *</ul>
++ *<p>
++ * Note: text buffer is not synchronized.
+  */
+ public final class TextBuffer
+ {
+     final static char[] NO_CHARS = new char[0];
+ 
+     /**
+-     * Let's start with sizable but not huge buffer, will grow as necessary
++     * Let's start with a sizable but not huge buffer, will grow as necessary.
+      */
+-    final static int MIN_SEGMENT_LEN = 1000;
+-    
+-    /**
+-     * Let's limit maximum segment length to something sensible
+-     * like 256k
+-     */
+-    final static int MAX_SEGMENT_LEN = 0x40000;
+-    
++    static final int MIN_SEGMENT_LEN = 1000;
++
++    static final int MAX_SEGMENT_LEN = 262144;
++
+     /*
+     /**********************************************************
+     /* Configuration:
+@@ -49,28 +43,31 @@ public final class TextBuffer
+ 
+     /*
+     /**********************************************************
+-    /* Shared input buffers
++    /* Shared input buf / input-pointer config
+     /**********************************************************
+      */
+ 
+     /**
+-     * Shared input buffer; stored here in case some input can be returned
+-     * as is, without being copied to collector's own buffers. Note that
+-     * this is read-only for this Object.
++     * Shared input buffer; stored here in case some specific sub-strings
++     * are needed.
+      */
+     private char[] _inputBuffer;
+ 
+     /**
+      * Character offset of first char in input buffer; -1 to indicate
+-     * that input buffer currently does not contain any useful char data
++     * that input buffer is not used.
+      */
+-    private int _inputStart;
++    private int _inputStart = -1;
+ 
++    /**
++     * Length of shared input buffer currently used; only relevant if
++     * {@code _inputStart >= 0}.
++     */
+     private int _inputLen;
+ 
+     /*
+     /**********************************************************
+-    /* Aggregation segments (when not using input buf)
++    /* Aggregation segments (when not in shared mode)
+     /**********************************************************
+      */
+ 
+@@ -80,18 +77,18 @@ public final class TextBuffer
+     private ArrayList<char[]> _segments;
+ 
+     /**
+-     * Flag that indicates whether _seqments is non-empty
++     * Flag that indicates whether _segments is non-empty
+      */
+     private boolean _hasSegments = false;
+ 
+-    // // // Currently used segment; not (yet) contained in _seqments
++    // // // Currently used segment; not (yet) contained in _segments
+ 
+     /**
+      * Amount of characters in segments in {@link _segments}
+      */
+     private int _segmentSize;
+ 
+-    private char[] _currentSegment;
++    private char[] _currentSegment = NO_CHARS;
+ 
+     /**
+      * Number of characters in currently active (last) segment
+@@ -104,6 +101,7 @@ public final class TextBuffer
+     /**********************************************************
+      */
+ 
++
+     /**
+      * String that will be constructed when the whole contents are
+      * needed; will be temporarily stored in case asked for again.
+@@ -301,10 +299,11 @@ public final class TextBuffer
+         if (_inputStart >= 0) return _inputBuffer;
+         if (_resultArray != null)  return _resultArray;
+         if (_resultString != null) {
+-            return (_resultArray = _resultString.toCharArray());
++            return (_resultArray = (_resultString.length() == 0)
++                    ? NO_CHARS : _resultString.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!_hasSegments)  return _currentSegment;
++        if (!_hasSegments)  return (_currentSegment == null) ? NO_CHARS : _currentSegment;
+         // Nope, need to have/create a non-segmented array and return it
+         return contentsAsArray();
+     }
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 878224ef..eb72b091 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -77,4 +77,20 @@ public class TestTextBuffer
+               }
+           }
+       }
++
++      public void testGetTextBufferForEmptyBufferIsConsistent()
++      {
++          TextBuffer tb = new TextBuffer(new BufferRecycler());
++          tb.resetWithEmpty();
++
++          char[] first = tb.getTextBuffer();
++          assertNotNull(first);
++          assertEquals(0, first.length);
++
++          assertEquals("", tb.contentsAsString());
++
++          char[] second = tb.getTextBuffer();
++          assertNotNull(second);
++          assertEquals(0, second.length);
++      }
+ }

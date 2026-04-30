@@ -1,0 +1,129 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..b3eea3c1e 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -71,8 +71,17 @@ setup_bundled_jdk_part() {
+   OS_NAME="$(uname -s)"
+   if [ $OS_NAME = "Darwin" ]; then
+     BUNDLED_JDK_PART="jdk.app/Contents/Home"
++    BUNDLED_JDK_ROOT="jdk.app"
+   else
+     BUNDLED_JDK_PART="jdk"
++    BUNDLED_JDK_ROOT="jdk"
++  fi
++}
++
++setup_bundled_jdk_version() {
++  BUNDLED_JDK_VERSION=""
++  if [ -r "${LOGSTASH_HOME}/${BUNDLED_JDK_ROOT}/VERSION" ]; then
++    BUNDLED_JDK_VERSION=`cat "${LOGSTASH_HOME}/${BUNDLED_JDK_ROOT}/VERSION"`
+   fi
+ }
+ 
+@@ -94,13 +103,14 @@ setup_java() {
+   # set the path to java into JAVACMD which will be picked up by JRuby to launch itself
+   if [ -z "$JAVACMD" ]; then
+     setup_bundled_jdk_part
++    setup_bundled_jdk_version
+     JAVACMD_TEST=`command -v java`
+     if [ -n "$LS_JAVA_HOME" ]; then
+       echo "Using LS_JAVA_HOME defined java: ${LS_JAVA_HOME}."
+       if [ -x "$LS_JAVA_HOME/bin/java" ]; then
+         JAVACMD="$LS_JAVA_HOME/bin/java"
+         if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+-          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK${BUNDLED_JDK_VERSION:+ (${BUNDLED_JDK_VERSION})}."
+         fi
+       else
+         echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."
+diff --git a/bin/setup.bat b/bin/setup.bat
+index 5e8acb4d1..18c77415c 100644
+--- a/bin/setup.bat
++++ b/bin/setup.bat
+@@ -24,7 +24,11 @@ if defined LS_JAVA_HOME (
+   set JAVACMD=%LS_JAVA_HOME%\bin\java.exe
+   echo Using LS_JAVA_HOME defined java: %LS_JAVA_HOME%
+   if exist "%LS_HOME%\jdk" (
+-    echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK.
++    if exist "%LS_HOME%\jdk\VERSION" (
++      for /f "usebackq delims=" %%I in ("%LS_HOME%\jdk\VERSION") do echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK (%%I).
++    ) else (
++      echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK.
++    )
+   )
+ ) else (
+   if exist "%LS_HOME%\jdk" (
+@@ -62,4 +66,4 @@ if not exist %JRUBY_BIN% (
+   exit /b 1
+ )
+ 
+-set RUBYLIB=%LS_HOME%\lib
+\ No newline at end of file
++set RUBYLIB=%LS_HOME%\lib
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..606e5ee77 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -853,6 +853,25 @@ tasks.register("decompressJdk") {
+         default:
+             dependsOn ":untarJdk"
+     }
++
++    doLast {
++        File releaseFile = file(osName == "darwin" ? "${project.ext.jdkBundlingDirectory}/Contents/Home/release" : "${project.ext.jdkBundlingDirectory}/release")
++        if (!releaseFile.exists()) {
++            throw new GradleException("Cannot determine bundled JDK version: missing ${releaseFile}")
++        }
++
++        String implementorVersionLine = releaseFile.readLines().find { it.startsWith("IMPLEMENTOR_VERSION=") }
++        if (implementorVersionLine == null) {
++            throw new GradleException("Cannot determine bundled JDK version: missing IMPLEMENTOR_VERSION in ${releaseFile}")
++        }
++
++        String implementorVersion = implementorVersionLine.split("=", 2)[1].trim()
++        if (implementorVersion.startsWith("\"") && implementorVersion.endsWith("\"")) {
++            implementorVersion = implementorVersion.substring(1, implementorVersion.length() - 1)
++        }
++
++        file("${project.ext.jdkBundlingDirectory}/VERSION").text = "${implementorVersion}\n"
++    }
+ }
+ 
+ tasks.register("copyJdk", Copy) {
+diff --git a/qa/acceptance/spec/shared_examples/installed_with_jdk.rb b/qa/acceptance/spec/shared_examples/installed_with_jdk.rb
+index 7cf01980a..c22a11b0f 100644
+--- a/qa/acceptance/spec/shared_examples/installed_with_jdk.rb
++++ b/qa/acceptance/spec/shared_examples/installed_with_jdk.rb
+@@ -39,6 +39,18 @@ RSpec.shared_examples "installable_with_jdk" do |logstash|
+     expect(logstash).to be_installed
+   end
+ 
++  it "ships the bundled JDK version file on #{logstash.hostname}" do
++    version_check = logstash.run_command("test -s /usr/share/logstash/jdk/VERSION && cat /usr/share/logstash/jdk/VERSION")
++    expect(version_check.exit_status).to be_zero
++    expect(version_check.stdout.strip).not_to be_empty
++  end
++
++  it "reports the bundled JDK version in the LS_JAVA_HOME warning on #{logstash.hostname}" do
++    bundled_jdk_version = logstash.run_command("cat /usr/share/logstash/jdk/VERSION").stdout.strip
++    launch = logstash.run_command("LS_JAVA_HOME=/usr/share/logstash/jdk /usr/share/logstash/bin/logstash --version")
++    expect(launch.stdout).to include("WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK (#{bundled_jdk_version}).")
++  end
++
+   it "is running on #{logstash.hostname}" do
+     with_running_logstash_service(logstash) do
+       expect(logstash).to be_running

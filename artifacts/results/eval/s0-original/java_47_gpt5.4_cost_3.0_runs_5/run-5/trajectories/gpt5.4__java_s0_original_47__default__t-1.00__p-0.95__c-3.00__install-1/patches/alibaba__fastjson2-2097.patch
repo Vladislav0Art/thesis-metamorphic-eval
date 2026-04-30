@@ -1,0 +1,123 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+index 0500f4b83..e6d8a774a 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+@@ -601,36 +601,14 @@ public abstract class JSONReader
+     public abstract String readReference();
+ 
+     public boolean readReference(List list, int i) {
+-        if (!isReference()) {
+-            return false;
+-        }
+-        String path = readReference();
+-        if ("..".equals(path)) {
+-            list.add(list);
+-        } else {
+-            addResolveTask(list, i, JSONPath.of(path));
+-        }
+-        return true;
+-    }
+-
+-    public final void addResolveTask(FieldReader fieldReader, Object object, JSONPath path) {
+-        if (resolveTasks == null) {
+-            resolveTasks = new ArrayList<>();
++        if (isReference()) {
++            addResolveTask(list, i, JSONPath.of(readReference()));
++            return true;
+         }
+-        resolveTasks.add(new ResolveTask(fieldReader, object, fieldReader.fieldName, path));
+-    }
+-
+-    public final void addResolveTask(Map object, Object key, JSONPath reference) {
+-        if (resolveTasks == null) {
+-            resolveTasks = new ArrayList<>();
+-        }
+-        if (object instanceof LinkedHashMap) {
+-            object.put(key, null);
+-        }
+-        resolveTasks.add(new ResolveTask(null, object, key, reference));
++        return false;
+     }
+ 
+-    public final void addResolveTask(Collection object, int i, JSONPath reference) {
++    public final void addResolveTask(List object, int i, JSONPath reference) {
+         if (resolveTasks == null) {
+             resolveTasks = new ArrayList<>();
+         }
+diff --git a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+index 2af2137f4..175ece110 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
++++ b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+@@ -601,6 +601,68 @@ public final class ObjectReaderImplList
+             }
+         }
+ 
++        if (listType == CLASS_ARRAYS_LIST) {
++            List arrayList = new ArrayList();
++            List<JSONPath> referencePaths = null;
++            List<Integer> referenceIndexes = null;
++            List<Integer> selfReferenceIndexes = null;
++
++            for (int i = 0; ; ++i) {
++                if (jsonReader.nextIfArrayEnd()) {
++                    break;
++                }
++
++                Object item;
++                if (itemType == String.class) {
++                    item = jsonReader.readString();
++                } else if (itemObjectReader != null) {
++                    if (jsonReader.isReference()) {
++                        String reference = jsonReader.readReference();
++                        if ("..".equals(reference)) {
++                            item = null;
++                            if (selfReferenceIndexes == null) {
++                                selfReferenceIndexes = new ArrayList<>();
++                            }
++                            selfReferenceIndexes.add(i);
++                        } else {
++                            item = null;
++                            if (referencePaths == null) {
++                                referencePaths = new ArrayList<>();
++                                referenceIndexes = new ArrayList<>();
++                            }
++                            referencePaths.add(JSONPath.of(reference));
++                            referenceIndexes.add(i);
++                        }
++                    } else {
++                        item = itemObjectReader.readObject(jsonReader, itemType, i, 0);
++                    }
++                } else {
++                    throw new JSONException(jsonReader.info("TODO : " + itemType));
++                }
++
++                arrayList.add(item);
++            }
++
++            jsonReader.nextIfComma();
++
++            Object[] array = arrayList.toArray();
++            List list = Arrays.asList(array);
++
++            if (selfReferenceIndexes != null) {
++                for (Integer index : selfReferenceIndexes) {
++                    array[index] = list;
++                }
++            }
++
++            if (referencePaths != null) {
++                for (int i = 0; i < referencePaths.size(); i++) {
++                    jsonReader.addResolveTask(array, referenceIndexes.get(i), referencePaths.get(i));
++                }
++            }
++
++            return list;
++        }
++
+         for (int i = 0; ; ++i) {
+             if (jsonReader.nextIfArrayEnd()) {
+                 break;

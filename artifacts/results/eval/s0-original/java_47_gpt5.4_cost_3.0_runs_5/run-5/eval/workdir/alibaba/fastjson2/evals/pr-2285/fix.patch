@@ -1,0 +1,160 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
+index b921de01f..83be25155 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
++++ b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
+@@ -363,6 +363,7 @@ public class ObjectWriterBaseModule
+             }
+ 
+             if (jsonField == null) {
++                applyTypeSerializer(fieldInfo, field.getType());
+                 return;
+             }
+ 
+@@ -378,6 +379,8 @@ public class ObjectWriterBaseModule
+                 fieldInfo.writeUsing = serializeUsing;
+             }
+ 
++            applyTypeSerializer(fieldInfo, field.getType());
++
+             if (jsonField.jsonDirect()) {
+                 fieldInfo.features |= FieldInfo.RAW_VALUE_MASK;
+             }
+@@ -390,6 +393,22 @@ public class ObjectWriterBaseModule
+             }
+         }
+ 
++        private void applyTypeSerializer(FieldInfo fieldInfo, Class<?> fieldClass) {
++            if (fieldInfo.writeUsing != null || fieldClass == null) {
++                return;
++            }
++
++            JSONType jsonType = BeanUtils.findAnnotation(fieldClass, JSONType.class);
++            if (jsonType == null) {
++                return;
++            }
++
++            Class<?> serializer = jsonType.serializer();
++            if (ObjectWriter.class.isAssignableFrom(serializer)) {
++                fieldInfo.writeUsing = serializer;
++            }
++        }
++
+         private void processJacksonJsonSubTypes(BeanInfo beanInfo, Annotation annotation) {
+             Class<? extends Annotation> annotationClass = annotation.getClass();
+             BeanUtils.annotationMethods(annotationClass, m -> {
+@@ -787,6 +806,8 @@ public class ObjectWriterBaseModule
+                     }
+                 }
+             }
++
++            applyTypeSerializer(fieldInfo, method.getReturnType());
+         }
+ 
+         private void processAnnotations(FieldInfo fieldInfo, Annotation[] annotations) {
+diff --git a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+index f8b847de4..2400810ee 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
++++ b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+@@ -54,4 +54,98 @@ public class JSONType_serializer {
+             assertEquals("{\"ID\":123}", str);
+         }
+     }
++
++    @Test
++    public void testFieldTypeSerializer() {
++        AppDto app = new AppDto();
++        app.setAlarmStatus(AlarmStatus.RUNNING);
++
++        assertEquals("{\"alarmStatus\":{\"label\":\"启用\",\"value\":1}}", JSON.toJSONString(app));
++    }
++
++    @Test
++    public void testFieldTypeSerializer1() {
++        AppDto app = new AppDto();
++        app.setAlarmStatus(AlarmStatus.RUNNING);
++
++        for (ObjectWriterCreator creator : TestUtils.writerCreators()) {
++            ObjectWriter objectWriter = creator.createObjectWriter(AppDto.class);
++            JSONWriter jsonWriter = JSONWriter.of();
++            objectWriter.write(jsonWriter, app);
++            String str = jsonWriter.toString();
++            assertEquals("{\"alarmStatus\":{\"label\":\"启用\",\"value\":1}}", str);
++        }
++    }
++
++    @Test
++    public void testGetterTypeSerializer() {
++        GetterOnlyDto app = new GetterOnlyDto();
++
++        assertEquals("{\"alarmStatus\":{\"label\":\"启用\",\"value\":1}}", JSON.toJSONString(app));
++    }
++
++    @Test
++    public void testGetterTypeSerializer1() {
++        GetterOnlyDto app = new GetterOnlyDto();
++
++        for (ObjectWriterCreator creator : TestUtils.writerCreators()) {
++            ObjectWriter objectWriter = creator.createObjectWriter(GetterOnlyDto.class);
++            JSONWriter jsonWriter = JSONWriter.of();
++            objectWriter.write(jsonWriter, app);
++            String str = jsonWriter.toString();
++            assertEquals("{\"alarmStatus\":{\"label\":\"启用\",\"value\":1}}", str);
++        }
++    }
++
++    public static class AppDto {
++        private AlarmStatus alarmStatus;
++
++        public AlarmStatus getAlarmStatus() {
++            return alarmStatus;
++        }
++
++        public void setAlarmStatus(AlarmStatus alarmStatus) {
++            this.alarmStatus = alarmStatus;
++        }
++    }
++
++    public static class GetterOnlyDto {
++        public AlarmStatus getAlarmStatus() {
++            return AlarmStatus.RUNNING;
++        }
++    }
++
++    @JSONType(serializer = AlarmStatusWriter.class)
++    public enum AlarmStatus {
++        RUNNING("启用", 1),
++        STOP("停止", 2);
++
++        public final String label;
++        public final int value;
++
++        AlarmStatus(String label, int value) {
++            this.label = label;
++            this.value = value;
++        }
++    }
++
++    public static class AlarmStatusWriter
++            implements ObjectWriter<AlarmStatus> {
++        @Override
++        public void write(JSONWriter jsonWriter, Object object, Object fieldName, Type fieldType, long features) {
++            AlarmStatus status = (AlarmStatus) object;
++
++            jsonWriter.startObject();
++
++            jsonWriter.writeName("label");
++            jsonWriter.writeColon();
++            jsonWriter.writeString(status.label);
++
++            jsonWriter.writeName("value");
++            jsonWriter.writeColon();
++            jsonWriter.writeInt32(status.value);
++
++            jsonWriter.endObject();
++        }
++    }
+ }

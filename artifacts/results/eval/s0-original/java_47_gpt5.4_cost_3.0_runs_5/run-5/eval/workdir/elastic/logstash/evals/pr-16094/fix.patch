@@ -1,0 +1,466 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/test/java/org/logstash/execution/ShutdownWatcherExtTest.java b/logstash-core/src/test/java/org/logstash/execution/ShutdownWatcherExtTest.java
+index 79ca8ac0a..08fc4b338 100644
+--- a/logstash-core/src/test/java/org/logstash/execution/ShutdownWatcherExtTest.java
++++ b/logstash-core/src/test/java/org/logstash/execution/ShutdownWatcherExtTest.java
+@@ -18,111 +18,188 @@
+  */
+ 
+ 
+-package org.logstash.execution;
+-
+-import java.io.IOException;
+-import java.nio.file.Files;
+-import java.nio.file.Path;
+-import java.nio.file.Paths;
+-import java.util.ArrayList;
+-import java.util.Arrays;
++/*
++ * Licensed to Elasticsearch under one or more contributor
++ * license agreements. See the NOTICE file distributed with
++ * this work for additional information regarding copyright
++ * ownership. Elasticsearch licenses this file to you under
++ * the Apache License, Version 2.0 (the "License"); you may
++ * not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *    http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing,
++ * software distributed under the License is distributed on an
++ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
++ * KIND, either express or implied.  See the License for the
++ * specific language governing permissions and limitations
++ * under the License.
++ */
++
++package org.logstash.log;
++
++import java.util.Collections;
++import java.util.HashMap;
+ import java.util.List;
+-import java.util.concurrent.ExecutionException;
+-import java.util.concurrent.ExecutorService;
+-import java.util.concurrent.Executors;
+-import java.util.concurrent.Future;
+-import java.util.concurrent.TimeUnit;
+-import java.util.stream.IntStream;
+-import javax.annotation.concurrent.NotThreadSafe;
++import java.util.Map;
+ 
++import com.fasterxml.jackson.core.JsonProcessingException;
++import org.apache.logging.log4j.LogManager;
++import org.apache.logging.log4j.Logger;
+ import org.apache.logging.log4j.junit.LoggerContextRule;
+ import org.apache.logging.log4j.test.appender.ListAppender;
+-import org.assertj.core.api.Assertions;
+-import org.jruby.RubySystemExit;
+-import org.jruby.exceptions.RaiseException;
+-import org.jruby.runtime.ThreadContext;
++import org.jruby.RubyHash;
+ import org.jruby.runtime.builtin.IRubyObject;
+-import org.junit.Before;
+ import org.junit.ClassRule;
+ import org.junit.Test;
+-import org.logstash.RubyTestBase;
++import org.logstash.ObjectMappers;
+ import org.logstash.RubyUtil;
+ 
+-import static org.junit.Assert.assertFalse;
+-import static org.junit.Assert.assertTrue;
++import static junit.framework.TestCase.assertEquals;
++import static junit.framework.TestCase.assertFalse;
++import static junit.framework.TestCase.assertNotNull;
+ 
+-/**
+- * Tests for {@link ShutdownWatcherExt}.
+- */
+-@NotThreadSafe
+-public final class ShutdownWatcherExtTest extends RubyTestBase {
++public class CustomLogEventTests {
+ 
+     private static final String CONFIG = "log4j2-test1.xml";
+-    private static final Path PIPELINE_TEMPLATE = Paths.get("./src/test/resources/shutdown_watcher_ext_pipeline_template.rb").toAbsolutePath();
+-    private ListAppender appender;
+ 
+     @ClassRule
+     public static LoggerContextRule CTX = new LoggerContextRule(CONFIG);
+ 
+-    @Before
+-    public void setup() {
+-        appender = CTX.getListAppender("EventLogger").clear();
++    @Test
++    public void testPatternLayout() {
++        final ListAppender appender = CTX.getListAppender("EventLogger").clear();
++        final Logger logger = LogManager.getLogger("EventLogger");
++
++        logger.info("simple message");
++        logger.warn("complex message", Collections.singletonMap("foo", "bar"));
++        logger.error("my name is: {}", "foo");
++        logger.debug("here is a map: {}", Collections.singletonMap(2, 5));
++        logger.warn("ignored params {}", 4, 6, 8);
++
++        final List<String> messages = appender.getMessages();
++
++        assertEquals(5, messages.size());
++        assertEquals("[INFO][EventLogger] simple message", messages.get(0));
++        assertEquals("[WARN][EventLogger] complex message", messages.get(1));
++        assertEquals("[ERROR][EventLogger] my name is: foo", messages.get(2));
++        assertEquals("[DEBUG][EventLogger] here is a map: {2=5}", messages.get(3));
++        assertEquals("[WARN][EventLogger] ignored params 4", messages.get(4));
+     }
+ 
+     @Test
+-    public void pipelineWithUnsafeShutdownShouldForceShutdown() throws InterruptedException, IOException {
+-        String pipeline = resolvedPipeline(false);
+-        watcherShutdownStallingPipeline(pipeline);
+-
+-        // non drain pipeline should print stall msg
+-        boolean printStalling = appender.getMessages().stream().anyMatch((msg) -> msg.contains("stalling"));
+-        assertTrue(printStalling);
++    @SuppressWarnings("unchecked")
++    public void testJSONLayout() throws JsonProcessingException {
++        final ListAppender appender = CTX.getListAppender("JSONEventLogger").clear();
++        final Logger logger = LogManager.getLogger("JSONEventLogger");
++
++        logger.info("simple message");
++        logger.warn("complex message", Collections.singletonMap("foo", "bar"));
++        logger.error("my name is: {}", "foo");
++        logger.debug("here is a map: {}", Collections.singletonMap(2, 5));
++        logger.warn("ignored params {}", 4, 6, 8);
++
++        final List<String> messages = appender.getMessages();
++
++        final Map<String, Object> firstMessage =
++            ObjectMappers.JSON_MAPPER.readValue(messages.get(0), Map.class);
++
++        assertEquals(5, firstMessage.size());
++        assertEquals("INFO", firstMessage.get("level"));
++        assertEquals("JSONEventLogger", firstMessage.get("loggerName"));
++        assertNotNull(firstMessage.get("thread"));
++        assertEquals(Collections.singletonMap("message", "simple message"), firstMessage.get("logEvent"));
++
++        final Map<String, Object> secondMessage =
++            ObjectMappers.JSON_MAPPER.readValue(messages.get(1), Map.class);
++
++        assertEquals(5, secondMessage.size());
++        assertEquals("WARN", secondMessage.get("level"));
++        assertEquals("JSONEventLogger", secondMessage.get("loggerName"));
++        assertNotNull(secondMessage.get("thread"));
++        Map<String, Object> logEvent = new HashMap<>();
++        logEvent.put("message", "complex message");
++        logEvent.put("foo", "bar");
++        assertEquals(logEvent, secondMessage.get("logEvent"));
++
++        final Map<String, Object> thirdMessage =
++            ObjectMappers.JSON_MAPPER.readValue(messages.get(2), Map.class);
++        assertEquals(5, thirdMessage.size());
++        logEvent = Collections.singletonMap("message", "my name is: foo");
++        assertEquals(logEvent, thirdMessage.get("logEvent"));
++
++        final Map<String, Object> fourthMessage =
++            ObjectMappers.JSON_MAPPER.readValue(messages.get(3), Map.class);
++        assertEquals(5, fourthMessage.size());
++        logEvent = new HashMap<>();
++        logEvent.put("message", "here is a map: {}");
++        logEvent.put("2", 5);
++        assertEquals(logEvent, fourthMessage.get("logEvent"));
++
++        final Map<String, Object> fifthMessage =
++            ObjectMappers.JSON_MAPPER.readValue(messages.get(4), Map.class);
++        assertEquals(5, fifthMessage.size());
++        logEvent = Collections.singletonMap("message", "ignored params 4");
++        assertEquals(logEvent, fifthMessage.get("logEvent"));
+     }
+ 
+-
+     @Test
+-    public void pipelineWithDrainShouldNotPrintStallMsg() throws InterruptedException, IOException {
+-        String pipeline = resolvedPipeline(true);
+-        watcherShutdownStallingPipeline(pipeline);
++    @SuppressWarnings("unchecked")
++    public void testJSONLayoutIgnoresStructuredMessageMessageFieldCollision() throws Exception {
++        final ListAppender appender = CTX.getListAppender("JSONEventLogger").clear();
++        final Logger logger = LogManager.getLogger("JSONEventLogger");
+ 
+-        boolean printStalling = appender.getMessages().stream().anyMatch((msg) -> msg.contains("stalling"));
+-        assertFalse(printStalling);
+-    }
++        final Map<String, Object> details = new HashMap<>();
++        details.put("message", "conflicting detail message");
++        details.put("foo", "bar");
+ 
+-    private void watcherShutdownStallingPipeline(String rubyScript) throws InterruptedException {
+-        final ExecutorService exec = Executors.newSingleThreadExecutor();
+-        try {
+-            final Future<IRubyObject> res = exec.submit(() -> {
+-                final ThreadContext context = RubyUtil.RUBY.getCurrentContext();
+-                ShutdownWatcherExt.setUnsafeShutdown(context, null, context.tru);
+-                return new ShutdownWatcherExt(context.runtime, RubyUtil.SHUTDOWN_WATCHER_CLASS)
+-                        .initialize(
+-                                context, new IRubyObject[]{
+-                                        RubyUtil.RUBY.evalScriptlet(rubyScript),
+-                                        context.runtime.newFloat(0.01)
+-                                }
+-                        ).start(context);
+-            });
+-            res.get();
+-            Assertions.fail("Shutdown watcher did not invoke system exit(-1)");
+-        } catch (final ExecutionException ex) {
+-            final RaiseException cause = (RaiseException) ex.getCause();
+-            Assertions.assertThat(cause.getException()).isInstanceOf(RubySystemExit.class);
+-        } finally {
+-            exec.shutdownNow();
+-            final ThreadContext context = RubyUtil.RUBY.getCurrentContext();
+-            ShutdownWatcherExt.setUnsafeShutdown(context, null, context.fals);
+-            if (!exec.awaitTermination(30L, TimeUnit.SECONDS)) {
+-                Assertions.fail("Failed to shut down shutdown watcher thread");
+-            }
+-        }
+-    }
++        logger.warn("primary message", details);
+ 
+-    private static String getPipelineTemplate() throws IOException {
+-        return new String(Files.readAllBytes(PIPELINE_TEMPLATE));
++        final List<String> loggedMessages = appender.getMessages();
++        assertEquals(1, loggedMessages.size());
++
++        final Map<String, Object> message = ObjectMappers.JSON_MAPPER.readValue(loggedMessages.get(0), Map.class);
++        final Map<String, Object> logEvent = (Map<String, Object>) message.get("logEvent");
++
++        assertEquals("primary message", logEvent.get("message"));
++        assertEquals("bar", logEvent.get("foo"));
++        assertEquals(2, logEvent.size());
+     }
+ 
+-    private static String resolvedPipeline(Boolean isDraining) throws IOException {
+-        return getPipelineTemplate().replace("%{value_placeholder}", isDraining.toString());
++    @Test
++    @SuppressWarnings("unchecked")
++    public void testJSONLayoutWithRubyObjectArgument() throws JsonProcessingException {
++        final ListAppender appender = CTX.getListAppender("JSONEventLogger").clear();
++        final Logger logger = LogManager.getLogger("JSONEventLogger");
++
++        final IRubyObject fooRubyObject = RubyUtil.RUBY.evalScriptlet("Class.new do def initialize\n @foo = true\n end\n def to_s\n 'foo_value'\n end end.new");
++        final Map<Object, Object> arguments = RubyHash.newHash(RubyUtil.RUBY);
++        arguments.put("foo", fooRubyObject);
++        arguments.put("bar", "bar_value");
++        arguments.put("one", 1);
++
++        final Map<Object, Object> mapArgValue = RubyHash.newHash(RubyUtil.RUBY);
++        mapArgValue.put("first", 1);
++        mapArgValue.put("second", 2);
++        arguments.put("map", mapArgValue);
++
++        logger.error("Error with hash: {}", arguments);
++
++        final List<String> loggedMessages = appender.getMessages();
++        assertFalse(loggedMessages.isEmpty());
++        assertFalse(loggedMessages.get(0).isEmpty());
++
++        final Map<String, Object> message =  ObjectMappers.JSON_MAPPER.readValue(loggedMessages.get(0), Map.class);
++        final Map<String, Object> logEvent = (Map<String, Object>) message.get("logEvent");
++
++        assertEquals("Error with hash: {}", logEvent.get("message"));
++        assertEquals("foo_value", logEvent.get("foo"));
++        assertEquals("bar_value", logEvent.get("bar"));
++        assertEquals(1, logEvent.get("one"));
++
++        final Map<String, Object> logEventMapValue = (Map<String, Object>) logEvent.get("map");
++        assertEquals(1, logEventMapValue.get("first"));
++        assertEquals(2, logEventMapValue.get("second"));
+     }
+ }
+diff --git a/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java b/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java
+index c340fb921..87299c2a9 100644
+--- a/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java
++++ b/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java
+@@ -17,34 +17,13 @@
+  * under the License.
+  */
+ 
+-
+-/*
+- * Licensed to Elasticsearch under one or more contributor
+- * license agreements. See the NOTICE file distributed with
+- * this work for additional information regarding copyright
+- * ownership. Elasticsearch licenses this file to you under
+- * the Apache License, Version 2.0 (the "License"); you may
+- * not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *    http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing,
+- * software distributed under the License is distributed on an
+- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+- * KIND, either express or implied.  See the License for the
+- * specific language governing permissions and limitations
+- * under the License.
+- */
+-
+ package org.logstash.log;
+ 
++import com.fasterxml.jackson.core.JsonProcessingException;
+ import java.util.Collections;
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
+-
+-import com.fasterxml.jackson.core.JsonProcessingException;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ import org.apache.logging.log4j.junit.LoggerContextRule;
+@@ -56,11 +35,12 @@ import org.junit.Test;
+ import org.logstash.ObjectMappers;
+ import org.logstash.RubyUtil;
+ 
+-import static junit.framework.TestCase.assertFalse;
+ import static junit.framework.TestCase.assertEquals;
++import static junit.framework.TestCase.assertFalse;
+ import static junit.framework.TestCase.assertNotNull;
+ 
+ public class CustomLogEventTests {
++
+     private static final String CONFIG = "log4j2-test1.xml";
+ 
+     @ClassRule
+@@ -68,36 +48,40 @@ public class CustomLogEventTests {
+ 
+     @Test
+     public void testPatternLayout() {
+-        ListAppender appender = CTX.getListAppender("EventLogger").clear();
+-        Logger logger = LogManager.getLogger("EventLogger");
++        final ListAppender appender = CTX.getListAppender("EventLogger").clear();
++        final Logger logger = LogManager.getLogger("EventLogger");
++
+         logger.info("simple message");
+         logger.warn("complex message", Collections.singletonMap("foo", "bar"));
+         logger.error("my name is: {}", "foo");
+-        logger.error("here is a map: {}. ok?", Collections.singletonMap(2, 5));
+-        logger.warn("ignored params {}", 4, 6);
+-        List<String> messages = appender.getMessages();
++        logger.debug("here is a map: {}", Collections.singletonMap(2, 5));
++        logger.warn("ignored params {}", 4, 6, 8);
++
++        final List<String> messages = appender.getMessages();
++
+         assertEquals(5, messages.size());
+         assertEquals("[INFO][EventLogger] simple message", messages.get(0));
+-        assertEquals("[WARN][EventLogger] complex message {foo=bar}", messages.get(1));
++        assertEquals("[WARN][EventLogger] complex message", messages.get(1));
+         assertEquals("[ERROR][EventLogger] my name is: foo", messages.get(2));
+-        assertEquals("[ERROR][EventLogger] here is a map: {}. ok? {2=5}", messages.get(3));
++        assertEquals("[DEBUG][EventLogger] here is a map: {2=5}", messages.get(3));
+         assertEquals("[WARN][EventLogger] ignored params 4", messages.get(4));
+     }
+ 
+     @Test
+     @SuppressWarnings("unchecked")
+-    public void testJSONLayout() throws Exception {
+-        ListAppender appender = CTX.getListAppender("JSONEventLogger").clear();
+-        Logger logger = LogManager.getLogger("JSONEventLogger");
++    public void testJSONLayout() throws JsonProcessingException {
++        final ListAppender appender = CTX.getListAppender("JSONEventLogger").clear();
++        final Logger logger = LogManager.getLogger("JSONEventLogger");
++
+         logger.info("simple message");
+         logger.warn("complex message", Collections.singletonMap("foo", "bar"));
+         logger.error("my name is: {}", "foo");
+-        logger.error("here is a map: {}", Collections.singletonMap(2, 5));
++        logger.debug("here is a map: {}", Collections.singletonMap(2, 5));
+         logger.warn("ignored params {}", 4, 6, 8);
+ 
+-        List<String> messages = appender.getMessages();
++        final List<String> messages = appender.getMessages();
+ 
+-        Map<String, Object> firstMessage =
++        final Map<String, Object> firstMessage =
+             ObjectMappers.JSON_MAPPER.readValue(messages.get(0), Map.class);
+ 
+         assertEquals(5, firstMessage.size());
+@@ -106,7 +90,7 @@ public class CustomLogEventTests {
+         assertNotNull(firstMessage.get("thread"));
+         assertEquals(Collections.singletonMap("message", "simple message"), firstMessage.get("logEvent"));
+ 
+-        Map<String, Object> secondMessage =
++        final Map<String, Object> secondMessage =
+             ObjectMappers.JSON_MAPPER.readValue(messages.get(1), Map.class);
+ 
+         assertEquals(5, secondMessage.size());
+@@ -118,13 +102,13 @@ public class CustomLogEventTests {
+         logEvent.put("foo", "bar");
+         assertEquals(logEvent, secondMessage.get("logEvent"));
+ 
+-        Map<String, Object> thirdMessage =
++        final Map<String, Object> thirdMessage =
+             ObjectMappers.JSON_MAPPER.readValue(messages.get(2), Map.class);
+         assertEquals(5, thirdMessage.size());
+         logEvent = Collections.singletonMap("message", "my name is: foo");
+         assertEquals(logEvent, thirdMessage.get("logEvent"));
+ 
+-        Map<String, Object> fourthMessage =
++        final Map<String, Object> fourthMessage =
+             ObjectMappers.JSON_MAPPER.readValue(messages.get(3), Map.class);
+         assertEquals(5, fourthMessage.size());
+         logEvent = new HashMap<>();
+@@ -132,13 +116,36 @@ public class CustomLogEventTests {
+         logEvent.put("2", 5);
+         assertEquals(logEvent, fourthMessage.get("logEvent"));
+ 
+-        Map<String, Object> fifthMessage =
++        final Map<String, Object> fifthMessage =
+             ObjectMappers.JSON_MAPPER.readValue(messages.get(4), Map.class);
+         assertEquals(5, fifthMessage.size());
+         logEvent = Collections.singletonMap("message", "ignored params 4");
+         assertEquals(logEvent, fifthMessage.get("logEvent"));
+     }
+ 
++    @Test
++    @SuppressWarnings("unchecked")
++    public void testJSONLayoutIgnoresStructuredMessageMessageFieldCollision() throws Exception {
++        final ListAppender appender = CTX.getListAppender("JSONEventLogger").clear();
++        final Logger logger = LogManager.getLogger("JSONEventLogger");
++
++        final Map<String, Object> details = new HashMap<>();
++        details.put("message", "conflicting detail message");
++        details.put("foo", "bar");
++
++        logger.warn("primary message", details);
++
++        final List<String> loggedMessages = appender.getMessages();
++        assertEquals(1, loggedMessages.size());
++
++        final Map<String, Object> message = ObjectMappers.JSON_MAPPER.readValue(loggedMessages.get(0), Map.class);
++        final Map<String, Object> logEvent = (Map<String, Object>) message.get("logEvent");
++
++        assertEquals("primary message", logEvent.get("message"));
++        assertEquals("bar", logEvent.get("foo"));
++        assertEquals(2, logEvent.size());
++    }
++
+     @Test
+     @SuppressWarnings("unchecked")
+     public void testJSONLayoutWithRubyObjectArgument() throws JsonProcessingException {
+@@ -162,7 +169,7 @@ public class CustomLogEventTests {
+         assertFalse(loggedMessages.isEmpty());
+         assertFalse(loggedMessages.get(0).isEmpty());
+ 
+-        final Map<String, Object> message =  ObjectMappers.JSON_MAPPER.readValue(loggedMessages.get(0), Map.class);
++        final Map<String, Object> message = ObjectMappers.JSON_MAPPER.readValue(loggedMessages.get(0), Map.class);
+         final Map<String, Object> logEvent = (Map<String, Object>) message.get("logEvent");
+ 
+         assertEquals("Error with hash: {}", logEvent.get("message"));

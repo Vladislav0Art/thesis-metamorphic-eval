@@ -1,0 +1,66 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/log/CustomLogEventSerializer.java b/logstash-core/src/main/java/org/logstash/log/CustomLogEventSerializer.java
+index b52c14a6f..0389f31d5 100644
+--- a/logstash-core/src/main/java/org/logstash/log/CustomLogEventSerializer.java
++++ b/logstash-core/src/main/java/org/logstash/log/CustomLogEventSerializer.java
+@@ -72,6 +72,10 @@ public class CustomLogEventSerializer extends JsonSerializer<CustomLogEvent> {
+             final String paramName = entry.getKey().toString();
+             final Object paramValue = entry.getValue();
+ 
++            if ("message".equals(paramName)) {
++                continue;
++            }
++
+             try {
+                 if (isValueSafeToWrite(paramValue)) {
+                     generator.writeObjectField(paramName, paramValue);
+diff --git a/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java b/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java
+index c340fb921..d89fb5cdd 100644
+--- a/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java
++++ b/logstash-core/src/test/java/org/logstash/log/CustomLogEventTests.java
+@@ -138,6 +138,32 @@ public class CustomLogEventTests {
+         logEvent = Collections.singletonMap("message", "ignored params 4");
+         assertEquals(logEvent, fifthMessage.get("logEvent"));
+     }
++    @Test
++    @SuppressWarnings("unchecked")
++    public void testJSONLayoutDoesNotDuplicateStructuredMessageField() throws Exception {
++        ListAppender appender = CTX.getListAppender("JSONEventLogger").clear();
++        Logger logger = LogManager.getLogger("JSONEventLogger");
++
++        Map<String, Object> details = new HashMap<>();
++        details.put("message", "conflicting detail message");
++        details.put("foo", "bar");
++
++        logger.warn("complex message", details);
++
++        List<String> messages = appender.getMessages();
++        assertEquals(1, messages.size());
++
++        String rawMessage = messages.get(0);
++        assertEquals(1, rawMessage.split("\"message\"", -1).length - 1);
++        assertFalse(rawMessage.contains("\"message\":\"conflicting detail message\""));
++
++        Map<String, Object> loggedMessage =
++            ObjectMappers.JSON_MAPPER.readValue(rawMessage, Map.class);
++        Map<String, Object> logEvent = (Map<String, Object>) loggedMessage.get("logEvent");
++
++        assertEquals("complex message", logEvent.get("message"));
++        assertEquals("bar", logEvent.get("foo"));
++    }
+ 
+     @Test
+     @SuppressWarnings("unchecked")

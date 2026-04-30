@@ -1,0 +1,106 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+index 0500f4b83..ac8fe62d0 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+@@ -644,6 +644,19 @@ public abstract class JSONReader
+         resolveTasks.add(new ResolveTask(null, object, i, reference));
+     }
+ 
++    public final void handleResolveTasks(Object from, Object to) {
++        if (resolveTasks == null || from == to) {
++            return;
++        }
++
++        for (int i = 0; i < resolveTasks.size(); i++) {
++            ResolveTask resolveTask = resolveTasks.get(i);
++            if (resolveTask.object == from) {
++                resolveTasks.set(i, new ResolveTask(resolveTask.fieldReader, to, resolveTask.name, resolveTask.reference));
++            }
++        }
++    }
++
+     public boolean isArray() {
+         return this.ch == '[';
+     }
+diff --git a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+index 2af2137f4..c004fe62a 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
++++ b/core/src/main/java/com/alibaba/fastjson2/reader/ObjectReaderImplList.java
+@@ -581,7 +581,9 @@ public final class ObjectReaderImplList
+                 Object item = itemObjectReader.readObject(jsonReader, itemType, 0, 0);
+                 list.add(item);
+                 if (builder != null) {
+-                    list = (Collection) builder.apply(list);
++                    Collection built = (Collection) builder.apply(list);
++                    jsonReader.handleResolveTasks(list, built);
++                    list = built;
+                 }
+                 return list;
+             }
+@@ -616,6 +618,7 @@ public final class ObjectReaderImplList
+                         item = this;
+                     } else {
+                         jsonReader.addResolveTask(list, i, JSONPath.of(reference));
++                        list.add(null);
+                         continue;
+                     }
+                 } else {
+@@ -631,7 +634,9 @@ public final class ObjectReaderImplList
+         jsonReader.nextIfComma();
+ 
+         if (builder != null) {
+-            return builder.apply(list);
++            Collection built = (Collection) builder.apply(list);
++            jsonReader.handleResolveTasks(list, built);
++            return built;
+         }
+ 
+         return list;
+diff --git a/core/src/test/java/com/alibaba/fastjson2/codec/RefTest6_list.java b/core/src/test/java/com/alibaba/fastjson2/codec/RefTest6_list.java
+index 27baf545e..a72d8fc7a 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/codec/RefTest6_list.java
++++ b/core/src/test/java/com/alibaba/fastjson2/codec/RefTest6_list.java
+@@ -1,5 +1,6 @@
+ package com.alibaba.fastjson2.codec;
+ 
++import com.alibaba.fastjson2.JSON;
+ import com.alibaba.fastjson2.JSONB;
+ import com.alibaba.fastjson2.JSONReader;
+ import com.alibaba.fastjson2.JSONWriter;
+@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
+ import java.util.Arrays;
+ import java.util.List;
+ 
++import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+ import static org.junit.jupiter.api.Assertions.assertSame;
+ 
+ public class RefTest6_list {
+@@ -43,6 +45,24 @@ public class RefTest6_list {
+         assertSame(a1.c, a1.values.get(0));
+     }
+ 
++    @Test
++    public void test_ref_arrays_as_list() {
++        C value = new C();
++        List<C> values = Arrays.asList(value, value);
++
++        String str = JSON.toJSONString(
++                values,
++                JSONWriter.Feature.WriteClassName,
++                JSONWriter.Feature.ReferenceDetection
++        );
++
++        Object parsed = JSON.parseObject(str, values.getClass(), JSONReader.Feature.SupportAutoType);
++        assertInstanceOf(values.getClass(), parsed);
++
++        List<?> parsedList = (List<?>) parsed;
++        assertSame(parsedList.get(0), parsedList.get(1));
++    }
++
+     public static class A {
+         public C c;
+         public List<C> values;

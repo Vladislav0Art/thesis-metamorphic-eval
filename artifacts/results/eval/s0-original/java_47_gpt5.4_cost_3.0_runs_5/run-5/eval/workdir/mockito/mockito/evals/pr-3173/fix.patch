@@ -1,0 +1,133 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+index cd5194258..b926c0c2c 100644
+--- a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
++++ b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+@@ -87,7 +87,6 @@ public class SpyAnnotationEngine implements AnnotationEngine {
+         return Mockito.mock(
+                 instance.getClass(),
+                 withSettings()
+-                        .genericTypeToMock(field.getGenericType())
+                         .spiedInstance(instance)
+                         .defaultAnswer(CALLS_REAL_METHODS)
+                         .name(field.getName()));
+diff --git a/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyRecordTest.java b/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyRecordTest.java
+new file mode 100644
+index 000000000..68bea1123
+--- /dev/null
++++ b/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyRecordTest.java
+@@ -0,0 +1,54 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockito.java21;
++
++import static org.junit.Assert.assertEquals;
++
++import java.util.List;
++
++import org.junit.After;
++import org.junit.Test;
++import org.mockito.Mockito;
++import org.mockito.MockitoAnnotations;
++import org.mockito.Spy;
++public class GenericSpyRecordTest {
++
++    private AutoCloseable mocks;
++
++    @Spy private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy private ExampleRecord exampleRecord = new ExampleRecord("some value");
++
++    @After
++    public void releaseMocks() throws Exception {
++        if (mocks != null) {
++            mocks.close();
++        }
++    }
++
++    @Test
++    public void should_keep_record_state_when_spied_directly() {
++        ExampleRecord record = Mockito.spy(new ExampleRecord("some value"));
++
++        assertEquals("some value", record.someParameter());
++    }
++
++    @Test
++    public void should_keep_record_state_when_spying_generic_instance_first() {
++        List<String> ignored = Mockito.spy(List.of("item A", "item B"));
++        ExampleRecord record = Mockito.spy(new ExampleRecord("some value"));
++
++        assertEquals("some value", record.someParameter());
++    }
++
++    @Test
++    public void should_keep_record_state_when_generic_spy_is_present() {
++        mocks = MockitoAnnotations.openMocks(this);
++
++        assertEquals("some value", exampleRecord.someParameter());
++    }
++
++    record ExampleRecord(String someParameter) {}
++}
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyWithRecordTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyWithRecordTest.java
+new file mode 100644
+index 000000000..be482e8c7
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyWithRecordTest.java
+@@ -0,0 +1,41 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.List;
++
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Spy;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++@ExtendWith(MockitoExtension.class)
++class GenericSpyWithRecordTest {
++
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private FinalClass example = new FinalClass("some value");
++
++    @Test
++    void keeps_final_spy_state_when_generic_spy_is_present() {
++        assertThat(example.someParameter()).isEqualTo("some value");
++    }
++
++    private static final class FinalClass {
++        private final String someParameter;
++
++        private FinalClass(String someParameter) {
++            this.someParameter = someParameter;
++        }
++
++        private String someParameter() {
++            return someParameter;
++        }
++    }
++}

@@ -1,0 +1,67 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java b/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java
+index 531e7f41b..e1ac7f8a7 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java
+@@ -42,7 +42,7 @@ public class IfVertex extends Vertex {
+     }
+ 
+     public String toString() {
+-        return "[if " + booleanExpression.toString(0) + "]";
++        return "[if " + humanReadableExpression() + "]";
+     }
+ 
+     @Override
+diff --git a/logstash-core/src/test/java/org/logstash/config/ir/graph/IfVertexTest.java b/logstash-core/src/test/java/org/logstash/config/ir/graph/IfVertexTest.java
+index 59e07f4dd..66f49d0b7 100644
+--- a/logstash-core/src/test/java/org/logstash/config/ir/graph/IfVertexTest.java
++++ b/logstash-core/src/test/java/org/logstash/config/ir/graph/IfVertexTest.java
+@@ -21,7 +21,10 @@
+ package org.logstash.config.ir.graph;
+ 
+ import org.junit.Test;
++import org.logstash.common.SourceWithMetadata;
+ import org.logstash.config.ir.InvalidIRException;
++import org.logstash.config.ir.expression.binary.Truthy;
++import org.logstash.config.ir.expression.ValueExpression;
+ 
+ import static org.hamcrest.CoreMatchers.*;
+ import static org.junit.Assert.assertThat;
+@@ -76,6 +79,24 @@ public class IfVertexTest {
+         assertThat(falseEdge.getEdgeType(), is(false));
+     }
+ 
++    @Test
++    public void testToStringFallsBackToSerializedExpressionWithoutSourceText() throws InvalidIRException {
++        IfVertex ifV = testIfVertex();
++
++        assertThat(ifV.toString(), is("[if (!!1)]"));
++    }
++
++    @Test
++    public void testToStringUsesOriginalSourceTextWhenAvailable() throws InvalidIRException {
++        SourceWithMetadata source = new SourceWithMetadata("file", "/fake/file", 1, 1, "[header][auth] != \"${secret}\"");
++        IfVertex ifV = new IfVertex(
++                randMeta(),
++                new Truthy(source, new ValueExpression(source, "resolved-secret"))
++        );
++
++        assertThat(ifV.toString(), is("[if [header][auth] != \"${secret}\"]"));
++    }
++
+     public IfVertex testIfVertex() throws InvalidIRException {
+         return new IfVertex(randMeta(), createTestExpression());
+     }

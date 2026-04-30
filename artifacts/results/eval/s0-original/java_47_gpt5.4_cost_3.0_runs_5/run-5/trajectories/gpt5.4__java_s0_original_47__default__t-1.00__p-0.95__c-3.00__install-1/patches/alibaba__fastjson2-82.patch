@@ -1,0 +1,76 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index b6a0ff2ce..b5aa90ed0 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -605,7 +605,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -627,7 +627,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -646,7 +646,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -668,7 +668,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -690,9 +690,10 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
++
+     /**
+      * Convert Java object order to {@link JSONArray} or {@link JSONObject}
+      *
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 32ab096bf..1e7c852e9 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -31,6 +31,15 @@ public class JSONTest {
+     public void test_isValidArray_0() {
+         assertTrue(JSON.isValidArray("[]"));
+         assertFalse(JSON.isValidArray("{}"));
++        assertFalse(JSON.isValidArray("[]1"));
++        assertFalse(JSON.isValidArray("[] 1"));
++        assertFalse(JSON.isValid("{\"id\":1}x"));
++        assertFalse(JSON.isValid("[1]x"));
++
++        assertFalse(JSON.isValidArray("[]1".getBytes(StandardCharsets.UTF_8)));
++        assertFalse(JSON.isValid("{\"id\":1}x".getBytes(StandardCharsets.UTF_8)));
++        byte[] bytes = "[1]x".getBytes(StandardCharsets.UTF_8);
++        assertFalse(JSON.isValid(bytes, 0, bytes.length, StandardCharsets.UTF_8));
+     }
+ 
+     @Test

@@ -1,0 +1,100 @@
+
+diff --git a/.gitignore b/.gitignore
+index 5bda0b93..e930bdfb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -18,3 +18,8 @@ local.properties
+ build
+ 
+ .DS_Store
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/gson/src/main/java/com/google/gson/internal/$Gson$Types.java b/gson/src/main/java/com/google/gson/internal/$Gson$Types.java
+index adea605f..824f0d79 100644
+--- a/gson/src/main/java/com/google/gson/internal/$Gson$Types.java
++++ b/gson/src/main/java/com/google/gson/internal/$Gson$Types.java
+@@ -101,7 +101,7 @@ public final class $Gson$Types {
+    * type is {@link java.io.Serializable}.
+    */
+   public static Type canonicalize(Type type) {
+-    if (type instanceof Class) {
++    if (type instanceof Class<?>) {
+       Class<?> c = (Class<?>) type;
+       return c.isArray() ? new GenericArrayTypeImpl(canonicalize(c.getComponentType())) : c;
+ 
+@@ -334,26 +334,30 @@ public final class $Gson$Types {
+   }
+ 
+   public static Type resolve(Type context, Class<?> contextRawType, Type toResolve) {
+-    return resolve(context, contextRawType, toResolve, new HashSet<TypeVariable>());
++    return resolve(context, contextRawType, toResolve, new HashMap<TypeVariable<?>, Type>());
+   }
+ 
+   private static Type resolve(Type context, Class<?> contextRawType, Type toResolve,
+-                              Collection<TypeVariable> visitedTypeVariables) {
++                              Map<TypeVariable<?>, Type> visitedTypeVariables) {
+     // this implementation is made a little more complicated in an attempt to avoid object-creation
+     while (true) {
+       if (toResolve instanceof TypeVariable) {
+         TypeVariable<?> typeVariable = (TypeVariable<?>) toResolve;
+-        if (visitedTypeVariables.contains(typeVariable)) {
+-          // cannot reduce due to infinite recursion
+-          return toResolve;
+-        } else {
+-          visitedTypeVariables.add(typeVariable);
++        Type previouslyResolved = visitedTypeVariables.get(typeVariable);
++        if (previouslyResolved != null) {
++          return previouslyResolved;
+         }
+-        toResolve = resolveTypeVariable(context, contextRawType, typeVariable);
+-        if (toResolve == typeVariable) {
+-          return toResolve;
++
++        visitedTypeVariables.put(typeVariable, typeVariable);
++        Type resolved = resolveTypeVariable(context, contextRawType, typeVariable);
++        if (resolved == typeVariable) {
++          return resolved;
+         }
+ 
++        toResolve = resolve(context, contextRawType, resolved, visitedTypeVariables);
++        visitedTypeVariables.put(typeVariable, toResolve);
++        return toResolve;
++
+       } else if (toResolve instanceof Class && ((Class<?>) toResolve).isArray()) {
+         Class<?> original = (Class<?>) toResolve;
+         Type componentType = original.getComponentType();
+diff --git a/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java b/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java
+index aaa577b5..a98fee59 100644
+--- a/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java
++++ b/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java
+@@ -108,7 +108,26 @@ public class RecursiveTypesResolveTest extends TestCase {
+     TypeAdapter<TestType2> adapter = new Gson().getAdapter(TestType2.class);
+     assertNotNull(adapter);
+   }
+-}
+ 
++  private enum TestEnum {
++    ONE, TWO, THREE
++  }
++
++  private static class TestEnumSetCollection extends SetCollection<TestEnum> {}
++
++  private static class SetCollection<T> extends BaseCollection<T, java.util.Set<T>> {}
+ 
++  private static class BaseCollection<U, C extends java.util.Collection<U>> {
++    public C collection;
++  }
++
++  public void testRecursiveTypeVariablesResolveRepeatedReference() {
++    TestEnumSetCollection withSet =
++        new Gson().fromJson("{\"collection\":[\"ONE\",\"THREE\"]}", TestEnumSetCollection.class);
+ 
++    assertNotNull(withSet.collection);
++    assertEquals(2, withSet.collection.size());
++    assertTrue(withSet.collection.contains(TestEnum.ONE));
++    assertTrue(withSet.collection.contains(TestEnum.THREE));
++  }
++}
