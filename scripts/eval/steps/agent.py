@@ -520,12 +520,23 @@ class AgentStep(Step):
         for entry in raw_entries:
             try:
                 org, repo, number = _parse_instance_id(entry["instance_id"])
+                model_patch = entry.get("model_patch")
+                if not model_patch:
+                    # Agent produced no patch for this instance (null or empty string).
+                    # Passing null to multi_swe_bench raises ValueError: Invalid patch: None.
+                    # Omit the entry — harness will count it as unresolved.
+                    logger.warning(
+                        f"Skipping '{entry['instance_id']}': model_patch is null/empty "
+                        f"(agent did not produce a patch for this instance)."
+                    )
+                    errors += 1
+                    continue
                 converted.append({
                     "org": org,
                     "repo": repo,
                     "number": number,
                     "model_name_or_path": entry["model_name_or_path"],
-                    "fix_patch": entry["model_patch"],
+                    "fix_patch": model_patch,
                 })
             except (KeyError, ValueError) as e:
                 logger.warning(f"Skipping malformed entry during conversion: {e}")
@@ -534,6 +545,6 @@ class AgentStep(Step):
         write_jsonl(str(fix_patches_path), converted)
         logger.info(
             f"Conversion complete: {len(converted)} entries written, "
-            f"{errors} skipped → {fix_patches_path}"
+            f"{errors} skipped (null patch or malformed) → {fix_patches_path}"
         )
         return fix_patches_path
