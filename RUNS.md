@@ -4,11 +4,11 @@
 ## Checklist
 
 | Step                 | Transform | Patches Check | Evaluation (GPT-5.4) | Evaluation (Claude-Sonnet-4.6) |
-|----------------------|-----------|---------------|----------------------|--------------------------------|
-| s0-original          | N/A       | N/A           | ✅ `N=5`             | ❌                             |
-| s1-renaming          | ❌        | ❌            | ❌                    | ❌                             |
-| s2-structural        | ...       | ❌            | ❌                    | ❌                             |
-| s3-problem-statement | ✅        | ❌            | ❌                    | ❌                             |
+|----------------------|-----------|---------------|--------------------------|--------------------------------|
+| s0-original          | N/A       | N/A           | ✅ `N=5` `benchmarks=47`  | ❌                             |
+| s1-renaming          | ❌        | ❌            | ❌                        | ❌                             |
+| s2-structural        | ❌        | ❌            | ❌                    | ❌                             |
+| s3-problem-statement | ✅        | ❌            | ...                   | ❌                             |
 | s4-combined          | ❌        | ❌            | ❌                    | ❌                             |
 
 **Total: 18 executions**
@@ -70,6 +70,13 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 ```
 
 1. Evaluation (GPT-5.4):
+
+```bash
+cd artifacts/results/eval/s3-problem-statement
+
+python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/evaluate.py \
+    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s3-problem-statement/s3_evaluate.yaml
+```
 
 1. Evaluation (Claude-Sonnet-4.6):
 
