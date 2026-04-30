@@ -309,7 +309,9 @@ def process_entry(
         logger.error(f"Failed to process {instance_id}: {e}", exc_info=True)
         errors.append(msg)
 
-    return entry, errors, warnings
+    return ProcessEntryResult(
+        entry=entry, errors=errors, warnings=warnings
+    )
 
 
 
