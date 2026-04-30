@@ -10,6 +10,7 @@ import argparse
 import logging
 import os
 import random
+import re
 import sys
 from pathlib import Path
 
@@ -41,6 +42,35 @@ DIRS = {
 
     'benchmarks': ARTIFACTS_DIR / 'benchmarks',
     'benchmark_downloads': ARTIFACTS_DIR / 'benchmarks' / 'downloads'
+}
+
+_INSTANCE_ID_V1 = re.compile(r'^([^/]+)/([^:]+):pr-(\d+)$')
+_INSTANCE_ID_V2 = re.compile(r'^(.+?)__(.+?)-(\d+)$')
+
+
+def normalize_instance_id(iid: str) -> str:
+    """Convert variant 1 (org/repo:pr-N) to variant 2 (org__repo-N). Pass-through otherwise."""
+    m = _INSTANCE_ID_V1.match(iid)
+    if m:
+        org, repo, number = m.groups()
+        return f"{org}__{repo}-{number}"
+    return iid
+
+
+def denormalize_instance_id(iid: str) -> str:
+    """Convert variant 2 (org__repo-N) to variant 1 (org/repo:pr-N). Pass-through otherwise."""
+    m = _INSTANCE_ID_V2.match(iid)
+    if m:
+        org, repo, number = m.groups()
+        return f"{org}/{repo}:pr-{number}"
+    return iid
+
+
+DATASET_ALIASES = {
+    'default':              'Multi-SWE-bench',
+    'Multi-SWE-bench':      'Multi-SWE-bench',
+    'mini':                 'Multi-SWE-bench_mini',
+    'Multi-SWE-bench_mini': 'Multi-SWE-bench_mini',
 }
 
 
@@ -258,6 +288,22 @@ def filter_entries(entries: list, language: str = None, difficulty: str = None, 
     return filtered
 
 
+def _load_dataset_entries(dataset_name: str, language: str | None) -> list:
+    """Download (if needed) and read all entries from a dataset.
+
+    For the full dataset, `language` selects the language subdirectory.
+    For mini datasets, `language` is ignored at the file level (filter later via filter_entries).
+    """
+    dataset_dir = download_benchmark_dataset(dataset_name)
+    jsonl_files = find_jsonl_files(dataset_dir, dataset_name, language)
+    entries = []
+    for jsonl_file in jsonl_files:
+        logger.info(f"Reading benchmark data from {jsonl_file}...")
+        entries.extend(read_jsonl(str(jsonl_file)))
+    logger.info(f"Total entries loaded from '{dataset_name}': {len(entries)}")
+    return entries
+
+
 def benchmark_command(args):
     """
     Execute the benchmark subcommand to create filtered benchmark datasets.
@@ -279,20 +325,12 @@ def benchmark_command(args):
         instance_ids = [id.strip() for id in args.instance_ids.split(',')]
         logger.info(f"Filtering by {len(instance_ids)} instance IDs: {instance_ids}")
 
-    # Download the benchmark dataset
+    # Download and read entries
     try:
-        dataset_dir = download_benchmark_dataset(args.name)
-        jsonl_files = find_jsonl_files(dataset_dir, args.name, args.language)
+        entries = _load_dataset_entries(args.name, args.language)
     except Exception as e:
         logger.error(f"Failed to prepare benchmark dataset: {e}")
         sys.exit(1)
-
-    # Read and merge entries from all files
-    entries = []
-    for jsonl_file in jsonl_files:
-        logger.info(f"Reading benchmark data from {jsonl_file}...")
-        entries.extend(read_jsonl(str(jsonl_file)))
-    logger.info(f"Total entries: {len(entries)}")
 
     # For the full (non-mini) dataset, language was already applied at the directory
     # level in find_jsonl_files, so entries have no 'language' field to filter on.
@@ -344,6 +382,101 @@ def benchmark_command(args):
     logger.info(f"Benchmark created successfully: {output_path}")
 
 
+def info_command(args):
+    """List filtered benchmark instances together with their difficulty level.
+
+    For the full dataset (which carries no 'difficulty' field), each entry is
+    looked up in the mini dataset; '-' is used when no match is found.
+    Output is printed as an aligned table and optionally saved to a file.
+    """
+    logger.info("Starting info command...")
+    ensure_directories()
+
+    dataset_name = DATASET_ALIASES[args.dataset]
+    is_mini = dataset_name.endswith('_mini')
+
+    instance_ids = None
+    if args.instance_ids:
+        instance_ids = [normalize_instance_id(iid.strip()) for iid in args.instance_ids.split(',')]
+
+    # Load and filter the requested dataset
+    try:
+        entries = _load_dataset_entries(dataset_name, args.language)
+    except Exception as e:
+        logger.error(f"Failed to load dataset '{dataset_name}': {e}")
+        sys.exit(1)
+
+    filter_language = args.language if is_mini else None
+    filtered = filter_entries(entries, filter_language, difficulty=None, instance_ids=instance_ids)
+
+    if not filtered:
+        logger.warning("No entries match the specified filters.")
+        sys.exit(0)
+
+    # Build mini difficulty index when using the full dataset.
+    # Mini is a subset of the full dataset and carries 'difficulty' per entry.
+    mini_difficulty: dict[str, str] = {}
+    if not is_mini:
+        try:
+            mini_entries = _load_dataset_entries('Multi-SWE-bench_mini', language=None)
+            mini_difficulty = {e['instance_id']: e.get('difficulty', '-') for e in mini_entries}
+            logger.info(f"Loaded {len(mini_difficulty)} entries from mini for difficulty lookup")
+        except Exception as e:
+            logger.warning(f"Could not load mini dataset for difficulty lookup: {e}")
+
+    # Build rows: (instance_id, difficulty)
+    rows = [
+        (
+            entry.get('instance_id', '?'),
+            entry.get('difficulty') or mini_difficulty.get(entry.get('instance_id', ''), '-'),
+        )
+        for entry in filtered
+    ]
+
+    # Summary
+    found_ids = {iid for iid, _ in rows}
+    if instance_ids is not None:
+        not_found = [iid for iid in instance_ids if iid not in found_ids]
+        summary = f"Found: {len(rows)}/{len(instance_ids)} instance_ids"
+        if not_found:
+            summary += f" (not found: {', '.join(not_found)})"
+    else:
+        summary = f"Total: {len(rows)} instance_ids"
+
+    # Render output
+    if args.format == 'json':
+        import json
+        output = json.dumps(
+            [
+                {
+                    "instance_id": {
+                        "agent":      iid,
+                        "evaluation": denormalize_instance_id(iid),
+                    },
+                    "difficulty": diff,
+                }
+                for iid, diff in rows
+            ],
+            indent=2,
+        )
+    else:
+        col_width = max(len('instance_id'), max(len(iid) for iid, _ in rows))
+        header    = f"{'instance_id':<{col_width}}  difficulty"
+        separator = '-' * len(header)
+        body      = '\n'.join(f"{iid:<{col_width}}  {diff}" for iid, diff in rows)
+        output    = '\n'.join([header, separator, body, separator, summary])
+
+    print(output)
+    if args.format == 'json':
+        print(summary)
+
+    if args.output:
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(output + '\n')
+        logger.info(f"Output saved to {args.output}")
+
+
 def main():
     """Main entry point for the bootstrap script."""
     parser = argparse.ArgumentParser(
@@ -379,6 +512,33 @@ def main():
 
     benchmark_parser.add_argument('--output', help='Output file path')
 
+    # Info subcommand
+    info_parser = subparsers.add_parser(
+        'info',
+        help='List filtered benchmark instances with difficulty levels',
+    )
+    info_parser.add_argument(
+        '--dataset',
+        type=str,
+        default='mini',
+        choices=list(DATASET_ALIASES.keys()),
+        metavar='{default,Multi-SWE-bench,mini,Multi-SWE-bench_mini}',
+        help='Dataset to query (default: mini)',
+    )
+    info_parser.add_argument('--language', type=str, default='java', help='Filter by language (default: java)')
+    info_parser.add_argument(
+        '--instance_ids', type=str,
+        help='Comma-separated list of instance IDs to filter',
+    )
+    info_parser.add_argument('--output', type=str, help='Optional output file path')
+    info_parser.add_argument(
+        '--format',
+        type=str,
+        default='plain',
+        choices=['plain', 'json'],
+        help='Output format: plain (default) or json',
+    )
+
     args = parser.parse_args()
 
     if not args.command:
@@ -390,6 +550,8 @@ def main():
         init_command(args)
     elif args.command == 'benchmark':
         benchmark_command(args)
+    elif args.command == 'info':
+        info_command(args)
 
 
 if __name__ == '__main__':
