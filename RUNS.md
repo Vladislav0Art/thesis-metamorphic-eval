@@ -8,7 +8,7 @@
 | s0-original          | N/A       | N/A           | ✅ `N=5`             | ❌                             |
 | s1-renaming          | ❌        | ❌            | ❌                    | ❌                             |
 | s2-structural        | ...       | ❌            | ❌                    | ❌                             |
-| s3-problem-statement | ...       | ❌            | ❌                    | ❌                             |
+| s3-problem-statement | ✅        | ❌            | ❌                    | ❌                             |
 | s4-combined          | ❌        | ❌            | ❌                    | ❌                             |
 
 **Total: 18 executions**
