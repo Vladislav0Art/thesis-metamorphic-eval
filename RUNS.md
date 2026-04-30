@@ -3,15 +3,32 @@
 
 ## Checklist
 
-| Step                 | Transform | Patches Check | Evaluation (GPT-5.4) | Evaluation (Claude-Sonnet-4.6) |
-|----------------------|-----------|---------------|--------------------------|--------------------------------|
-| s0-original          | N/A       | N/A           | ✅ `N=5` `benchmarks=47`  | ❌                             |
-| s1-renaming          | ❌        | ❌            | ❌                        | ❌                             |
-| s2-structural        | ❌        | ❌            | ❌                    | ❌                             |
-| s3-problem-statement | ✅        | ❌            | ...                   | ❌                             |
-| s4-combined          | ❌        | ❌            | ❌                    | ❌                             |
 
-**Total: 18 executions**
+### Runs for 5 benchmarks (small)
+
+| Step                 | Transform | Patches Check | Evaluation (GPT-5.4) | Evaluation (Claude-Sonnet-4.6)     |
+|----------------------|-----------|---------------|--------------------------|--------------------------------|
+| s0-original          | N/A       | N/A           | ❌                       | ❌                             |
+| s1-renaming          | ...       | ❌            | ❌                        | ❌                             |
+| s2-structural        | ❌        | ❌            | ❌                        | ❌                             |
+| s3-problem-statement | ✅        | ❌            | ❌                        | ❌                             |
+| s4-combined          | ❌        | ❌            | ❌                        | ❌                             |
+
+
+
+
+### Runs for 47 benchmarks (full)
+
+| Step                 | Transform | Patches Check | Evaluation (GPT-5.4) | Evaluation (Claude-Sonnet-4.6)     |
+|----------------------|-----------|---------------|--------------------------|--------------------------------|
+| s0-original          | N/A       | N/A           | ✅ `N=5`                 | ❌                             |
+| s1-renaming          | ❌        | ❌            | ❌                        | ❌                             |
+| s2-structural        | ❌        | ❌            | ❌                        | ❌                             |
+| s3-problem-statement | ✅        | ❌            | ✅ `N=5`                  | ❌                             |
+| s4-combined          | ❌        | ❌            | ❌                        | ❌                             |
+
+**Total: 18 runs**
+
 
 
 
@@ -33,6 +50,21 @@ tbd
 
 ### s1-renaming
 
+1. Transform:
+```bash
+cd artifacts/benchmarks/eval/s1-renaming
+
+# full (47 benchmarks)
+python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/transform.py \
+    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s1-renaming/s1_transform.yaml
+
+# small (5 benchmarks)
+python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/transform.py \
+    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s1-renaming/s1_small_transform.yaml
+```
+
+
+
 
 ### s2-structural
 
@@ -40,8 +72,13 @@ tbd
 ```bash
 cd artifacts/benchmarks/eval/s2-structural
 
+# full (47 benchmarks)
 python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/transform.py \
     --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s2-structural/s2_transform.yaml
+
+# small (5 benchmarks)
+python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/transform.py \
+    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s2-structural/s2_small_transform.yaml
 ```
 
 1. Patches Check:
