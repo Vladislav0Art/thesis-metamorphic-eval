@@ -141,6 +141,21 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 
 47 instances. Sorted by difficulty (easy → medium → hard → unknown), then by baseline score descending.
 
+
+**Selection of 5 for smaller eval:**
+
+| # | instance_id | baseline (s0) | difficulty |
+|---|---|---|---|
+| 1 | `fasterxml__jackson-core-1142` | 5/5 | — |
+| 2 | `google__gson-1391` | 5/5 | — |
+| 3 | `elastic__logstash-14970` | 4/5 | — |
+| 4 | `elastic__logstash-14981` | 4/5 | medium |
+| 5 | `elastic__logstash-16681` | 3/5 | medium |
+
+
+
+**Full table:**
+
 | instance_id | difficulty | baseline (s0) |
 |---|:---:|:---:|
 | `fasterxml__jackson-core-183`<br>`fasterxml/jackson-core:pr-183` | easy | 1/5 |
@@ -190,3 +205,5 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 | `mockito__mockito-3220`<br>`mockito/mockito:pr-3220` | - | 0/5 |
 | `mockito__mockito-3173`<br>`mockito/mockito:pr-3173` | - | 0/5 |
 | `mockito__mockito-3133`<br>`mockito/mockito:pr-3133` | - | 0/5 |
+
+
