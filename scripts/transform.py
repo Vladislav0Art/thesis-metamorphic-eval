@@ -486,10 +486,12 @@ def process_entry(
         logger.info("===== STEP 6: Replacing test_patch/fix_patch with morphed versions and save metamorphic_base_patch into 'base' =====")
         logger.info("====================================================================================================================")
 
-        # base: sha -> sha + metamorphic_base_patch (MSWE-agent and multi_swe_bench should apply the patch manually)
+        # base: sha -> sha + metamorphic_base_patch + strategy (MSWE-agent and multi_swe_bench should apply the patch manually)
         # test: test_patch -> new_morphed_test_patch
         # fix:  fix_patch  -> new_morphed_fix_patch
-        entry['base']['metamorphic_base_patch'] = metamorphic_base_patch
+        if metamorphic_base_patch:
+            entry['base']['metamorphic_base_patch'] = metamorphic_base_patch
+        entry['base']['strategy'] = strategy
         entry['test_patch'] = new_morphed_test_patch
         entry['fix_patch'] = new_morphed_fix_patch
 
