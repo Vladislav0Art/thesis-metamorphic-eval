@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 from common.codecocoon import CodeCocoonResult
+import os
 
 
 @dataclass
@@ -49,3 +50,23 @@ class TransformConfig:
     override: bool = False                              # delete and recreate strategy branches if they already exist
     skip_existing_entries: bool = True                  # skip entries whose instance_id is already present in the output file
     rewrite_problem_statement: bool = False             # run rewriteProblemStatement after all code transformations
+
+
+def validate_config(config: TransformConfig) -> None:
+    """Raise ValueError if any path in config is invalid or missing."""
+    if not os.path.exists(config.input):
+        raise ValueError(f"Input file does not exist: {config.input}")
+    if not os.path.exists(config.codecocoon):
+        raise ValueError(f"CodeCocoon directory does not exist: {config.codecocoon}")
+    if not os.path.isdir(config.codecocoon):
+        raise ValueError(f"CodeCocoon path is not a directory: {config.codecocoon}")
+    if config.env_filepath is not None:
+        if not os.path.exists(config.env_filepath):
+            raise ValueError(f"`env_filepath` does not exist: {config.env_filepath}")
+        if not os.path.isfile(config.env_filepath):
+            raise ValueError(f"`env_filepath` is not a file: {config.env_filepath}")
+    if config.additional_envs_filepath is not None:
+        if not os.path.exists(config.additional_envs_filepath):
+            raise ValueError(f"`additional_envs_filepath` does not exist: {config.additional_envs_filepath}")
+        if not os.path.isfile(config.additional_envs_filepath):
+            raise ValueError(f"`additional_envs_filepath` is not a file: {config.additional_envs_filepath}")
