@@ -72,17 +72,19 @@ def _apply_code_morphing(
     transform_test_files: bool,
     override: bool,
     logger,
-) -> _CodeMorphingResult | None:
+) -> tuple[_CodeMorphingResult | None, list[str]]:
     """Run all CodeCocoon code-morphing steps (Steps 1–5).
 
     Covers: cloning the repo, branch management, file extraction, CodeCocoon
     config generation, and the three morph passes (base, test, fix) plus diff
     generation.
 
-    Returns a ``_CodeMorphingResult`` on success, or ``None`` if any step
-    fails or is skipped (branches already exist + ``override=False``, no Java
-    files found, morph failure, etc.).  The caller writes the results back to
-    ``entry``.
+    Returns ``(result, errors)`` where:
+    - ``(result, [])``   on success
+    - ``(None,   [])``   when skipped without error (branches already exist,
+                         no Java files found)
+    - ``(None, errors)`` when a step fails; errors is a non-empty list of
+                         brief human-readable messages
     """
     instance_id = entry['instance_id']
 
@@ -100,7 +102,7 @@ def _apply_code_morphing(
 
     if not clone_repository(repo_url, repo_dir, base_sha, logger):
         logger.error(f"Failed to clone repository for {instance_id}")
-        return None
+        return None, [f"clone failed for {entry['org']}/{entry['repo']}"]
 
     # Step 1.5: Check / delete transformation branches
     base_branch = f"{strategy}-base-transformation"
@@ -116,19 +118,19 @@ def _apply_code_morphing(
             f"Branches for strategy '{strategy}' already exist. "
             "Skipping transformation (use --override to regenerate)."
         )
-        return None
+        return None, []  # expected skip, not an error
 
     if override and (base_exists or test_exists or fix_exists):
         logger.info(f"Override enabled: Deleting existing branches for strategy '{strategy}'")
         if base_exists and not delete_branch(repo_dir, base_branch, logger):
             logger.error(f"Failed to delete base branch '{base_branch}'")
-            return None
+            return None, [f"failed to delete branch '{base_branch}'"]
         if test_exists and not delete_branch(repo_dir, test_branch, logger):
             logger.error(f"Failed to delete test branch '{test_branch}'")
-            return None
+            return None, [f"failed to delete branch '{test_branch}'"]
         if fix_exists and not delete_branch(repo_dir, fix_branch, logger):
             logger.error(f"Failed to delete fix branch '{fix_branch}'")
-            return None
+            return None, [f"failed to delete branch '{fix_branch}'"]
 
     # Step 2: Extract changed files (Java only — CodeCocoon handles only Java)
     fix_files  = extract_changed_files(patch=entry.get('fix_patch',  ''), logger=logger)
@@ -152,7 +154,7 @@ def _apply_code_morphing(
 
     if not files_to_transform:
         logger.warning(f"No files found in patches for {instance_id}")
-        return None
+        return None, []  # expected skip, not an error
 
     files_str = ''.join([f"\n     - {f}" for f in files_to_transform])
     logger.info(f"Extracted {len(files_to_transform)} unique changed files:{files_str}")
@@ -180,7 +182,7 @@ def _apply_code_morphing(
 
     if not checkout_branch(repo_dir, base_sha, logger, create=False):
         logger.error(f"Failed to checkout base SHA {base_sha}")
-        return None
+        return None, [f"checkout failed for base SHA {base_sha[:8]}"]
 
     base_morph_result: MorphResult = morph(
         repo_dir=repo_dir,
@@ -195,7 +197,7 @@ def _apply_code_morphing(
 
     if base_morph_result.succeeded is False:
         logger.error("Failed to apply base metamorphic transformations")
-        return None
+        return None, ["CodeCocoon base morph failed"]
 
     metamorphic_base_commit: str = base_morph_result.last_commit_sha
     metamorphic_base_patch:  str = base_morph_result.metamorphic_patch
@@ -227,7 +229,7 @@ def _apply_code_morphing(
 
     if not checkout_branch(repo_dir, base_sha, logger, create=False):
         logger.error(f"Failed to checkout base SHA {base_sha}")
-        return None
+        return None, [f"checkout failed for base SHA {base_sha[:8]} (test morph)"]
 
     test_patch = entry.get('test_patch', '')
     test_morph_result: MorphResult = morph(
@@ -243,7 +245,7 @@ def _apply_code_morphing(
 
     if test_morph_result.succeeded is False:
         logger.error("Failed to apply test metamorphic transformations")
-        return None
+        return None, ["CodeCocoon test morph failed"]
 
     metamorphic_test_commit = test_morph_result.last_commit_sha
     _metamorphic_test_patch = test_morph_result.metamorphic_patch
@@ -273,7 +275,7 @@ def _apply_code_morphing(
     )
     if not new_morphed_test_patch:
         logger.error("Failed to generate new_morphed_test_patch")
-        return None
+        return None, ["new_morphed_test_patch generation failed (empty diff)"]
 
     strategy_entry["metamorphic_patches"]["test"]["original_patch"] = test_patch
     strategy_entry["metamorphic_patches"]["test"]["new_morphed_test_patch"] = {
@@ -292,7 +294,7 @@ def _apply_code_morphing(
 
     if not checkout_branch(repo_dir, base_sha, logger, create=False):
         logger.error(f"Failed to checkout base SHA {base_sha}")
-        return None
+        return None, [f"checkout failed for base SHA {base_sha[:8]} (fix morph)"]
 
     fix_patch = entry.get('fix_patch', '')
     fix_morph_result: MorphResult = morph(
@@ -308,7 +310,7 @@ def _apply_code_morphing(
 
     if fix_morph_result.succeeded is False:
         logger.error("Failed to apply fix metamorphic transformations")
-        return None
+        return None, ["CodeCocoon fix morph failed"]
 
     metamorphic_fix_commit = fix_morph_result.last_commit_sha
     _metamorphic_fix_patch = fix_morph_result.metamorphic_patch
@@ -338,7 +340,7 @@ def _apply_code_morphing(
     )
     if not new_morphed_fix_patch:
         logger.error("Failed to generate new_morphed_fix_patch")
-        return None
+        return None, ["new_morphed_fix_patch generation failed (empty diff)"]
 
     strategy_entry["metamorphic_patches"]["fix"]["original_patch"] = fix_patch
     strategy_entry["metamorphic_patches"]["fix"]["new_morphed_fix_patch"] = {
@@ -362,5 +364,5 @@ def _apply_code_morphing(
         new_morphed_fix_patch=new_morphed_fix_patch,
         artifacts_dir=artifacts_dir,
         memory_filepath=memory_filepath,
-    )
+    ), []
 

@@ -140,9 +140,13 @@ def process_entry(
     transform_test_files: bool,
     override: bool,
     rewrite_problem_statement: bool,
-) -> Dict:
-    """Process a single entry through the transformation pipeline."""
+) -> tuple[Dict, list[str]]:
+    """Process a single entry through the transformation pipeline.
+
+    Returns ``(entry, errors)`` where errors is empty on full success.
+    """
     instance_id = entry['instance_id']
+    errors: list[str] = []
     logger.info(f"Processing entry: {instance_id}")
     logger.info(f"ENV variables: [{', '.join(env_vars.keys())}]")
 
@@ -181,16 +185,15 @@ def process_entry(
                         entry[key] = rps_output[key]
                 logger.info(f"rewriteProblemStatement succeeded: title={entry.get('title', '')[:80]!r}")
             else:
-                logger.error(
-                    f"rewriteProblemStatement failed (return_code={rps_raw.return_code}); "
-                    "keeping original problem statement"
-                )
+                msg = f"rewriteProblemStatement failed (return_code={rps_raw.return_code})"
+                logger.error(f"{msg}; keeping original problem statement")
+                errors.append(msg)
         else:
             logger.info("rewrite_problem_statement=false — returning entry unchanged.")
-        return entry
+        return entry, errors
 
     try:
-        morph_result = _apply_code_morphing(
+        morph_result, morph_errors = _apply_code_morphing(
             entry=entry,
             strategy=strategy,
             transformations=transformations,
@@ -202,9 +205,10 @@ def process_entry(
             override=override,
             logger=logger,
         )
+        errors.extend(morph_errors)
 
         if morph_result is None:
-            return entry
+            return entry, errors
 
         # Commit morphing results to entry.
         strategy_entry = morph_result.strategy_entry
@@ -222,7 +226,7 @@ def process_entry(
         # Step 7: Problem statement text transformations
         has_rename_move = has_renaming_or_moving_transformations(transformations)
         if not has_rename_move and not rewrite_problem_statement:
-            return entry
+            return entry, errors
 
         logger.info("=========================================================================================")
         logger.info("===== STEP 7: Problem statement text transformations =====")
@@ -262,10 +266,9 @@ def process_entry(
                 current_ps_path = ps_renamed
                 logger.info("transformMetamorphicTexts succeeded")
             else:
-                logger.error(
-                    f"transformMetamorphicTexts failed (return_code={tmt_result.return_code}); "
-                    "keeping original problem statement"
-                )
+                msg = f"transformMetamorphicTexts failed (return_code={tmt_result.return_code})"
+                logger.error(f"{msg}; keeping original problem statement")
+                errors.append(msg)
             strategy_entry["text_transformations"]["transform_metamorphic_texts"] = tmt_log
 
         # 7b: rewriteProblemStatement — runs on current_ps_path (may already be renamed)
@@ -284,10 +287,9 @@ def process_entry(
                 current_ps_path = ps_rewritten
                 logger.info("rewriteProblemStatement succeeded")
             else:
-                logger.error(
-                    f"rewriteProblemStatement failed (return_code={rps_raw.return_code}); "
-                    "keeping current problem statement"
-                )
+                msg = f"rewriteProblemStatement failed (return_code={rps_raw.return_code})"
+                logger.error(f"{msg}; keeping current problem statement")
+                errors.append(msg)
             strategy_entry["text_transformations"]["rewrite_problem_statement"] = rps_log
 
         if current_ps_path != ps_input:
@@ -302,9 +304,11 @@ def process_entry(
             )
 
     except Exception as e:
+        msg = f"{type(e).__name__}: {e}"
         logger.error(f"Failed to process {instance_id}: {e}", exc_info=True)
+        errors.append(msg)
 
-    return entry
+    return entry, errors
 
 
 
@@ -363,6 +367,9 @@ def main():
         already_processed = {e["instance_id"] for e in existing if "instance_id" in e}
         logger.info(f"Resuming: {len(already_processed)} already-processed entries found in {config.output}")
 
+    n_attempted = 0
+    failed_entries: list[tuple[str, list[str]]] = []
+
     for i, entry in enumerate(entries, 1):
         instance_id = entry["instance_id"]
         logger.info("==========================================================================")
@@ -374,6 +381,8 @@ def main():
             logger.info("==========================================================================")
             continue
 
+        n_attempted += 1
+
         instance_env_vars = dict(env_vars)
         for env_entry in additional_envs:
             if env_entry.instance_id == instance_id:
@@ -381,7 +390,7 @@ def main():
                     instance_env_vars[env_var.name] = env_var.value
                 break
 
-        processed_entry = process_entry(
+        processed_entry, errors = process_entry(
             entry=entry,
             strategy=config.strategy,
             codecocoon_dir=config.codecocoon,
@@ -395,10 +404,24 @@ def main():
         )
         append_jsonl(config.output, processed_entry)
 
-        logger.info(f"====== ✅ Completed entry '{instance_id}' ({i}/{len(entries)}) ======")
+        if errors:
+            failed_entries.append((instance_id, errors))
+            errors_str = ''.join([f"\n     - {e}" for e in errors])
+            logger.error(f"====== ❌ Completed entry '{instance_id}' ({i}/{len(entries)}) with errors:{errors_str}")
+        else:
+            logger.info(f"====== ✅ Completed entry '{instance_id}' ({i}/{len(entries)}) ======")
         logger.info("==========================================================================")
 
-    logger.info("Processing complete!")
+    n_succeeded = n_attempted - len(failed_entries)
+    logger.info("")
+    logger.info("==========================================================================")
+    logger.info(f"Processing complete! succeeded {n_succeeded}/{n_attempted}, failed {len(failed_entries)}/{n_attempted}")
+    if failed_entries:
+        logger.error("Failed entries:")
+        for fid, ferrors in failed_entries:
+            errors_str = ''.join([f"\n     - {e}" for e in ferrors])
+            logger.error(f"  {fid}:{errors_str}")
+    logger.info("==========================================================================")
 
 
 if __name__ == "__main__":
