@@ -11,7 +11,7 @@
 | s0-original          | N/A       | N/A           | next `N=10`              | ❌                             |
 | s1-renaming          | ❌        | ❌            | ❌                        | ❌                             |
 | s2-structural        | ✅ 1/5    | ❌            | ❌                        | ❌                             |
-| s3-problem-statement | ✅ 5/5    | ❌            | ... `N=10`                | ❌                             |
+| s3-problem-statement | ✅ 5/5    | ❌            | ✅ `N=10`                 | ❌                             |
 | s4-combined          | ❌        | ❌            | ❌                        | ❌                             |
 
 
@@ -21,12 +21,16 @@
 |----------------------|-----------|---------------|--------------------------|--------------------------------|
 | s0-original          | N/A       | N/A           | ✅ `N=5`                 | ❌                             |
 | s1-renaming          | ❌        | ❌            | ❌                        | ❌                             |
-| s2-structural        | ... xx/47 | ❌            | ❌                        | ❌                             |
+| s2-structural        | ✅ 8/47   | ❌            | ❌                        | ❌                             |
 | s3-problem-statement | ✅        | ❌            | ✅ `N=5`                  | ❌                             |
 | s4-combined          | ❌        | ❌            | ❌                        | ❌                             |
 
-**Total: 18 runs**
 
+1. s1-renaming:
+1. s2-structural: 8/47 (fully: all files moved), /47 (partially: some files moved, some not)
+
+
+**Total: 18 runs**
 
 
 
@@ -245,4 +249,45 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 | `mockito__mockito-3173`<br>`mockito/mockito:pr-3173` | - | 0/5 |
 | `mockito__mockito-3133`<br>`mockito/mockito:pr-3133` | - | 0/5 |
 
+
+## Successfully Transformed Projects
+
+### s2-structural
+
+Projects that resulted in successful transformation: 8/47.
+
+
+**NOTES**:
+
+1. Only `move-file-into-suggested-directory-transformation/ai` failed.
+1. Some runs had several files under transformations -> partial set of files might have been moved (the run would still be deemed as failed).
+1. 8 successful runs == 8 instance ids where no transformation, for all files, has failed.
+
+Projects that fully succeeded (8/47):
+
+1. apache__dubbo-10638 (6/47)
+1. elastic__logstash-17021 (7/47)
+1. elastic__logstash-17020 (8/47)
+1. elastic__logstash-16579 (10/47)
+1. elastic__logstash-16094 (11/47)
+1. elastic__logstash-13914 (27/47) - WARN: no Java files changed!
+1. fasterxml__jackson-core-370 (31/47)
+1. fasterxml__jackson-databind-1923 (45/47)
+
+
+Projects that partially succeeded (13/47):
+
+1. `elastic__logstash-14058` (20/47)
+1. `elastic__logstash-14045` (21/47) (no base/fix metamorphic patches generated!)
+1. `elastic__logstash-14027` (22/47)
+1. `elastic__logstash-14000` (23/47)
+1. `elastic__logstash-13997` (24/47)
+1. `elastic__logstash-13931` (25/47)
+1. `elastic__logstash-13930` (26/47)
+1. `elastic__logstash-13902` (28/47)
+1. `fasterxml__jackson-databind-2036` (34/47)
+1. `googlecontainertools__jib-4144` (39/47)
+1. `mockito__mockito-3220` (43/47)
+1. `mockito__mockito-3133` (46/47)
+1. `mockito__mockito-3129` (47/47)
 
