@@ -1,0 +1,2418 @@
+[2026-05-02 13:15:32,342] [docker_util.py] [INFO]: Start building image `mswebench/mockito_m_mockito:pr-3129`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/patches/eval/s2-structural/java_47_s2_runs_3_patches/run-1/eval/workdir/mockito/mockito/images/pr-3129`
+[2026-05-02 13:15:32,804] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/mockito_m_mockito:base
+[2026-05-02 13:15:32,804] [docker_util.py] [INFO]: 
+[2026-05-02 13:15:32,820] [docker_util.py] [INFO]: ---> fda52827992a
+[2026-05-02 13:15:32,820] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-05-02 13:15:32,820] [docker_util.py] [INFO]: 
+[2026-05-02 13:15:35,321] [docker_util.py] [INFO]: ---> 375b920e9fb8
+[2026-05-02 13:15:35,321] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-05-02 13:15:35,321] [docker_util.py] [INFO]: 
+[2026-05-02 13:15:35,932] [docker_util.py] [INFO]: ---> df23d71b528e
+[2026-05-02 13:15:35,932] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-05-02 13:15:35,932] [docker_util.py] [INFO]: 
+[2026-05-02 13:15:36,512] [docker_util.py] [INFO]: ---> cce709d0a0f6
+[2026-05-02 13:15:36,512] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-05-02 13:15:36,512] [docker_util.py] [INFO]: 
+[2026-05-02 13:15:37,086] [docker_util.py] [INFO]: ---> 7aab71a971a5
+[2026-05-02 13:15:37,086] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-05-02 13:15:37,086] [docker_util.py] [INFO]: 
+[2026-05-02 13:15:37,792] [docker_util.py] [INFO]: ---> ad7eebd8d3f1
+[2026-05-02 13:15:37,792] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-05-02 13:15:37,792] [docker_util.py] [INFO]: 
+[2026-05-02 13:15:38,427] [docker_util.py] [INFO]: ---> 86ffad006725
+[2026-05-02 13:15:38,427] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-05-02 13:15:38,427] [docker_util.py] [INFO]: 
+[2026-05-02 13:15:38,997] [docker_util.py] [INFO]: ---> 4671fd19f1ac
+[2026-05-02 13:15:38,997] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-05-02 13:15:38,997] [docker_util.py] [INFO]: 
+[2026-05-02 13:15:39,055] [docker_util.py] [INFO]: ---> Running in 804d127d4680
+[2026-05-02 13:15:39,994] [docker_util.py] [INFO]: HEAD is now at 32f06eb83 Bump codecov/codecov-action from 5 to 6 (#3800)
+[2026-05-02 13:15:40,051] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-05-02 13:15:40,164] [docker_util.py] [INFO]: [91mNote: switching to 'edc624371009ce981bbc11b7d125ff4e359cff7e'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at edc624371 Bump com.google.googlejavaformat:google-java-format (#3126)
+[0m
+[2026-05-02 13:15:40,391] [docker_util.py] [INFO]: [detached HEAD ce9452124] Apply `metamorphic_base_patch` transformation to base commit
+ 42 files changed, 172 insertions(+), 167 deletions(-)
+ rename src/main/java/org/mockito/plugins/{ => api}/MockitoPlugins.java (96%)
+ rename src/main/java/org/mockito/{internal => }/util/MockUtil.java (99%)
+[2026-05-02 13:15:40,440] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-05-02 13:15:40,460] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:15:40,527] [docker_util.py] [INFO]: Downloading https://services.gradle.org/distributions/gradle-8.2-bin.zip
+[2026-05-02 13:15:42,783] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:43,324] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:43,875] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:44,442] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:44,988] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:45,331] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:45,769] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:46,091] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:46,432] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:46,779] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:47,560] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:48,372] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:48,876] [docker_util.py] [INFO]: 10%.
+[2026-05-02 13:15:49,879] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:52,028] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:52,945] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:53,831] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:55,419] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:56,494] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:58,283] [docker_util.py] [INFO]: .
+[2026-05-02 13:15:59,680] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:00,400] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:00,686] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:00,986] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:01,237] [docker_util.py] [INFO]: 20%.
+[2026-05-02 13:16:01,460] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:01,729] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:01,976] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:02,200] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:02,381] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:02,589] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:02,763] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:02,944] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:03,130] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:03,301] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:03,460] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:03,655] [docker_util.py] [INFO]: 30%.
+[2026-05-02 13:16:03,860] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:04,601] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:06,941] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:12,850] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:14,407] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:14,853] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:15,214] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:15,679] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:17,114] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:18,276] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:19,311] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:21,423] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:21,523] [docker_util.py] [INFO]: 40%.
+[2026-05-02 13:16:21,863] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:22,274] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:22,612] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:23,051] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:23,389] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:23,811] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:24,166] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:24,527] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:24,722] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:24,908] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:25,130] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:25,344] [docker_util.py] [INFO]: 50%.
+[2026-05-02 13:16:25,545] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:25,842] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:26,075] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:26,356] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:26,615] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:26,903] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:27,135] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:28,198] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:28,840] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:29,091] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:29,508] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:30,479] [docker_util.py] [INFO]: 60%.
+[2026-05-02 13:16:31,422] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:32,349] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:32,845] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:33,069] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:33,349] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:33,526] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:33,727] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:33,987] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:34,206] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:34,456] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:34,644] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:34,851] [docker_util.py] [INFO]: 70%.
+[2026-05-02 13:16:35,034] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:35,205] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:35,353] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:35,532] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:35,689] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:35,836] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:36,032] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:36,299] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:36,609] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:36,972] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:37,327] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:37,694] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:38,072] [docker_util.py] [INFO]: 80%.
+[2026-05-02 13:16:38,528] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:39,084] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:39,559] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:40,103] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:40,728] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:41,187] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:41,625] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:42,407] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:43,266] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:44,248] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:44,911] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:45,575] [docker_util.py] [INFO]: 90%.
+[2026-05-02 13:16:46,839] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:48,451] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:49,808] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:52,469] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:55,889] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:57,880] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:58,929] [docker_util.py] [INFO]: .
+[2026-05-02 13:16:59,703] [docker_util.py] [INFO]: .
+[2026-05-02 13:17:00,390] [docker_util.py] [INFO]: .
+[2026-05-02 13:17:01,857] [docker_util.py] [INFO]: .
+[2026-05-02 13:17:03,176] [docker_util.py] [INFO]: .
+[2026-05-02 13:17:03,635] [docker_util.py] [INFO]: 100%
+[2026-05-02 13:17:04,535] [docker_util.py] [INFO]: 
+[2026-05-02 13:17:04,538] [docker_util.py] [INFO]: Welcome to Gradle 8.2!
+[2026-05-02 13:17:04,538] [docker_util.py] [INFO]: Here are the highlights of this release:
+[2026-05-02 13:17:04,538] [docker_util.py] [INFO]: - Kotlin DSL: new reference documentation, assignment syntax by default
+[2026-05-02 13:17:04,538] [docker_util.py] [INFO]: - Kotlin DSL is now the default with Gradle init
+[2026-05-02 13:17:04,541] [docker_util.py] [INFO]: - Improved suggestions to resolve errors in console output
+[2026-05-02 13:17:04,541] [docker_util.py] [INFO]: 
+[2026-05-02 13:17:04,541] [docker_util.py] [INFO]: For more details see https://docs.gradle.org/8.2/release-notes.html
+
+Starting a Gradle Daemon (subsequent builds will be faster)
+[2026-05-02 13:20:17,936] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:17,937] [docker_util.py] [INFO]: > Configure project :
+Building version '5.5.1-SNAPSHOT'
+  - reason: shipkit-auto-version deduced snapshot based on tag: 'v5.5.0'
+[2026-05-02 13:20:26,136] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:26,136] [docker_util.py] [INFO]: > Task :bom:assemble
+[2026-05-02 13:20:26,136] [docker_util.py] [INFO]: UP-TO-DATE
+> Task :bom:check UP-TO-DATE
+> Task :bom:build
+[2026-05-02 13:20:26,136] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 13:20:26,136] [docker_util.py] [INFO]: > Task :inlineTest:processResources NO-SOURCE
+> Task :groovyInlineTest:compileJava NO-SOURCE
+> Task :memory-test:processResources NO-SOURCE
+> Task :module-test:processResources NO-SOURCE
+[2026-05-02 13:20:26,136] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:26,136] [docker_util.py] [INFO]: > Task :extTest:compileJava NO-SOURCE
+[2026-05-02 13:20:26,136] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:compileJava NO-SOURCE
+> Task :errorprone:processResources NO-SOURCE
+> Task :junitJupiterParallelTest:compileJava NO-SOURCE
+> Task :osgi-test:compileJava NO-SOURCE
+> Task :junitJupiterExtensionTest:compileJava NO-SOURCE
+[2026-05-02 13:20:26,136] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:26,136] [docker_util.py] [INFO]: > Task :junit-jupiter:processResources NO-SOURCE
+> Task :groovyTest:compileJava NO-SOURCE
+[2026-05-02 13:20:26,136] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:compileKotlin NO-SOURCE
+> Task :kotlinTest:compileKotlin NO-SOURCE
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:processResources NO-SOURCE
+> Task :osgi-test:processResources NO-SOURCE
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: > Task :groovyTest:compileGroovy NO-SOURCE
+> Task :inlineTest:processTestResources NO-SOURCE
+> Task :groovyInlineTest:compileGroovy NO-SOURCE
+> Task :junitJupiterExtensionTest:processResources
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: NO-SOURCE
+> Task :extTest:processResources NO-SOURCE
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: > Task :memory-test:processTestResources NO-SOURCE
+> Task :junitJupiterParallelTest:classes UP-TO-DATE
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:processResources
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: > Task :kotlinTest:compileJava NO-SOURCE
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: > Task :module-test:processTestResources NO-SOURCE
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: > Task :osgi-test:classes UP-TO-DATE
+> Task :junitJupiterInlineMockMakerExtensionTest:classes UP-TO-DATE
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: > Task :groovyInlineTest:processResources NO-SOURCE
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: > Task :groovyTest:processResources NO-SOURCE
+> Task :extTest:classes UP-TO-DATE
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:classes UP-TO-DATE
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:compileJava NO-SOURCE
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: > Task :kotlinTest:processResources NO-SOURCE
+> Task :groovyInlineTest:classes UP-TO-DATE
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: > Task :inlineTest:licenseMain
+[2026-05-02 13:20:26,137] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 13:20:26,138] [docker_util.py] [INFO]: > Task :kotlinTest:classes UP-TO-DATE
+> Task :groovyTest:classes UP-TO-DATE
+[2026-05-02 13:20:26,138] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:processResources NO-SOURCE
+[2026-05-02 13:20:26,138] [docker_util.py] [INFO]: > Task :module-test:licenseMain NO-SOURCE
+[2026-05-02 13:20:26,138] [docker_util.py] [INFO]: > Task :memory-test:licenseMain NO-SOURCE
+> Task :kotlinReleaseCoroutinesTest:classes UP-TO-DATE
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:jar
+> Task :groovyInlineTest:jar
+> Task :kotlinReleaseCoroutinesTest:jar
+> Task :osgi-test:jar
+> Task :junitJupiterInlineMockMakerExtensionTest:jar
+> Task :groovyTest:jar
+> Task :junitJupiterExtensionTest:jar
+> Task :junit-jupiter:sourcesJar
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :kotlinTest:jar
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :errorprone:sourcesJar
+> Task :android:processResources
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :groovyInlineTest:assemble
+> Task :osgi-test:assemble
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:assemble
+> Task :groovyTest:assemble
+> Task :junitJupiterExtensionTest:assemble
+> Task :junitJupiterInlineMockMakerExtensionTest:assemble
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :kotlinTest:assemble
+> Task :kotlinReleaseCoroutinesTest:checkstyleMain NO-SOURCE
+> Task :groovyInlineTest:checkstyleMain NO-SOURCE
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:assemble
+> Task :junit-jupiter:processTestResources NO-SOURCE
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :osgi-test:checkstyleMain
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: NO-SOURCE
+> Task :groovyInlineTest:processTestResources NO-SOURCE
+> Task :errorprone:processTestResources NO-SOURCE
+> Task :junitJupiterExtensionTest:checkstyleMain NO-SOURCE
+> Task :kotlinTest:checkstyleMain NO-SOURCE
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:checkstyleMain NO-SOURCE
+> Task :groovyInlineTest:licenseMain NO-SOURCE
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:checkstyleMain NO-SOURCE
+> Task :groovyTest:checkstyleMain NO-SOURCE
+> Task :groovyTest:processTestResources NO-SOURCE
+> Task :kotlinReleaseCoroutinesTest:processTestResources
+> Task :groovyTest:licenseMain NO-SOURCE
+> Task :junitJupiterParallelTest:processTestResources
+> Task :kotlinReleaseCoroutinesTest:licenseMain NO-SOURCE
+> Task :kotlinTest:processTestResources
+> Task :junitJupiterParallelTest:licenseMain NO-SOURCE
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:processTestResources
+> Task :kotlinTest:licenseMain NO-SOURCE
+> Task :junitJupiterExtensionTest:licenseMain NO-SOURCE
+> Task :android:sourcesJar
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:processTestResources
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :android:processTestResources NO-SOURCE
+> Task :junitJupiterInlineMockMakerExtensionTest:licenseMain NO-SOURCE
+> Task :junitJupiterParallelTest:licenseTest UP-TO-DATE
+> Task :junitJupiterInlineMockMakerExtensionTest:licenseTest UP-TO-DATE
+> Task :module-test:licenseTest UP-TO-DATE
+> Task :memory-test:licenseTest UP-TO-DATE
+> Task :kotlinTest:licenseTest UP-TO-DATE
+> Task :groovyTest:licenseTest UP-TO-DATE
+> Task :android:licenseMain UP-TO-DATE
+[2026-05-02 13:20:26,236] [docker_util.py] [INFO]: > Task :errorprone:licenseMain UP-TO-DATE
+> Task :junitJupiterExtensionTest:licenseTest UP-TO-DATE
+> Task :groovyTest:license UP-TO-DATE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :groovyInlineTest:licenseTest UP-TO-DATE
+> Task :junit-jupiter:licenseMain UP-TO-DATE
+> Task :memory-test:license UP-TO-DATE
+> Task :groovyInlineTest:license UP-TO-DATE
+> Task :junitJupiterParallelTest:license UP-TO-DATE
+> Task :inlineTest:licenseTest UP-TO-DATE
+> Task :programmatic-test:processResources NO-SOURCE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:license
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :module-test:license UP-TO-DATE
+> Task :junitJupiterExtensionTest:license UP-TO-DATE
+> Task :android:licenseTest NO-SOURCE
+> Task :kotlinTest:license UP-TO-DATE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :inlineTest:license UP-TO-DATE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :android:license UP-TO-DATE
+> Task :programmatic-test:processTestResources NO-SOURCE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :programmatic-test:licenseMain NO-SOURCE
+> Task :proxy:processResources
+> Task :errorprone:licenseTest UP-TO-DATE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :errorprone:license UP-TO-DATE
+> Task :junit-jupiter:licenseTest UP-TO-DATE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :subclass:processResources
+> Task :junit-jupiter:license UP-TO-DATE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :programmatic-test:licenseTest UP-TO-DATE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :programmatic-test:license UP-TO-DATE
+> Task :proxy:sourcesJar
+> Task :subclass:sourcesJar
+> Task :proxy:processTestResources
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: NO-SOURCE
+> Task :subclass:processTestResources NO-SOURCE
+> Task :subclass:licenseMain UP-TO-DATE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :proxy:licenseMain UP-TO-DATE
+> Task :proxy:licenseTest UP-TO-DATE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :subclass:licenseTest UP-TO-DATE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :proxy:license UP-TO-DATE
+> Task :subclass:license UP-TO-DATE
+> Task :extTest:jar
+> Task :kotlinReleaseCoroutinesTest:licenseTest UP-TO-DATE
+> Task :kotlinReleaseCoroutinesTest:license UP-TO-DATE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :extTest:assemble
+> Task :extTest:checkstyleMain NO-SOURCE
+> Task :extTest:processTestResources
+> Task :extTest:licenseMain NO-SOURCE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :errorprone:generatePomFileForJavaLibraryPublication
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :proxy:generatePomFileForJavaLibraryPublication
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :subclass:generatePomFileForJavaLibraryPublication
+> Task :android:generatePomFileForJavaLibraryPublication
+> Task :extTest:licenseTest UP-TO-DATE
+> Task :extTest:license UP-TO-DATE
+[2026-05-02 13:20:26,237] [docker_util.py] [INFO]: > Task :junit-jupiter:osgiProperties
+[2026-05-02 13:20:26,336] [docker_util.py] [INFO]: > Task :junit-jupiter:generatePomFileForJavaLibraryPublication
+[2026-05-02 13:20:34,741] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:34,742] [docker_util.py] [INFO]: > Task :osgi-test:compileOtherBundleJava
+[2026-05-02 13:20:34,742] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:20:35,736] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:35,736] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:20:35,736] [docker_util.py] [INFO]: > Task :osgi-test:processOtherBundleResources NO-SOURCE
+> Task :osgi-test:otherBundleClasses
+
+> Task :compileJava
+[2026-05-02 13:20:41,236] [docker_util.py] [INFO]: [91mNote: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+[0m
+[2026-05-02 13:20:41,936] [docker_util.py] [INFO]: > Task :module-test:compileJava NO-SOURCE
+> Task :proxy:compileJava NO-SOURCE
+> Task :memory-test:compileJava NO-SOURCE
+> Task :module-test:classes UP-TO-DATE
+> Task :programmatic-test:compileJava NO-SOURCE
+> Task :inlineTest:compileJava NO-SOURCE
+> Task :programmatic-test:classes UP-TO-DATE
+> Task :subclass:compileJava NO-SOURCE
+> Task :proxy:classes
+> Task :subclass:classes
+> Task :memory-test:classes UP-TO-DATE
+> Task :copyMockMethodDispatcher
+> Task :inlineTest:classes UP-TO-DATE
+[2026-05-02 13:20:42,038] [docker_util.py] [INFO]: > Task :processResources NO-SOURCE
+> Task :classes
+> Task :subclass:jar
+> Task :proxy:jar
+[2026-05-02 13:20:42,038] [docker_util.py] [INFO]: > Task :programmatic-test:jar
+[2026-05-02 13:20:42,038] [docker_util.py] [INFO]: > Task :module-test:jar
+> Task :inlineTest:jar
+> Task :programmatic-test:assemble
+> Task :proxy:javadoc SKIPPED
+> Task :memory-test:jar
+> Task :module-test:assemble
+> Task :inlineTest:assemble
+> Task :subclass:javadoc SKIPPED
+> Task :memory-test:assemble
+> Task :module-test:checkstyleMain NO-SOURCE
+> Task :inlineTest:checkstyleMain NO-SOURCE
+> Task :programmatic-test:checkstyleMain NO-SOURCE
+> Task :memory-test:checkstyleMain NO-SOURCE
+> Task :proxy:javadocJar
+[2026-05-02 13:20:42,038] [docker_util.py] [INFO]: > Task :proxy:assemble
+> Task :subclass:javadocJar
+[2026-05-02 13:20:42,038] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:42,038] [docker_util.py] [INFO]: > Task :subclass:assemble
+> Task :proxy:checkstyleMain NO-SOURCE
+> Task :subclass:checkstyleMain NO-SOURCE
+[2026-05-02 13:20:42,636] [docker_util.py] [INFO]: > Task :jar
+[2026-05-02 13:20:42,636] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:42,636] [docker_util.py] [INFO]: > Task :groovyInlineTest:compileTestJava
+[2026-05-02 13:20:42,636] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 13:20:42,636] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:42,636] [docker_util.py] [INFO]: > Task :groovyTest:compileTestJava
+[2026-05-02 13:20:42,636] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 13:20:42,636] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:44,036] [docker_util.py] [INFO]: > Task :android:compileJava
+> Task :android:classes
+
+> Task :inlineTest:compileTestJava
+[2026-05-02 13:20:44,036] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:20:44,136] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:20:44,136] [docker_util.py] [INFO]: > Task :android:jar
+> Task :android:javadoc SKIPPED
+> Task :android:javadocJar
+> Task :android:assemble
+
+> Task :module-test:compileTestJava
+[2026-05-02 13:20:46,838] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:20:46,838] [docker_util.py] [INFO]: > Task :subclass:compileTestJava
+
+> Task :android:compileTestJava NO-SOURCE
+> Task :android:testClasses UP-TO-DATE
+> Task :programmatic-test:compileTestJava
+> Task :programmatic-test:testClasses
+> Task :android:checkstyleTest NO-SOURCE
+
+> Task :memory-test:compileTestJava
+[2026-05-02 13:20:46,936] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:20:46,936] [docker_util.py] [INFO]: > Task :android:test NO-SOURCE
+> Task :android:retryTest SKIPPED
+> Task :android:generateMetadataFileForJavaLibraryPublication SKIPPED
+
+> Task :proxy:compileTestJava
+[2026-05-02 13:20:47,041] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:47,041] [docker_util.py] [INFO]: > Task :android:publishJavaLibraryPublicationToMavenLocal
+> Task :subclass:testClasses
+
+> Task :javadoc
+[2026-05-02 13:20:47,041] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:47,041] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:20:47,336] [docker_util.py] [INFO]: > Task :memory-test:compileTestJava
+[2026-05-02 13:20:47,336] [docker_util.py] [INFO]: > Task :memory-test:testClasses
+
+> Task :junit-jupiter:compileJava
+[2026-05-02 13:20:47,336] [docker_util.py] [INFO]: [91mNote: /home/mockito/subprojects/memory-test/src/test/java/org/mockito/memorytest/LocationFactoryAllocationRateTest.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:20:47,436] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:47,436] [docker_util.py] [INFO]: > Task :errorprone:compileJava
+[2026-05-02 13:20:47,436] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:47,436] [docker_util.py] [INFO]: > Task :errorprone:classes
+> Task :errorprone:jar
+[2026-05-02 13:20:47,440] [docker_util.py] [INFO]: > Task :osgi-test:compileTestJava
+[2026-05-02 13:20:47,440] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:47,440] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:20:47,635] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:47,638] [docker_util.py] [INFO]: > Task :osgi-test:checkstyleOtherBundle
+[2026-05-02 13:20:47,638] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:47,936] [docker_util.py] [INFO]: > Task :junit-jupiter:classes
+[2026-05-02 13:20:47,936] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:48,136] [docker_util.py] [INFO]: > Task :junit-jupiter:jar
+[2026-05-02 13:20:48,136] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:49,036] [docker_util.py] [INFO]: > Task :android:checkstyleMain
+[2026-05-02 13:20:49,039] [docker_util.py] [INFO]: > Task :android:check
+> Task :android:build
+[2026-05-02 13:20:49,040] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:49,436] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:49,436] [docker_util.py] [INFO]: > Task :errorprone:javadoc
+[2026-05-02 13:20:49,436] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:20:49,835] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: > Task :errorprone:javadocJar
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: > Task :errorprone:assemble
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: > Task :memory-test:test
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91mjava.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.defineClass2(Native Method)[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)[0m
+[2026-05-02 13:20:49,836] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/java.lang.Class.forName(Class.java:627)[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/java.lang.Class.forName(Class.java:602)[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,837] [docker_util.py] [INFO]: [91m	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91mCaused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,838] [docker_util.py] [INFO]: [91m	... 35 more[0m
+[2026-05-02 13:20:49,839] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,839] [docker_util.py] [INFO]: [91mCaused by: java.lang.IllegalArgumentException: Unsupported class file major version 65[0m
+[2026-05-02 13:20:49,839] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,839] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)[0m
+[2026-05-02 13:20:49,839] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,839] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)[0m
+[2026-05-02 13:20:49,839] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,839] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)[0m
+[2026-05-02 13:20:49,839] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,839] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)[0m
+[2026-05-02 13:20:49,841] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,841] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)[0m
+[2026-05-02 13:20:49,841] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,841] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)[0m
+[2026-05-02 13:20:49,841] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:49,841] [docker_util.py] [INFO]: [91m	... 36 more[0m
+[2026-05-02 13:20:49,841] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:50,440] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:50,440] [docker_util.py] [INFO]: > Task :javadocJar
+[2026-05-02 13:20:50,441] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:50,441] [docker_util.py] [INFO]: > Task :junit-jupiter:javadoc
+[2026-05-02 13:20:50,441] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:20:50,736] [docker_util.py] [INFO]: > Task :sourcesJar
+> Task :assemble
+> Task :errorprone:checkstyleMain
+> Task :junitJupiterInlineMockMakerExtensionTest:compileTestJava
+> Task :junitJupiterInlineMockMakerExtensionTest:testClasses
+[2026-05-02 13:20:51,136] [docker_util.py] [INFO]: > Task :junit-jupiter:javadocJar
+[2026-05-02 13:20:51,136] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:51,136] [docker_util.py] [INFO]: > Task :junit-jupiter:assemble
+[2026-05-02 13:20:51,136] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:51,236] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:compileTestJava
+[2026-05-02 13:20:51,236] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:51,547] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:compileTestJava
+[2026-05-02 13:20:51,550] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:51,551] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:testClasses
+[2026-05-02 13:20:51,551] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:51,737] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:checkstyleTest
+[2026-05-02 13:20:51,737] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:51,737] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:testClasses
+[2026-05-02 13:20:51,737] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:51,737] [docker_util.py] [INFO]: > Task :junit-jupiter:checkstyleMain
+[2026-05-02 13:20:51,737] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:51,838] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:51,838] [docker_util.py] [INFO]: > Task :memory-test:test
+[2026-05-02 13:20:51,838] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:51,838] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended[0m
+[2026-05-02 13:20:51,838] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:52,139] [docker_util.py] [INFO]: > Task :inlineTest:testClasses
+[2026-05-02 13:20:52,649] [docker_util.py] [INFO]: > Task :subclass:checkstyleTest
+[2026-05-02 13:20:52,736] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:checkstyleTest
+[2026-05-02 13:20:52,736] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:52,836] [docker_util.py] [INFO]: > Task :inlineTest:checkstyleTest
+[2026-05-02 13:20:52,838] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:52,839] [docker_util.py] [INFO]: > Task :module-test:testClasses
+[2026-05-02 13:20:52,938] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:checkstyleTest
+[2026-05-02 13:20:53,036] [docker_util.py] [INFO]: > Task :memory-test:checkstyleTest
+> Task :osgi-test:processTestResources NO-SOURCE
+> Task :osgi-test:testClasses
+[2026-05-02 13:20:53,038] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:53,438] [docker_util.py] [INFO]: > Task :module-test:checkstyleTest
+[2026-05-02 13:20:53,737] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:53,737] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:test
+[2026-05-02 13:20:53,737] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:20:53,936] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:20:53,936] [docker_util.py] [INFO]: > Task :programmatic-test:checkstyleTest
+
+> Task :junitJupiterExtensionTest:test
+[2026-05-02 13:20:54,137] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:54,140] [docker_util.py] [INFO]: > Task :osgi-test:checkstyleTest
+> Task :proxy:testClasses
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: > Task :inlineTest:test
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+	at java.base/java.lang.Class.forName(Class.java:627)[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m
+	at java.base/java.lang.Class.forName(Class.java:602)
+[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m
+	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91mCaused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m	... 35 more[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91mCaused by: java.lang.IllegalArgumentException: Unsupported class file major version 65[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:54,743] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)[0m
+[2026-05-02 13:20:54,745] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:54,745] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+[0m
+[2026-05-02 13:20:55,637] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+	at java.base/java.lang.Class.forName(Class.java:627)
+	at java.base/java.lang.Class.forName(Class.java:602)
+	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+	... 35 more
+Caused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:20:55,637] [docker_util.py] [INFO]: > Task :proxy:checkstyleTest
+
+> Task :junitJupiterParallelTest:test
+[2026-05-02 13:20:55,844] [docker_util.py] [INFO]: [91mjava.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+	at java.base/java.lang.Class.forName(Class.java:627)
+	at java.base/java.lang.Class.forName(Class.java:602)
+	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+	... 35 more
+Caused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+[0m
+[2026-05-02 13:20:55,844] [docker_util.py] [INFO]: > Task :osgi-test:compileTestBundleJava
+> Task :osgi-test:processTestBundleResources NO-SOURCE
+> Task :osgi-test:testBundleClasses
+
+> Task :junitJupiterInlineMockMakerExtensionTest:test
+[2026-05-02 13:20:56,639] [docker_util.py] [INFO]: [91mjava.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+	at java.base/java.lang.Class.forName(Class.java:627)
+	at java.base/java.lang.Class.forName(Class.java:602)
+	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+	... 35 more
+Caused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+[0m
+[2026-05-02 13:20:56,639] [docker_util.py] [INFO]: > Task :osgi-test:checkstyleTestBundle
+> Task :osgi-test:licenseMain NO-SOURCE
+
+> Task :junitJupiterExtensionTest:test
+[2026-05-02 13:20:56,737] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+	at java.base/java.lang.Class.forName(Class.java:627)
+	at java.base/java.lang.Class.forName(Class.java:602)
+	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+	... 35 more
+Caused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+[0m
+[2026-05-02 13:20:56,737] [docker_util.py] [INFO]: > Task :osgi-test:licenseOtherBundle UP-TO-DATE
+
+> Task :module-test:test
+[2026-05-02 13:20:56,836] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:56,839] [docker_util.py] [INFO]: > Task :osgi-test:licenseTest
+[2026-05-02 13:20:56,839] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 13:20:56,840] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:56,841] [docker_util.py] [INFO]: > Task :osgi-test:licenseTestBundle UP-TO-DATE
+[2026-05-02 13:20:56,841] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:56,841] [docker_util.py] [INFO]: > Task :inlineTest:test
+[2026-05-02 13:20:56,841] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:56,842] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: [0m
+[2026-05-02 13:20:56,842] [docker_util.py] [INFO]: [91mSharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:20:56,943] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:56,945] [docker_util.py] [INFO]: > Task :osgi-test:license
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: > Task :programmatic-test:test
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+	at java.base/java.lang.Class.forName(Class.java:627)
+	at java.base/java.lang.Class.forName(Class.java:602)
+	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+[0m
+[2026-05-02 13:20:56,946] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+[0m
+[2026-05-02 13:20:56,947] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+[0m
+[2026-05-02 13:20:56,947] [docker_util.py] [INFO]: [91m	... 35 more
+Caused by: java.lang.IllegalArgumentException: Unsupported class file major version 65[0m
+[2026-05-02 13:20:56,947] [docker_util.py] [INFO]: [91m
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:20:58,437] [docker_util.py] [INFO]: > Task :osgi-test:otherBundle
+
+> Task :errorprone:compileTestJava
+[2026-05-02 13:20:58,437] [docker_util.py] [INFO]: [91mNote: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+[0m
+[2026-05-02 13:20:58,636] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:58,637] [docker_util.py] [INFO]: > Task :osgi-test:testBundle
+[2026-05-02 13:20:58,637] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:58,637] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:test
+[2026-05-02 13:20:58,637] [docker_util.py] [INFO]: 
+[2026-05-02 13:20:58,642] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:21:00,441] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+	at java.base/java.lang.Class.forName(Class.java:627)
+	at java.base/java.lang.Class.forName(Class.java:602)
+[0m
+[2026-05-02 13:21:00,442] [docker_util.py] [INFO]: > Task :proxy:test
+[2026-05-02 13:21:00,442] [docker_util.py] [INFO]: > Task :proxy:retryTest SKIPPED
+> Task :proxy:check
+> Task :proxy:generateMetadataFileForJavaLibraryPublication SKIPPED
+
+> Task :groovyInlineTest:compileTestGroovy
+[2026-05-02 13:21:00,442] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+	... 35 more
+Caused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:21:00,555] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:check
+> Task :junitJupiterParallelTest:build
+[2026-05-02 13:21:00,557] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:00,557] [docker_util.py] [INFO]: > Task :proxy:publishJavaLibraryPublicationToMavenLocal
+[2026-05-02 13:21:00,557] [docker_util.py] [INFO]: > Task :proxy:build
+[2026-05-02 13:21:00,557] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:00,557] [docker_util.py] [INFO]: > Task :errorprone:testClasses
+[2026-05-02 13:21:00,557] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:00,557] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:00,557] [docker_util.py] [INFO]: > Task :groovyTest:compileTestGroovy
+[2026-05-02 13:21:00,558] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:00,558] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 13:21:00,558] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:01,041] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:21:01,041] [docker_util.py] [INFO]: > Task :errorprone:checkstyleTest
+
+> Task :junitJupiterExtensionTest:test
+[2026-05-02 13:21:02,040] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:02,040] [docker_util.py] [INFO]: > Task :junit-jupiter:compileTestJava
+> Task :junit-jupiter:testClasses
+> Task :junitJupiterInlineMockMakerExtensionTest:check
+> Task :junitJupiterInlineMockMakerExtensionTest:build
+
+> Task :module-test:test
+[2026-05-02 13:21:02,040] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:21:02,936] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:02,937] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:check
+[2026-05-02 13:21:02,937] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:02,937] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:build
+[2026-05-02 13:21:02,937] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:02,937] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:02,937] [docker_util.py] [INFO]: > Task :programmatic-test:test
+[2026-05-02 13:21:02,937] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:02,937] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 13:21:02,937] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,938] [docker_util.py] [INFO]: [91mjava.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.[0m
+[2026-05-02 13:21:02,938] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,938] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)[0m
+[2026-05-02 13:21:02,938] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,938] [docker_util.py] [INFO]: [91m	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)[0m
+[2026-05-02 13:21:02,938] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,938] [docker_util.py] [INFO]: [91m	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)[0m
+[2026-05-02 13:21:02,938] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.defineClass2(Native Method)[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.base/java.lang.Class.forName(Class.java:627)[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.base/java.lang.Class.forName(Class.java:602)[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,939] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)[0m
+[2026-05-02 13:21:02,940] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,940] [docker_util.py] [INFO]: [91m	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)[0m
+[2026-05-02 13:21:02,940] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,940] [docker_util.py] [INFO]: [91m	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)[0m
+[2026-05-02 13:21:02,941] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,941] [docker_util.py] [INFO]: [91m	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)[0m
+[2026-05-02 13:21:02,941] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,941] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)[0m
+[2026-05-02 13:21:02,941] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,942] [docker_util.py] [INFO]: [91m	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)[0m
+[2026-05-02 13:21:02,942] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,943] [docker_util.py] [INFO]: [91m	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)[0m
+[2026-05-02 13:21:02,943] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,943] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)[0m
+[2026-05-02 13:21:02,943] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,943] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)[0m
+[2026-05-02 13:21:02,943] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,943] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)[0m
+[2026-05-02 13:21:02,943] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,943] [docker_util.py] [INFO]: [91m	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)[0m
+[2026-05-02 13:21:02,943] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,943] [docker_util.py] [INFO]: [91m	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)[0m
+[2026-05-02 13:21:02,943] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:02,943] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+	... 35 more
+Caused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+[0m
+[2026-05-02 13:21:03,437] [docker_util.py] [INFO]: > Task :junit-jupiter:checkstyleTest
+
+> Task :osgi-test:test
+[ant:animalsniffer] Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[ant:animalsniffer] java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+[ant:animalsniffer] 	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+[ant:animalsniffer] 	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+[ant:animalsniffer] 	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+[ant:animalsniffer] 	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+[ant:animalsniffer] 	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+[ant:animalsniffer] 	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+[ant:animalsniffer] 	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+[ant:animalsniffer] 	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+[ant:animalsniffer] 	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+[ant:animalsniffer] 	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+[ant:animalsniffer] 	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+[ant:animalsniffer] 	at java.base/java.lang.Class.forName(Class.java:627)
+[ant:animalsniffer] 	at java.base/java.lang.Class.forName(Class.java:602)
+[ant:animalsniffer] 	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+[ant:animalsniffer] 	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+[ant:animalsniffer] 	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+[ant:animalsniffer] 	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+[ant:animalsniffer] 	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+[ant:animalsniffer] 	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+[ant:animalsniffer] 	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+[ant:animalsniffer] 	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+[2026-05-02 13:21:03,437] [docker_util.py] [INFO]: [ant:animalsniffer] 	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+[ant:animalsniffer] 	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+[ant:animalsniffer] 	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)
+[ant:animalsniffer] 	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+[ant:animalsniffer] 	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+[ant:animalsniffer] 	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+[2026-05-02 13:21:03,437] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:03,437] [docker_util.py] [INFO]: [ant:animalsniffer] 	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+[ant:animalsniffer] 	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+[2026-05-02 13:21:03,437] [docker_util.py] [INFO]: [ant:animalsniffer] 	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+[ant:animalsniffer] 	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+[ant:animalsniffer] 	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+[ant:animalsniffer] 	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+[ant:animalsniffer] 	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+[ant:animalsniffer] 	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+[2026-05-02 13:21:03,438] [docker_util.py] [INFO]: [ant:animalsniffer] 	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+[ant:animalsniffer] Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+[ant:animalsniffer] 	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+[ant:animalsniffer] 	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+[ant:animalsniffer] 	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+[ant:animalsniffer] 	... 35 more
+[2026-05-02 13:21:03,438] [docker_util.py] [INFO]: [ant:animalsniffer] Caused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+[2026-05-02 13:21:03,438] [docker_util.py] [INFO]: [ant:animalsniffer] 	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+[2026-05-02 13:21:03,438] [docker_util.py] [INFO]: [ant:animalsniffer] 	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+[2026-05-02 13:21:03,438] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:03,438] [docker_util.py] [INFO]: [ant:animalsniffer] 	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+[2026-05-02 13:21:03,438] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:03,438] [docker_util.py] [INFO]: [ant:animalsniffer] 	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+[2026-05-02 13:21:03,438] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:03,438] [docker_util.py] [INFO]: [ant:animalsniffer] 	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+[2026-05-02 13:21:03,438] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:03,438] [docker_util.py] [INFO]: [ant:animalsniffer] 	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+[ant:animalsniffer] 	... 36 more
+[2026-05-02 13:21:03,843] [docker_util.py] [INFO]: > Task :animalsnifferMain
+
+> Task :subclass:test
+[2026-05-02 13:21:03,844] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)[0m
+[2026-05-02 13:21:03,849] [docker_util.py] [INFO]: [91m
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+[0m
+[2026-05-02 13:21:03,849] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+	at java.base/java.lang.Class.forName(Class.java:627)
+	at java.base/java.lang.Class.forName(Class.java:602)
+	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)[0m
+[2026-05-02 13:21:03,849] [docker_util.py] [INFO]: [91m
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+[0m
+[2026-05-02 13:21:03,849] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+[0m
+[2026-05-02 13:21:03,849] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)[0m
+[2026-05-02 13:21:03,849] [docker_util.py] [INFO]: [91m
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+[0m
+[2026-05-02 13:21:03,849] [docker_util.py] [INFO]: [91m	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)[0m
+[2026-05-02 13:21:03,849] [docker_util.py] [INFO]: [91m
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.[0m
+[2026-05-02 13:21:03,849] [docker_util.py] [INFO]: [91m
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+[0m
+[2026-05-02 13:21:03,849] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+[0m
+[2026-05-02 13:21:03,850] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+[0m
+[2026-05-02 13:21:03,850] [docker_util.py] [INFO]: [91m	... 35 more
+[0m
+[2026-05-02 13:21:03,850] [docker_util.py] [INFO]: [91mCaused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+[0m
+[2026-05-02 13:21:03,850] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+[0m
+[2026-05-02 13:21:03,850] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+[0m
+[2026-05-02 13:21:03,850] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+[0m
+[2026-05-02 13:21:03,850] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)[0m
+[2026-05-02 13:21:03,850] [docker_util.py] [INFO]: [91m
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)[0m
+[2026-05-02 13:21:03,850] [docker_util.py] [INFO]: [91m
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)[0m
+[2026-05-02 13:21:03,850] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:03,850] [docker_util.py] [INFO]: [91m	... 36 more
+[0m
+[2026-05-02 13:21:05,036] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:05,039] [docker_util.py] [INFO]: > Task :groovyTest:testClasses
+[2026-05-02 13:21:05,040] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:05,041] [docker_util.py] [INFO]: > Task :groovyTest:checkstyleTest NO-SOURCE
+[2026-05-02 13:21:05,041] [docker_util.py] [INFO]: > Task :module-test:test
+[2026-05-02 13:21:05,041] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:21:05,737] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended[0m
+[2026-05-02 13:21:05,737] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:05,936] [docker_util.py] [INFO]: > Task :groovyInlineTest:testClasses
+> Task :groovyInlineTest:checkstyleTest NO-SOURCE
+[2026-05-02 13:21:05,936] [docker_util.py] [INFO]: > Task :programmatic-test:test
+[2026-05-02 13:21:05,936] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:21:06,336] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:06,336] [docker_util.py] [INFO]: > Task :subclass:retryTest
+[2026-05-02 13:21:06,337] [docker_util.py] [INFO]: SKIPPED
+> Task :subclass:check
+[2026-05-02 13:21:06,337] [docker_util.py] [INFO]: > Task :subclass:generateMetadataFileForJavaLibraryPublication SKIPPED
+> Task :subclass:publishJavaLibraryPublicationToMavenLocal
+> Task :subclass:build
+[2026-05-02 13:21:06,337] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:06,337] [docker_util.py] [INFO]: > Task :errorprone:test
+[2026-05-02 13:21:06,337] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:06,337] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+WARNING: package com.sun.tools.javac.type not in jdk.compiler
+java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+[0m
+[2026-05-02 13:21:06,337] [docker_util.py] [INFO]: [91m	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+[0m
+[2026-05-02 13:21:06,337] [docker_util.py] [INFO]: [91m	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)[0m
+[2026-05-02 13:21:06,337] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,337] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+[0m
+[2026-05-02 13:21:06,337] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)[0m
+[2026-05-02 13:21:06,337] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,337] [docker_util.py] [INFO]: [91m	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/java.lang.Class.forName(Class.java:627)[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/java.lang.Class.forName(Class.java:602)
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)[0m
+[2026-05-02 13:21:06,338] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,340] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+[0m
+[2026-05-02 13:21:06,340] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)[0m
+[2026-05-02 13:21:06,340] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,340] [docker_util.py] [INFO]: [91m	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)[0m
+[2026-05-02 13:21:06,340] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,340] [docker_util.py] [INFO]: [91m	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)[0m
+[2026-05-02 13:21:06,340] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,340] [docker_util.py] [INFO]: [91m	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)[0m
+[2026-05-02 13:21:06,340] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,340] [docker_util.py] [INFO]: [91m	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m	... 35 more[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91mCaused by: java.lang.IllegalArgumentException: Unsupported class file major version 65[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m	... 36 more[0m
+[2026-05-02 13:21:06,345] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,839] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:07,839] [docker_util.py] [INFO]: > Task :programmatic-test:check
+[2026-05-02 13:21:07,839] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:07,839] [docker_util.py] [INFO]: > Task :programmatic-test:build
+[2026-05-02 13:21:07,839] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:07,839] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:07,840] [docker_util.py] [INFO]: > Task :junit-jupiter:test
+[2026-05-02 13:21:07,840] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:07,840] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 13:21:07,840] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,843] [docker_util.py] [INFO]: [91mjava.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.[0m
+[2026-05-02 13:21:07,843] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,843] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)[0m
+[2026-05-02 13:21:07,843] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,843] [docker_util.py] [INFO]: [91m	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)[0m
+[2026-05-02 13:21:07,843] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,843] [docker_util.py] [INFO]: [91m	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)[0m
+[2026-05-02 13:21:07,843] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,843] [docker_util.py] [INFO]: [91m	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)[0m
+[2026-05-02 13:21:07,843] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,843] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.defineClass2(Native Method)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.lang.Class.forName(Class.java:627)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.lang.Class.forName(Class.java:602)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91mCaused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	... 35 more[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91mCaused by: java.lang.IllegalArgumentException: Unsupported class file major version 65[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m	... 36 more[0m
+[2026-05-02 13:21:07,844] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,036] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: > Task :module-test:check
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: > Task :module-test:build
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: > Task :groovyTest:test
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91mjava.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.defineClass2(Native Method)[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m	at java.base/java.lang.Class.forName(Class.java:627)[0m
+[2026-05-02 13:21:08,037] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,038] [docker_util.py] [INFO]: [91m	at java.base/java.lang.Class.forName(Class.java:602)[0m
+[2026-05-02 13:21:08,038] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,038] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)[0m
+[2026-05-02 13:21:08,038] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,038] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)[0m
+[2026-05-02 13:21:08,038] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,038] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)[0m
+[2026-05-02 13:21:08,038] [docker_util.py] [INFO]: [91m
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+[0m
+[2026-05-02 13:21:08,039] [docker_util.py] [INFO]: [91m	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)[0m
+[2026-05-02 13:21:08,039] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,039] [docker_util.py] [INFO]: [91m	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+[0m
+[2026-05-02 13:21:08,039] [docker_util.py] [INFO]: [91m	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+[0m
+[2026-05-02 13:21:08,039] [docker_util.py] [INFO]: [91m	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)[0m
+[2026-05-02 13:21:08,039] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,039] [docker_util.py] [INFO]: [91m	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)[0m
+[2026-05-02 13:21:08,039] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,039] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)[0m
+[2026-05-02 13:21:08,039] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,039] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)[0m
+[2026-05-02 13:21:08,039] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91mCaused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	... 35 more[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91mCaused by: java.lang.IllegalArgumentException: Unsupported class file major version 65[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m	... 36 more[0m
+[2026-05-02 13:21:08,040] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:08,836] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:21:11,936] [docker_util.py] [INFO]: > Task :kotlinTest:compileTestKotlin
+> Task :kotlinReleaseCoroutinesTest:compileTestKotlin
+[2026-05-02 13:21:12,936] [docker_util.py] [INFO]: > Task :checkstyleMain
+[2026-05-02 13:21:12,936] [docker_util.py] [INFO]: > Task :junit-jupiter:test
+[2026-05-02 13:21:12,936] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended[0m
+[2026-05-02 13:21:12,936] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:14,138] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+[0m
+[2026-05-02 13:21:14,138] [docker_util.py] [INFO]: > Task :osgi-test:check
+
+> Task :groovyInlineTest:test
+[2026-05-02 13:21:14,138] [docker_util.py] [INFO]: [91m	at java.base/java.lang.Class.forName(Class.java:627)
+	at java.base/java.lang.Class.forName(Class.java:602)
+	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+	... 35 more
+Caused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:21:14,236] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:14,236] [docker_util.py] [INFO]: > Task :osgi-test:build
+[2026-05-02 13:21:14,236] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:14,237] [docker_util.py] [INFO]: > Task :groovyTest:check
+[2026-05-02 13:21:14,237] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:14,237] [docker_util.py] [INFO]: > Task :groovyTest:build
+[2026-05-02 13:21:14,238] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:14,438] [docker_util.py] [INFO]: > Task :memory-test:check
+> Task :memory-test:build
+[2026-05-02 13:21:14,936] [docker_util.py] [INFO]: > Task :errorprone:retryTest
+[2026-05-02 13:21:14,936] [docker_util.py] [INFO]: SKIPPED
+[2026-05-02 13:21:14,936] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:14,936] [docker_util.py] [INFO]: > Task :errorprone:check
+[2026-05-02 13:21:14,936] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:14,936] [docker_util.py] [INFO]: > Task :errorprone:generateMetadataFileForJavaLibraryPublication
+[2026-05-02 13:21:14,936] [docker_util.py] [INFO]: SKIPPED
+[2026-05-02 13:21:14,936] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:14,936] [docker_util.py] [INFO]: > Task :errorprone:publishJavaLibraryPublicationToMavenLocal
+[2026-05-02 13:21:14,936] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:14,936] [docker_util.py] [INFO]: > Task :errorprone:build
+[2026-05-02 13:21:14,936] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:15,236] [docker_util.py] [INFO]: > Task :inlineTest:check
+[2026-05-02 13:21:15,236] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:15,236] [docker_util.py] [INFO]: > Task :inlineTest:build
+> Task :groovyInlineTest:check
+> Task :groovyInlineTest:build
+[2026-05-02 13:21:15,338] [docker_util.py] [INFO]: > Task :junit-jupiter:retryTest
+[2026-05-02 13:21:15,338] [docker_util.py] [INFO]: SKIPPED
+[2026-05-02 13:21:15,338] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:16,036] [docker_util.py] [INFO]: > Task :junit-jupiter:verifyOSGi
+> Task :junit-jupiter:check
+> Task :junit-jupiter:generateMetadataFileForJavaLibraryPublication
+[2026-05-02 13:21:16,036] [docker_util.py] [INFO]: SKIPPED
+> Task :junit-jupiter:publishJavaLibraryPublicationToMavenLocal
+> Task :junit-jupiter:build
+[2026-05-02 13:21:17,838] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:compileTestJava NO-SOURCE
+> Task :kotlinReleaseCoroutinesTest:testClasses
+> Task :kotlinReleaseCoroutinesTest:checkstyleTest NO-SOURCE
+[2026-05-02 13:21:18,936] [docker_util.py] [INFO]: > Task :kotlinTest:compileTestJava NO-SOURCE
+> Task :kotlinTest:testClasses
+> Task :kotlinTest:checkstyleTest NO-SOURCE
+[2026-05-02 13:21:19,837] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+	at java.base/java.lang.Class.forName(Class.java:627)
+	at java.base/java.lang.Class.forName(Class.java:602)
+	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)[0m
+[2026-05-02 13:21:19,837] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:test
+[2026-05-02 13:21:19,838] [docker_util.py] [INFO]: [91m
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+[0m
+[2026-05-02 13:21:19,838] [docker_util.py] [INFO]: [91mCaused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+	... 35 more
+Caused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+[0m
+[2026-05-02 13:21:19,838] [docker_util.py] [INFO]: [91m	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:21:21,036] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:check
+> Task :kotlinReleaseCoroutinesTest:build
+
+> Task :kotlinTest:test
+[2026-05-02 13:21:21,036] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+	at java.base/java.lang.Class.forName(Class.java:627)
+	at java.base/java.lang.Class.forName(Class.java:602)
+	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+[0m
+[2026-05-02 13:21:21,036] [docker_util.py] [INFO]: [91m	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+	... 35 more
+Caused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:21:22,236] [docker_util.py] [INFO]: > Task :kotlinTest:check
+> Task :kotlinTest:build
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: > Task :compileTestJava
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: [91mNote: Some input files use or override a deprecated API.[0m
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: [91mNote: Recompile with -Xlint:deprecation for details.[0m
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: [91mNote: Some input files use or override a deprecated API that is marked for removal.[0m
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: [91mNote: Recompile with -Xlint:removal for details.[0m
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: [91mNote: Some input files use unchecked or unsafe operations.[0m
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: [91mNote: Recompile with -Xlint:unchecked for details.[0m
+[2026-05-02 13:21:28,436] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:21:28,936] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:28,936] [docker_util.py] [INFO]: > Task :processTestResources
+[2026-05-02 13:21:28,936] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 13:21:28,936] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:28,936] [docker_util.py] [INFO]: > Task :createTestResources
+[2026-05-02 13:21:28,936] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:28,936] [docker_util.py] [INFO]: > Task :testClasses
+[2026-05-02 13:21:28,936] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:29,037] [docker_util.py] [INFO]: > Task :licenseMain
+[2026-05-02 13:21:29,037] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 13:21:29,038] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:29,038] [docker_util.py] [INFO]: > Task :licenseTest
+[2026-05-02 13:21:29,038] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 13:21:29,038] [docker_util.py] [INFO]: > Task :license UP-TO-DATE
+[2026-05-02 13:21:31,037] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:31,038] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+	at java.base/java.lang.Class.forName(Class.java:627)
+	at java.base/java.lang.Class.forName(Class.java:602)
+	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+	... 35 more
+Caused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:21:31,038] [docker_util.py] [INFO]: > Task :test
+[2026-05-02 13:21:31,336] [docker_util.py] [INFO]: > Task :extTest:compileTestJava
+> Task :extTest:testClasses
+[2026-05-02 13:21:31,838] [docker_util.py] [INFO]: > Task :extTest:checkstyleTest
+[2026-05-02 13:21:32,536] [docker_util.py] [INFO]: > Task :checkstyleTest
+[2026-05-02 13:21:32,537] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:33,436] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:33,436] [docker_util.py] [INFO]: > Task :extTest:test
+[2026-05-02 13:21:33,436] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:33,436] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 13:21:33,438] [docker_util.py] [INFO]: [91m
+java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+	at java.base/java.lang.Class.forName(Class.java:627)
+	at java.base/java.lang.Class.forName(Class.java:602)
+	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+	... 35 more
+Caused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+[0m
+[2026-05-02 13:21:34,436] [docker_util.py] [INFO]: > Task :extTest:check
+> Task :extTest:build
+[2026-05-02 13:21:53,336] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:53,338] [docker_util.py] [INFO]: > Task :test
+[2026-05-02 13:21:53,338] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:53,338] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:53,436] [docker_util.py] [INFO]: org.mockito.internal.junit.UnusedStubbingsTest > unused_stubbings FAILED
+[2026-05-02 13:21:53,436] [docker_util.py] [INFO]: java.lang.AssertionError:
+[2026-05-02 13:21:53,436] [docker_util.py] [INFO]: Expecting actual:
+      "[MockitoHint] MyTest.myTestMethod (see javadoc for MockitoHint):
+[2026-05-02 13:21:53,437] [docker_util.py] [INFO]: [MockitoHint] 1. Unused -> at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:0)
+    [MockitoHint] 2. Unused -> at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:0)
+    "
+    to be in:
+      ["[MockitoHint] MyTest.myTestMethod (see javadoc for MockitoHint):
+    [MockitoHint] 1. Unused -> at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    [MockitoHint] 2. Unused -> at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    ",
+[2026-05-02 13:21:53,437] [docker_util.py] [INFO]: 
+[2026-05-02 13:21:53,437] [docker_util.py] [INFO]: "[MockitoHint] MyTest.myTestMethod (see javadoc for MockitoHint):
+    [MockitoHint] 1. Unused -> at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    [MockitoHint] 2. Unused -> at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+[2026-05-02 13:21:53,437] [docker_util.py] [INFO]: "]
+        at org.mockito.internal.junit.UnusedStubbingsTest.unused_stubbings(UnusedStubbingsTest.java:57)
+[2026-05-02 13:22:05,137] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 13:22:27,039] [docker_util.py] [INFO]: [91m
+2250 tests completed, 1 failed, 71 skipped
+[0m
+[2026-05-02 13:22:27,040] [docker_util.py] [INFO]: [retryTest] wrote 1 failed tests to: build/test-failures.txt
+[2026-05-02 13:22:27,136] [docker_util.py] [INFO]: There were failing tests. See the report at: file:///home/mockito/build/reports/tests/test/index.html
+[2026-05-02 13:22:28,936] [docker_util.py] [INFO]: > Task :retryTest FAILED
+[retryTest] retrying 1 test(s).
+[2026-05-02 13:22:28,936] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+java.lang.instrument.IllegalClassFormatException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:94)
+	at java.instrument/java.lang.instrument.ClassFileTransformer.transform(ClassFileTransformer.java:244)
+	at java.instrument/sun.instrument.TransformerManager.transform(TransformerManager.java:188)
+	at java.instrument/sun.instrument.InstrumentationImpl.transform(InstrumentationImpl.java:610)
+	at java.base/java.lang.ClassLoader.defineClass2(Native Method)
+	at java.base/java.lang.ClassLoader.defineClass(ClassLoader.java:1118)
+	at java.base/java.security.SecureClassLoader.defineClass(SecureClassLoader.java:182)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.defineClass(BuiltinClassLoader.java:821)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClassInModuleOrNull(BuiltinClassLoader.java:741)
+	at java.base/jdk.internal.loader.BuiltinClassLoader.findClass(BuiltinClassLoader.java:621)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:638)
+	at java.base/java.lang.Class.forName(Class.java:627)
+	at java.base/java.lang.Class.forName(Class.java:602)
+	at java.base/java.util.ServiceLoader.loadProvider(ServiceLoader.java:859)
+	at java.base/java.util.ServiceLoader$ModuleServicesLookupIterator.hasNext(ServiceLoader.java:1084)
+[0m
+[2026-05-02 13:22:28,936] [docker_util.py] [INFO]: [91m	at java.base/java.util.ServiceLoader$2.hasNext(ServiceLoader.java:1309)[0m
+[2026-05-02 13:22:28,936] [docker_util.py] [INFO]: [91m
+	at java.base/java.util.ServiceLoader$3.hasNext(ServiceLoader.java:1393)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.lambda$new$0(CLDRLocaleProviderAdapter.java:84)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:571)
+	at java.base/sun.util.cldr.CLDRLocaleProviderAdapter.<init>(CLDRLocaleProviderAdapter.java:83)
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+[0m
+[2026-05-02 13:22:28,936] [docker_util.py] [INFO]: [91m	at java.base/sun.util.locale.provider.LocaleProviderAdapter.forType(LocaleProviderAdapter.java:194)[0m
+[2026-05-02 13:22:28,936] [docker_util.py] [INFO]: [91m
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.findAdapter(LocaleProviderAdapter.java:293)
+	at java.base/sun.util.locale.provider.LocaleProviderAdapter.getAdapter(LocaleProviderAdapter.java:264)
+	at java.base/java.util.Calendar.createCalendar(Calendar.java:1696)
+	at java.base/java.util.Calendar.getInstance(Calendar.java:1663)
+	at java.base/java.text.SimpleDateFormat.initializeCalendar(SimpleDateFormat.java:680)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:624)
+	at java.base/java.text.SimpleDateFormat.<init>(SimpleDateFormat.java:603)[0m
+[2026-05-02 13:22:28,936] [docker_util.py] [INFO]: [91m
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.getLastResortErrorLogFile(SystemApplicationClassLoaderWorker.java:129)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:97)
+	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:65)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69)
+	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74)
+Caused by: java.io.IOException: Error while instrumenting sun/util/resources/cldr/provider/CLDRLocaleDataMetaInfo with JaCoCo 0.8.8.202204050719/5dcf34a.
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrumentError(Instrumenter.java:161)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:111)
+	at org.jacoco.agent.rt.internal_b6258fc.CoverageTransformer.transform(CoverageTransformer.java:92)
+	... 35 more
+[0m
+[2026-05-02 13:22:28,936] [docker_util.py] [INFO]: org.mockito.internal.junit.UnusedStubbingsTest > unused_stubbings FAILED
+    java.lang.AssertionError: 
+    Expecting actual:
+      "[MockitoHint] MyTest.myTestMethod (see javadoc for MockitoHint):
+    [MockitoHint] 1. Unused -> at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:0)
+    [MockitoHint] 2. Unused -> at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:0)
+    "
+    to be in:
+      ["[MockitoHint] MyTest.myTestMethod (see javadoc for MockitoHint):
+    [MockitoHint] 1. Unused -> at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    [MockitoHint] 2. Unused -> at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    ",
+        "[MockitoHint] MyTest.myTestMethod (see javadoc for MockitoHint):
+    [MockitoHint] 1. Unused -> at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    [MockitoHint] 2. Unused -> at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+    "]
+        at org.mockito.internal.junit.UnusedStubbingsTest.unused_stubbings(UnusedStubbingsTest.java:57)
+
+[retryTest] retried 1 test(s), 1 still failed.
+[2026-05-02 13:22:28,936] [docker_util.py] [INFO]: [91mCaused by: java.lang.IllegalArgumentException: Unsupported class file major version 65
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:199)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:180)
+	at org.jacoco.agent.rt.internal_b6258fc.asm.ClassReader.<init>(ClassReader.java:166)
+	at org.jacoco.agent.rt.internal_b6258fc.core.internal.instr.InstrSupport.classReaderFor(InstrSupport.java:280)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:77)
+	at org.jacoco.agent.rt.internal_b6258fc.core.instr.Instrumenter.instrument(Instrumenter.java:109)
+	... 36 more
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+
+1 test completed, 1 failed
+[0m
+[2026-05-02 13:22:29,036] [docker_util.py] [INFO]: > Task :removeTestResources
+[2026-05-02 13:22:29,036] [docker_util.py] [INFO]: 
+[2026-05-02 13:22:29,036] [docker_util.py] [INFO]: Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.2/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+150 actionable tasks: 124 executed, 26 up-to-date
+[2026-05-02 13:22:29,036] [docker_util.py] [INFO]: [91m
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':retryTest'.
+> There were failing tests. See the report at: file:///home/mockito/build/reports/tests/retryTest/index.html
+
+BUILD FAILED in 6m 48s
+[0m
+[2026-05-02 13:23:04,429] [docker_util.py] [INFO]: ---> Removed intermediate container 804d127d4680
+[2026-05-02 13:23:04,429] [docker_util.py] [INFO]: ---> c5115d0bc059
+[2026-05-02 13:23:04,429] [docker_util.py] [INFO]: sha256:c5115d0bc05948446a9c63d933d3464d5156ea3c728418b886be2237f20262b4
+[2026-05-02 13:23:04,439] [docker_util.py] [INFO]: Successfully built c5115d0bc059
+[2026-05-02 13:23:04,471] [docker_util.py] [INFO]: Successfully tagged mswebench/mockito_m_mockito:pr-3129
+[2026-05-02 13:23:04,471] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/patches/eval/s2-structural/java_47_s2_runs_3_patches/run-1/eval/workdir/mockito/mockito/images/pr-3129) build success: mswebench/mockito_m_mockito:pr-3129

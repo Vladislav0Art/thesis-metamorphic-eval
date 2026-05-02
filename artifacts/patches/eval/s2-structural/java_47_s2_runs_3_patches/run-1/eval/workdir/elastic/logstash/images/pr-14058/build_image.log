@@ -1,0 +1,884 @@
+[2026-05-02 12:37:38,374] [docker_util.py] [INFO]: Start building image `mswebench/elastic_m_logstash:pr-14058`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/patches/eval/s2-structural/java_47_s2_runs_3_patches/run-1/eval/workdir/elastic/logstash/images/pr-14058`
+[2026-05-02 12:37:39,246] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/elastic_m_logstash:base
+[2026-05-02 12:37:39,246] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:39,261] [docker_util.py] [INFO]: ---> 177a0c933542
+[2026-05-02 12:37:39,261] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-05-02 12:37:39,261] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:43,459] [docker_util.py] [INFO]: ---> d96272932d8b
+[2026-05-02 12:37:43,459] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-05-02 12:37:43,459] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:44,189] [docker_util.py] [INFO]: ---> e1cb41b70648
+[2026-05-02 12:37:44,189] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-05-02 12:37:44,189] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:44,920] [docker_util.py] [INFO]: ---> b9a7b80afd85
+[2026-05-02 12:37:44,925] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-05-02 12:37:44,925] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:45,636] [docker_util.py] [INFO]: ---> d152e8deab4f
+[2026-05-02 12:37:45,636] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-05-02 12:37:45,636] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:46,227] [docker_util.py] [INFO]: ---> 9919fe5950b7
+[2026-05-02 12:37:46,227] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-05-02 12:37:46,227] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:46,859] [docker_util.py] [INFO]: ---> f90cd8530fe1
+[2026-05-02 12:37:46,859] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-05-02 12:37:46,859] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:47,569] [docker_util.py] [INFO]: ---> f36c02d9d138
+[2026-05-02 12:37:47,569] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-05-02 12:37:47,569] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:47,662] [docker_util.py] [INFO]: ---> Running in 67f3ffb5f42e
+[2026-05-02 12:37:48,829] [docker_util.py] [INFO]: [91mUpdating files:  58% (1277/2197)[0m
+[2026-05-02 12:37:48,845] [docker_util.py] [INFO]: [91mUpdating files:  59% (1297/2197)[0m
+[2026-05-02 12:37:48,868] [docker_util.py] [INFO]: [91mUpdating files:  60% (1319/2197)[0m
+[2026-05-02 12:37:48,879] [docker_util.py] [INFO]: [91mUpdating files:  61% (1341/2197)[0m
+[2026-05-02 12:37:48,916] [docker_util.py] [INFO]: [91mUpdating files:  62% (1363/2197)[0m
+[2026-05-02 12:37:48,933] [docker_util.py] [INFO]: [91mUpdating files:  63% (1385/2197)[0m
+[2026-05-02 12:37:48,953] [docker_util.py] [INFO]: [91mUpdating files:  64% (1407/2197)[0m
+[2026-05-02 12:37:48,968] [docker_util.py] [INFO]: [91mUpdating files:  65% (1429/2197)[0m
+[2026-05-02 12:37:49,000] [docker_util.py] [INFO]: [91mUpdating files:  66% (1451/2197)[0m
+[2026-05-02 12:37:49,012] [docker_util.py] [INFO]: [91mUpdating files:  67% (1472/2197)[0m
+[2026-05-02 12:37:49,046] [docker_util.py] [INFO]: [91mUpdating files:  68% (1494/2197)[0m
+[2026-05-02 12:37:49,058] [docker_util.py] [INFO]: [91mUpdating files:  69% (1516/2197)[0m
+[2026-05-02 12:37:49,073] [docker_util.py] [INFO]: [91mUpdating files:  70% (1538/2197)[0m
+[2026-05-02 12:37:49,091] [docker_util.py] [INFO]: [91mUpdating files:  71% (1560/2197)[0m
+[2026-05-02 12:37:49,105] [docker_util.py] [INFO]: [91mUpdating files:  72% (1582/2197)[0m
+[2026-05-02 12:37:49,132] [docker_util.py] [INFO]: [91mUpdating files:  73% (1604/2197)[0m
+[2026-05-02 12:37:49,158] [docker_util.py] [INFO]: [91mUpdating files:  74% (1626/2197)[0m
+[2026-05-02 12:37:49,181] [docker_util.py] [INFO]: [91mUpdating files:  75% (1648/2197)[0m
+[2026-05-02 12:37:49,214] [docker_util.py] [INFO]: [91mUpdating files:  76% (1670/2197)[0m
+[2026-05-02 12:37:49,232] [docker_util.py] [INFO]: [91mUpdating files:  77% (1692/2197)[0m
+[2026-05-02 12:37:49,262] [docker_util.py] [INFO]: [91mUpdating files:  78% (1714/2197)[0m
+[2026-05-02 12:37:49,274] [docker_util.py] [INFO]: [91mUpdating files:  79% (1736/2197)[0m
+[2026-05-02 12:37:49,292] [docker_util.py] [INFO]: [91mUpdating files:  80% (1758/2197)[0m
+[2026-05-02 12:37:49,302] [docker_util.py] [INFO]: [91mUpdating files:  81% (1780/2197)[0m
+[2026-05-02 12:37:49,310] [docker_util.py] [INFO]: [91mUpdating files:  82% (1802/2197)[0m
+[2026-05-02 12:37:49,317] [docker_util.py] [INFO]: [91mUpdating files:  83% (1824/2197)[0m
+[2026-05-02 12:37:49,327] [docker_util.py] [INFO]: [91mUpdating files:  84% (1846/2197)[0m
+[2026-05-02 12:37:49,533] [docker_util.py] [INFO]: [91mUpdating files:  85% (1868/2197)[0m
+[2026-05-02 12:37:49,542] [docker_util.py] [INFO]: [91mUpdating files:  86% (1890/2197)[0m
+[2026-05-02 12:37:49,554] [docker_util.py] [INFO]: [91mUpdating files:  87% (1912/2197)[0m
+[2026-05-02 12:37:49,569] [docker_util.py] [INFO]: [91mUpdating files:  88% (1934/2197)[0m
+[2026-05-02 12:37:49,585] [docker_util.py] [INFO]: [91mUpdating files:  89% (1956/2197)[0m
+[2026-05-02 12:37:49,611] [docker_util.py] [INFO]: [91mUpdating files:  90% (1978/2197)[0m
+[2026-05-02 12:37:49,618] [docker_util.py] [INFO]: [91mUpdating files:  91% (2000/2197)[0m
+[2026-05-02 12:37:49,639] [docker_util.py] [INFO]: [91mUpdating files:  92% (2022/2197)[0m
+[2026-05-02 12:37:49,662] [docker_util.py] [INFO]: [91mUpdating files:  93% (2044/2197)[0m
+[2026-05-02 12:37:49,708] [docker_util.py] [INFO]: [91mUpdating files:  94% (2066/2197)[0m
+[2026-05-02 12:37:49,728] [docker_util.py] [INFO]: [91mUpdating files:  95% (2088/2197)[0m
+[2026-05-02 12:37:49,756] [docker_util.py] [INFO]: [91mUpdating files:  96% (2110/2197)[0m
+[2026-05-02 12:37:49,777] [docker_util.py] [INFO]: [91mUpdating files:  97% (2132/2197)[0m
+[2026-05-02 12:37:49,798] [docker_util.py] [INFO]: [91mUpdating files:  98% (2154/2197)[0m
+[2026-05-02 12:37:49,832] [docker_util.py] [INFO]: [91mUpdating files:  98% (2168/2197)[0m
+[2026-05-02 12:37:49,837] [docker_util.py] [INFO]: [91mUpdating files:  99% (2176/2197)[0m
+[2026-05-02 12:37:49,861] [docker_util.py] [INFO]: [91mUpdating files: 100% (2197/2197)Updating files: 100% (2197/2197), done.
+[0m
+[2026-05-02 12:37:49,867] [docker_util.py] [INFO]: HEAD is now at 74d9f5b56 Exclude non-runtime dependencies for snyk scans of jar dependencies (#19039)
+[2026-05-02 12:37:49,904] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-05-02 12:37:50,173] [docker_util.py] [INFO]: [91mNote: switching to '1c851bb15c6d8651be591f3c9389116536d22770'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 1c851bb15 Fix geoip database download does not respect http_proxy setting (#14048)
+[0m
+[2026-05-02 12:37:50,243] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-05-02 12:37:50,251] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:37:50,341] [docker_util.py] [INFO]: Downloading https://services.gradle.org/distributions/gradle-7.3.1-bin.zip
+[2026-05-02 12:37:52,242] [docker_util.py] [INFO]: .
+[2026-05-02 12:37:53,372] [docker_util.py] [INFO]: .
+[2026-05-02 12:37:54,598] [docker_util.py] [INFO]: .
+[2026-05-02 12:37:55,610] [docker_util.py] [INFO]: .
+[2026-05-02 12:37:56,725] [docker_util.py] [INFO]: .
+[2026-05-02 12:37:57,890] [docker_util.py] [INFO]: .
+[2026-05-02 12:37:59,115] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:00,174] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:01,168] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:01,943] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:02,795] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:03,599] [docker_util.py] [INFO]: 10%.
+[2026-05-02 12:38:04,665] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:05,350] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:06,088] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:06,809] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:07,527] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:08,258] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:09,275] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:10,089] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:10,832] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:11,549] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:12,267] [docker_util.py] [INFO]: 20%.
+[2026-05-02 12:38:13,046] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:13,799] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:14,713] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:15,427] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:16,236] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:17,131] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:17,952] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:18,740] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:19,491] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:20,326] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:21,305] [docker_util.py] [INFO]: 30%.
+[2026-05-02 12:38:22,201] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:23,038] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:23,969] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:24,846] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:25,632] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:26,570] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:27,486] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:28,297] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:29,219] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:30,356] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:31,814] [docker_util.py] [INFO]: 40%.
+[2026-05-02 12:38:33,034] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:34,250] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:35,625] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:36,722] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:38,051] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:39,452] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:40,727] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:41,805] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:43,373] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:45,480] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:47,648] [docker_util.py] [INFO]: 50%.
+[2026-05-02 12:38:48,415] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:49,198] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:50,027] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:51,564] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:52,882] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:55,334] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:56,510] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:57,631] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:58,545] [docker_util.py] [INFO]: .
+[2026-05-02 12:38:59,359] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:00,240] [docker_util.py] [INFO]: 60%.
+[2026-05-02 12:39:01,219] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:02,143] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:03,165] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:04,270] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:07,169] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:08,882] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:09,819] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:10,917] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:11,920] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:12,864] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:13,889] [docker_util.py] [INFO]: 70%.
+[2026-05-02 12:39:14,815] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:15,910] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:16,831] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:18,933] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:20,542] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:21,670] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:22,912] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:24,017] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:25,021] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:25,986] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:27,098] [docker_util.py] [INFO]: 80%
+[2026-05-02 12:39:27,098] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:28,087] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:29,123] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:30,610] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:31,662] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:32,472] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:33,576] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:34,771] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:36,145] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:37,363] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:38,489] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:39,905] [docker_util.py] [INFO]: 90%.
+[2026-05-02 12:39:41,275] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:42,382] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:43,396] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:44,695] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:45,831] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:46,893] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:47,780] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:48,626] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:49,500] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:50,393] [docker_util.py] [INFO]: .
+[2026-05-02 12:39:50,710] [docker_util.py] [INFO]: 100%
+[2026-05-02 12:39:51,472] [docker_util.py] [INFO]: 
+[2026-05-02 12:39:51,472] [docker_util.py] [INFO]: Welcome to Gradle 7.3.1!
+[2026-05-02 12:39:51,472] [docker_util.py] [INFO]: 
+[2026-05-02 12:39:51,472] [docker_util.py] [INFO]: Here are the highlights of this release:
+[2026-05-02 12:39:51,472] [docker_util.py] [INFO]: - Easily declare new test suites in Java projects
+[2026-05-02 12:39:51,472] [docker_util.py] [INFO]: - Support for Java 17
+ - Support for Scala 3
+[2026-05-02 12:39:51,472] [docker_util.py] [INFO]: For more details see https://docs.gradle.org/7.3.1/release-notes.html
+[2026-05-02 12:39:51,472] [docker_util.py] [INFO]: 
+[2026-05-02 12:39:51,473] [docker_util.py] [INFO]: To honour the JVM settings for this build a single-use Daemon process will be forked. See https://docs.gradle.org/7.3.1/userguide/gradle_daemon.html#sec:disabling_the_daemon.
+[2026-05-02 12:39:51,967] [docker_util.py] [INFO]: Daemon will be stopped at the end of the build
+[2026-05-02 12:39:53,772] [docker_util.py] [INFO]: > Task :buildSrc:compileJava NO-SOURCE
+[2026-05-02 12:40:00,169] [docker_util.py] [INFO]: > Task :buildSrc:compileGroovy
+[2026-05-02 12:40:00,169] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:40:01,367] [docker_util.py] [INFO]: > Task :buildSrc:processResources NO-SOURCE
+> Task :buildSrc:classes
+> Task :buildSrc:jar
+> Task :buildSrc:assemble
+> Task :buildSrc:compileTestJava NO-SOURCE
+[2026-05-02 12:40:03,667] [docker_util.py] [INFO]: > Task :buildSrc:compileTestGroovy
+> Task :buildSrc:processTestResources NO-SOURCE
+[2026-05-02 12:40:03,667] [docker_util.py] [INFO]: > Task :buildSrc:testClasses
+[2026-05-02 12:40:05,667] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:40:05,667] [docker_util.py] [INFO]: > Task :buildSrc:test
+[2026-05-02 12:40:06,466] [docker_util.py] [INFO]: > Task :buildSrc:check
+> Task :buildSrc:build
+[2026-05-02 12:42:12,168] [docker_util.py] [INFO]: > Task :clean UP-TO-DATE
+> Task :benchmark-cli:clean UP-TO-DATE
+> Task :dependencies-report:clean
+[2026-05-02 12:42:12,168] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 12:42:12,168] [docker_util.py] [INFO]: > Task :ingest-converter:clean UP-TO-DATE
+> Task :logstash-core:cleanGemjar UP-TO-DATE
+[2026-05-02 12:42:12,168] [docker_util.py] [INFO]: > Task :logstash-core:clean UP-TO-DATE
+> Task :logstash-core-benchmarks:clean UP-TO-DATE
+[2026-05-02 12:42:12,168] [docker_util.py] [INFO]: > Task :logstash-integration-tests:clean UP-TO-DATE
+> Task :logstash-xpack:clean UP-TO-DATE
+> Task :compileJava NO-SOURCE
+> Task :processResources NO-SOURCE
+[2026-05-02 12:42:12,168] [docker_util.py] [INFO]: > Task :classes UP-TO-DATE
+> Task :compileTestJava NO-SOURCE
+[2026-05-02 12:42:12,168] [docker_util.py] [INFO]: > Task :processTestResources NO-SOURCE
+> Task :testClasses
+[2026-05-02 12:42:12,168] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 12:42:12,168] [docker_util.py] [INFO]: > Task :test
+[2026-05-02 12:42:12,168] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:42:13,268] [docker_util.py] [INFO]: > Task :benchmark-cli:compileJava
+> Task :benchmark-cli:processResources
+> Task :benchmark-cli:classes
+[2026-05-02 12:42:24,569] [docker_util.py] [INFO]: > Task :benchmark-cli:compileTestJava
+> Task :benchmark-cli:processTestResources
+> Task :benchmark-cli:testClasses
+[2026-05-02 12:42:26,574] [docker_util.py] [INFO]: 
+[2026-05-02 12:42:26,574] [docker_util.py] [INFO]: > Task :benchmark-cli:test
+[2026-05-02 12:42:26,576] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:42:31,267] [docker_util.py] [INFO]: org.logstash.benchmark.cli.LsMetricsMonitorTest > parsesCpuUsage PASSED
+[2026-05-02 12:42:36,267] [docker_util.py] [INFO]: org.logstash.benchmark.cli.LsMetricsMonitorTest > parsesFilteredCount PASSED
+[2026-05-02 12:42:36,367] [docker_util.py] [INFO]: --------------------------------------------------------------------
+|  Results: SUCCESS (2 tests, 2 successes, 0 failures, 0 skipped)  |
+--------------------------------------------------------------------
+[2026-05-02 12:42:36,668] [docker_util.py] [INFO]: > Task :dependencies-report:compileJava
+[2026-05-02 12:42:36,770] [docker_util.py] [INFO]: > Task :dependencies-report:processResources
+[2026-05-02 12:42:36,770] [docker_util.py] [INFO]: > Task :dependencies-report:classes
+[2026-05-02 12:42:36,969] [docker_util.py] [INFO]: > Task :dependencies-report:compileTestJava
+> Task :dependencies-report:processTestResources
+> Task :dependencies-report:testClasses
+[2026-05-02 12:42:37,667] [docker_util.py] [INFO]: 
+[2026-05-02 12:42:37,668] [docker_util.py] [INFO]: > Task :dependencies-report:test
+[2026-05-02 12:42:37,669] [docker_util.py] [INFO]: org.logstash.dependencies.ReportGeneratorTest > testReportWithConflictingLicenses PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithUnacceptableLicenses STANDARD_OUT
+    Generated report with 16 dependencies (2 unknown or unacceptable licenses, 0 unknown or missing notices).
+
+    Add complying licenses (using the SPDX license ID from https://spdx.org/licenses) with URLs for the libraries listed below to tools/dependencies-report/src/main/resources/licenseMapping.csv:
+    "bundler:1.16.1"
+    "com.fasterxml.jackson.core:jackson-core:2.7.3"
+    The following 43 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    bundler
+    com.fasterxml.jackson.core:jackson-core
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithUnacceptableLicenses PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testSuccessfulReport STANDARD_OUT
+    Generated report with 16 dependencies (0 unknown or unacceptable licenses, 0 unknown or missing notices).
+
+    The following 41 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testSuccessfulReport PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithUnusedLicenses STANDARD_OUT
+    Generated report with 16 dependencies (0 unknown or unacceptable licenses, 0 unknown or missing notices).
+
+    The following 42 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    co.elastic:noNoticeDep
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithUnusedLicenses PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingLicenses STANDARD_OUT
+    Generated report with 16 dependencies (2 unknown or unacceptable licenses, 0 unknown or missing notices).
+
+    Add complying licenses (using the SPDX license ID from https://spdx.org/licenses) with URLs for the libraries listed below to tools/dependencies-report/src/main/resources/licenseMapping.csv:
+    "commons-io:commons-io:2.5"
+    "filesize:0.0.4"
+    The following 43 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    commons-io:commons-io
+    filesize
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+[2026-05-02 12:42:37,669] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:42:37,671] [docker_util.py] [INFO]: org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingLicenses PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingNotices STANDARD_OUT
+    Generated report with 13 dependencies (1 unknown or unacceptable licenses, 1 unknown or missing notices).
+
+    Add complying licenses (using the SPDX license ID from https://spdx.org/licenses) with URLs for the libraries listed below to tools/dependencies-report/src/main/resources/licenseMapping.csv:
+    "co.elastic:noNoticeDep:0.0.1"
+    The following NOTICE.txt entries are missing, please add them:
+    LS_HOME/tools/dependencies-report/src/main/resources/notices/co.elastic!noNoticeDep-NOTICE.txt
+    The following 45 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.errorprone:javac-shaded
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    commons-io:commons-io
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    junit:junit
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:commons-compiler
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingNotices PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingUrls STANDARD_OUT
+    Generated report with 16 dependencies (2 unknown or unacceptable licenses, 0 unknown or missing notices).
+
+    Add complying licenses (using the SPDX license ID from https://spdx.org/licenses) with URLs for the libraries listed below to tools/dependencies-report/src/main/resources/licenseMapping.csv:
+    "json-parser:"
+    "org.codehaus.janino:commons-compiler:3.0.8"
+    The following 43 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    json-parser
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:commons-compiler
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingUrls PASSED
+
+--------------------------------------------------------------------
+|  Results: SUCCESS (7 tests, 7 successes, 0 failures, 0 skipped)  |
+--------------------------------------------------------------------
+[2026-05-02 12:42:38,367] [docker_util.py] [INFO]: 
+[2026-05-02 12:42:38,368] [docker_util.py] [INFO]: > Task :ingest-converter:compileJava
+> Task :ingest-converter:processResources NO-SOURCE
+> Task :ingest-converter:classes
+[2026-05-02 12:42:39,667] [docker_util.py] [INFO]: > Task :ingest-converter:compileTestJava
+> Task :ingest-converter:processTestResources
+> Task :ingest-converter:testClasses
+[2026-05-02 12:42:40,867] [docker_util.py] [INFO]: 
+[2026-05-02 12:42:40,868] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:42:40,868] [docker_util.py] [INFO]: > Task :ingest-converter:test
+
+org.logstash.ingest.AppendTest > convertsAppendProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.AppendTest > convertsAppendProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.AppendTest > convertsAppendProcessorCorrectly[2] PASSED
+
+org.logstash.ingest.ConvertTest > convertsConvertProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.ConvertTest > convertsConvertProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.ConvertTest > convertsConvertProcessorCorrectly[2] PASSED
+
+org.logstash.ingest.ConvertTest > convertsConvertProcessorCorrectly[3] PASSED
+
+org.logstash.ingest.DateTest > convertsDateFieldCorrectly[0] PASSED
+
+org.logstash.ingest.DateTest > convertsDateFieldCorrectly[1] PASSED
+
+org.logstash.ingest.DateTest > convertsDateFieldCorrectly[2] PASSED
+
+org.logstash.ingest.GeoIpTest > convertsGeoIpFieldCorrectly[0] PASSED
+
+org.logstash.ingest.GeoIpTest > convertsGeoIpFieldCorrectly[1] PASSED
+
+org.logstash.ingest.GrokTest > convertsGrokFieldCorrectly[0] PASSED
+
+org.logstash.ingest.GrokTest > convertsGrokFieldCorrectly[1] PASSED
+
+org.logstash.ingest.GrokTest > convertsGrokFieldCorrectly[2] PASSED
+
+org.logstash.ingest.GsubTest > convertsGsubCorrectly[0] PASSED
+
+org.logstash.ingest.JsonTest > convertsConvertProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.JsonTest > convertsConvertProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.JsonTest > convertsConvertProcessorCorrectly[2] PASSED
+
+org.logstash.ingest.LowercaseTest > convertsAppendProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.LowercaseTest > convertsAppendProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[0] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[0] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[1] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[1] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[2] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[2] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[3] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[3] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[4] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[5] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[6] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[7] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[8] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[9] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[9] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[10] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[10] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[11] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[11] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[12] PASSED
+[2026-05-02 12:42:40,868] [docker_util.py] [INFO]: org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[13] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[14] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[15] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[16] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[17] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[18] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[19] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[20] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[21] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[22] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[23] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[24] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[25] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[26] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[27] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[28] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[29] PASSED
+
+org.logstash.ingest.RenameTest > convertsConvertProcessorCorrectly[0] PASSED
+[2026-05-02 12:42:40,868] [docker_util.py] [INFO]: org.logstash.ingest.RenameTest > convertsConvertProcessorCorrectly[1] PASSED
+[2026-05-02 12:42:40,868] [docker_util.py] [INFO]: org.logstash.ingest.SetTest > convertsSetProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.SetTest > convertsSetProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.SetTest > convertsSetProcessorCorrectly[2] PASSED
+
+----------------------------------------------------------------------
+|  Results: SUCCESS (56 tests, 56 successes, 0 failures, 0 skipped)  |
+----------------------------------------------------------------------
+
+> Task :markTestAliasDefinitions
+[2026-05-02 12:42:40,977] [docker_util.py] [INFO]: > Task :copyPluginTestAlias_java
+> Task :copyPluginTestAlias_ruby
+> Task :copyPluginTestAlias
+> Task :buildCustomJRuby SKIPPED
+> Task :installCustomJRuby SKIPPED
+[2026-05-02 12:42:42,967] [docker_util.py] [INFO]: > Task :downloadJRuby
+Download https://repo1.maven.org/maven2/org/jruby/jruby-dist/9.2.20.1/jruby-dist-9.2.20.1-bin.tar.gz
+[2026-05-02 12:42:55,568] [docker_util.py] [INFO]: > Task :verifyFile
+[2026-05-02 12:42:56,169] [docker_util.py] [INFO]: > Task :downloadAndInstallJRuby
+> Task :jar
+[2026-05-02 12:42:56,169] [docker_util.py] [INFO]: > Task :assemble
+[2026-05-02 12:42:56,268] [docker_util.py] [INFO]: > Task :benchmark-cli:jar
+[2026-05-02 12:42:57,668] [docker_util.py] [INFO]: > Task :benchmark-cli:shadowJar
+> Task :benchmark-cli:assemble
+> Task :dependencies-report:jar
+[2026-05-02 12:42:57,968] [docker_util.py] [INFO]: > Task :dependencies-report:shadowJar
+[2026-05-02 12:42:57,970] [docker_util.py] [INFO]: > Task :dependencies-report:assemble
+[2026-05-02 12:42:57,970] [docker_util.py] [INFO]: 
+[2026-05-02 12:42:57,970] [docker_util.py] [INFO]: > Task :ingest-converter:jar
+[2026-05-02 12:42:57,970] [docker_util.py] [INFO]: 
+[2026-05-02 12:42:58,170] [docker_util.py] [INFO]: > Task :ingest-converter:shadowJar
+> Task :ingest-converter:assemble
+[2026-05-02 12:43:03,070] [docker_util.py] [INFO]: > Task :logstash-core:compileJava
+[2026-05-02 12:43:03,070] [docker_util.py] [INFO]: [91mNote: Processing Log4j annotations
+Note: Annotations processed
+[0m
+[2026-05-02 12:43:03,167] [docker_util.py] [INFO]: [91mNote: Processing Log4j annotations
+Note: No elements to process
+[0m
+[2026-05-02 12:43:06,067] [docker_util.py] [INFO]: > Task :markAliasDefinitions
+> Task :copyPluginAlias_java
+> Task :copyPluginAlias_ruby
+> Task :copyPluginAlias NO-SOURCE
+> Task :logstash-core:processResources
+> Task :logstash-core:classes
+> Task :logstash-core:jar
+[2026-05-02 12:43:06,668] [docker_util.py] [INFO]: > Task :logstash-core:copyRuntimeLibs
+[2026-05-02 12:43:06,769] [docker_util.py] [INFO]: > Task :logstash-core:sourcesJar
+> Task :logstash-core:copyGemjar
+[2026-05-02 12:43:08,770] [docker_util.py] [INFO]: > Task :logstash-core:javadoc
+[2026-05-02 12:43:08,770] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:43:10,567] [docker_util.py] [INFO]: > Task :logstash-core:javadocJar
+> Task :logstash-core:assemble
+[2026-05-02 12:43:27,968] [docker_util.py] [INFO]: > Task :logstash-core-benchmarks:compileJava
+> Task :logstash-core-benchmarks:processResources
+> Task :logstash-core-benchmarks:classes
+> Task :logstash-core-benchmarks:jar
+> Task :logstash-core-benchmarks:assemble
+> Task :logstash-integration-tests:compileJava NO-SOURCE
+> Task :logstash-integration-tests:processResources NO-SOURCE
+> Task :logstash-integration-tests:classes UP-TO-DATE
+> Task :logstash-integration-tests:jar
+> Task :logstash-integration-tests:assemble
+> Task :logstash-xpack:compileJava NO-SOURCE
+> Task :logstash-xpack:processResources NO-SOURCE
+> Task :logstash-xpack:classes UP-TO-DATE
+> Task :logstash-xpack:jar
+> Task :logstash-xpack:assemble
+[2026-05-02 12:43:45,569] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:45,570] [docker_util.py] [INFO]: > Task :installBundler
+Fetching bundler-2.7.2.gem
+[2026-05-02 12:43:46,387] [docker_util.py] [INFO]: [91mERROR:  Error installing bundler:
+	bundler requires Ruby version >= 3.2.0. The current ruby version is 2.5.8.0.
+[0m
+[2026-05-02 12:43:47,269] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:47,270] [docker_util.py] [INFO]: > Task :bootstrap FAILED
+[2026-05-02 12:43:47,270] [docker_util.py] [INFO]: [91mLoadError: no such file to load -- bundler[0m
+[2026-05-02 12:43:47,270] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:43:47,270] [docker_util.py] [INFO]: [91m  require at org/jruby/RubyKernel.java:974[0m
+[2026-05-02 12:43:47,270] [docker_util.py] [INFO]: [91m
+  require at uri:classloader:/META-INF/jruby.home/lib/ruby/stdlib/rubygems/core_ext/kernel_require.rb:83[0m
+[2026-05-02 12:43:47,270] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:43:47,270] [docker_util.py] [INFO]: [91m  invoke! at /home/logstash/lib/bootstrap/bundler.rb:111
+   <main> at <script>:1[0m
+[2026-05-02 12:43:47,270] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:43:52,768] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:52,768] [docker_util.py] [INFO]: > Task :logstash-core:compileTestJava
+[2026-05-02 12:43:52,768] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:52,768] [docker_util.py] [INFO]: > Task :logstash-core:processTestResources
+[2026-05-02 12:43:52,769] [docker_util.py] [INFO]: > Task :logstash-core:testClasses
+[2026-05-02 12:43:52,780] [docker_util.py] [INFO]: > Task :logstash-core-benchmarks:compileTestJava
+[2026-05-02 12:43:52,780] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:43:52,780] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:52,781] [docker_util.py] [INFO]: > Task :logstash-core-benchmarks:processTestResources NO-SOURCE
+> Task :logstash-core-benchmarks:testClasses UP-TO-DATE
+> Task :logstash-core-benchmarks:test SKIPPED
+[2026-05-02 12:43:53,368] [docker_util.py] [INFO]: > Task :logstash-integration-tests:compileTestJava
+[2026-05-02 12:43:53,369] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:53,469] [docker_util.py] [INFO]: > Task :logstash-integration-tests:processTestResources NO-SOURCE
+> Task :logstash-integration-tests:testClasses
+> Task :logstash-integration-tests:test NO-SOURCE
+> Task :logstash-xpack:compileTestJava
+> Task :logstash-xpack:processTestResources NO-SOURCE
+> Task :logstash-xpack:testClasses
+[2026-05-02 12:43:53,568] [docker_util.py] [INFO]: [91m
+FAILURE: [0m
+[2026-05-02 12:43:53,569] [docker_util.py] [INFO]: [91mBuild failed with an exception.
+
+* Where:
+Script '/home/logstash/rubyUtils.gradle' line: 157
+
+* What went wrong:
+Execution failed for task ':bootstrap'.
+> (LoadError) no such file to load -- bundler
+
+[0m
+[2026-05-02 12:43:53,569] [docker_util.py] [INFO]: [91m* Try:
+> Run with --stacktrace option to get the stack trace.[0m
+[2026-05-02 12:43:53,569] [docker_util.py] [INFO]: [91m
+> Run with --info or --debug[0m
+[2026-05-02 12:43:53,569] [docker_util.py] [INFO]: [91m option to get more log output.
+> [0m
+[2026-05-02 12:43:53,569] [docker_util.py] [INFO]: [91mRun with [0m
+[2026-05-02 12:43:53,569] [docker_util.py] [INFO]: [91m--scan[0m
+[2026-05-02 12:43:53,569] [docker_util.py] [INFO]: [91m to get full insights.[0m
+[2026-05-02 12:43:53,569] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:43:53,569] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:43:53,569] [docker_util.py] [INFO]: [91m* Get more help at https://help.gradle.org[0m
+[2026-05-02 12:43:53,569] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:43:53,569] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:43:53,570] [docker_util.py] [INFO]: [91mBUILD FAILED[0m
+[2026-05-02 12:43:53,570] [docker_util.py] [INFO]: [91m in 6m 3s
+[0m
+[2026-05-02 12:43:53,570] [docker_util.py] [INFO]: 61 actionable tasks: 53 executed, 8 up-to-date
+[2026-05-02 12:44:15,377] [docker_util.py] [INFO]: ---> Removed intermediate container 67f3ffb5f42e
+[2026-05-02 12:44:15,378] [docker_util.py] [INFO]: ---> 5e28fc3f326b
+[2026-05-02 12:44:15,378] [docker_util.py] [INFO]: sha256:5e28fc3f326b2192aceee7bb49e3642bae8a38fb4cb5d62bd4cacb8a6fc3b3c9
+[2026-05-02 12:44:15,386] [docker_util.py] [INFO]: Successfully built 5e28fc3f326b
+[2026-05-02 12:44:15,412] [docker_util.py] [INFO]: Successfully tagged mswebench/elastic_m_logstash:pr-14058
+[2026-05-02 12:44:15,412] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/patches/eval/s2-structural/java_47_s2_runs_3_patches/run-1/eval/workdir/elastic/logstash/images/pr-14058) build success: mswebench/elastic_m_logstash:pr-14058

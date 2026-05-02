@@ -1,0 +1,126 @@
+diff --git a/src/main/java/com/fasterxml/jackson/databind/cfg/DeserializationFeature.java b/src/main/java/com/fasterxml/jackson/databind/cfg/DeserializationFeature.java
+index 2c5b48c8c..130b2292c 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/cfg/DeserializationFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/cfg/DeserializationFeature.java
+@@ -465,6 +465,14 @@ public enum DeserializationFeature implements ConfigFeature
+      */
+     ADJUST_DATES_TO_CONTEXT_TIME_ZONE(true),
+ 
++    /**
++     * Feature that specifies whether the given concrete class is used
++     * if type property is missing.
++     *
++     * @since 2.9
++     */
++    USE_BASE_TYPE_AS_DEFAULT(false),
++
+     /*
+     /******************************************************
+     /* Other
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/StdTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/StdTypeResolverBuilder.java
+index cbdafbd2b..54cf768ff 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/StdTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/StdTypeResolverBuilder.java
+@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
+ 
+ import com.fasterxml.jackson.databind.*;
+ import com.fasterxml.jackson.databind.annotation.NoClass;
++import com.fasterxml.jackson.databind.cfg.DeserializationFeature;
+ import com.fasterxml.jackson.databind.cfg.MapperConfig;
+ import com.fasterxml.jackson.databind.jsontype.impl.AsArrayTypeDeserializer;
+ import com.fasterxml.jackson.databind.jsontype.impl.AsArrayTypeSerializer;
+@@ -157,6 +158,50 @@ public class StdTypeResolverBuilder
+ 
+     @Override public Class<?> getDefaultImpl() { return _defaultImpl; }
+ 
++    protected JavaType defineDefaultImpl(DeserializationConfig config, JavaType baseType) {
++        JavaType defaultImpl;
++        if (_defaultImpl == null) {
++            //Fis of issue #955
++            if (config.isEnabled(DeserializationFeature.USE_BASE_TYPE_AS_DEFAULT) && !baseType.isAbstract()) {
++                defaultImpl = baseType;
++            } else {
++                defaultImpl = null;
++            }
++        } else {
++            // 20-Mar-2016, tatu: It is important to do specialization go through
++            //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
++            //   call to JavaType was used, but that cannot work reliably with 2.7
++            // 20-Mar-2016, tatu: Can finally add a check for type compatibility BUT
++            //   if so, need to add explicit checks for marker types. Not ideal, but
++            //   seems like a reasonable compromise.
++            if ((_defaultImpl == Void.class)
++                    || (_defaultImpl == NoClass.class)) {
++                defaultImpl = config.getTypeFactory().constructType(_defaultImpl);
++            } else {
++                if (baseType.hasRawClass(_defaultImpl)) { // common enough to check
++                    defaultImpl = baseType;
++                } else if (baseType.isTypeOrSuperTypeOf(_defaultImpl)) {
++                    // most common case with proper base type...
++                    defaultImpl = config.getTypeFactory()
++                            .constructSpecializedType(baseType, _defaultImpl);
++                } else {
++                    // 05-Apr-2018, tatu: As [databind#1565] and [databind#1861] need to allow
++                    //    some cases of seemingly incompatible `defaultImpl`. Easiest to just clear
++                    //    the setting.
++
++                    /*
++                    throw new IllegalArgumentException(
++                            String.format("Invalid \"defaultImpl\" (%s): not a subtype of basetype (%s)",
++                                    ClassUtil.nameOf(_defaultImpl), ClassUtil.nameOf(baseType.getRawClass()))
++                            );
++                            */
++                    defaultImpl = null;
++                }
++            }
++        }
++        return defaultImpl;
++    }
++
+     @Override
+     public StdTypeResolverBuilder defaultImpl(Class<?> defaultImpl) {
+         _defaultImpl = defaultImpl;
+@@ -203,42 +248,7 @@ public class StdTypeResolverBuilder
+ 
+         TypeIdResolver idRes = idResolver(config, baseType, subtypes, false, true);
+ 
+-        JavaType defaultImpl;
+-
+-        if (_defaultImpl == null) {
+-            defaultImpl = null;
+-        } else {
+-            // 20-Mar-2016, tatu: It is important to do specialization go through
+-            //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+-            //   call to JavaType was used, but that cannot work reliably with 2.7
+-            // 20-Mar-2016, tatu: Can finally add a check for type compatibility BUT
+-            //   if so, need to add explicit checks for marker types. Not ideal, but
+-            //   seems like a reasonable compromise.
+-            if ((_defaultImpl == Void.class)
+-                     || (_defaultImpl == NoClass.class)) {
+-                defaultImpl = config.getTypeFactory().constructType(_defaultImpl);
+-            } else {
+-                if (baseType.hasRawClass(_defaultImpl)) { // common enough to check
+-                    defaultImpl = baseType;
+-                } else if (baseType.isTypeOrSuperTypeOf(_defaultImpl)) {
+-                    // most common case with proper base type...
+-                    defaultImpl = config.getTypeFactory()
+-                            .constructSpecializedType(baseType, _defaultImpl);
+-                } else {
+-                    // 05-Apr-2018, tatu: As [databind#1565] and [databind#1861] need to allow
+-                    //    some cases of seemingly incompatible `defaultImpl`. Easiest to just clear
+-                    //    the setting.
+-
+-                    /*
+-                    throw new IllegalArgumentException(
+-                            String.format("Invalid \"defaultImpl\" (%s): not a subtype of basetype (%s)",
+-                                    ClassUtil.nameOf(_defaultImpl), ClassUtil.nameOf(baseType.getRawClass()))
+-                            );
+-                            */
+-                    defaultImpl = null;
+-                }
+-            }
+-        }
++        JavaType defaultImpl = defineDefaultImpl(config, baseType);
+ 
+         // First, method for converting type info to type id:
+         switch (_includeAs) {
