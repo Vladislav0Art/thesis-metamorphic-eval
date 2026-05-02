@@ -83,7 +83,11 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 
 1. Patches Check:
 ```bash
+cd artifacts/patches/eval/s2-structural/java_47_s2_runs_3_patches
 
+# full (47 benchmarks)
+python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/evaluate.py \
+    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s2-structural/full/s2_fix_patches.yaml
 ```
 
 1. Evaluation (GPT-5.4):
