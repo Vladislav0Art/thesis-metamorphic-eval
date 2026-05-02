@@ -1,0 +1,28 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+index 6626641a1..734ee0ead 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+@@ -14,7 +14,8 @@ import java.util.stream.StreamSupport;
+ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+ 
+     // The canonical source of truth for mapping addresses to their AddressStates
+-    protected final AddressStateMapping addressStates = new AddressStateMapping();
++    // The canonical source of truth for mapping addresses to their AddressStates
++    protected final AddressStateMapping addressStates;
+ 
+     // A cached mapping from any given registered sender (PipelineOutput) to a query-only view of
+     // the AddressState-s to which it is registered.

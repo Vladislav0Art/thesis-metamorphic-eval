@@ -1,0 +1,27 @@
+[2026-05-02 06:16:03,621] [gen_report.py] [INFO]: Initialize logger successfully.
+[2026-05-02 06:16:03,621] [gen_report.py] [INFO]: Collecting report tasks...
+[2026-05-02 06:16:03,622] [gen_report.py] [INFO]: Successfully collected 5 tasks.
+[2026-05-02 06:16:03,622] [gen_report.py] [INFO]: Loading dataset...
+[2026-05-02 06:16:03,774] [gen_report.py] [INFO]: Successfully loaded 5 valid datasets from ['/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/benchmarks/eval/s3-problem-statement/java_s3_problem_statement_5.jsonl']
+[2026-05-02 06:16:03,840] [gen_report.py] [ERROR]: Invalid eval report for elastic/logstash:pr-16681, Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (1120, 2, 30)
+  test = (1120, 4, 30)
+  fix  = (151, 1, 20), Before applying the fix patch, the test passed; however, after applying the fix patch, the test failed. A brief summary is as follows: Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (1120, 2, 30)
+  test = (1120, 4, 30)
+  fix  = (151, 1, 20). `logstash-core:compileJava`: Test(run=<TestStatus.PASS: 'PASS'>, test=<TestStatus.PASS: 'PASS'>, fix=<TestStatus.FAIL: 'FAIL'>)
+[2026-05-02 06:16:03,914] [gen_report.py] [INFO]: Successfully generated 4 reports.

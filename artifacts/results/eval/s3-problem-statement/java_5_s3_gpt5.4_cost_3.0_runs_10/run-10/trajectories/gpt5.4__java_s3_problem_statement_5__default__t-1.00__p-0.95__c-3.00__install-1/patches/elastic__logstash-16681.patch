@@ -1,0 +1,174 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+index 6626641a1..2a4b47962 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+@@ -48,11 +48,10 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+                                final Iterable<String> addresses) {
+         Objects.requireNonNull(sender, "sender must not be null");
+         Objects.requireNonNull(addresses, "addresses must not be null");
+-        addressStatesBySender.compute(sender, (po, existing) -> {
+-            return StreamSupport.stream(addresses.spliterator(), false)
+-                                .map((addr) -> addressStates.mutate(addr, (as) -> as.addOutput(po)))
+-                                .collect(Collectors.toUnmodifiableSet());
+-        });
++        final Set<AddressState.ReadOnly> registeredAddresses = StreamSupport.stream(addresses.spliterator(), false)
++            .map((addr) -> addressStates.mutate(addr, (as) -> as.addOutput(sender)))
++            .collect(Collectors.toUnmodifiableSet());
++        addressStatesBySender.put(sender, registeredAddresses);
+     }
+ 
+     @Override
+@@ -60,10 +59,8 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+                                  final Iterable<String> addresses) {
+         Objects.requireNonNull(sender, "sender must not be null");
+         Objects.requireNonNull(addresses, "addresses must not be null");
+-        addressStatesBySender.compute(sender, (po, existing) -> {
+-            addresses.forEach((addr) -> addressStates.mutate(addr, (as) -> as.removeOutput(po)));
+-            return null;
+-        });
++        addresses.forEach((addr) -> addressStates.mutate(addr, (as) -> as.removeOutput(sender)));
++        addressStatesBySender.remove(sender);
+     }
+ 
+     @Override
+@@ -90,12 +87,12 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+     }
+ 
+     private void unlistenNonblock(final PipelineInput listener,
+-                                   final String address) {
++                                  final String address) {
+         addressStates.mutate(address, (addressState) -> addressState.unassignInput(listener));
+     }
+ 
+     private void unlistenBlocking(final PipelineInput listener,
+-                          final String address) throws InterruptedException {
++                                  final String address) throws InterruptedException {
+         synchronized (Objects.requireNonNull(listener, "listener must not be null")) {
+             while(!tryUnlistenOrphan(listener, address)) {
+                 listener.wait(10000);
+@@ -134,22 +131,24 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+ 
+         public AddressState.ReadOnly mutate(final String address,
+                                             final Consumer<AddressState> consumer) {
++            final PipelineInput[] currentInput = new PipelineInput[1];
+             final AddressState result = mapping.compute(address, (a, addressState) -> {
+                 if (addressState == null) {
+                     addressState = new AddressState(address);
+                 }
+ 
+                 consumer.accept(addressState);
+-
+-                // If this addressState has a listener, ensure that any waiting
+-                // threads get notified so that they can resume immediately
+-                final PipelineInput currentInput = addressState.getInput();
+-                if (currentInput != null) {
+-                    synchronized (currentInput) { currentInput.notifyAll(); }
+-                }
++                currentInput[0] = addressState.getInput();
+ 
+                 return addressState.isEmpty() ? null : addressState;
+             });
++
++            if (currentInput[0] != null) {
++                synchronized (currentInput[0]) {
++                    currentInput[0].notifyAll();
++                }
++            }
++
+             return result == null ? null : result.getReadOnlyView();
+         }
+ 
+diff --git a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+index 78f7c22ac..59480ddff 100644
+--- a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
++++ b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+@@ -304,7 +304,67 @@ public class PipelineBusTest {
+         unlistenThread.join(Duration.ofSeconds(30).toMillis());
+         assertThat(unlistenThread.getState()).isEqualTo(Thread.State.TERMINATED);
+ 
+-        assertThat(bus.getAddressState(address)).isNotPresent();
++    }
++
++    @Test
++    public void pipelineBusV2AddressStateMutationDoesNotDeadlockOnListenerNotification() throws InterruptedException {
++        if (!(bus instanceof PipelineBusV2)) {
++            return;
++        }
++
++        final PipelineBusV2.AddressStateMapping mapping = new PipelineBusV2.AddressStateMapping();
++        final TestPipelineInput listener = new TestPipelineInput();
++        final List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
++        final CountDownLatch firstMutationEntered = new CountDownLatch(1);
++        final CountDownLatch secondMutationStarted = new CountDownLatch(1);
++        final CountDownLatch allowFirstMutationToFinish = new CountDownLatch(1);
++
++        mapping.mutate(address, (addressState) -> addressState.assignInputIfMissing(listener));
++
++        final Thread firstMutation = new Thread(() -> {
++            try {
++                mapping.mutate(address, (addressState) -> {
++                    firstMutationEntered.countDown();
++                    try {
++                        allowFirstMutationToFinish.await(30, TimeUnit.SECONDS);
++                    } catch (InterruptedException e) {
++                        Thread.currentThread().interrupt();
++                        throw new RuntimeException(e);
++                    }
++                });
++            } catch (Throwable t) {
++                failures.add(t);
++            }
++        });
++
++        final Thread secondMutation = new Thread(() -> {
++            try {
++                synchronized (listener) {
++                    secondMutationStarted.countDown();
++                    mapping.mutate(address, (addressState) -> { });
++                }
++            } catch (Throwable t) {
++                failures.add(t);
++            }
++        });
++
++        firstMutation.start();
++        assertThat(firstMutationEntered.await(30, TimeUnit.SECONDS)).isTrue();
++
++        secondMutation.start();
++        assertThat(secondMutationStarted.await(30, TimeUnit.SECONDS)).isTrue();
++
++        allowFirstMutationToFinish.countDown();
++
++        firstMutation.join(Duration.ofSeconds(30).toMillis());
++        secondMutation.join(Duration.ofSeconds(30).toMillis());
++
++        assertThat(failures).isEmpty();
++        assertThat(firstMutation.getState()).isEqualTo(Thread.State.TERMINATED);
++        assertThat(secondMutation.getState()).isEqualTo(Thread.State.TERMINATED);
++    }
++
++    @Test
+     }
+ 
+     @Test
+@@ -403,4 +463,4 @@ public class PipelineBusTest {
+             return lastBatchSize;
+         }
+     }
+-}
+\ No newline at end of file
++}

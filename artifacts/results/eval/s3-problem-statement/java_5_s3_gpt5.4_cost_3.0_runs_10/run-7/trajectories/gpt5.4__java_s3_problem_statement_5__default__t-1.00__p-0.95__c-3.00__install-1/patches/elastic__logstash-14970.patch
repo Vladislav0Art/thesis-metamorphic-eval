@@ -1,0 +1,71 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index c60648423..109f33390 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -408,7 +408,16 @@ public final class DeadLetterQueueWriter implements Closeable {
+      * Start from the end of the latest block, and going backward try to read the next event from its start.
+      * */
+     private static Optional<Timestamp> readTimestampOfLastEventInSegment(Path segmentPath) throws IOException {
+-        final int lastBlockId = (int) Math.ceil(((Files.size(segmentPath) - VERSION_SIZE) / (double) BLOCK_SIZE)) - 1;
++        final long segmentSize = Files.size(segmentPath);
++        if (segmentSize == VERSION_SIZE) {
++            return Optional.empty();
++        }
++        if (segmentSize < VERSION_SIZE) {
++            logger.warn("Cannot find a complete event into the segment file [{}], this is a DLQ segment corruption", segmentPath);
++            return Optional.empty();
++        }
++
++        final int lastBlockId = (int) Math.ceil(((segmentSize - VERSION_SIZE) / (double) BLOCK_SIZE)) - 1;
+         byte[] eventBytes;
+         try (RecordIOReader recordReader = new RecordIOReader(segmentPath)) {
+             int blockId = lastBlockId;
+@@ -428,6 +437,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+         return Optional.of(DLQEntry.deserialize(eventBytes).getEntryTime());
+     }
+ 
++
+     // package-private for testing
+     void dropTailSegment() throws IOException {
+         // remove oldest segment
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 5702d169a..79d084f0f 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -171,6 +171,22 @@ public class DeadLetterQueueWriterTest {
+         }
+     }
+ 
++    @Test
++    public void testCanInitializeWithVersionOnlySegment() throws Exception {
++        Files.write(dir.resolve("1.log"), new byte[]{RecordIOWriter.VERSION}, StandardOpenOption.CREATE_NEW);
++
++        try (DeadLetterQueueWriter writer = DeadLetterQueueWriter
++                .newBuilder(dir, 1_000, 100_000, Duration.ofSeconds(1))
++                .build()) {
++            writer.writeEntry(new DLQEntry(new Event(), "type", "id", "reason"));
++        }
++
++        assertTrue(Files.exists(dir.resolve("1.log")));
++        assertTrue(Files.exists(dir.resolve("2.log")));
++        assertThat(Files.size(dir.resolve("1.log")), is(EMPTY_DLQ));
++        assertThat(Files.size(dir.resolve("2.log")), is(greaterThan(EMPTY_DLQ)));
++    }
++
+     @Test
+     public void testSlowFlush() throws Exception {
+         try (DeadLetterQueueWriter writer = DeadLetterQueueWriter

@@ -1,0 +1,126 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index c60648423..3c285a498 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -50,8 +50,10 @@ import java.time.Duration;
+ import java.time.Instant;
+ import java.time.temporal.TemporalAmount;
+ import java.util.Comparator;
++import java.util.Iterator;
+ import java.util.Locale;
+ import java.util.Optional;
++import java.util.stream.Stream;
+ import java.util.concurrent.Executors;
+ import java.util.concurrent.ScheduledExecutorService;
+ import java.util.concurrent.TimeUnit;
+@@ -217,7 +219,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+         return lastError;
+     }
+ 
+-    public void writeEntry(Event event, String pluginName, String pluginId, String reason) throws IOException {
++    public void writeEntry(org.logstash.Event event, String pluginName, String pluginId, String reason) throws IOException {
+         writeEntry(new DLQEntry(event, pluginName, pluginId, reason));
+     }
+ 
+@@ -288,13 +290,14 @@ public final class DeadLetterQueueWriter implements Closeable {
+     private void executeAgeRetentionPolicy() {
+         if (isOldestSegmentExpired()) {
+             try {
+-                deleteExpiredSegments();
++                dropTailSegment();
+             } catch (IOException ex) {
+                 logger.error("Can't remove some DLQ files while cleaning expired segments", ex);
+             }
+         }
+     }
+ 
++
+     /**
+      * @param eventPayloadSize payload size in bytes.
+      * @return boolean true if event write has to be skipped.
+@@ -388,19 +391,19 @@ public final class DeadLetterQueueWriter implements Closeable {
+     }
+ 
+     private void updateOldestSegmentReference() throws IOException {
+-        oldestSegmentPath = listSegmentPaths(this.queuePath).sorted().findFirst();
+-        if (!oldestSegmentPath.isPresent()) {
+-            oldestSegmentTimestamp = Optional.empty();
+-            return;
+-        }
+-        // extract the newest timestamp from the oldest segment
+-        Optional<Timestamp> foundTimestamp = readTimestampOfLastEventInSegment(oldestSegmentPath.get());
+-        if (!foundTimestamp.isPresent()) {
+-            // clean also the last segment, because doesn't contain a timestamp (corrupted maybe)
+-            // or is not present anymore
+-            oldestSegmentPath = Optional.empty();
++        try (Stream<Path> segmentPaths = listSegmentPaths(this.queuePath).sorted()) {
++            for (Iterator<Path> iterator = segmentPaths.iterator(); iterator.hasNext(); ) {
++                final Path segmentPath = iterator.next();
++                final Optional<Timestamp> foundTimestamp = readTimestampOfLastEventInSegment(segmentPath);
++                if (foundTimestamp.isPresent()) {
++                    oldestSegmentPath = Optional.of(segmentPath);
++                    oldestSegmentTimestamp = foundTimestamp;
++                    return;
++                }
++            }
+         }
+-        oldestSegmentTimestamp = foundTimestamp;
++        oldestSegmentPath = Optional.empty();
++        oldestSegmentTimestamp = Optional.empty();
+     }
+ 
+     /**
+@@ -409,6 +412,9 @@ public final class DeadLetterQueueWriter implements Closeable {
+      * */
+     private static Optional<Timestamp> readTimestampOfLastEventInSegment(Path segmentPath) throws IOException {
+         final int lastBlockId = (int) Math.ceil(((Files.size(segmentPath) - VERSION_SIZE) / (double) BLOCK_SIZE)) - 1;
++        if (lastBlockId < 0) {
++            return Optional.empty();
++        }
+         byte[] eventBytes;
+         try (RecordIOReader recordReader = new RecordIOReader(segmentPath)) {
+             int blockId = lastBlockId;
+@@ -428,6 +434,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+         return Optional.of(DLQEntry.deserialize(eventBytes).getEntryTime());
+     }
+ 
++
+     // package-private for testing
+     void dropTailSegment() throws IOException {
+         // remove oldest segment
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 5702d169a..7e2faaa97 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -322,6 +322,17 @@ public class DeadLetterQueueWriterTest {
+                 0, droppedEvent);
+     }
+ 
++    @Test
++    public void testOpenQueueWithVersionOnlySegmentFile() throws Exception {
++        Files.write(dir.resolve("1.log"), new byte[]{'1'}, StandardOpenOption.CREATE_NEW);
++
++        try (DeadLetterQueueWriter writer = DeadLetterQueueWriter
++                .newBuilder(dir, 1_000, 100_000, Duration.ofSeconds(1))
++                .build()) {
++            assertTrue(writer.getCurrentQueueSize() >= VERSION_SIZE);
++        }
++    }
++
+     @Test
+     public void testRemoveSegmentsOrder() throws IOException {
+         try (DeadLetterQueueWriter sut = DeadLetterQueueWriter

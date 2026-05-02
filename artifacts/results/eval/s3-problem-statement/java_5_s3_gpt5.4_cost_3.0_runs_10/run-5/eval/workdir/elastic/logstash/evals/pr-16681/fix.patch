@@ -1,0 +1,164 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+index 6626641a1..96441da34 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+@@ -134,22 +134,25 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+ 
+         public AddressState.ReadOnly mutate(final String address,
+                                             final Consumer<AddressState> consumer) {
++            final PipelineInput[] currentInputHolder = new PipelineInput[1];
+             final AddressState result = mapping.compute(address, (a, addressState) -> {
+                 if (addressState == null) {
+                     addressState = new AddressState(address);
+                 }
+ 
+                 consumer.accept(addressState);
+-
+-                // If this addressState has a listener, ensure that any waiting
+-                // threads get notified so that they can resume immediately
+-                final PipelineInput currentInput = addressState.getInput();
+-                if (currentInput != null) {
+-                    synchronized (currentInput) { currentInput.notifyAll(); }
+-                }
++                currentInputHolder[0] = addressState.getInput();
+ 
+                 return addressState.isEmpty() ? null : addressState;
+             });
++
++            final PipelineInput currentInput = currentInputHolder[0];
++            if (currentInput != null) {
++                synchronized (currentInput) {
++                    currentInput.notifyAll();
++                }
++            }
++
+             return result == null ? null : result.getReadOnlyView();
+         }
+ 
+diff --git a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusV2Test.java b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusV2Test.java
+new file mode 100644
+index 000000000..1e91dbcf1
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusV2Test.java
+@@ -0,0 +1,107 @@
++package org.logstash.plugins.pipeline;
++
++import co.elastic.logstash.api.Event;
++import org.junit.Test;
++
++import java.util.Collection;
++import java.util.Collections;
++import java.util.concurrent.CountDownLatch;
++import java.util.concurrent.ExecutorService;
++import java.util.concurrent.Executors;
++import java.util.concurrent.Future;
++import java.util.concurrent.TimeUnit;
++
++import static org.junit.Assert.assertTrue;
++
++public class PipelineBusV2Test {
++
++    @Test
++    public void addressStateMutationDoesNotDeadlockWithListenerMonitorHeld() throws Exception {
++        final PipelineBusV2.AddressStateMapping mapping = new PipelineBusV2.AddressStateMapping();
++        final BlockingPipelineInput input = new BlockingPipelineInput("listener");
++        mapping.mutate("address", state -> state.setInput(input));
++
++        final ExecutorService executor = Executors.newFixedThreadPool(2);
++        try {
++            final Future<?> unregisterLikeMutation = executor.submit(() ->
++                mapping.mutate("address", state -> {
++                    input.computeStarted.countDown();
++                    await(input.unlistenEntered);
++                    await(input.releaseCompute);
++                    state.unsetInput(input);
++                })
++            );
++
++            assertTrue(input.computeStarted.await(5, TimeUnit.SECONDS));
++
++            final Future<?> unlistenLikeMutation = executor.submit(() -> {
++                synchronized (input) {
++                    input.unlistenEntered.countDown();
++                    await(input.allowUnlistenMutation);
++                    mapping.mutate("address", state -> state.unsetInput(input));
++                }
++            });
++
++            assertTrue(input.unlistenEntered.await(5, TimeUnit.SECONDS));
++            input.allowUnlistenMutation.countDown();
++            input.releaseCompute.countDown();
++
++            unregisterLikeMutation.get(5, TimeUnit.SECONDS);
++            unlistenLikeMutation.get(5, TimeUnit.SECONDS);
++        } finally {
++            executor.shutdownNow();
++            executor.awaitTermination(5, TimeUnit.SECONDS);
++        }
++    }
++
++    private static void await(final CountDownLatch latch) {
++        try {
++            if (!latch.await(5, TimeUnit.SECONDS)) {
++                throw new AssertionError("timed out waiting for test coordination");
++            }
++        } catch (InterruptedException e) {
++            Thread.currentThread().interrupt();
++            throw new AssertionError(e);
++        }
++    }
++
++    private static final class BlockingPipelineInput implements PipelineInput {
++        private final String id;
++        private final CountDownLatch computeStarted = new CountDownLatch(1);
++        private final CountDownLatch unlistenEntered = new CountDownLatch(1);
++        private final CountDownLatch allowUnlistenMutation = new CountDownLatch(1);
++        private final CountDownLatch releaseCompute = new CountDownLatch(1);
++
++        private BlockingPipelineInput(final String id) {
++            this.id = id;
++        }
++
++        @Override
++        public String getId() {
++            return id;
++        }
++
++        @Override
++        public ReceiveResponse internalReceive(final Collection<Event> events) {
++            return ReceiveResponse.completed();
++        }
++
++        @Override
++        public boolean isRunning() {
++            return true;
++        }
++
++        @Override
++        public boolean isDeadLetterQueueEnabled() {
++            return false;
++        }
++
++        @Override
++        public void setPipelineMetric(final PipelineMetric pipelineMetric) {
++        }
++
++        @Override
++        public Collection<String> getAddresses() {
++            return Collections.emptyList();
++        }
++    }

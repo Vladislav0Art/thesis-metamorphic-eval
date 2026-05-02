@@ -1,0 +1,162 @@
+[2026-05-02 04:22:51,276] [run_evaluation.py] [INFO]: Initialize logger successfully.
+[2026-05-02 04:22:51,276] [run_evaluation.py] [INFO]: Building images...
+[2026-05-02 04:22:51,276] [run_evaluation.py] [INFO]: Loading repo commits...
+[2026-05-02 04:22:51,276] [run_evaluation.py] [INFO]: Creating instances...
+[2026-05-02 04:22:51,276] [run_evaluation.py] [INFO]: Loading datasets...
+[2026-05-02 04:22:51,435] [run_evaluation.py] [INFO]: Successfully loaded 5 valid datasets from ['/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/benchmarks/eval/s3-problem-statement/java_s3_problem_statement_5.jsonl']
+[2026-05-02 04:22:51,436] [run_evaluation.py] [INFO]: Successfully loaded 5 valid instances.
+[2026-05-02 04:22:51,436] [run_evaluation.py] [DEBUG]: Repo: elastic/logstash, commits: 3
+[2026-05-02 04:22:51,436] [run_evaluation.py] [DEBUG]: Repo: fasterxml/jackson-core, commits: 1
+[2026-05-02 04:22:51,436] [run_evaluation.py] [DEBUG]: Repo: google/gson, commits: 1
+[2026-05-02 04:22:51,496] [util.py] [DEBUG]: sys.platform='darwin', git_executable='git'
+[2026-05-02 04:22:51,497] [cmd.py] [DEBUG]: Popen(['git', 'rev-list', '--all', '--'], cwd=/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_5_s3_gpt5.4_cost_3.0_runs_10/repos/elastic/logstash, stdin=None, shell=False, universal_newlines=False)
+[2026-05-02 04:22:51,669] [util.py] [DEBUG]: sys.platform='darwin', git_executable='git'
+[2026-05-02 04:22:51,670] [cmd.py] [DEBUG]: Popen(['git', 'rev-list', '--all', '--'], cwd=/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_5_s3_gpt5.4_cost_3.0_runs_10/repos/fasterxml/jackson-core, stdin=None, shell=False, universal_newlines=False)
+[2026-05-02 04:22:51,740] [util.py] [DEBUG]: sys.platform='darwin', git_executable='git'
+[2026-05-02 04:22:51,740] [cmd.py] [DEBUG]: Popen(['git', 'rev-list', '--all', '--'], cwd=/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_5_s3_gpt5.4_cost_3.0_runs_10/repos/google/gson, stdin=None, shell=False, universal_newlines=False)
+[2026-05-02 04:22:51,776] [run_evaluation.py] [INFO]: Total images: 8
+[2026-05-02 04:22:51,791] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/fasterxml_m_jackson-core:base/json HTTP/1.1" 200 None
+[2026-05-02 04:22:51,792] [run_evaluation.py] [DEBUG]: Image mswebench/fasterxml_m_jackson-core:base already exists, skipping...
+[2026-05-02 04:22:51,792] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/google_m_gson:base/json HTTP/1.1" 200 None
+[2026-05-02 04:22:51,792] [run_evaluation.py] [DEBUG]: Image mswebench/google_m_gson:base already exists, skipping...
+[2026-05-02 04:22:51,792] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/elastic_m_logstash:base/json HTTP/1.1" 200 None
+[2026-05-02 04:22:51,792] [run_evaluation.py] [DEBUG]: Image mswebench/elastic_m_logstash:base already exists, skipping...
+[2026-05-02 04:22:51,806] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/elastic_m_logstash:pr-14970/json HTTP/1.1" 200 None
+[2026-05-02 04:22:51,806] [run_evaluation.py] [DEBUG]: Image mswebench/elastic_m_logstash:pr-14970 already exists, skipping...
+[2026-05-02 04:22:51,811] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/fasterxml_m_jackson-core:pr-1142/json HTTP/1.1" 200 None
+[2026-05-02 04:22:51,811] [run_evaluation.py] [DEBUG]: Image mswebench/fasterxml_m_jackson-core:pr-1142 already exists, skipping...
+[2026-05-02 04:22:51,811] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/elastic_m_logstash:pr-16681/json HTTP/1.1" 200 None
+[2026-05-02 04:22:51,812] [run_evaluation.py] [DEBUG]: Image mswebench/elastic_m_logstash:pr-16681 already exists, skipping...
+[2026-05-02 04:22:51,813] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/google_m_gson:pr-1391/json HTTP/1.1" 200 None
+[2026-05-02 04:22:51,813] [run_evaluation.py] [DEBUG]: Image mswebench/google_m_gson:pr-1391 already exists, skipping...
+[2026-05-02 04:22:51,814] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/images/mswebench/elastic_m_logstash:pr-14981/json HTTP/1.1" 200 None
+[2026-05-02 04:22:51,814] [run_evaluation.py] [DEBUG]: Image mswebench/elastic_m_logstash:pr-14981 already exists, skipping...
+[2026-05-02 04:22:51,815] [run_evaluation.py] [INFO]: Images built successfully.
+[2026-05-02 04:22:51,815] [run_evaluation.py] [INFO]: Running instances...
+[2026-05-02 04:22:51,816] [run_evaluation.py] [INFO]: Running instance mswebench/elastic_m_logstash:pr-14970 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_5_s3_gpt5.4_cost_3.0_runs_10/run-6/eval/workdir/elastic/logstash/evals/pr-14970
+[2026-05-02 04:22:51,816] [run_evaluation.py] [INFO]: Running instance mswebench/elastic_m_logstash:pr-14981 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_5_s3_gpt5.4_cost_3.0_runs_10/run-6/eval/workdir/elastic/logstash/evals/pr-14981
+[2026-05-02 04:22:51,816] [run_evaluation.py] [INFO]: Running instance mswebench/google_m_gson:pr-1391 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_5_s3_gpt5.4_cost_3.0_runs_10/run-6/eval/workdir/google/gson/evals/pr-1391
+[2026-05-02 04:22:51,816] [run_evaluation.py] [INFO]: Running instance mswebench/elastic_m_logstash:pr-16681 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_5_s3_gpt5.4_cost_3.0_runs_10/run-6/eval/workdir/elastic/logstash/evals/pr-16681
+[2026-05-02 04:22:51,816] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-05-02 04:22:51,816] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-05-02 04:22:51,816] [run_evaluation.py] [INFO]: Running instance mswebench/fasterxml_m_jackson-core:pr-1142 in directory /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_5_s3_gpt5.4_cost_3.0_runs_10/run-6/eval/workdir/fasterxml/jackson-core/evals/pr-1142
+[2026-05-02 04:22:51,816] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-05-02 04:22:51,816] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-05-02 04:22:51,816] [run_evaluation.py] [INFO]: Instance fix_patch_run_cmd: ``
+[2026-05-02 04:22:51,816] [run_evaluation.py] [INFO]: Mounted agent's prediction patch under /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_5_s3_gpt5.4_cost_3.0_runs_10/run-6/eval/workdir/elastic/logstash/evals/pr-14970/fix.patch: `
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plug...`
+[2026-05-02 04:22:51,817] [run_evaluation.py] [INFO]: Running mswebench/elastic_m_logstash:pr-14970 with command: bash /home/fix-run.sh...
+[2026-05-02 04:22:51,816] [run_evaluation.py] [INFO]: Mounted agent's prediction patch under /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_5_s3_gpt5.4_cost_3.0_runs_10/run-6/eval/workdir/elastic/logstash/evals/pr-14981/fix.patch: `
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plug...`
+[2026-05-02 04:22:51,818] [run_evaluation.py] [INFO]: Running mswebench/elastic_m_logstash:pr-14981 with command: bash /home/fix-run.sh...
+[2026-05-02 04:22:51,818] [run_evaluation.py] [INFO]: Mounted agent's prediction patch under /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_5_s3_gpt5.4_cost_3.0_runs_10/run-6/eval/workdir/elastic/logstash/evals/pr-16681/fix.patch: `
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstas...`
+[2026-05-02 04:22:51,818] [run_evaluation.py] [INFO]: Running mswebench/elastic_m_logstash:pr-16681 with command: bash /home/fix-run.sh...
+[2026-05-02 04:22:51,818] [run_evaluation.py] [INFO]: Mounted agent's prediction patch under /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_5_s3_gpt5.4_cost_3.0_runs_10/run-6/eval/workdir/google/gson/evals/pr-1391/fix.patch: `
+diff --git a/.gitignore b/.gitignore
+index 5bda0b93..e930bdfb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -18,3 +18,8 @@ local.properties
+ build
+ 
+ .DS_Store
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/gson/src/main/java/com/google/gson/in...`
+[2026-05-02 04:22:51,821] [run_evaluation.py] [INFO]: Mounted agent's prediction patch under /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s3-problem-statement/java_5_s3_gpt5.4_cost_3.0_runs_10/run-6/eval/workdir/fasterxml/jackson-core/evals/pr-1142/fix.patch: `
+diff --git a/.gitignore b/.gitignore
+index 587b8bfb..70946ce8 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -23,3 +23,7 @@ syntax: glob
+ *.iws
+ /.idea/
+ dependency-reduced-pom.xml
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxm...`
+[2026-05-02 04:22:51,821] [run_evaluation.py] [INFO]: Running mswebench/fasterxml_m_jackson-core:pr-1142 with command: bash /home/fix-run.sh...
+[2026-05-02 04:22:51,824] [run_evaluation.py] [INFO]: Running mswebench/google_m_gson:pr-1391 with command: bash /home/fix-run.sh...
+[2026-05-02 04:22:51,893] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-05-02 04:22:51,895] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/0616b55fb2ec4785ceebd5b9c1c6d3dc487cc382ab68184fa4f81c800f399399/json HTTP/1.1" 200 None
+[2026-05-02 04:22:51,903] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-05-02 04:22:51,905] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/16460a8ff60166c03e93eb48015ef9493ea7ca985ddc7d7c9eff6a3364109ce9/json HTTP/1.1" 200 None
+[2026-05-02 04:22:51,912] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-05-02 04:22:51,912] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-05-02 04:22:51,914] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/create HTTP/1.1" 201 None
+[2026-05-02 04:22:51,916] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/6b3dae72e3512a1238fe98e31c20deb93debef1c0e2bea92b3de057ca7d014d6/json HTTP/1.1" 200 None
+[2026-05-02 04:22:51,918] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/4b0fc69e9fdc036a16742a785ef6267b386fb584ae3378c5d1c504afd2960082/json HTTP/1.1" 200 None
+[2026-05-02 04:22:51,919] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/657dea26dd1dea879c2d964e7d19014880213ee11caac55103a2c3ce0455195c/json HTTP/1.1" 200 None
+[2026-05-02 04:22:52,049] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/0616b55fb2ec4785ceebd5b9c1c6d3dc487cc382ab68184fa4f81c800f399399/start HTTP/1.1" 204 0
+[2026-05-02 04:22:52,051] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/0616b55fb2ec4785ceebd5b9c1c6d3dc487cc382ab68184fa4f81c800f399399/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-05-02 04:22:52,052] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/16460a8ff60166c03e93eb48015ef9493ea7ca985ddc7d7c9eff6a3364109ce9/start HTTP/1.1" 204 0
+[2026-05-02 04:22:52,054] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/0616b55fb2ec4785ceebd5b9c1c6d3dc487cc382ab68184fa4f81c800f399399/json HTTP/1.1" 200 None
+[2026-05-02 04:22:52,054] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/16460a8ff60166c03e93eb48015ef9493ea7ca985ddc7d7c9eff6a3364109ce9/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-05-02 04:22:52,056] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/16460a8ff60166c03e93eb48015ef9493ea7ca985ddc7d7c9eff6a3364109ce9/json HTTP/1.1" 200 None
+[2026-05-02 04:22:52,094] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/657dea26dd1dea879c2d964e7d19014880213ee11caac55103a2c3ce0455195c/start HTTP/1.1" 204 0
+[2026-05-02 04:22:52,097] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/657dea26dd1dea879c2d964e7d19014880213ee11caac55103a2c3ce0455195c/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-05-02 04:22:52,098] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/657dea26dd1dea879c2d964e7d19014880213ee11caac55103a2c3ce0455195c/json HTTP/1.1" 200 None
+[2026-05-02 04:22:52,116] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/6b3dae72e3512a1238fe98e31c20deb93debef1c0e2bea92b3de057ca7d014d6/start HTTP/1.1" 204 0
+[2026-05-02 04:22:52,117] [connectionpool.py] [DEBUG]: http://localhost:None "POST /v1.47/containers/4b0fc69e9fdc036a16742a785ef6267b386fb584ae3378c5d1c504afd2960082/start HTTP/1.1" 204 0
+[2026-05-02 04:22:52,121] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/6b3dae72e3512a1238fe98e31c20deb93debef1c0e2bea92b3de057ca7d014d6/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-05-02 04:22:52,122] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/4b0fc69e9fdc036a16742a785ef6267b386fb584ae3378c5d1c504afd2960082/logs?stderr=1&stdout=1&timestamps=0&follow=1&tail=all HTTP/1.1" 200 None
+[2026-05-02 04:22:52,124] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/4b0fc69e9fdc036a16742a785ef6267b386fb584ae3378c5d1c504afd2960082/json HTTP/1.1" 200 None
+[2026-05-02 04:22:52,125] [connectionpool.py] [DEBUG]: http://localhost:None "GET /v1.47/containers/6b3dae72e3512a1238fe98e31c20deb93debef1c0e2bea92b3de057ca7d014d6/json HTTP/1.1" 200 None
+[2026-05-02 04:22:52,295] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/657dea26dd1dea879c2d964e7d19014880213ee11caac55103a2c3ce0455195c?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-05-02 04:22:58,265] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/4b0fc69e9fdc036a16742a785ef6267b386fb584ae3378c5d1c504afd2960082?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-05-02 04:23:21,424] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/6b3dae72e3512a1238fe98e31c20deb93debef1c0e2bea92b3de057ca7d014d6?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-05-02 04:34:08,370] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/0616b55fb2ec4785ceebd5b9c1c6d3dc487cc382ab68184fa4f81c800f399399?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-05-02 04:38:22,463] [connectionpool.py] [DEBUG]: http://localhost:None "DELETE /v1.47/containers/16460a8ff60166c03e93eb48015ef9493ea7ca985ddc7d7c9eff6a3364109ce9?v=False&link=False&force=True HTTP/1.1" 204 0
+[2026-05-02 04:38:22,465] [run_evaluation.py] [INFO]: Instances run successfully.
+[2026-05-02 04:38:22,465] [run_evaluation.py] [INFO]: Running evaluation...
+[2026-05-02 04:38:22,466] [gen_report.py] [INFO]: Initialize logger successfully.
+[2026-05-02 04:38:22,466] [gen_report.py] [INFO]: Collecting report tasks...
+[2026-05-02 04:38:22,467] [gen_report.py] [INFO]: Successfully collected 5 tasks.
+[2026-05-02 04:38:22,467] [gen_report.py] [INFO]: Loading dataset...
+[2026-05-02 04:38:22,613] [gen_report.py] [INFO]: Successfully loaded 5 valid datasets from ['/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/benchmarks/eval/s3-problem-statement/java_s3_problem_statement_5.jsonl']
+[2026-05-02 04:38:22,716] [gen_report.py] [ERROR]: Invalid eval report for elastic/logstash:pr-14981, Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (1058, 2, 32)
+  test = (1057, 4, 32)
+  fix  = (0, 0, 0), After applying the fix patch, no test results were captured when executing the test command. A brief summary is as follows: Test Result Summary:
+Stage Descriptions:
+  run  : Execute the test command without any patches applied.
+  test : Execute the test command after applying the test patch.
+  fix  : Execute the test command after applying both the test patch and the fix patch.
+Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.
+
+Results:
+  run  = (1058, 2, 32)
+  test = (1057, 4, 32)
+  fix  = (0, 0, 0)
+[2026-05-02 04:38:22,749] [gen_report.py] [INFO]: Successfully generated 4 reports.
