@@ -8,7 +8,7 @@
 
 | Step                 | Transform | Patches Check | Evaluation (GPT-5.4) | Evaluation (Claude-Sonnet-4.6)     |
 |----------------------|-----------|---------------|--------------------------|--------------------------------|
-| s0-original          | N/A       | N/A           | ... `N=10`               | ❌                             |
+| s0-original          | N/A       | N/A           | next `N=10`              | ❌                             |
 | s1-renaming          | ❌        | ❌            | ❌                        | ❌                             |
 | s2-structural        | ✅ 1/5    | ❌            | ❌                        | ❌                             |
 | s3-problem-statement | ✅ 5/5    | ❌            | ... `N=10`                | ❌                             |
@@ -21,7 +21,7 @@
 |----------------------|-----------|---------------|--------------------------|--------------------------------|
 | s0-original          | N/A       | N/A           | ✅ `N=5`                 | ❌                             |
 | s1-renaming          | ❌        | ❌            | ❌                        | ❌                             |
-| s2-structural        | ...       | ❌            | ❌                        | ❌                             |
+| s2-structural        | ... xx/47 | ❌            | ❌                        | ❌                             |
 | s3-problem-statement | ✅        | ❌            | ✅ `N=5`                  | ❌                             |
 | s4-combined          | ❌        | ❌            | ❌                        | ❌                             |
 
