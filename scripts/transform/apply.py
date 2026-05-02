@@ -51,12 +51,24 @@ def _check_morph_summary(
     summary = parse_transformation_summary(morph_result.codecocoon_result.stdout)
     if summary is None:
         return
-    succeeded, failed, skipped = summary
-    pretty = f"Transformation summary ({label}): {succeeded} succeeded, {failed} failed, {skipped} skipped"
+
+    header = (
+        f"Transformation summary ({label}): "
+        f"{summary.succeeded} succeeded, {summary.failed} failed, {summary.skipped} skipped"
+    )
+    lines = [header]
+    if summary.succeeded_ids:
+        lines.append(f"  succeeded: {', '.join(summary.succeeded_ids)}")
+    if summary.failed_ids:
+        lines.append(f"  failed:    {', '.join(summary.failed_ids)}")
+    if summary.skipped_ids:
+        lines.append(f"  skipped:   {', '.join(summary.skipped_ids)}")
+    pretty = '\n'.join(lines)
+
     logger.info(pretty)
-    if failed > 0:
+    if summary.failed > 0:
         errors.append(pretty)
-    if skipped > 0:
+    if summary.skipped > 0:
         warnings.append(f"[warn] {pretty}")
 
 

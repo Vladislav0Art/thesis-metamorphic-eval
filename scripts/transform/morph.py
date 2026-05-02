@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass, field
 from typing import List, Dict
 from common.cli import run_cli_command
 from common.git import (
@@ -12,15 +13,48 @@ from common.codecocoon import CodeCocoonResult, execute_codecocoon
 from transform.models import Patch, MorphResult
 
 
-def parse_transformation_summary(stdout: str) -> tuple[int, int, int] | None:
-    """Extract (succeeded, failed, skipped) from CodeCocoon's 'Transformation summary' line."""
-    match = re.search(
+@dataclass
+class TransformationSummary:
+    succeeded:     int
+    failed:        int
+    skipped:       int
+    succeeded_ids: List[str] = field(default_factory=list)
+    failed_ids:    List[str] = field(default_factory=list)
+    skipped_ids:   List[str] = field(default_factory=list)
+
+
+def parse_transformation_summary(stdout: str) -> TransformationSummary | None:
+    """Parse CodeCocoon's 'Transformation summary' block from stdout.
+
+    Handles both the count line and the optional per-transformation ID lines:
+
+        [TransformationService] Transformation summary: 1 succeeded, 0 failed, 1 skipped:
+        [TransformationService]      - succeeded: move-file-into-suggested-directory-transformation/ai
+        [TransformationService]      - failed:
+        [TransformationService]      - skipped:   reorder-class-methods-transformation
+    """
+    count_match = re.search(
         r'Transformation summary:\s*(\d+)\s+succeeded,\s*(\d+)\s+failed,\s*(\d+)\s+skipped',
         stdout,
     )
-    if match:
-        return int(match.group(1)), int(match.group(2)), int(match.group(3))
-    return None
+    if not count_match:
+        return None
+
+    def _parse_ids(pattern: str) -> List[str]:
+        m = re.search(pattern, stdout)
+        if not m:
+            return []
+        return [s.strip() for s in m.group(1).split(',') if s.strip()]
+
+    return TransformationSummary(
+        succeeded=int(count_match.group(1)),
+        failed=int(count_match.group(2)),
+        skipped=int(count_match.group(3)),
+        # Use [ \t]* (not \s*) so we never consume the newline on empty lines.
+        succeeded_ids=_parse_ids(r'-\s+succeeded:[ \t]*([^\n]*)'),
+        failed_ids=_parse_ids(r'-\s+failed:[ \t]*([^\n]*)'),
+        skipped_ids=_parse_ids(r'-\s+skipped:[ \t]*([^\n]*)'),
+    )
 
 
 def morph(
