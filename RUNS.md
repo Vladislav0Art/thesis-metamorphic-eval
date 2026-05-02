@@ -8,13 +8,11 @@
 
 | Step                 | Transform | Patches Check | Evaluation (GPT-5.4) | Evaluation (Claude-Sonnet-4.6)     |
 |----------------------|-----------|---------------|--------------------------|--------------------------------|
-| s0-original          | N/A       | N/A           | ❌                       | ❌                             |
-| s1-renaming          | ...       | ❌            | ❌                        | ❌                             |
-| s2-structural        | ❌        | ❌            | ❌                        | ❌                             |
-| s3-problem-statement | ✅        | ❌            | ❌                        | ❌                             |
+| s0-original          | N/A       | N/A           | ... `N=10`               | ❌                             |
+| s1-renaming          | ❌        | ❌            | ❌                        | ❌                             |
+| s2-structural        | ✅ 1/5    | ❌            | ❌                        | ❌                             |
+| s3-problem-statement | ✅ 5/5    | ❌            | ... `N=10`                | ❌                             |
 | s4-combined          | ❌        | ❌            | ❌                        | ❌                             |
-
-
 
 
 ### Runs for 47 benchmarks (full)
@@ -23,7 +21,7 @@
 |----------------------|-----------|---------------|--------------------------|--------------------------------|
 | s0-original          | N/A       | N/A           | ✅ `N=5`                 | ❌                             |
 | s1-renaming          | ❌        | ❌            | ❌                        | ❌                             |
-| s2-structural        | ❌        | ❌            | ❌                        | ❌                             |
+| s2-structural        | ...       | ❌            | ❌                        | ❌                             |
 | s3-problem-statement | ✅        | ❌            | ✅ `N=5`                  | ❌                             |
 | s4-combined          | ❌        | ❌            | ❌                        | ❌                             |
 
@@ -64,21 +62,19 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 ```
 
 
-
-
 ### s2-structural
 
 1. Transform:
 ```bash
 cd artifacts/benchmarks/eval/s2-structural
 
-# full (47 benchmarks)
-python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/transform.py \
-    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s2-structural/s2_transform.yaml
-
 # small (5 benchmarks)
 python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/transform.py \
-    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s2-structural/s2_small_transform.yaml
+    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s2-structural/small/s2_small_transform.yaml
+
+# full (47 benchmarks)
+python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/transform.py \
+    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s2-structural/full/s2_transform.yaml
 ```
 
 1. Patches Check:
@@ -89,6 +85,7 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 1. Evaluation (GPT-5.4):
 
 1. Evaluation (Claude-Sonnet-4.6):
+
 
 
 ### s3-problem-statement
@@ -111,6 +108,11 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 ```bash
 cd artifacts/results/eval/s3-problem-statement
 
+# 5 benchmarks (small)
+python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/evaluate.py \
+    --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s3-problem-statement/small/s3_small_evaluate.yaml
+
+# 47 benchmarks (full)
 python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/evaluate.py \
     --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s3-problem-statement/s3_evaluate.yaml
 ```
