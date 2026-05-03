@@ -58,7 +58,7 @@ def execute_transform_metamorphic_texts(
 ) -> CodeCocoonResult:
     """Execute CodeCocoon transformMetamorphicTexts gradle task to sync rename/move changes into benchmark text fields."""
     logger.info(
-        f"Executing transformMetamorphicTexts: memory={memory_file}, input={input_file}, output={output_file}"
+        f"Executing transformMetamorphicTexts: memory: {memory_file}, input: {input_file}, output: {output_file}"
     )
     stdout, stderr, code = run_cli_command(
         './gradlew',
