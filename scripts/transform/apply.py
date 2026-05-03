@@ -14,6 +14,7 @@ from common.git import (
 from common.codecocoon import generate_codecocoon_config, execute_rewrite_problem_statement
 from transform.models import Patch, MorphResult
 from transform.morph import morph, insert_metamorphic_log, parse_transformation_summary
+from transform.patch_filter import filter_import_changes
 
 # ─── Internal result types ────────────────────────────────────────────────────
 
@@ -251,6 +252,9 @@ def _apply_code_morphing(
     metamorphic_base_commit: str = base_morph_result.last_commit_sha
     metamorphic_base_patch:  str = base_morph_result.metamorphic_patch
 
+    base_filter = filter_import_changes(metamorphic_base_patch, logger, patch_label='base patch')
+    metamorphic_base_patch = base_filter.filtered_patch
+
     strategy_entry["repo"] = {
         "instance_id": instance_id,
         "path":        repo_dir,
@@ -264,6 +268,7 @@ def _apply_code_morphing(
         },
         "commit": metamorphic_base_commit,
         "branch": base_branch,
+        "import_fixes": [f.__dict__ for f in base_filter.fixes],
     }
     insert_metamorphic_log(
         strategy_entry=strategy_entry, label="base_metamorphic_transformation_log",
@@ -328,6 +333,9 @@ def _apply_code_morphing(
         logger.error("Failed to generate new_morphed_test_patch")
         return _MorphingOutcome(result=None, errors=errors + ["new_morphed_test_patch generation failed (empty diff)"], warnings=warnings)
 
+    test_filter = filter_import_changes(new_morphed_test_patch, logger, patch_label='test patch')
+    new_morphed_test_patch = test_filter.filtered_patch
+
     strategy_entry["metamorphic_patches"]["test"]["original_patch"] = test_patch
     strategy_entry["metamorphic_patches"]["test"]["new_morphed_test_patch"] = {
         "description": (
@@ -336,6 +344,7 @@ def _apply_code_morphing(
             "(replaces original `test_patch` field)"
         ),
         "value": new_morphed_test_patch,
+        "import_fixes": [f.__dict__ for f in test_filter.fixes],
     }
 
     # Step 4d: Fix morph
@@ -395,6 +404,9 @@ def _apply_code_morphing(
         logger.error("Failed to generate new_morphed_fix_patch")
         return _MorphingOutcome(result=None, errors=errors + ["new_morphed_fix_patch generation failed (empty diff)"], warnings=warnings)
 
+    fix_filter = filter_import_changes(new_morphed_fix_patch, logger, patch_label='fix patch')
+    new_morphed_fix_patch = fix_filter.filtered_patch
+
     strategy_entry["metamorphic_patches"]["fix"]["original_patch"] = fix_patch
     strategy_entry["metamorphic_patches"]["fix"]["new_morphed_fix_patch"] = {
         "description": (
@@ -403,6 +415,7 @@ def _apply_code_morphing(
             "(replaces original `fix_patch` field)"
         ),
         "value": new_morphed_fix_patch,
+        "import_fixes": [f.__dict__ for f in fix_filter.fixes],
     }
 
     logger.info(
