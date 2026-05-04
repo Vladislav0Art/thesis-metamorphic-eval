@@ -6,7 +6,7 @@
 
 ### Runs for 5 benchmarks (small)
 
-| Step                 | Transform | Patches Check | Evaluation (GPT-5.4) | Evaluation (Claude-Sonnet-4.6)     |
+| Step                 | Transform | Patches Check | Evaluation (GPT-5.4)     | Evaluation (Claude-Sonnet-4.6) |
 |----------------------|-----------|---------------|--------------------------|--------------------------------|
 | s0-original          | N/A       | N/A           | next `N=10`              | ❌                             |
 | s1-renaming          | ❌        | ❌            | ❌                        | ❌                             |
@@ -17,11 +17,11 @@
 
 ### Runs for 47 benchmarks (full)
 
-| Step                 | Transform | Patches Check | Evaluation (GPT-5.4) | Evaluation (Claude-Sonnet-4.6)     |
+| Step                 | Transform | Patches Check | Evaluation (GPT-5.4)     | Evaluation (Claude-Sonnet-4.6) |
 |----------------------|-----------|---------------|--------------------------|--------------------------------|
 | s0-original          | N/A       | N/A           | ✅ `N=5`                 | ❌                             |
-| s1-renaming          | ...       | ❌            | ❌                        | ❌                             |
-| s2-structural        | ✅ 8/47   | ✅ 19/47      | ❌                        | ❌                             |
+| s1-renaming          | ✅ ?/47   | 🔵 ?/47       | ❌                        | ❌                             |
+| s2-structural        | ✅ ?/47   | 🔵 ?/47       | ❌                        | ❌                             |
 | s3-problem-statement | ✅        | ❌            | ✅ `N=5`                  | ❌                             |
 | s4-combined          | ❌        | ❌            | ❌                        | ❌                             |
 
@@ -65,6 +65,28 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
     --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s1-renaming/s1_small_transform.yaml
 ```
 
+2. Generate patches:
+```bash
+# full (47 benchmarks)
+python scripts/convert_model_predictions.py \
+	-t benchmark \
+	-i /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/benchmarks/eval/s1-renaming/java_s1_renaming_47.jsonl \
+	-o /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/benchmarks/eval/s1-renaming/patches/java_s1_renaming_47_patches.jsonl
+```
+
+3. Evaluate patches:
+```bash
+cd artifacts/patches/eval/s1-renaming
+
+# full (47 benchmarks)
+python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/evaluate.py \
+	--config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s1-renaming/s1_fix_patches.yaml
+```
+
+
+
+
+
 
 ### s2-structural
 
@@ -81,7 +103,17 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
     --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s2-structural/full/s2_transform.yaml
 ```
 
-1. Patches Check:
+
+1. Generate patches:
+```bash
+python scripts/convert_model_predictions.py \
+	-t benchmark \
+	-i /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/benchmarks/eval/s2-structural/java_s2_structural_47.jsonl \
+	-o /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/benchmarks/eval/s2-structural/patches/java_s2_structural_47_patches.jsonl
+```
+
+
+1. Evaluate patches:
 ```bash
 cd artifacts/patches/eval/s2-structural/java_47_s2_runs_3_patches
 
@@ -106,7 +138,7 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
     --config /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/setup/configs/eval/s3-problem-statement/s3_transform.yaml
 ```
 
-1. Patches Check:
+1. Evaluate patches:
 ```bash
 
 ```
@@ -252,6 +284,63 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 | `mockito__mockito-3220`<br>`mockito/mockito:pr-3220` | - | 0/5 |
 | `mockito__mockito-3173`<br>`mockito/mockito:pr-3173` | - | 0/5 |
 | `mockito__mockito-3133`<br>`mockito/mockito:pr-3133` | - | 0/5 |
+
+
+## Selected 20 benchmarks for eval
+
+
+| instance_id | difficulty | baseline (s0) | s1-renaming (patches) | s1 status |
+|---|:---:|:---:|:---:|:---:|
+| `mockito__mockito-3424`<br>`mockito/mockito:pr-3424` | - | 0/5 | + | resolved |
+| `mockito__mockito-3129`<br>`mockito/mockito:pr-3129` | e | 1/5 | + | resolved |
+| `google__gson-1555`<br>`google/gson:pr-1555` | - | 2/5 | + | resolved |
+| `google__gson-1391`<br>`google/gson:pr-1391` | - | 5/5 | + | resolved |
+| `fasterxml__jackson-databind-2036`<br>`fasterxml/jackson-databind:pr-2036` | - | 0/5 | + | resolved |
+| `fasterxml__jackson-databind-1923`<br>`fasterxml/jackson-databind:pr-1923` | e | 0/5 | + | resolved |
+| `elastic__logstash-16681`<br>`elastic/logstash:pr-16681` | m | 3/5 | + | resolved |
+| `elastic__logstash-16579`<br>`elastic/logstash:pr-16579` | h | 0/5 | + | resolved |
+| `elastic__logstash-13914`<br>`elastic/logstash:pr-13914` | m | 0/5 | + | resolved |
+| `google__gson-1093`<br>`google/gson:pr-1093` | m | 2/5 | - | unresolved |
+| `fasterxml__jackson-core-370`<br>`fasterxml/jackson-core:pr-370` | m | 1/5 | - | unresolved |
+| `fasterxml__jackson-core-183`<br>`fasterxml/jackson-core:pr-183` | e | 1/5 | - | unresolved |
+| `elastic__logstash-14981`<br>`elastic/logstash:pr-14981` | m | 4/5 | - | unresolved |
+| `elastic__logstash-14970`<br>`elastic/logstash:pr-14970` | - | 4/5 | - | unresolved |
+| `alibaba__fastjson2-82`<br>`alibaba/fastjson2:pr-82` | e | 0/5 | - | unresolved |
+| `mockito__mockito-3167`<br>`mockito/mockito:pr-3167` | m | 0/5 | - | unresolved |
+| `fasterxml__jackson-core-174`<br>`fasterxml/jackson-core:pr-174` | m | 0/5 | - | unresolved |
+| `apache__dubbo-11781`<br>`apache/dubbo:pr-11781` | m | 0/5 | - | unresolved |
+| `googlecontainertools__jib-4144`<br>`googlecontainertools/jib:pr-4144` | m | 0/5 | - | unresolved |
+| `googlecontainertools__jib-4035`<br>`googlecontainertools/jib:pr-4035` | m | 0/5 | - | unresolved |
+
+
+selected (20 benchmarks):
+
+resolved (s1-renaming):
+"mockito/mockito:pr-3424", 0/5 -
+"mockito/mockito:pr-3129", 1/5 e
+"google/gson:pr-1555",     2/5 -
+"google/gson:pr-1391",     5/5 -
+"fasterxml/jackson-databind:pr-2036", 0/5 -
+"fasterxml/jackson-databind:pr-1923", 0/5 e
+"elastic/logstash:pr-16681",  3/5 m
+"elastic/logstash:pr-16579",  0/5 h
+"elastic/logstash:pr-13914".  0/5 m
+
+
+unresolved (s1-renaming):
+"google/gson:pr-1093", 2/5 m
+"fasterxml/jackson-core:pr-370", 1/5 m
+"fasterxml/jackson-core:pr-183", 1/5 e
+"elastic/logstash:pr-14981", 4/5 m
+"elastic/logstash:pr-14970", 4/5 -
+
+"alibaba/fastjson2:pr-82", 0/5 e
+"mockito/mockito:pr-3167",   0/5 m
+"fasterxml/jackson-core:pr-174",     0/5 m
+"apache/dubbo:pr-11781", 0/5 m
+"googlecontainertools/jib:pr-4144",   0/5 m
+"googlecontainertools/jib:pr-4035",   0/5 m
+
 
 
 ## Successfully Transformed Projects
