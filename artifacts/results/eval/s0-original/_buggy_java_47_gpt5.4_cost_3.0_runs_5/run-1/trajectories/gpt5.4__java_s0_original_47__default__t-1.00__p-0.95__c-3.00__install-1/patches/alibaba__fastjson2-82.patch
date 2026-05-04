@@ -1,0 +1,94 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index b6a0ff2ce..b5aa90ed0 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -605,7 +605,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -627,7 +627,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -646,7 +646,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -668,7 +668,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -690,9 +690,10 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.current() == JSONReader.EOI;
+     }
+ 
++
+     /**
+      * Convert Java object order to {@link JSONArray} or {@link JSONObject}
+      *
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 32ab096bf..2041426d5 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -31,6 +31,8 @@ public class JSONTest {
+     public void test_isValidArray_0() {
+         assertTrue(JSON.isValidArray("[]"));
+         assertFalse(JSON.isValidArray("{}"));
++        assertFalse(JSON.isValidArray("[]1"));
++        assertFalse(JSON.isValidArray("[1]x"));
+     }
+ 
+     @Test
+diff --git a/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
+index 5f165ed35..57ad8914a 100644
+--- a/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
++++ b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
+@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
+ import com.alibaba.fastjson.JSONObject;
+ import org.junit.jupiter.api.Test;
+ 
++import static org.junit.jupiter.api.Assertions.assertFalse;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ public class Issue2982 {
+@@ -16,5 +17,11 @@ public class Issue2982 {
+         assertTrue(JSONObject.isValidArray(jsonStr));
+     }
+ 
+-
++    @Test
++    public void test_for_issue_with_trailing_content() {
++        String jsonStr = "[1]1";
++        assertFalse(JSONArray.isValidArray(jsonStr));
++        assertFalse(JSON.isValidArray(jsonStr));
++        assertFalse(JSONObject.isValidArray(jsonStr));
++    }
+ }

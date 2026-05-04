@@ -1,0 +1,68 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index 1aad80538..d194484dd 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -200,33 +200,26 @@ public final class DeadLetterQueueWriter implements Closeable {
+         return expiredEvents.longValue();
+     }
+ 
+-    public String getLastError() {
+-        return lastError;
+-    }
+-
+-    public void writeEntry(Event event, String pluginName, String pluginId, String reason) throws IOException {
+-        writeEntry(new DLQEntry(event, pluginName, pluginId, reason));
+-    }
+-
+     @Override
+-    public void close() {
+-        if (open.compareAndSet(true, false)) {
+-            try {
++    public void close() throws IOException {
++        lock.lock();
++        try {
++            if (open.compareAndSet(true, false)) {
+                 finalizeSegment(FinalizeWhen.ALWAYS);
+-            } catch (Exception e) {
+-                logger.warn("Unable to close dlq writer, ignoring", e);
+-            }
+-            try {
+-                releaseFileLock();
+-            } catch (Exception e) {
+-                logger.warn("Unable to release fileLock, ignoring", e);
+-            }
++                try {
++                    releaseFileLock();
++                } catch (Exception e) {
++                    logger.warn("Unable to release fileLock, ignoring", e);
++                }
+ 
+-            try {
+-                flushScheduler.shutdown();
+-            } catch (Exception e) {
+-                logger.warn("Unable shutdown flush scheduler, ignoring", e);
++                try {
++                    flushScheduler.shutdown();
++                } catch (Exception e) {
++                    logger.warn("Unable shutdown flush scheduler, ignoring", e);
++                }
+             }
++        } finally {
++            lock.unlock();
+         }
+     }
+ 

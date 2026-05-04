@@ -1,0 +1,149 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterCreator.java b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterCreator.java
+index c70fcd52d..ee30bbaee 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterCreator.java
++++ b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterCreator.java
+@@ -10,7 +10,6 @@ import com.alibaba.fastjson2.function.*;
+ import com.alibaba.fastjson2.modules.ObjectWriterModule;
+ import com.alibaba.fastjson2.util.BeanUtils;
+ import com.alibaba.fastjson2.util.JDKUtils;
+-import com.alibaba.fastjson2.util.TypeUtils;
+ 
+ import java.lang.invoke.*;
+ import java.lang.reflect.*;
+@@ -19,7 +18,6 @@ import java.math.BigInteger;
+ import java.time.LocalDate;
+ import java.time.OffsetDateTime;
+ import java.util.*;
+-import java.util.concurrent.atomic.AtomicInteger;
+ import java.util.function.*;
+ 
+ import static com.alibaba.fastjson2.JSONWriter.Feature.WriteClassName;
+@@ -28,8 +26,12 @@ import static com.alibaba.fastjson2.util.TypeUtils.*;
+ import static com.alibaba.fastjson2.writer.ObjectWriterProvider.NAME_COMPATIBLE_WITH_FILED;
+ 
+ public class ObjectWriterCreator {
++    public static final boolean JIT = !JDKUtils.ANDROID && !JDKUtils.GRAAL;
+     public static final ObjectWriterCreator INSTANCE = new ObjectWriterCreator();
+ 
++    protected final java.util.concurrent.atomic.AtomicInteger jitErrorCount = new java.util.concurrent.atomic.AtomicInteger();
++    protected volatile Throwable jitErrorLast;
++
+     static final Map<Class, LambdaInfo> lambdaMapping = new HashMap<>();
+ 
+     static {
+@@ -43,37 +45,16 @@ public class ObjectWriterCreator {
+         lambdaMapping.put(double.class, new LambdaInfo(double.class, ToDoubleFunction.class, "applyAsDouble"));
+     }
+ 
+-    protected final AtomicInteger jitErrorCount = new AtomicInteger();
+-    protected volatile Throwable jitErrorLast;
+-
+-    public ObjectWriterCreator() {
+-    }
+-
+-    public ObjectWriter createObjectWriter(List<FieldWriter> fieldWriters) {
+-        return new ObjectWriterAdapter(null, null, null, 0, fieldWriters);
+-    }
+-
+-    public ObjectWriter createObjectWriter(FieldWriter... fieldWriters) {
+-        return createObjectWriter(Arrays.asList(fieldWriters));
+-    }
+-
+-    public <T> ObjectWriter<T> createObjectWriter(String[] names, Type[] types, FieldSupplier<T> supplier) {
+-        FieldWriter[] fieldWriters = new FieldWriter[names.length];
+-        for (int i = 0; i < names.length; i++) {
+-            String fieldName = names[i];
+-            Type fieldType = types[i];
+-            Function<T, Object> function = new FieldSupplierFunction<>(supplier, i);
+-            fieldWriters[i] = createFieldWriter(fieldName, fieldType, TypeUtils.getClass(fieldType), function);
+-        }
+-        return createObjectWriter(fieldWriters);
++    public ObjectWriter createObjectWriter(
++            List<FieldWriter> fieldWriters
++    ) {
++        return createObjectWriter(null, 0, fieldWriters.toArray(new FieldWriter[0]));
+     }
+ 
+-    public ObjectWriter createObjectWriter(Class objectType) {
+-        return createObjectWriter(
+-                objectType,
+-                0,
+-                JSONFactory.getDefaultObjectWriterProvider()
+-        );
++    public ObjectWriter createObjectWriter(
++            FieldWriter... fieldWriters
++    ) {
++        return createObjectWriter(null, 0, fieldWriters);
+     }
+ 
+     public ObjectWriter createObjectWriter(Class objectType,
+diff --git a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+index f8b847de4..34467da3c 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
++++ b/core/src/test/java/com/alibaba/fastjson2/annotation/JSONType_serializer.java
+@@ -54,4 +54,61 @@ public class JSONType_serializer {
+             assertEquals("{\"ID\":123}", str);
+         }
+     }
++
++    @Test
++    public void test_nestedTypeSerializer() {
++        BeanContainer bean = new BeanContainer();
++        bean.value = new Bean();
++        bean.value.id = 123;
++
++        assertEquals("{\"value\":{\"ID\":123}}", JSON.toJSONString(bean));
++    }
++
++    public static class BeanContainer {
++        public Bean value;
++    }
++
++    @Test
++    public void test_enumFieldTypeSerializer() {
++        EnumContainer bean = new EnumContainer();
++        bean.status = Status.RUNNING;
++
++        assertEquals("{\"status\":{\"name\":\"RUNNING\",\"code\":1}}", JSON.toJSONString(bean));
++    }
++
++    public static class EnumContainer {
++        public Status status;
++    }
++
++    @JSONType(serializer = StatusWriter.class)
++    public enum Status {
++        RUNNING(1),
++        STOP(2);
++
++        public final int code;
++
++        Status(int code) {
++            this.code = code;
++        }
++    }
++
++    public static class StatusWriter
++            implements ObjectWriter<Status> {
++        @Override
++        public void write(JSONWriter jsonWriter, Object object, Object fieldName, Type fieldType, long features) {
++            Status status = (Status) object;
++
++            jsonWriter.startObject();
++
++            jsonWriter.writeName("name");
++            jsonWriter.writeColon();
++            jsonWriter.writeString(status.name());
++
++            jsonWriter.writeName("code");
++            jsonWriter.writeColon();
++            jsonWriter.writeInt32(status.code);
++
++            jsonWriter.endObject();
++        }
++    }
+ }

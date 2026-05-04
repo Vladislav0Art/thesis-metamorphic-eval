@@ -1,0 +1,40 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 5702d169a..89c429964 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -209,15 +209,14 @@ public class DeadLetterQueueWriterTest {
+             try (DeadLetterQueueReader readManager = new DeadLetterQueueReader(dir)) {
+                 for (int i = 0; i < 4; i++) {
+                     DLQEntry entry = readManager.pollEntry(100);
+-                    assertThat(entry, is(CoreMatchers.nullValue()));
+-                }
+-            }
++    public void close() {
++        if (open.compareAndSet(true, false)) {
++            flushScheduler.shutdown();
++            finalizeSegment(FlushMethod.ALWAYS);
++            executeAgeRetentionPolicy();
++            releaseResources();
+         }
+     }
+-
+-
+-    @Test
+-    public void testCloseFlush() throws Exception {
+         try (DeadLetterQueueWriter writer = DeadLetterQueueWriter
+                 .newBuilder(dir, 1_000, 1_000_000, Duration.ofHours(1))
+                 .build()) {

@@ -1,0 +1,61 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java b/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
+index daa71bed3..963f352ca 100644
+--- a/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
++++ b/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
+@@ -284,6 +284,23 @@ public class SpyAnnotationTest extends TestBase {
+         verify(translator).translate(eq("hello"));
+     }
+ 
++    @Test
++    public void should_not_break_initialized_final_spy_when_generic_spy_is_present() throws Exception {
++        Assume.assumeThat(Plugins.getMockMaker(), instanceOf(InlineMockMaker.class));
++
++        class WithGenericAndFinalSpy {
++            @Spy final List<String> genericSpy = List.of("item A", "item B");
++
++            @Spy final FinalClass finalSpy = new FinalClass("some value");
++        }
++
++        WithGenericAndFinalSpy testInstance = new WithGenericAndFinalSpy();
++
++        MockitoAnnotations.openMocks(testInstance);
++
++        assertThat(testInstance.finalSpy.someParameter()).isEqualTo("some value");
++    }
++
+     static class WithInnerPrivateStaticAbstract {
+         @Spy private InnerPrivateStaticAbstract spy_field;
+ 
+@@ -332,6 +349,18 @@ public class SpyAnnotationTest extends TestBase {
+         }
+     }
+ 
++    static final class FinalClass {
++        private final String someParameter;
++
++        FinalClass(String someParameter) {
++            this.someParameter = someParameter;
++        }
++
++        String someParameter() {
++            return someParameter;
++        }
++    }
++
+     interface Translator {
+         List<String> translate(List<String> messages);
+     }

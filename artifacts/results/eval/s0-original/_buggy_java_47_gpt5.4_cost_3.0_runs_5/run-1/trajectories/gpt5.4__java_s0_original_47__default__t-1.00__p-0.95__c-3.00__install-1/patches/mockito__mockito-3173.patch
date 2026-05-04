@@ -1,0 +1,81 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/MockSettingsImpl.java b/src/main/java/org/mockito/internal/creation/MockSettingsImpl.java
+index 7bef7764d..0af626c86 100644
+--- a/src/main/java/org/mockito/internal/creation/MockSettingsImpl.java
++++ b/src/main/java/org/mockito/internal/creation/MockSettingsImpl.java
+@@ -193,14 +193,14 @@ public class MockSettingsImpl<T> extends CreationSettings<T>
+ 
+     static <T> void addListeners(T[] listeners, List<T> container, String method) {
+         if (listeners == null) {
+-            throw methodDoesNotAcceptParameter(method, "null vararg array.");
++            throw methodDoesNotAcceptParameter(method, "null vararg array");
+         }
+         if (listeners.length == 0) {
+             throw requiresAtLeastOneListener(method);
+         }
+         for (T listener : listeners) {
+             if (listener == null) {
+-                throw methodDoesNotAcceptParameter(method, "null listeners.");
++                throw methodDoesNotAcceptParameter(method, "null listeners");
+             }
+             container.add(listener);
+         }
+diff --git a/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java b/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
+index daa71bed3..5f7ef3879 100644
+--- a/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
++++ b/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
+@@ -193,6 +193,17 @@ public class SpyAnnotationTest extends TestBase {
+         }
+     }
+ 
++    @Test
++    public void should_spy_final_instance_when_generic_spy_is_present() throws Exception {
++        Assume.assumeThat(Plugins.getMockMaker(), instanceOf(InlineMockMaker.class));
++
++        WithGenericAndFinalSpy withSpies = new WithGenericAndFinalSpy();
++        MockitoAnnotations.openMocks(withSpies);
++
++        assertThat(withSpies.genericSpy).containsExactly("item A", "item B");
++        assertThat(withSpies.finalType.value()).isEqualTo("some value");
++    }
++
+     @Test
+     public void should_spy_private_inner() throws Exception {
+         Assume.assumeThat(Plugins.getMockMaker(), instanceOf(InlineMockMaker.class));
+@@ -322,6 +333,23 @@ public class SpyAnnotationTest extends TestBase {
+         InnerStaticClassWithNoArgConstructor(String f) {}
+     }
+ 
++    static class WithGenericAndFinalSpy {
++        @Spy final List<String> genericSpy = List.of("item A", "item B");
++        @Spy FinalType finalType = new FinalType("some value");
++    }
++
++    static final class FinalType {
++        private final String value;
++
++        FinalType(String value) {
++            this.value = value;
++        }
++
++        String value() {
++            return value;
++        }
++    }
++
+     static class NoValidConstructor {
+         NoValidConstructor(String f) {}
+     }

@@ -1,0 +1,88 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/DoNotMock.java b/src/main/java/org/mockito/DoNotMock.java
+index fb2de8ecf..4436eba53 100644
+--- a/src/main/java/org/mockito/DoNotMock.java
++++ b/src/main/java/org/mockito/DoNotMock.java
+@@ -39,3 +39,4 @@ public @interface DoNotMock {
+      */
+     String reason() default "Create a real instance instead.";
+ }
++
+diff --git a/src/main/java/org/mockito/internal/MockitoCore.java b/src/main/java/org/mockito/internal/MockitoCore.java
+index fd39f6a4a..d72251295 100644
+--- a/src/main/java/org/mockito/internal/MockitoCore.java
++++ b/src/main/java/org/mockito/internal/MockitoCore.java
+@@ -131,6 +131,7 @@ public class MockitoCore {
+         }
+         MockSettingsImpl impl = MockSettingsImpl.class.cast(settings);
+         MockCreationSettings<T> creationSettings = impl.buildStatic(classToMock);
++        checkDoNotMockAnnotation(creationSettings.getTypeToMock(), creationSettings);
+         MockMaker.StaticMockControl<T> control = createStaticMock(classToMock, creationSettings);
+         control.enable();
+         mockingProgress().mockingStarted(classToMock, creationSettings);
+diff --git a/src/test/java/org/mockito/MockitoTest.java b/src/test/java/org/mockito/MockitoTest.java
+index 1671280d0..9a5a66687 100644
+--- a/src/test/java/org/mockito/MockitoTest.java
++++ b/src/test/java/org/mockito/MockitoTest.java
+@@ -134,6 +134,7 @@ public class MockitoTest {
+                         "Mockito's inline mock maker supports construction mocks based on the Instrumentation API.",
+                         "You can simply enable this mock mode, by placing the 'mockito-inline' artifact where you are currently using 'mockito-core'.",
+                         "Note that Mockito's inline mock maker is not supported on Android.");
++
+     }
+ 
+     @SuppressWarnings({"CheckReturnValue", "MockitoUsage"})
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java
+index e63e5bba8..b5a8fc874 100644
+--- a/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java
+@@ -13,9 +13,11 @@ import static org.mockito.Mockito.times;
+ import java.util.concurrent.atomic.AtomicReference;
+ 
+ import org.junit.Test;
++import org.mockito.DoNotMock;
+ import org.mockito.MockedStatic;
+ import org.mockito.Mockito;
+ import org.mockito.exceptions.base.MockitoException;
++import org.mockito.exceptions.misusing.DoNotMockException;
+ import org.mockito.exceptions.verification.NoInteractionsWanted;
+ import org.mockito.exceptions.verification.WantedButNotInvoked;
+ 
+@@ -223,6 +225,16 @@ public final class StaticMockTest {
+         assertEquals("foobar", Dummy.fooVarargs("foo", "bar"));
+     }
+ 
++    @Test
++    public void testStaticMockRespectsDoNotMockAnnotation() {
++        assertThatThrownBy(
++                        () -> {
++                            Mockito.mockStatic(NotMockable.class);
++                        })
++                .isInstanceOf(DoNotMockException.class)
++                .hasMessageContaining("Create a real instance instead");
++    }
++
+     static class Dummy {
+ 
+         static String var1 = null;
+@@ -247,4 +259,7 @@ public final class StaticMockTest {
+             return sb.toString();
+         }
+     }
++
++    @DoNotMock(reason = "Create a real instance instead")
++    static class NotMockable {}
+ }

@@ -1,0 +1,170 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/plugins/MockitoPlugins.java b/src/main/java/org/mockito/plugins/MockitoPlugins.java
+index d911077fd..279e8cf99 100644
+--- a/src/main/java/org/mockito/plugins/MockitoPlugins.java
++++ b/src/main/java/org/mockito/plugins/MockitoPlugins.java
+@@ -20,25 +20,133 @@ import org.mockito.MockitoFramework;
+ public interface MockitoPlugins {
+ 
+     /**
+-     * Returns the default plugin implementation used by Mockito.
+-     * Mockito plugins are stateless so it is recommended to keep hold of the returned plugin implementation
+-     * rather than calling this method multiple times.
+-     * Each time this method is called, new instance of the plugin is created.
+-     *
+-     * @param pluginType type of the plugin, for example {@link MockMaker}.
+-     * @return the plugin instance
+-     * @since 2.10.0
+-     */
+-    <T> T getDefaultPlugin(Class<T> pluginType);
++public class DefaultMockitoPlugins implements MockitoPlugins {
++
++    private static final Map<String, String> DEFAULT_PLUGINS = new HashMap<>();
++    private static final Map<Class<? extends MockMaker>, MockMaker> MOCK_MAKERS = new HashMap<>();
++    static final String INLINE_ALIAS = MockMakers.INLINE;
++    static final String PROXY_ALIAS = MockMakers.PROXY;
++    static final String SUBCLASS_ALIAS = MockMakers.SUBCLASS;
++    public static final Set<String> MOCK_MAKER_ALIASES = new HashSet<>();
++    static final String MODULE_ALIAS = "member-accessor-module";
++    static final String REFLECTION_ALIAS = "member-accessor-reflection";
++    public static final Set<String> MEMBER_ACCESSOR_ALIASES = new HashSet<>();
++
++    static {
++        // Keep the mapping: plugin interface name -> plugin implementation class name
++        DEFAULT_PLUGINS.put(PluginSwitch.class.getName(), DefaultPluginSwitch.class.getName());
++        DEFAULT_PLUGINS.put(
++                MockMaker.class.getName(),
++                "org.mockito.internal.creation.bytebuddy.InlineByteBuddyMockMaker");
++        DEFAULT_PLUGINS.put(
++                StackTraceCleanerProvider.class.getName(),
++                "org.mockito.internal.exceptions.stacktrace.DefaultStackTraceCleanerProvider");
++        DEFAULT_PLUGINS.put(
++                InstantiatorProvider2.class.getName(),
++                "org.mockito.internal.creation.instance.DefaultInstantiatorProvider");
++        DEFAULT_PLUGINS.put(
++                AnnotationEngine.class.getName(),
++                "org.mockito.internal.configuration.InjectingAnnotationEngine");
++        DEFAULT_PLUGINS.put(
++                INLINE_ALIAS, "org.mockito.internal.creation.bytebuddy.InlineByteBuddyMockMaker");
++        DEFAULT_PLUGINS.put(PROXY_ALIAS, "org.mockito.internal.creation.proxy.ProxyMockMaker");
++        DEFAULT_PLUGINS.put(
++                SUBCLASS_ALIAS, "org.mockito.internal.creation.bytebuddy.ByteBuddyMockMaker");
++        DEFAULT_PLUGINS.put(
++                MockitoLogger.class.getName(), "org.mockito.internal.util.ConsoleMockitoLogger");
++        DEFAULT_PLUGINS.put(
++                MemberAccessor.class.getName(),
++                "org.mockito.internal.util.reflection.ModuleMemberAccessor");
++        DEFAULT_PLUGINS.put(
++                MODULE_ALIAS, "org.mockito.internal.util.reflection.ModuleMemberAccessor");
++        DEFAULT_PLUGINS.put(
++                REFLECTION_ALIAS, "org.mockito.internal.util.reflection.ReflectionMemberAccessor");
++        DEFAULT_PLUGINS.put(
++                DoNotMockEnforcer.class.getName(),
++                "org.mockito.internal.configuration.DefaultDoNotMockEnforcer");
++
++        MOCK_MAKER_ALIASES.add(INLINE_ALIAS);
++        MOCK_MAKER_ALIASES.add(PROXY_ALIAS);
++        MOCK_MAKER_ALIASES.add(SUBCLASS_ALIAS);
++
++        MEMBER_ACCESSOR_ALIASES.add(MODULE_ALIAS);
++        MEMBER_ACCESSOR_ALIASES.add(REFLECTION_ALIAS);
++    }
++
++    @Override
++    public <T> T getDefaultPlugin(Class<T> pluginType) {
++        String className = DEFAULT_PLUGINS.get(pluginType.getName());
++        return create(pluginType, className);
++    }
++
++    public static String getDefaultPluginClass(String classOrAlias) {
++        return DEFAULT_PLUGINS.get(classOrAlias);
++    }
++
++    @Override
++    public MockMaker getMockMaker(String mockMaker) {
++        if (mockMaker == null) {
++            return Plugins.getMockMaker();
++        }
++
++        String typeName;
++        if (MOCK_MAKER_ALIASES.contains(mockMaker)) {
++            typeName = getDefaultPluginClass(mockMaker);
++        } else {
++            typeName = mockMaker;
++        }
++
++        Class<? extends MockMaker> type;
++        ClassLoader loader = Thread.currentThread().getContextClassLoader();
++        if (loader == null) {
++            loader = ClassLoader.getSystemClassLoader();
++        }
++        try {
++            type = loader.loadClass(typeName).asSubclass(MockMaker.class);
++        } catch (Exception e) {
++            throw new IllegalStateException("Failed to load MockMaker: " + mockMaker, e);
++        }
++
++        synchronized (MOCK_MAKERS) {
++            MockMaker instance = MOCK_MAKERS.get(type);
++            if (instance == null) {
++                instance = create(MockMaker.class, type.getName());
++                MOCK_MAKERS.put(type, instance);
++            }
++            return instance;
++        }
++    }
+ 
+     /**
+-     * Returns inline mock maker, an optional mock maker that is bundled with Mockito distribution.
+-     * This method is needed because {@link #getDefaultPlugin(Class)} does not provide an instance of inline mock maker.
+-     * Creates new instance each time is called so it is recommended to keep hold of the resulting object for future invocations.
+-     * For more information about inline mock maker see the javadoc for main {@link Mockito} class.
+-     *
+-     * @return instance of inline mock maker
+-     * @since 2.10.0
++     * Creates an instance of given plugin type, using specific implementation class.
+      */
+-    MockMaker getInlineMockMaker();
++    private <T> T create(Class<T> pluginType, String className) {
++        if (className == null) {
++            throw new IllegalStateException(
++                    "No default implementation for requested Mockito plugin type: "
++                            + pluginType.getName()
++                            + "\n"
++                            + "Is this a valid Mockito plugin type? If yes, please report this problem to Mockito team.\n"
++                            + "Otherwise, please check if you are passing valid plugin type.\n"
++                            + "Examples of valid plugin types: MockMaker, StackTraceCleanerProvider.");
++        }
++        try {
++            // Default implementation. Use our own ClassLoader instead of the context
++            // ClassLoader, as the default implementation is assumed to be part of
++            // Mockito and may not be available via the context ClassLoader.
++            return pluginType.cast(Class.forName(className).getDeclaredConstructor().newInstance());
++        } catch (Exception e) {
++            throw new IllegalStateException(
++                    "Internal problem occurred, please report it. "
++                            + "Mockito is unable to load the default implementation of class that is a part of Mockito distribution. "
++                            + "Failed to load "
++                            + pluginType,
++                    e);
++        }
++    }
++
++    @Override
++    public MockMaker getInlineMockMaker() {
++        return create(MockMaker.class, DEFAULT_PLUGINS.get(INLINE_ALIAS));
++    }
+ }

@@ -1,0 +1,313 @@
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/convert/CompatibleTypeUtils.java b/dubbo-common/src/main/java/org/apache/dubbo/common/convert/CompatibleTypeUtils.java
+index 3fa38861eb..6ec28d1b27 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/convert/CompatibleTypeUtils.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/convert/CompatibleTypeUtils.java
+@@ -26,6 +26,7 @@ import java.text.ParseException;
+ import java.text.SimpleDateFormat;
+ import java.time.LocalDate;
+ import java.time.LocalDateTime;
++import java.time.LocalTime;
+ import java.util.ArrayList;
+ import java.util.Collection;
+ import java.util.Date;
+@@ -37,6 +38,11 @@ public class CompatibleTypeUtils {
+ 
+     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+ 
++    /**
++     * the text to parse such as "2007-12-03T10:15:30"
++     */
++    private static final int ISO_LOCAL_DATE_TIME_MIN_LEN = 19;
++
+     /**
+      * Compatible type convert. Null value is allowed to pass in. If no conversion is needed, then the original value
+      * will be returned.
+@@ -128,7 +134,12 @@ public class CompatibleTypeUtils {
+                 if (StringUtils.isEmpty(string)) {
+                     return null;
+                 }
+-                return LocalDateTime.parse(string).toLocalTime();
++
++                if (string.length() >= ISO_LOCAL_DATE_TIME_MIN_LEN) {
++                    return LocalDateTime.parse(string).toLocalTime();
++                } else {
++                    return LocalTime.parse(string);
++                }
+             }
+             if (type == Class.class) {
+                 try {
+@@ -226,8 +237,5 @@ public class CompatibleTypeUtils {
+             return collection;
+         }
+         return value;
+-    }
+-
+-    private CompatibleTypeUtils() {
+-    }
+-}
++    }private CompatibleTypeUtils() {
++    }}
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/objectutils/PojoUtils.java b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/objectutils/PojoUtils.java
+index 8023b273d7..578c0beda3 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/objectutils/PojoUtils.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/objectutils/PojoUtils.java
+@@ -38,6 +38,9 @@ import java.lang.reflect.Proxy;
+ import java.lang.reflect.Type;
+ import java.lang.reflect.TypeVariable;
+ import java.lang.reflect.WildcardType;
++import java.time.LocalDate;
++import java.time.LocalDateTime;
++import java.time.LocalTime;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.Collection;
+@@ -112,12 +115,9 @@ public class PojoUtils {
+                 value = realize0((Map<String, Object>) value, method.getReturnType(), null, new IdentityHashMap<Object, Object>());
+             }
+             return value;
+-        }
+-
+-        public PojoInvocationHandler(Map<Object, Object> map) {
++        }public PojoInvocationHandler(Map<Object, Object> map) {
+             this.map = map;
+-        }
+-    }
++        }}
+ 
+     /**
+      * Update the property if absent
+@@ -132,9 +132,7 @@ public class PojoUtils {
+         if (newValue != null && getterMethod.get() == null) {
+             setterMethod.accept(newValue);
+         }
+-    }
+-
+-    @SuppressWarnings({"unchecked", "rawtypes"})
++    }@SuppressWarnings({"unchecked", "rawtypes"})
+     private static Object realize0(Object pojo, Class<?> type, Type genericType, final Map<Object, Object> history) {
+         if (pojo == null) {
+             return null;
+@@ -354,9 +352,7 @@ public class PojoUtils {
+             }
+         }
+         return pojo;
+-    }
+-
+-    public static Object[] realize(Object[] objs, Class<?>[] types) {
++    }public static Object[] realize(Object[] objs, Class<?>[] types) {
+         if (objs.length != types.length) {
+             throw new IllegalArgumentException("args.length != types.length");
+         }
+@@ -367,9 +363,7 @@ public class PojoUtils {
+         }
+ 
+         return dests;
+-    }
+-
+-    public static Object[] realize(Object[] objs, Class<?>[] types, Type[] gtypes) {
++    }public static Object[] realize(Object[] objs, Class<?>[] types, Type[] gtypes) {
+         if (objs.length != types.length || objs.length != gtypes.length) {
+             throw new IllegalArgumentException("args.length != types.length");
+         }
+@@ -378,26 +372,18 @@ public class PojoUtils {
+             dests[i] = realize(objs[i], types[i], gtypes[i]);
+         }
+         return dests;
+-    }
+-
+-    public static Object realize(Object pojo, Class<?> type) {
++    }public static Object realize(Object pojo, Class<?> type) {
+         return realize0(pojo, type, null, new IdentityHashMap<Object, Object>());
+-    }
+-
+-    public static Object realize(Object pojo, Class<?> type, Type genericType) {
++    }public static Object realize(Object pojo, Class<?> type, Type genericType) {
+         return realize0(pojo, type, genericType, new IdentityHashMap<Object, Object>());
+-    }
+-
+-    private static Object newThrowableInstance(Class<?> cls, String message) {
++    }private static Object newThrowableInstance(Class<?> cls, String message) {
+         try {
+             Constructor<?> messagedConstructor = cls.getDeclaredConstructor(String.class);
+             return messagedConstructor.newInstance(message);
+         } catch (Throwable t) {
+             return newInstance(cls);
+         }
+-    }
+-
+-    private static Object newInstance(Class<?> cls) {
++    }private static Object newInstance(Class<?> cls) {
+         try {
+             return cls.newInstance();
+         } catch (Throwable t) {
+@@ -425,9 +411,7 @@ public class PojoUtils {
+             }
+             throw new RuntimeException(lastError.getMessage(), lastError);
+         }
+-    }
+-
+-    /**
++    } /**
+      * convert map to a specific class instance
+      *
+      * @param map map wait for convert
+@@ -454,15 +438,11 @@ public class PojoUtils {
+         }
+ 
+         return instance;
+-    }
+-
+-    public static boolean isPojo(Class<?> cls) {
++    }public static boolean isPojo(Class<?> cls) {
+         return !ReflectUtils.isPrimitives(cls)
+             && !Collection.class.isAssignableFrom(cls)
+             && !Map.class.isAssignableFrom(cls);
+-    }
+-
+-    private static Method getSetterMethod(Class<?> cls, String property, Class<?> valueCls) {
++    }private static Method getSetterMethod(Class<?> cls, String property, Class<?> valueCls) {
+         String name = "set" + property.substring(0, 1).toUpperCase() + property.substring(1);
+         Method method = NAME_METHODS_CACHE.get(cls.getName() + "." + name + "(" + valueCls.getName() + ")");
+         if (method == null) {
+@@ -481,9 +461,7 @@ public class PojoUtils {
+             }
+         }
+         return method;
+-    }
+-
+-    /**
++    } /**
+      * Get key type for {@link Map} directly implemented by {@code clazz}.
+      * If {@code clazz} does not implement {@link Map} directly, return {@code null}.
+      *
+@@ -503,9 +481,7 @@ public class PojoUtils {
+             }
+         }
+         return null;
+-    }
+-
+-    /**
++    } /**
+      * Get parameterized type
+      *
+      * @param genericType generic type
+@@ -521,9 +497,7 @@ public class PojoUtils {
+             clazz = types[index];
+         }
+         return clazz;
+-    }
+-
+-    private static Object getFieldObject(Object mapObject, Type fieldType) throws ReflectiveOperationException {
++    }private static Object getFieldObject(Object mapObject, Type fieldType) throws ReflectiveOperationException {
+         if (fieldType instanceof Class<?>) {
+             return convertClassType(mapObject, (Class<?>) fieldType);
+         } else if (fieldType instanceof ParameterizedType) {
+@@ -534,9 +508,7 @@ public class PojoUtils {
+         } else {
+             throw new IllegalArgumentException("Unrecognized Type: " + fieldType.toString());
+         }
+-    }
+-
+-    private static Field getField(Class<?> cls, String fieldName) {
++    }private static Field getField(Class<?> cls, String fieldName) {
+         Field result = null;
+         if (CLASS_FIELD_CACHE.containsKey(cls) && CLASS_FIELD_CACHE.get(cls).containsKey(fieldName)) {
+             return CLASS_FIELD_CACHE.get(cls).get(fieldName);
+@@ -557,9 +529,7 @@ public class PojoUtils {
+             fields.putIfAbsent(fieldName, result);
+         }
+         return result;
+-    }
+-
+-    /**
++    } /**
+      * return init value
+      *
+      * @param parameterType
+@@ -579,21 +549,15 @@ public class PojoUtils {
+             return (short) 0;
+         }
+         return parameterType.isPrimitive() ? 0 : null;
+-    }
+-
+-    public static Object[] generalize(Object[] objs) {
++    }public static Object[] generalize(Object[] objs) {
+         Object[] dests = new Object[objs.length];
+         for (int i = 0; i < objs.length; i++) {
+             dests[i] = generalize(objs[i]);
+         }
+         return dests;
+-    }
+-
+-    public static Object generalize(Object pojo) {
++    }public static Object generalize(Object pojo) {
+         return generalize(pojo, new IdentityHashMap<Object, Object>());
+-    }
+-
+-    @SuppressWarnings("unchecked")
++    }@SuppressWarnings("unchecked")
+     private static Object generalize(Object pojo, Map<Object, Object> history) {
+         if (pojo == null) {
+             return null;
+@@ -615,6 +579,10 @@ public class PojoUtils {
+             return pojo;
+         }
+ 
++        if (pojo instanceof LocalDate || pojo instanceof LocalDateTime || pojo instanceof LocalTime) {
++            return pojo.toString();
++        }
++
+         if (pojo instanceof Class) {
+             return ((Class) pojo).getName();
+         }
+@@ -690,9 +658,7 @@ public class PojoUtils {
+             }
+         }
+         return map;
+-    }
+-
+-    private static Map createMap(Map src) {
++    }private static Map createMap(Map src) {
+         Class<? extends Map> cl = src.getClass();
+         Map result = null;
+         if (HashMap.class == cl) {
+@@ -731,9 +697,7 @@ public class PojoUtils {
+         }
+ 
+         return result;
+-    }
+-
+-    @SuppressWarnings("unchecked")
++    }@SuppressWarnings("unchecked")
+     private static Collection<Object> createCollection(Class<?> type, int len) {
+         if (type.isAssignableFrom(ArrayList.class)) {
+             return new ArrayList<Object>(len);
+@@ -749,9 +713,7 @@ public class PojoUtils {
+             }
+         }
+         return new ArrayList<Object>();
+-    }
+-
+-    @SuppressWarnings("unchecked")
++    }@SuppressWarnings("unchecked")
+     private static Object convertParameterizedType(Object mapObject, ParameterizedType type) throws ReflectiveOperationException {
+         Type rawType = type.getRawType();
+         if (!isAssignableFrom((Class<?>) rawType, mapObject.getClass())) {
+@@ -780,9 +742,7 @@ public class PojoUtils {
+             // ignore other type currently
+             return null;
+         }
+-    }
+-
+-    @SuppressWarnings("unchecked")
++    }@SuppressWarnings("unchecked")
+     private static Object convertClassType(Object mapObject, Class<?> type) throws ReflectiveOperationException {
+         if (type.isPrimitive() || isAssignableFrom(type, mapObject.getClass())) {
+             return mapObject;
+@@ -796,5 +756,4 @@ public class PojoUtils {
+             // we just ignore this situation.
+             return null;
+         }
+-    }
+-}
++    }}

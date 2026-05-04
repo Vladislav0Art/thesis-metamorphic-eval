@@ -1,0 +1,475 @@
+[2026-04-29 06:22:06,747] [docker_util.py] [INFO]: Start building image `mswebench/googlecontainertools_m_jib:pr-4144`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s0-original/java_47_gpt5.4_cost_3.0_runs_5/run-1/eval/workdir/googlecontainertools/jib/images/pr-4144`
+[2026-04-29 06:22:07,115] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/googlecontainertools_m_jib:base
+[2026-04-29 06:22:07,116] [docker_util.py] [INFO]: 
+[2026-04-29 06:22:07,133] [docker_util.py] [INFO]: ---> 88ccec4dfacb
+[2026-04-29 06:22:07,133] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-04-29 06:22:07,133] [docker_util.py] [INFO]: 
+[2026-04-29 06:22:09,358] [docker_util.py] [INFO]: ---> ed854bd5a0c9
+[2026-04-29 06:22:09,358] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-04-29 06:22:09,358] [docker_util.py] [INFO]: 
+[2026-04-29 06:22:09,894] [docker_util.py] [INFO]: ---> 080d37cdeb85
+[2026-04-29 06:22:09,894] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-04-29 06:22:09,894] [docker_util.py] [INFO]: 
+[2026-04-29 06:22:10,444] [docker_util.py] [INFO]: ---> 82b770af64c1
+[2026-04-29 06:22:10,444] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-04-29 06:22:10,444] [docker_util.py] [INFO]: 
+[2026-04-29 06:22:10,993] [docker_util.py] [INFO]: ---> 6236990994a8
+[2026-04-29 06:22:10,993] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-04-29 06:22:10,993] [docker_util.py] [INFO]: 
+[2026-04-29 06:22:11,563] [docker_util.py] [INFO]: ---> 0ef403177f7a
+[2026-04-29 06:22:11,563] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-04-29 06:22:11,563] [docker_util.py] [INFO]: 
+[2026-04-29 06:22:12,171] [docker_util.py] [INFO]: ---> 05d723f70c1b
+[2026-04-29 06:22:12,171] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-04-29 06:22:12,171] [docker_util.py] [INFO]: 
+[2026-04-29 06:22:12,787] [docker_util.py] [INFO]: ---> b4283b0b1ae6
+[2026-04-29 06:22:12,787] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-04-29 06:22:12,787] [docker_util.py] [INFO]: 
+[2026-04-29 06:22:12,827] [docker_util.py] [INFO]: ---> Running in 8bf3d0c294c1
+[2026-04-29 06:22:13,728] [docker_util.py] [INFO]: HEAD is now at 49234a54 Issue #4231: jib cli: add doc about jvm options (#4430)
+[2026-04-29 06:22:13,765] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-04-29 06:22:13,799] [docker_util.py] [INFO]: [91mNote: switching to '8df72a1ab4d60cf4e5800963c787448e1b9c71b3'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 8df72a1a Update CONTRIBUTING guidelines (#4192)
+[0m
+[2026-04-29 06:22:13,837] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-04-29 06:22:13,847] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-29 06:22:13,921] [docker_util.py] [INFO]: Downloading https://services.gradle.org/distributions/gradle-6.9.2-bin.zip
+[2026-04-29 06:22:15,176] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:15,359] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:15,519] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:15,670] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:15,791] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:15,924] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:16,090] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:16,220] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:16,334] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:16,468] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:16,614] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:16,745] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:16,891] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:17,016] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:17,140] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:17,315] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:17,520] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:17,650] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:17,808] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:17,938] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:18,100] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:18,246] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:18,386] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:18,526] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:18,706] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:18,855] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:18,997] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:19,132] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:19,263] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:19,393] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:19,534] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:19,666] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:19,804] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:19,951] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:20,077] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:20,209] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:20,330] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:20,485] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:20,613] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:20,782] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:20,930] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:21,104] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:21,247] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:21,429] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:21,728] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:21,856] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:22,032] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:22,201] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:22,396] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:22,578] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:22,793] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:22,961] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:23,142] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:23,322] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:23,500] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:23,685] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:23,876] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:24,042] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:24,196] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:24,373] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:24,526] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:24,716] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:24,894] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:25,068] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:25,230] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:25,394] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:25,573] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:25,740] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:25,925] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:26,065] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:26,225] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:26,392] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:26,531] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:26,662] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:26,844] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:27,010] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:27,164] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:27,336] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:27,489] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:27,658] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:27,831] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:27,988] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:28,160] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:28,313] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:28,491] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:28,653] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:28,793] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:28,947] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:29,090] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:29,224] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:29,374] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:29,505] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:29,632] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:29,795] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:29,946] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:30,088] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:30,223] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:30,336] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:30,458] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:30,589] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:30,720] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:30,853] [docker_util.py] [INFO]: .
+[2026-04-29 06:22:30,935] [docker_util.py] [INFO]: 
+[2026-04-29 06:22:31,593] [docker_util.py] [INFO]: Welcome to Gradle 6.9.2!
+[2026-04-29 06:22:31,593] [docker_util.py] [INFO]: Here are the highlights of this release:
+ - This is a small backport release.
+[2026-04-29 06:22:31,593] [docker_util.py] [INFO]: - Java 16 can be used to compile when used with Java toolchains
+[2026-04-29 06:22:31,593] [docker_util.py] [INFO]: - Dynamic versions can be used within plugin declarations
+[2026-04-29 06:22:31,593] [docker_util.py] [INFO]: - Native support for Apple Silicon processors
+[2026-04-29 06:22:31,593] [docker_util.py] [INFO]: For more details see https://docs.gradle.org/6.9.2/release-notes.html
+[2026-04-29 06:22:31,593] [docker_util.py] [INFO]: 
+[2026-04-29 06:22:31,593] [docker_util.py] [INFO]: Starting a Gradle Daemon (subsequent builds will be faster)
+[2026-04-29 06:23:08,292] [docker_util.py] [INFO]: > Task :jib-build-plan:clean
+> Task :jib-cli:clean
+[2026-04-29 06:23:08,292] [docker_util.py] [INFO]: > Task :jib-core:clean
+> Task :jib-gradle-plugin:clean
+[2026-04-29 06:23:08,292] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:clean
+> Task :jib-maven-plugin:clean
+[2026-04-29 06:23:08,292] [docker_util.py] [INFO]: > Task :jib-maven-plugin-extension-api:clean
+> Task :jib-plugins-common:clean
+[2026-04-29 06:23:08,292] [docker_util.py] [INFO]: > Task :jib-plugins-extension-common:clean
+> Task :jib-build-plan:ensureTransitiveDependencyOverrides
+[2026-04-29 06:23:14,091] [docker_util.py] [INFO]: > Task :jib-build-plan:compileJava
+> Task :jib-build-plan:processResources NO-SOURCE
+[2026-04-29 06:23:14,092] [docker_util.py] [INFO]: > Task :jib-build-plan:classes
+[2026-04-29 06:23:17,491] [docker_util.py] [INFO]: > Task :jib-build-plan:compileTestJava
+> Task :jib-build-plan:processTestResources
+> Task :jib-build-plan:testClasses
+[2026-04-29 06:23:18,491] [docker_util.py] [INFO]: > Task :jib-build-plan:test
+[2026-04-29 06:23:18,492] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-29 06:23:21,291] [docker_util.py] [INFO]: > Task :jib-cli:ensureTransitiveDependencyOverrides
+> Task :jib-cli:generateSources
+> Task :jib-core:ensureTransitiveDependencyOverrides
+[2026-04-29 06:23:24,391] [docker_util.py] [INFO]: [91m/home/jib/jib-core/src/main/java/com/google/cloud/tools/jib/tar/TarExtractor.java:74: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry();
+                                                        ^
+/home/jib/jib-core/src/main/java/com/google/cloud/tools/jib/tar/TarExtractor.java:76: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+          entry = tarArchiveInputStream.getNextTarEntry()) {
+                                       ^
+[0m
+[2026-04-29 06:23:24,391] [docker_util.py] [INFO]: > Task :jib-core:compileJava
+[2026-04-29 06:23:27,791] [docker_util.py] [INFO]: [91m2 warnings
+[0m
+[2026-04-29 06:23:28,091] [docker_util.py] [INFO]: > Task :jib-plugins-common:ensureTransitiveDependencyOverrides
+[2026-04-29 06:23:29,691] [docker_util.py] [INFO]: > Task :jib-plugins-common:compileJava
+> Task :jib-plugins-common:processResources NO-SOURCE
+> Task :jib-plugins-common:classes
+> Task :jib-plugins-common:jar
+[2026-04-29 06:23:29,692] [docker_util.py] [INFO]: 
+[2026-04-29 06:23:31,693] [docker_util.py] [INFO]: > Task :jib-cli:compileJava
+> Task :jib-cli:processResources NO-SOURCE
+> Task :jib-cli:classes
+[2026-04-29 06:23:33,991] [docker_util.py] [INFO]: > Task :jib-cli:compileTestJava
+[2026-04-29 06:23:33,991] [docker_util.py] [INFO]: > Task :jib-cli:processTestResources
+> Task :jib-cli:testClasses
+> Task :jib-core:processResources
+> Task :jib-core:classes
+> Task :jib-core:jar
+[2026-04-29 06:23:35,991] [docker_util.py] [INFO]: 
+[2026-04-29 06:23:35,991] [docker_util.py] [INFO]: > Task :jib-cli:test
+[2026-04-29 06:23:35,991] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.junit.contrib.java.lang.system.EnvironmentVariables (file:/root/.gradle/caches/modules-2/files-2.1/com.github.stefanbirkner/system-rules/1.19.0/d541c9a1cff0dda32e2436c74562e2e4aa6c88cd/system-rules-1.19.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.junit.contrib.java.lang.system.EnvironmentVariables
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+[0m
+[2026-04-29 06:23:39,392] [docker_util.py] [INFO]: [91m/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/tar/TarStreamBuilderTest.java:121: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+    TarArchiveEntry headerFile = tarArchiveInputStream.getNextTarEntry();
+                                                      ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/tar/TarStreamBuilderTest.java:126: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+    headerFile = tarArchiveInputStream.getNextTarEntry();
+                                      ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/tar/TarStreamBuilderTest.java:131: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+    headerFile = tarArchiveInputStream.getNextTarEntry();
+                                      ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/tar/TarStreamBuilderTest.java:136: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+    Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
+                                           ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/tar/TarStreamBuilderTest.java:154: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+    TarArchiveEntry entry1 = tarInStream.getNextTarEntry();
+                                        ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/tar/TarStreamBuilderTest.java:155: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+    TarArchiveEntry entry2 = tarInStream.getNextTarEntry();
+                                        ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/tar/TarStreamBuilderTest.java:234: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+    TarArchiveEntry headerFileA = tarArchiveInputStream.getNextTarEntry();
+                                                       ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/tar/TarStreamBuilderTest.java:240: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+    TarArchiveEntry headerFileB = tarArchiveInputStream.getNextTarEntry();
+                                                       ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/tar/TarStreamBuilderTest.java:246: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+    TarArchiveEntry headerDirectoryA = tarArchiveInputStream.getNextTarEntry();
+                                                            ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/tar/TarStreamBuilderTest.java:250: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+    TarArchiveEntry headerFileALong = tarArchiveInputStream.getNextTarEntry();
+                                                           ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/tar/TarStreamBuilderTest.java:257: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+    Assert.assertNull(tarArchiveInputStream.getNextTarEntry());
+                                           ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:62: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+    TarArchiveEntry header = tarArchiveInputStream.getNextTarEntry();
+                                                  ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:81: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+    TarArchiveEntry extractionPathEntry = tarArchiveInputStream.getNextTarEntry();
+                                                               ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:237: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry root = in.getNextTarEntry();
+                               ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:246: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry rootParentA = in.getNextTarEntry();
+                                      ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:255: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      in.getNextTarEntry();
+        ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:258: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry rootParentB = in.getNextTarEntry();
+                                      ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:269: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      in.getNextTarEntry();
+        ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:272: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry rootParentC = in.getNextTarEntry();
+                                      ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:361: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      assertThat(in.getNextTarEntry().getMode()).isEqualTo(040755);
+                   ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:363: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      assertThat(in.getNextTarEntry().getMode()).isEqualTo(0100644);
+                   ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:365: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      assertThat(in.getNextTarEntry().getMode()).isEqualTo(0100123);
+                   ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:367: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      assertThat(in.getNextTarEntry().getMode()).isEqualTo(040456);
+                   ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:436: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry entry1 = in.getNextTarEntry();
+                                 ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:442: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry entry2 = in.getNextTarEntry();
+                                 ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:448: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry entry3 = in.getNextTarEntry();
+                                 ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:454: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry entry4 = in.getNextTarEntry();
+                                 ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:460: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry entry5 = in.getNextTarEntry();
+                                 ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:466: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry entry6 = in.getNextTarEntry();
+                                 ^
+[0m
+[2026-04-29 06:23:39,392] [docker_util.py] [INFO]: [91m/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:472: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry entry7 = in.getNextTarEntry();
+                                 ^
+[0m
+[2026-04-29 06:23:39,392] [docker_util.py] [INFO]: > Task :jib-core:compileTestJava
+[2026-04-29 06:23:39,392] [docker_util.py] [INFO]: [91m/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:478: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry entry8 = in.getNextTarEntry();
+                                 ^
+[0m
+[2026-04-29 06:23:39,392] [docker_util.py] [INFO]: [91m/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ReproducibleLayerBuilderTest.java:484: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry entry9 = in.getNextTarEntry();
+[0m
+[2026-04-29 06:23:39,392] [docker_util.py] [INFO]: [91m                                 ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ImageTarballTest.java:108: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry headerFileALayer = tarArchiveInputStream.getNextTarEntry();
+                                                              ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ImageTarballTest.java:116: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry headerFileBLayer = tarArchiveInputStream.getNextTarEntry();
+                                                              ^
+[0m
+[2026-04-29 06:23:39,392] [docker_util.py] [INFO]: [91m/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ImageTarballTest.java:124: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry headerContainerConfiguration = tarArchiveInputStream.getNextTarEntry();
+                                                                          ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ImageTarballTest.java:132: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry headerManifest = tarArchiveInputStream.getNextTarEntry();
+                                                            ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ImageTarballTest.java:162: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+[0m
+[2026-04-29 06:23:39,392] [docker_util.py] [INFO]: [91m      TarArchiveEntry headerFileALayer = tarArchiveInputStream.getNextTarEntry();
+                                                              ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ImageTarballTest.java:170: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry headerFileBLayer = tarArchiveInputStream.getNextTarEntry();
+                                                              ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ImageTarballTest.java:178: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry headerContainerConfiguration = tarArchiveInputStream.getNextTarEntry();
+                                                                          ^
+[0m
+[2026-04-29 06:23:39,392] [docker_util.py] [INFO]: [91m/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ImageTarballTest.java:185: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry headerManifest = tarArchiveInputStream.getNextTarEntry();
+                                                            ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ImageTarballTest.java:192: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated
+      TarArchiveEntry headerOciLayout = tarArchiveInputStream.getNextTarEntry();
+                                                             ^
+/home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/image/ImageTarballTest.java:200: warning: [deprecation] getNextTarEntry() in TarArchiveInputStream has been deprecated[0m
+[2026-04-29 06:23:39,392] [docker_util.py] [INFO]: [91m
+      TarArchiveEntry headerIndex = tarArchiveInputStream.getNextTarEntry();
+[0m
+[2026-04-29 06:23:39,392] [docker_util.py] [INFO]: [91m                                                         ^
+[0m
+[2026-04-29 06:23:41,293] [docker_util.py] [INFO]: [91mNote: /home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/builder/steps/StepsRunnerTest.java uses unchecked or unsafe operations.
+[0m
+[2026-04-29 06:23:41,294] [docker_util.py] [INFO]: [91mNote: Recompile with -Xlint:unchecked for details.
+42 warnings
+[0m
+[2026-04-29 06:23:41,493] [docker_util.py] [INFO]: > Task :jib-core:processTestResources
+> Task :jib-core:testClasses
+[2026-04-29 06:23:43,491] [docker_util.py] [INFO]: > Task :jib-core:test
+[2026-04-29 06:23:43,492] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-29 06:23:47,491] [docker_util.py] [INFO]: [91mWARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.mockito.internal.util.reflection.ReflectionMemberAccessor (file:/root/.gradle/caches/modules-2/files-2.1/org.mockito/mockito-core/4.11.0/ce5226440c2ee78915716d4ce3d10aed2dbf26fb/mockito-core-4.11.0.jar) to constructor java.util.Optional(java.lang.Object)
+WARNING: Please consider reporting this to the maintainers of org.mockito.internal.util.reflection.ReflectionMemberAccessor
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+[0m
+[2026-04-29 06:23:59,201] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:ensureTransitiveDependencyOverrides
+[2026-04-29 06:24:15,591] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:compileJava
+> Task :jib-gradle-plugin:pluginDescriptors
+> Task :jib-gradle-plugin:processResources
+> Task :jib-gradle-plugin:classes
+[2026-04-29 06:24:15,791] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:pluginUnderTestMetadata
+> Task :jib-core:testJar
+[2026-04-29 06:24:17,191] [docker_util.py] [INFO]: > Task :jib-plugins-common:compileTestJava
+> Task :jib-plugins-common:processTestResources
+> Task :jib-plugins-common:testClasses
+> Task :jib-plugins-common:testJar
+[2026-04-29 06:24:22,891] [docker_util.py] [INFO]: 
+[2026-04-29 06:24:22,892] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:compileTestJava
+[2026-04-29 06:24:22,892] [docker_util.py] [INFO]: [91mNote: /home/jib/jib-gradle-plugin/src/test/java/com/google/cloud/tools/jib/gradle/GradleRawConfigurationTest.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+[0m
+[2026-04-29 06:24:23,093] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:processTestResources
+[2026-04-29 06:24:23,093] [docker_util.py] [INFO]: 
+[2026-04-29 06:24:23,093] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:testClasses
+[2026-04-29 06:24:23,093] [docker_util.py] [INFO]: 
+[2026-04-29 06:24:25,091] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-29 06:24:25,091] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:test
+[2026-04-29 06:24:28,791] [docker_util.py] [INFO]: com.google.cloud.tools.jib.gradle.skaffold.FilesTaskV2Test > testFilesTast_withConfigModifiers STANDARD_OUT
+    Downloading https://services.gradle.org/distributions/gradle-5.1-bin.zip
+[2026-04-29 06:24:40,291] [docker_util.py] [INFO]: .................................................................................
+[2026-04-29 06:24:43,892] [docker_util.py] [INFO]: com.google.cloud.tools.jib.gradle.skaffold.FilesTaskV2Test > testFilesTask_platformProject STANDARD_OUT
+    Downloading https://services.gradle.org/distributions/gradle-5.2-bin.zip
+[2026-04-29 06:25:15,691] [docker_util.py] [INFO]: ...................................................................................
+[2026-04-29 06:25:33,492] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:ensureTransitiveDependencyOverrides
+[2026-04-29 06:25:34,092] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:compileJava
+[2026-04-29 06:25:34,191] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:processResources NO-SOURCE
+> Task :jib-gradle-plugin-extension-api:classes
+> Task :jib-gradle-plugin-extension-api:compileTestJava NO-SOURCE
+[2026-04-29 06:25:34,191] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:processTestResources NO-SOURCE
+> Task :jib-gradle-plugin-extension-api:testClasses UP-TO-DATE
+> Task :jib-gradle-plugin-extension-api:test NO-SOURCE
+[2026-04-29 06:25:35,392] [docker_util.py] [INFO]: > Task :jib-maven-plugin:ensureTransitiveDependencyOverrides
+[2026-04-29 06:25:37,391] [docker_util.py] [INFO]: 
+[2026-04-29 06:25:37,391] [docker_util.py] [INFO]: > Task :jib-maven-plugin:compileJava
+[2026-04-29 06:25:37,392] [docker_util.py] [INFO]: 
+[2026-04-29 06:25:37,392] [docker_util.py] [INFO]: [91m/home/jib/jib-maven-plugin/src/main/java/com/google/cloud/tools/jib/maven/JibPluginConfiguration.java:383: warning: [UnnecessaryAssignment] Fields annotated with @Inject should not be manually assigned to, as they should be initialized by a framework. Remove the assignment if a framework is being used, or the annotation if one isn't.
+  @Inject private Set<JibMavenPluginExtension<?>> injectedPluginExtensions = Collections.emptySet();
+                                                  ^
+    (see https://errorprone.info/bugpattern/UnnecessaryAssignment)
+  Did you mean '@Inject private Set<JibMavenPluginExtension<?>> injectedPluginExtensions ;' or 'private Set<JibMavenPluginExtension<?>> injectedPluginExtensions = Collections.emptySet();'?
+[0m
+[2026-04-29 06:25:37,791] [docker_util.py] [INFO]: [91m1 warning
+[0m
+[2026-04-29 06:25:37,891] [docker_util.py] [INFO]: 
+[2026-04-29 06:25:37,891] [docker_util.py] [INFO]: > Task :jib-maven-plugin:generatePomFileForMavenJavaPublication
+[2026-04-29 06:25:38,191] [docker_util.py] [INFO]: > Task :jib-maven-plugin:generateMavenPluginDescriptor
+> Task :jib-maven-plugin:processResources
+> Task :jib-maven-plugin:classes
+> Task :jib-maven-plugin:jar
+[2026-04-29 06:25:38,291] [docker_util.py] [INFO]: > Task :jib-maven-plugin:generateMetadataFileForMavenJavaPublication
+> Task :jib-maven-plugin:publishMavenJavaPublicationToMavenLocal
+> Task :jib-maven-plugin:publishToMavenLocal
+[2026-04-29 06:25:40,292] [docker_util.py] [INFO]: [91m/home/jib/jib-maven-plugin/src/test/java/com/google/cloud/tools/jib/maven/TestRepository.java:27: warning: [deprecation] ArtifactRepository in org.apache.maven.artifact.repository has been deprecated
+import org.apache.maven.artifact.repository.ArtifactRepository;
+[0m
+[2026-04-29 06:25:40,292] [docker_util.py] [INFO]: > Task :jib-maven-plugin:compileTestJava
+[2026-04-29 06:25:40,292] [docker_util.py] [INFO]: [91m                                           ^
+/home/jib/jib-maven-plugin/src/test/java/com/google/cloud/tools/jib/maven/TestRepository.java:43: warning: [deprecation] ArtifactRepository in org.apache.maven.artifact.repository has been deprecated
+  private ArtifactRepository testLocalRepo;
+          ^
+[0m
+[2026-04-29 06:25:40,592] [docker_util.py] [INFO]: [91m2 warnings
+[0m
+[2026-04-29 06:25:40,691] [docker_util.py] [INFO]: > Task :jib-maven-plugin:processTestResources
+[2026-04-29 06:25:40,691] [docker_util.py] [INFO]: > Task :jib-maven-plugin:testClasses
+[2026-04-29 06:25:42,691] [docker_util.py] [INFO]: > Task :jib-maven-plugin:test
+[2026-04-29 06:25:42,691] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-29 06:27:34,592] [docker_util.py] [INFO]: > Task :jib-maven-plugin-extension-api:ensureTransitiveDependencyOverrides
+[2026-04-29 06:27:35,792] [docker_util.py] [INFO]: > Task :jib-maven-plugin-extension-api:compileJava
+> Task :jib-maven-plugin-extension-api:processResources NO-SOURCE
+> Task :jib-maven-plugin-extension-api:classes
+> Task :jib-maven-plugin-extension-api:compileTestJava NO-SOURCE
+> Task :jib-maven-plugin-extension-api:processTestResources NO-SOURCE
+> Task :jib-maven-plugin-extension-api:testClasses UP-TO-DATE
+> Task :jib-maven-plugin-extension-api:test NO-SOURCE
+[2026-04-29 06:27:37,792] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-29 06:27:37,792] [docker_util.py] [INFO]: > Task :jib-plugins-common:test
+[2026-04-29 06:27:41,492] [docker_util.py] [INFO]: > Task :jib-plugins-extension-common:ensureTransitiveDependencyOverrides
+[2026-04-29 06:27:42,067] [docker_util.py] [INFO]: > Task :jib-plugins-extension-common:compileJava
+> Task :jib-plugins-extension-common:processResources NO-SOURCE
+> Task :jib-plugins-extension-common:classes
+> Task :jib-plugins-extension-common:compileTestJava NO-SOURCE
+> Task :jib-plugins-extension-common:processTestResources NO-SOURCE
+> Task :jib-plugins-extension-common:testClasses UP-TO-DATE
+> Task :jib-plugins-extension-common:test NO-SOURCE
+[2026-04-29 06:27:42,068] [docker_util.py] [INFO]: BUILD SUCCESSFUL in 5m 28s
+60 actionable tasks: 60 executed
+[2026-04-29 06:28:07,348] [docker_util.py] [INFO]: ---> Removed intermediate container 8bf3d0c294c1
+[2026-04-29 06:28:07,348] [docker_util.py] [INFO]: ---> 74573661d022
+[2026-04-29 06:28:07,349] [docker_util.py] [INFO]: sha256:74573661d022e0fd7715dd5c1bd0e3b1a785a7633fd603cb2c2735fa5ab161bd
+[2026-04-29 06:28:07,368] [docker_util.py] [INFO]: Successfully built 74573661d022
+[2026-04-29 06:28:07,380] [docker_util.py] [INFO]: Successfully tagged mswebench/googlecontainertools_m_jib:pr-4144
+[2026-04-29 06:28:07,381] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s0-original/java_47_gpt5.4_cost_3.0_runs_5/run-1/eval/workdir/googlecontainertools/jib/images/pr-4144) build success: mswebench/googlecontainertools_m_jib:pr-4144

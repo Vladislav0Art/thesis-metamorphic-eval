@@ -1,0 +1,184 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/lib/logstash/environment.rb b/logstash-core/lib/logstash/environment.rb
+index 0147a1cf6..9fd2ffd98 100644
+--- a/logstash-core/lib/logstash/environment.rb
++++ b/logstash-core/lib/logstash/environment.rb
+@@ -242,3 +242,52 @@ module LogStash
+ end
+ 
+ require "logstash/patches"
++    class Password < Coercible
++      def initialize(name, default=nil, strict=true)
++        super(name, LogStash::Util::Password, default, strict)
++      end
++
++      def coerce(value)
++        return value if value.kind_of?(LogStash::Util::Password)
++
++        if value && !value.kind_of?(::String)
++          raise(ArgumentError, "Setting `#{name}` could not coerce non-string value to password")
++        end
++
++        LogStash::Util::Password.new(value)
++      end
++
++      def validate(value)
++        super(value)
++      end
++    end
++
++    class ComplexPassword < Password
++      COMPLEXITY_REQUIREMENTS = [
++        [/[a-z]/, "one lowercase letter"],
++        [/[A-Z]/, "one uppercase letter"],
++        [/\d/, "one digit"],
++        [/[[:punct:]]/, "one special character"]
++      ].freeze
++
++      MINIMUM_LENGTH = 8
++
++      def validate(value)
++        super(value)
++
++        password = value.value
++        return if password.nil?
++
++        missing_requirements = COMPLEXITY_REQUIREMENTS.each_with_object([]) do |(pattern, description), missing|
++          missing << description unless pattern.match?(password)
++        end
++
++        return if password.length >= MINIMUM_LENGTH && missing_requirements.empty?
++
++        complexity_errors = []
++        complexity_errors << "be at least #{MINIMUM_LENGTH} characters long" if password.length < MINIMUM_LENGTH
++        complexity_errors << "contain at least #{missing_requirements.join(', ')}" unless missing_requirements.empty?
++
++        raise(ArgumentError, "Setting `#{name}` must #{complexity_errors.join(' and ')}")
++      end
++    end
+diff --git a/logstash-core/lib/logstash/settings.rb b/logstash-core/lib/logstash/settings.rb
+index 1df5315ca..01af7fa6b 100644
+--- a/logstash-core/lib/logstash/settings.rb
++++ b/logstash-core/lib/logstash/settings.rb
+@@ -73,8 +73,8 @@ module LogStash
+       "queue.type",
+     ]
+ 
+-
+     def initialize
++
+       @settings = {}
+       # Theses settings were loaded from the yaml file
+       # but we didn't find any settings to validate them,
+@@ -246,49 +246,36 @@ module LogStash
+       @validator_proc = validator_proc
+       @value = nil
+       @value_is_set = false
+-      @strict = strict
+-
+-      validate(default) if @strict
+-      @default = default
+-    end
+-
+-    def value
+-      @value_is_set ? @value : default
+-    end
+ 
+-    def set?
+-      @value_is_set
+-    end
++      if strict
++        validate(default)
++      end
+ 
+-    def strict?
+-      @strict
++      @default = default
+     end
+ 
+     def set(value)
+-      validate(value) if @strict
++      validate(value)
+       @value = value
+       @value_is_set = true
+       @value
+     end
+ 
++    def value
++      @value.nil? ? @default : @value
++    end
++
++    def set?(value=true)
++      @value_is_set == value
++    end
++
+     def reset
+       @value = nil
+       @value_is_set = false
+     end
+ 
+     def to_hash
+-      {
+-        "name" => @name,
+-        "klass" => @klass,
+-        "value" => @value,
+-        "value_is_set" => @value_is_set,
+-        "default" => @default,
+-        # Proc#== will only return true if it's the same obj
+-        # so no there's no point in comparing it
+-        # also thereś no use case atm to return the proc
+-        # so let's not expose it
+-        #"validator_proc" => @validator_proc
+-      }
++      { :name => @name, :value => value, :default => @default, :set => @value_is_set }
+     end
+ 
+     def inspect
+@@ -542,6 +529,34 @@ module LogStash
+       end
+     end
+ 
++    class ComplexPassword < Password
++      MINIMUM_LENGTH = 8
++      COMPLEXITY_REQUIREMENTS = [
++        [/[a-z]/, "one lowercase letter"],
++        [/[A-Z]/, "one uppercase letter"],
++        [/\d/, "one digit"]
++      ].freeze
++
++      def validate(value)
++        super(value)
++
++        password = value.value
++        return if password.nil?
++
++        missing_requirements = COMPLEXITY_REQUIREMENTS.each_with_object([]) do |(pattern, description), missing|
++          missing << description unless pattern.match?(password)
++        end
++
++        errors = []
++        errors << "be at least #{MINIMUM_LENGTH} characters long" if password.length < MINIMUM_LENGTH
++        errors << "contain at least #{missing_requirements.join(', ')}" unless missing_requirements.empty?
++
++        return if errors.empty?
++
++        raise(ArgumentError, "Setting `#{name}` must #{errors.join(' and ')}")
++      end
++    end
++
+     # The CoercibleString allows user to enter any value which coerces to a String.
+     # For example for true/false booleans; if the possible_strings are ["foo", "true", "false"]
+     # then these options in the config file or command line will be all valid: "foo", true, false, "true", "false"

@@ -1,0 +1,80 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java b/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java
+index 531e7f41b..e1ac7f8a7 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/graph/IfVertex.java
+@@ -42,7 +42,7 @@ public class IfVertex extends Vertex {
+     }
+ 
+     public String toString() {
+-        return "[if " + booleanExpression.toString(0) + "]";
++        return "[if " + humanReadableExpression() + "]";
+     }
+ 
+     @Override
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/imperative/IfStatement.java b/logstash-core/src/main/java/org/logstash/config/ir/imperative/IfStatement.java
+index 04d242d4b..716f8b55f 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/imperative/IfStatement.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/imperative/IfStatement.java
+@@ -90,7 +90,7 @@ public class IfStatement extends Statement {
+     @Override
+     public String toString(int indent) {
+         return indentPadding(indent) +
+-                    "(if " + booleanExpression.toString(0) +
++                    "(if " + (booleanExpression.getSourceWithMetadata() != null && booleanExpression.getSourceWithMetadata().getText() != null ? booleanExpression.getSourceWithMetadata().getText() : booleanExpression.toString(0)) +
+                     "\n" +
+                     this.trueStatement +
+                     "\n" +
+diff --git a/logstash-core/src/test/java/org/logstash/config/ir/graph/IfVertexTest.java b/logstash-core/src/test/java/org/logstash/config/ir/graph/IfVertexTest.java
+index 59e07f4dd..3f60eba4b 100644
+--- a/logstash-core/src/test/java/org/logstash/config/ir/graph/IfVertexTest.java
++++ b/logstash-core/src/test/java/org/logstash/config/ir/graph/IfVertexTest.java
+@@ -21,10 +21,14 @@
+ package org.logstash.config.ir.graph;
+ 
+ import org.junit.Test;
++import org.logstash.common.SourceWithMetadata;
+ import org.logstash.config.ir.InvalidIRException;
++import org.logstash.config.ir.expression.binary.Neq;
+ 
+ import static org.hamcrest.CoreMatchers.*;
+ import static org.junit.Assert.assertThat;
++import static org.logstash.config.ir.DSL.eEventValue;
++import static org.logstash.config.ir.DSL.eValue;
+ import static org.logstash.config.ir.IRHelpers.*;
+ 
+ public class IfVertexTest {
+@@ -76,6 +80,20 @@ public class IfVertexTest {
+         assertThat(falseEdge.getEdgeType(), is(false));
+     }
+ 
++    @Test
++    public void testToStringUsesOriginalSourceTextWhenAvailable() throws InvalidIRException {
++        final String secret = "super-secret-value";
++        final String sourceText = "[header][auth] != \"${secret}\"";
++        final SourceWithMetadata meta = new SourceWithMetadata("test.conf", "test", 1, 1, sourceText);
++        final IfVertex ifVertex = new IfVertex(
++                randMeta(),
++                new Neq(meta, eEventValue("[header][auth]"), eValue(secret))
++        );
++
++        assertThat(ifVertex.toString(), containsString(sourceText));
++        assertThat(ifVertex.toString(), not(containsString(secret)));
++    }
++
+     public IfVertex testIfVertex() throws InvalidIRException {
+         return new IfVertex(randMeta(), createTestExpression());
+     }

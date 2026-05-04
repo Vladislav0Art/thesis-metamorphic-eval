@@ -1,0 +1,35 @@
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+index 2cef7a7a..a3f12420 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+@@ -134,6 +134,16 @@ public class JsonPointer
+             return null;
+         }
+         return _nextSegment;
++    } /**
++     * Returns the leaf of current json pointer expression.
++     * Leaf is the last non-null segment of current json pointer.
++     */
++    public JsonPointer last() {
++        JsonPointer current = this;
++        while(!JsonPointer.EMPTY.equals(current._nextSegment)) {
++            current = current._nextSegment;
++        }
++        return current;
+     } /**
+      * Accessor for getting a "pointer", instance from current segment to
+      * segment before segment leaf. For root pointer, will return null.
+@@ -167,6 +177,13 @@ public class JsonPointer
+             throw new IllegalArgumentException("Invalid input: JSON Pointer expression must start with '/': "+"\""+input+"\"");
+         }
+         return _parseTailAndHead(input);
++    }public JsonPointer append(JsonPointer jsonPointer) {
++        String currentJsonPointer = _asString;
++        if(currentJsonPointer.endsWith("/")) {
++            //removes final slash
++            currentJsonPointer = currentJsonPointer.substring(0, currentJsonPointer.length()-1);
++        }
++        return compile(currentJsonPointer + jsonPointer._asString);
+     }protected static JsonPointer _parseTailAndHead(String input) {
+         final int end = input.length();
+ 

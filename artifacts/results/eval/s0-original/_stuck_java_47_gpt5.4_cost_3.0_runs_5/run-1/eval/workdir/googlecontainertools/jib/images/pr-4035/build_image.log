@@ -1,0 +1,332 @@
+[2026-04-29 06:26:47,522] [docker_util.py] [INFO]: Start building image `mswebench/googlecontainertools_m_jib:pr-4035`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s0-original/java_47_gpt5.4_cost_3.0_runs_5/run-1/eval/workdir/googlecontainertools/jib/images/pr-4035`
+[2026-04-29 06:26:47,917] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/googlecontainertools_m_jib:base
+[2026-04-29 06:26:47,917] [docker_util.py] [INFO]: 
+[2026-04-29 06:26:47,927] [docker_util.py] [INFO]: ---> 88ccec4dfacb
+[2026-04-29 06:26:47,928] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-04-29 06:26:47,928] [docker_util.py] [INFO]: 
+[2026-04-29 06:26:50,376] [docker_util.py] [INFO]: ---> 9a28628fd809
+[2026-04-29 06:26:50,378] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-04-29 06:26:50,378] [docker_util.py] [INFO]: 
+[2026-04-29 06:26:51,170] [docker_util.py] [INFO]: ---> d8559cfd1900
+[2026-04-29 06:26:51,170] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-04-29 06:26:51,170] [docker_util.py] [INFO]: 
+[2026-04-29 06:26:51,915] [docker_util.py] [INFO]: ---> 215b524541b5
+[2026-04-29 06:26:51,915] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-04-29 06:26:51,915] [docker_util.py] [INFO]: 
+[2026-04-29 06:26:52,771] [docker_util.py] [INFO]: ---> 85ac3049965c
+[2026-04-29 06:26:52,771] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-04-29 06:26:52,771] [docker_util.py] [INFO]: 
+[2026-04-29 06:26:53,684] [docker_util.py] [INFO]: ---> d94f121804c9
+[2026-04-29 06:26:53,684] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-04-29 06:26:53,684] [docker_util.py] [INFO]: 
+[2026-04-29 06:26:54,415] [docker_util.py] [INFO]: ---> 1f8a0d6c8989
+[2026-04-29 06:26:54,415] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-04-29 06:26:54,415] [docker_util.py] [INFO]: 
+[2026-04-29 06:26:55,091] [docker_util.py] [INFO]: ---> ef8cba4a0d0b
+[2026-04-29 06:26:55,091] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-04-29 06:26:55,091] [docker_util.py] [INFO]: 
+[2026-04-29 06:26:55,129] [docker_util.py] [INFO]: ---> Running in 48f9fddbdfba
+[2026-04-29 06:26:56,104] [docker_util.py] [INFO]: HEAD is now at 49234a54 Issue #4231: jib cli: add doc about jvm options (#4430)
+[2026-04-29 06:26:56,128] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-04-29 06:26:56,142] [docker_util.py] [INFO]: [91mNote: switching to '934814cc5a2f8d22af8644aabe0d2a2e803818cd'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 934814cc maven release v3.3.2 (#4022)
+[0m
+[2026-04-29 06:26:56,170] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-04-29 06:26:56,179] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-29 06:26:56,268] [docker_util.py] [INFO]: Downloading https://services.gradle.org/distributions/gradle-6.9.2-bin.zip
+[2026-04-29 06:26:57,050] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:57,178] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:57,359] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:57,507] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:57,654] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:57,802] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:57,937] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:58,098] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:58,230] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:58,343] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:58,494] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:58,621] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:58,743] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:58,897] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:59,031] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:59,168] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:59,320] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:59,445] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:59,573] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:59,709] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:59,840] [docker_util.py] [INFO]: .
+[2026-04-29 06:26:59,980] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:00,115] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:00,244] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:00,366] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:00,478] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:00,601] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:00,735] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:00,862] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:00,999] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:01,145] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:01,264] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:01,403] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:01,545] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:01,695] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:01,864] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:02,001] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:02,128] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:02,265] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:02,405] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:02,574] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:02,749] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:02,927] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:03,096] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:03,245] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:03,412] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:03,562] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:03,725] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:03,902] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:04,058] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:04,266] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:04,466] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:04,667] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:04,858] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:05,030] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:05,178] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:05,352] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:05,512] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:05,686] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:05,844] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:06,009] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:06,164] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:06,296] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:06,425] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:06,578] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:06,713] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:06,843] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:06,984] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:07,136] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:07,280] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:07,403] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:07,542] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:07,694] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:07,804] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:07,926] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:08,057] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:08,205] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:08,342] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:08,467] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:08,768] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:08,840] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:09,356] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:09,646] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:10,004] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:10,537] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:11,141] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:11,799] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:12,628] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:13,749] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:14,685] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:14,936] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:15,139] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:15,400] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:15,619] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:15,883] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:16,367] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:17,179] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:17,896] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:18,352] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:18,651] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:18,905] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:19,111] [docker_util.py] [INFO]: .
+[2026-04-29 06:27:19,225] [docker_util.py] [INFO]: 
+[2026-04-29 06:27:20,094] [docker_util.py] [INFO]: Welcome to Gradle 6.9.2!
+
+Here are the highlights of this release:
+ - This is a small backport release.
+ - Java 16 can be used to compile when used with Java toolchains
+ - Dynamic versions can be used within plugin declarations
+ - Native support for Apple Silicon processors
+
+For more details see https://docs.gradle.org/6.9.2/release-notes.html
+[2026-04-29 06:27:20,178] [docker_util.py] [INFO]: Starting a Gradle Daemon (subsequent builds will be faster)
+[2026-04-29 06:27:46,180] [docker_util.py] [INFO]: > Task :jib-build-plan:clean
+[2026-04-29 06:27:46,180] [docker_util.py] [INFO]: > Task :jib-cli:clean
+[2026-04-29 06:27:46,181] [docker_util.py] [INFO]: > Task :jib-core:clean
+[2026-04-29 06:27:46,181] [docker_util.py] [INFO]: 
+[2026-04-29 06:27:46,181] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:clean
+[2026-04-29 06:27:46,181] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:clean
+[2026-04-29 06:27:46,181] [docker_util.py] [INFO]: > Task :jib-maven-plugin:clean
+[2026-04-29 06:27:46,182] [docker_util.py] [INFO]: > Task :jib-maven-plugin-extension-api:clean
+[2026-04-29 06:27:46,182] [docker_util.py] [INFO]: > Task :jib-plugins-common:clean
+[2026-04-29 06:27:46,182] [docker_util.py] [INFO]: > Task :jib-plugins-extension-common:clean
+[2026-04-29 06:27:46,182] [docker_util.py] [INFO]: > Task :jib-build-plan:ensureTransitiveDependencyOverrides
+[2026-04-29 06:27:51,478] [docker_util.py] [INFO]: > Task :jib-build-plan:compileJava
+> Task :jib-build-plan:processResources NO-SOURCE
+> Task :jib-build-plan:classes
+[2026-04-29 06:27:56,778] [docker_util.py] [INFO]: > Task :jib-build-plan:compileTestJava
+> Task :jib-build-plan:processTestResources
+> Task :jib-build-plan:testClasses
+[2026-04-29 06:27:57,778] [docker_util.py] [INFO]: > Task :jib-build-plan:test
+[2026-04-29 06:27:57,779] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-29 06:27:59,178] [docker_util.py] [INFO]: > Task :jib-cli:ensureTransitiveDependencyOverrides
+[2026-04-29 06:27:59,178] [docker_util.py] [INFO]: 
+[2026-04-29 06:27:59,178] [docker_util.py] [INFO]: > Task :jib-cli:generateSources
+[2026-04-29 06:27:59,178] [docker_util.py] [INFO]: 
+[2026-04-29 06:27:59,278] [docker_util.py] [INFO]: > Task :jib-core:ensureTransitiveDependencyOverrides
+[2026-04-29 06:27:59,279] [docker_util.py] [INFO]: 
+[2026-04-29 06:28:10,380] [docker_util.py] [INFO]: > Task :jib-core:compileJava
+> Task :jib-plugins-common:ensureTransitiveDependencyOverrides
+[2026-04-29 06:28:12,178] [docker_util.py] [INFO]: > Task :jib-plugins-common:compileJava
+> Task :jib-plugins-common:processResources NO-SOURCE
+> Task :jib-plugins-common:classes
+[2026-04-29 06:28:12,278] [docker_util.py] [INFO]: > Task :jib-plugins-common:jar
+[2026-04-29 06:28:14,178] [docker_util.py] [INFO]: > Task :jib-cli:compileJava
+> Task :jib-cli:processResources NO-SOURCE
+> Task :jib-cli:classes
+[2026-04-29 06:28:16,479] [docker_util.py] [INFO]: > Task :jib-cli:compileTestJava
+[2026-04-29 06:28:16,578] [docker_util.py] [INFO]: > Task :jib-cli:processTestResources
+> Task :jib-cli:testClasses
+> Task :jib-core:processResources
+> Task :jib-core:classes
+> Task :jib-core:jar
+[2026-04-29 06:28:18,578] [docker_util.py] [INFO]: > Task :jib-cli:test
+[2026-04-29 06:28:18,580] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.junit.contrib.java.lang.system.EnvironmentVariables (file:/root/.gradle/caches/modules-2/files-2.1/com.github.stefanbirkner/system-rules/1.19.0/d541c9a1cff0dda32e2436c74562e2e4aa6c88cd/system-rules-1.19.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.junit.contrib.java.lang.system.EnvironmentVariables[0m
+[2026-04-29 06:28:18,580] [docker_util.py] [INFO]: [91m
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+[0m
+[2026-04-29 06:28:22,678] [docker_util.py] [INFO]: > Task :jib-core:compileTestJava
+[2026-04-29 06:28:22,678] [docker_util.py] [INFO]: [91mNote: /home/jib/jib-core/src/test/java/com/google/cloud/tools/jib/builder/steps/StepsRunnerTest.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+[0m
+[2026-04-29 06:28:22,778] [docker_util.py] [INFO]: > Task :jib-core:processTestResources
+> Task :jib-core:testClasses
+[2026-04-29 06:28:24,778] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-29 06:28:24,778] [docker_util.py] [INFO]: > Task :jib-core:test
+[2026-04-29 06:28:25,778] [docker_util.py] [INFO]: [91mWARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.mockito.internal.util.reflection.ReflectionMemberAccessor (file:/root/.gradle/caches/modules-2/files-2.1/org.mockito/mockito-core/4.11.0/ce5226440c2ee78915716d4ce3d10aed2dbf26fb/mockito-core-4.11.0.jar) to constructor java.util.Optional()
+WARNING: Please consider reporting this to the maintainers of org.mockito.internal.util.reflection.ReflectionMemberAccessor
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+[0m
+[2026-04-29 06:28:25,778] [docker_util.py] [INFO]: [91mWARNING: All illegal access operations will be denied in a future release
+[0m
+[2026-04-29 06:28:32,378] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:ensureTransitiveDependencyOverrides
+[2026-04-29 06:28:42,378] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:compileJava
+[2026-04-29 06:28:42,478] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:pluginDescriptors
+> Task :jib-gradle-plugin:processResources
+> Task :jib-gradle-plugin:classes
+[2026-04-29 06:28:42,577] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:pluginUnderTestMetadata
+> Task :jib-core:testJar
+[2026-04-29 06:28:43,778] [docker_util.py] [INFO]: > Task :jib-plugins-common:compileTestJava
+> Task :jib-plugins-common:processTestResources
+> Task :jib-plugins-common:testClasses
+> Task :jib-plugins-common:testJar
+[2026-04-29 06:28:47,478] [docker_util.py] [INFO]: 
+[2026-04-29 06:28:47,478] [docker_util.py] [INFO]: [91mNote: /home/jib/jib-gradle-plugin/src/test/java/com/google/cloud/tools/jib/gradle/GradleRawConfigurationTest.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+[0m
+[2026-04-29 06:28:47,479] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:compileTestJava
+[2026-04-29 06:28:47,679] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:processTestResources
+> Task :jib-gradle-plugin:testClasses
+[2026-04-29 06:28:49,679] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-29 06:28:49,679] [docker_util.py] [INFO]: > Task :jib-gradle-plugin:test
+[2026-04-29 06:28:52,080] [docker_util.py] [INFO]: 
+[2026-04-29 06:28:52,080] [docker_util.py] [INFO]: com.google.cloud.tools.jib.gradle.skaffold.FilesTaskV2Test > testFilesTast_withConfigModifiers STANDARD_OUT
+    Downloading https://services.gradle.org/distributions/gradle-5.1-bin.zip
+[2026-04-29 06:29:15,178] [docker_util.py] [INFO]: .................................................................................
+[2026-04-29 06:29:18,478] [docker_util.py] [INFO]: com.google.cloud.tools.jib.gradle.skaffold.FilesTaskV2Test > testFilesTask_platformProject STANDARD_OUT
+    Downloading https://services.gradle.org/distributions/gradle-5.2-bin.zip
+[2026-04-29 06:29:32,978] [docker_util.py] [INFO]: ...................................................................................
+[2026-04-29 06:29:48,979] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:ensureTransitiveDependencyOverrides
+[2026-04-29 06:29:49,379] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:compileJava
+> Task :jib-gradle-plugin-extension-api:processResources NO-SOURCE
+> Task :jib-gradle-plugin-extension-api:classes
+> Task :jib-gradle-plugin-extension-api:compileTestJava NO-SOURCE
+[2026-04-29 06:29:49,380] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:processTestResources NO-SOURCE
+[2026-04-29 06:29:49,380] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:testClasses UP-TO-DATE
+[2026-04-29 06:29:49,380] [docker_util.py] [INFO]: > Task :jib-gradle-plugin-extension-api:test NO-SOURCE
+[2026-04-29 06:29:50,878] [docker_util.py] [INFO]: > Task :jib-maven-plugin:ensureTransitiveDependencyOverrides
+[2026-04-29 06:29:53,378] [docker_util.py] [INFO]: > Task :jib-maven-plugin:compileJava
+[2026-04-29 06:29:53,378] [docker_util.py] [INFO]: [91m/home/jib/jib-maven-plugin/src/main/java/com/google/cloud/tools/jib/maven/JibPluginConfiguration.java:383: warning: [UnnecessaryAssignment] Fields annotated with @Inject should not be manually assigned to, as they should be initialized by a framework. Remove the assignment if a framework is being used, or the annotation if one isn't.
+  @Inject private Set<JibMavenPluginExtension<?>> injectedPluginExtensions = Collections.emptySet();
+                                                  ^
+    (see https://errorprone.info/bugpattern/UnnecessaryAssignment)
+  Did you mean '@Inject private Set<JibMavenPluginExtension<?>> injectedPluginExtensions ;' or 'private Set<JibMavenPluginExtension<?>> injectedPluginExtensions = Collections.emptySet();'?
+[0m
+[2026-04-29 06:29:53,978] [docker_util.py] [INFO]: [91m1 warning
+[0m
+[2026-04-29 06:29:54,178] [docker_util.py] [INFO]: > Task :jib-maven-plugin:generatePomFileForMavenJavaPublication
+[2026-04-29 06:29:54,378] [docker_util.py] [INFO]: > Task :jib-maven-plugin:generateMavenPluginDescriptor
+> Task :jib-maven-plugin:processResources
+> Task :jib-maven-plugin:classes
+> Task :jib-maven-plugin:jar
+> Task :jib-maven-plugin:generateMetadataFileForMavenJavaPublication
+> Task :jib-maven-plugin:publishMavenJavaPublicationToMavenLocal
+> Task :jib-maven-plugin:publishToMavenLocal
+[2026-04-29 06:29:56,379] [docker_util.py] [INFO]: > Task :jib-maven-plugin:compileTestJava
+[2026-04-29 06:29:56,379] [docker_util.py] [INFO]: [91m/home/jib/jib-maven-plugin/src/test/java/com/google/cloud/tools/jib/maven/TestRepository.java:27: warning: [deprecation] ArtifactRepository in org.apache.maven.artifact.repository has been deprecated
+import org.apache.maven.artifact.repository.ArtifactRepository;
+                                           ^
+/home/jib/jib-maven-plugin/src/test/java/com/google/cloud/tools/jib/maven/TestRepository.java:43: warning: [deprecation] ArtifactRepository in org.apache.maven.artifact.repository has been deprecated
+  private ArtifactRepository testLocalRepo;
+          ^
+[0m
+[2026-04-29 06:29:57,080] [docker_util.py] [INFO]: [91m2 warnings
+[0m
+[2026-04-29 06:29:57,279] [docker_util.py] [INFO]: > Task :jib-maven-plugin:processTestResources
+> Task :jib-maven-plugin:testClasses
+[2026-04-29 06:29:59,178] [docker_util.py] [INFO]: > Task :jib-maven-plugin:test
+[2026-04-29 06:29:59,178] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-29 06:31:31,880] [docker_util.py] [INFO]: > Task :jib-maven-plugin-extension-api:ensureTransitiveDependencyOverrides
+[2026-04-29 06:31:34,479] [docker_util.py] [INFO]: > Task :jib-maven-plugin-extension-api:compileJava
+> Task :jib-maven-plugin-extension-api:processResources NO-SOURCE
+> Task :jib-maven-plugin-extension-api:classes
+> Task :jib-maven-plugin-extension-api:compileTestJava NO-SOURCE
+> Task :jib-maven-plugin-extension-api:processTestResources NO-SOURCE
+> Task :jib-maven-plugin-extension-api:testClasses UP-TO-DATE
+> Task :jib-maven-plugin-extension-api:test NO-SOURCE
+[2026-04-29 06:31:36,479] [docker_util.py] [INFO]: > Task :jib-plugins-common:test
+[2026-04-29 06:31:36,479] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-04-29 06:31:38,879] [docker_util.py] [INFO]: > Task :jib-plugins-extension-common:ensureTransitiveDependencyOverrides
+[2026-04-29 06:31:39,179] [docker_util.py] [INFO]: > Task :jib-plugins-extension-common:compileJava
+> Task :jib-plugins-extension-common:processResources NO-SOURCE
+> Task :jib-plugins-extension-common:classes
+> Task :jib-plugins-extension-common:compileTestJava NO-SOURCE
+> Task :jib-plugins-extension-common:processTestResources NO-SOURCE
+> Task :jib-plugins-extension-common:testClasses UP-TO-DATE
+> Task :jib-plugins-extension-common:test NO-SOURCE
+[2026-04-29 06:31:39,225] [docker_util.py] [INFO]: Deprecated Gradle features were used in this build, making it incompatible with Gradle 7.0.
+Use '--warning-mode all' to show the individual deprecation warnings.
+See https://docs.gradle.org/6.9.2/userguide/command_line_interface.html#sec:command_line_warnings
+
+BUILD SUCCESSFUL in 4m 42s
+60 actionable tasks: 60 executed
+[2026-04-29 06:32:04,425] [docker_util.py] [INFO]: ---> Removed intermediate container 48f9fddbdfba
+[2026-04-29 06:32:04,425] [docker_util.py] [INFO]: ---> 40f04c9c297e
+[2026-04-29 06:32:04,425] [docker_util.py] [INFO]: sha256:40f04c9c297e264bad0f2280c708fffac445ff3837c490024216ca1160c280db
+[2026-04-29 06:32:04,465] [docker_util.py] [INFO]: Successfully built 40f04c9c297e
+[2026-04-29 06:32:04,489] [docker_util.py] [INFO]: Successfully tagged mswebench/googlecontainertools_m_jib:pr-4035
+[2026-04-29 06:32:04,490] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/results/eval/s0-original/java_47_gpt5.4_cost_3.0_runs_5/run-1/eval/workdir/googlecontainertools/jib/images/pr-4035) build success: mswebench/googlecontainertools_m_jib:pr-4035

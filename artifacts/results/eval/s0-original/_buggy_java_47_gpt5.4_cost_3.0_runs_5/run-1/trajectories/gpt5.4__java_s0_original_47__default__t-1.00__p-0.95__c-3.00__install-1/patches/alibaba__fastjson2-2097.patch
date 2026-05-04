@@ -1,0 +1,59 @@
+
+diff --git a/.gitignore b/.gitignore
+index e09139a19..502e2970f 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/test/java/com/alibaba/fastjson2/features/ReferenceDetectTest.java b/core/src/test/java/com/alibaba/fastjson2/features/ReferenceDetectTest.java
+index e0801abaa..d6ae6e0b9 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/features/ReferenceDetectTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/features/ReferenceDetectTest.java
+@@ -2,6 +2,7 @@ package com.alibaba.fastjson2.features;
+ 
+ import com.alibaba.fastjson2.JSON;
+ import com.alibaba.fastjson2.JSONB;
++import com.alibaba.fastjson2.JSONReader;
+ import com.alibaba.fastjson2.JSONWriter;
+ import org.junit.jupiter.api.Test;
+ 
+@@ -176,4 +177,42 @@ public class ReferenceDetectTest {
+             this.stackTrace = stackTrace;
+         }
+     }
++    @Test
++    public void test4_arraysArrayListRef() {
++        StackTraceElement e1 = new StackTraceElement(
++                "d1",
++                "m1",
++                "f1",
++                101
++        );
++        StackTraceElement e2 = new StackTraceElement(
++                "d2",
++                "m2",
++                "f2",
++                102
++        );
++
++        List<StackTraceElement> list = Arrays.asList(
++                e1,
++                e2,
++                e1,
++                e2
++        );
++
++        String str = JSON.toJSONString(
++                list,
++                JSONWriter.Feature.ReferenceDetection,
++                JSONWriter.Feature.WriteClassName
++        );
++        List<StackTraceElement> list1 = (List<StackTraceElement>) JSON.parseObject(
++                str,
++                Object.class,
++                JSONReader.Feature.SupportAutoType
++        );
++
++        assertEquals(list, list1);
++        assertEquals(list.getClass(), list1.getClass());
++        assertSame(list1.get(0), list1.get(2));
++        assertSame(list1.get(1), list1.get(3));
++    }
+ }

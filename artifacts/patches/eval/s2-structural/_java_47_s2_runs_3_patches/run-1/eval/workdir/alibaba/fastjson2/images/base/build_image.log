@@ -1,0 +1,44 @@
+[2026-05-02 12:37:37,083] [docker_util.py] [INFO]: Start building image `mswebench/alibaba_m_fastjson2:base`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/patches/eval/s2-structural/java_47_s2_runs_3_patches/run-1/eval/workdir/alibaba/fastjson2/images/base`
+[2026-05-02 12:37:37,959] [docker_util.py] [INFO]: Step 1/10 : FROM ubuntu:20.04
+[2026-05-02 12:37:37,959] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:37,979] [docker_util.py] [INFO]: ---> 8feb4d8ca535
+[2026-05-02 12:37:37,979] [docker_util.py] [INFO]: Step 2/10 : ENV JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai"
+[2026-05-02 12:37:37,979] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:38,000] [docker_util.py] [INFO]: ---> Using cache
+[2026-05-02 12:37:38,000] [docker_util.py] [INFO]: ---> 7df987972010
+[2026-05-02 12:37:38,000] [docker_util.py] [INFO]: Step 3/10 : ENV DEBIAN_FRONTEND=noninteractive
+[2026-05-02 12:37:38,000] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:38,025] [docker_util.py] [INFO]: ---> Using cache
+[2026-05-02 12:37:38,025] [docker_util.py] [INFO]: ---> b69ef0ae1a6e
+[2026-05-02 12:37:38,025] [docker_util.py] [INFO]: Step 4/10 : ENV LANG=C.UTF-8
+[2026-05-02 12:37:38,025] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:38,048] [docker_util.py] [INFO]: ---> Using cache
+[2026-05-02 12:37:38,048] [docker_util.py] [INFO]: ---> ac1a6268e8cd
+[2026-05-02 12:37:38,048] [docker_util.py] [INFO]: Step 5/10 : ENV LC_ALL=C.UTF-8
+[2026-05-02 12:37:38,048] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:38,076] [docker_util.py] [INFO]: ---> Using cache
+[2026-05-02 12:37:38,076] [docker_util.py] [INFO]: ---> a32cf755b9c2
+[2026-05-02 12:37:38,076] [docker_util.py] [INFO]: Step 6/10 : WORKDIR /home/
+[2026-05-02 12:37:38,076] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:38,099] [docker_util.py] [INFO]: ---> Using cache
+[2026-05-02 12:37:38,099] [docker_util.py] [INFO]: ---> c93e9c52c55f
+[2026-05-02 12:37:38,099] [docker_util.py] [INFO]: Step 7/10 : RUN apt update && apt install -y gnupg ca-certificates git curl
+[2026-05-02 12:37:38,099] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:38,127] [docker_util.py] [INFO]: ---> Using cache
+[2026-05-02 12:37:38,127] [docker_util.py] [INFO]: ---> ffbca10096a7
+[2026-05-02 12:37:38,127] [docker_util.py] [INFO]: Step 8/10 : RUN curl -s https://repos.azul.com/azul-repo.key | gpg --dearmor -o /usr/share/keyrings/azul.gpg     && echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | tee /etc/apt/sources.list.d/zulu.list
+[2026-05-02 12:37:38,127] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:38,151] [docker_util.py] [INFO]: ---> Using cache
+[2026-05-02 12:37:38,152] [docker_util.py] [INFO]: ---> 3c59c2f87ee7
+[2026-05-02 12:37:38,152] [docker_util.py] [INFO]: Step 9/10 : RUN apt update && apt install -y zulu8-jdk
+[2026-05-02 12:37:38,152] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:38,179] [docker_util.py] [INFO]: ---> Using cache
+[2026-05-02 12:37:38,180] [docker_util.py] [INFO]: ---> ca48bcf15a9f
+[2026-05-02 12:37:38,180] [docker_util.py] [INFO]: Step 10/10 : RUN git clone https://github.com/alibaba/fastjson2.git /home/fastjson2
+[2026-05-02 12:37:38,180] [docker_util.py] [INFO]: 
+[2026-05-02 12:37:38,235] [docker_util.py] [INFO]: ---> Using cache
+[2026-05-02 12:37:38,235] [docker_util.py] [INFO]: ---> 663166187285
+[2026-05-02 12:37:38,235] [docker_util.py] [INFO]: sha256:66316618728568875ecadb4c5cd0c9784fa939e96d87edf7d84f4aac30349a13
+[2026-05-02 12:37:38,239] [docker_util.py] [INFO]: Successfully built 663166187285
+[2026-05-02 12:37:38,260] [docker_util.py] [INFO]: Successfully tagged mswebench/alibaba_m_fastjson2:base
+[2026-05-02 12:37:38,260] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/patches/eval/s2-structural/java_47_s2_runs_3_patches/run-1/eval/workdir/alibaba/fastjson2/images/base) build success: mswebench/alibaba_m_fastjson2:base

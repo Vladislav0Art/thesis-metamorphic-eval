@@ -1,0 +1,201 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/execution/AbstractPipelineExt.java b/logstash-core/src/main/java/org/logstash/execution/AbstractPipelineExt.java
+index be91d3dd1..d1db7061f 100644
+--- a/logstash-core/src/main/java/org/logstash/execution/AbstractPipelineExt.java
++++ b/logstash-core/src/main/java/org/logstash/execution/AbstractPipelineExt.java
+@@ -38,87 +38,101 @@ import org.jruby.Ruby;
+ import org.jruby.RubyArray;
+ import org.jruby.RubyBasicObject;
+ import org.jruby.RubyClass;
+-import org.jruby.RubyString;
+-import org.jruby.RubySymbol;
+-import org.jruby.anno.JRubyClass;
+-import org.jruby.anno.JRubyMethod;
+-import org.jruby.javasupport.JavaUtil;
+-import org.jruby.runtime.ThreadContext;
+-import org.jruby.runtime.Visibility;
+-import org.jruby.runtime.builtin.IRubyObject;
+-import org.logstash.RubyUtil;
+-import org.logstash.ackedqueue.QueueFactoryExt;
+-import org.logstash.ackedqueue.ext.JRubyAckedQueueExt;
+-import org.logstash.ackedqueue.ext.JRubyWrappedAckedQueueExt;
+-import org.logstash.common.DeadLetterQueueFactory;
+-import org.logstash.common.EnvironmentVariableProvider;
+-import org.logstash.common.SourceWithMetadata;
+-import org.logstash.common.io.QueueStorageType;
+-import org.logstash.config.ir.ConfigCompiler;
+-import org.logstash.config.ir.InvalidIRException;
+-import org.logstash.config.ir.PipelineConfig;
+-import org.logstash.config.ir.PipelineIR;
+-import org.logstash.ext.JRubyAbstractQueueWriteClientExt;
+-import org.logstash.ext.JRubyWrappedWriteClientExt;
+-import org.logstash.instrument.metrics.AbstractMetricExt;
+-import org.logstash.instrument.metrics.AbstractNamespacedMetricExt;
+-import org.logstash.instrument.metrics.MetricKeys;
+-import org.logstash.instrument.metrics.NullMetricExt;
+-import org.logstash.plugins.ConfigVariableExpander;
+-import org.logstash.secret.store.SecretStore;
+-import org.logstash.secret.store.SecretStoreExt;
+-
+-/**
+- * JRuby extension to provide ancestor class for Ruby's Pipeline and JavaPipeline classes.
+- * */
+-@JRubyClass(name = "AbstractPipeline")
+-public class AbstractPipelineExt extends RubyBasicObject {
+-
+-    private static final long serialVersionUID = 1L;
+-
+-    private static final Logger LOGGER = LogManager.getLogger(AbstractPipelineExt.class);
+-
+-    private static final @SuppressWarnings("rawtypes") RubyArray CAPACITY_NAMESPACE =
+-        RubyArray.newArray(RubyUtil.RUBY, RubyUtil.RUBY.newSymbol("capacity"));
+-
+-    private static final @SuppressWarnings("rawtypes") RubyArray DATA_NAMESPACE =
+-        RubyArray.newArray(RubyUtil.RUBY, RubyUtil.RUBY.newSymbol("data"));
+-
+-    private static final RubySymbol PAGE_CAPACITY_IN_BYTES =
+-        RubyUtil.RUBY.newSymbol("page_capacity_in_bytes");
+-
+-    private static final RubySymbol MAX_QUEUE_SIZE_IN_BYTES =
+-        RubyUtil.RUBY.newSymbol("max_queue_size_in_bytes");
+-
+-    private static final RubySymbol MAX_QUEUE_UNREAD_EVENTS =
+-        RubyUtil.RUBY.newSymbol("max_unread_events");
+-
+-    private static final RubySymbol QUEUE_SIZE_IN_BYTES =
+-        RubyUtil.RUBY.newSymbol("queue_size_in_bytes");
+-
+-    private static final RubySymbol FREE_SPACE_IN_BYTES =
+-        RubyUtil.RUBY.newSymbol("free_space_in_bytes");
+-
+-    private static final RubySymbol STORAGE_TYPE = RubyUtil.RUBY.newSymbol("storage_type");
+-
+-    private static final RubySymbol PATH = RubyUtil.RUBY.newSymbol("path");
+-
+-    private static final RubySymbol TYPE_KEY = RubyUtil.RUBY.newSymbol("type");
+-
+-    private static final RubySymbol QUEUE_KEY = RubyUtil.RUBY.newSymbol("queue");
+-
+-    private static final RubySymbol DLQ_KEY = RubyUtil.RUBY.newSymbol("dlq");
+-
+-    private static final RubySymbol STORAGE_POLICY =
+-            RubyUtil.RUBY.newSymbol("storage_policy");
+-
+-    private static final @SuppressWarnings("rawtypes") RubyArray EVENTS_METRIC_NAMESPACE = RubyArray.newArray(
+-        RubyUtil.RUBY, new IRubyObject[]{MetricKeys.STATS_KEY, MetricKeys.EVENTS_KEY}
+-    );
+-
+-    protected PipelineIR lir;
+-
+-    private final RubyString ephemeralId = RubyUtil.RUBY.newString(UUID.randomUUID().toString());
++import co.elastic.logstash.api.NamespacedMetric;
++import java.io.Closeable;
++import java.io.IOException;
++import java.nio.channels.FileLock;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.StandardCopyOption;
++import java.time.Duration;
++import java.time.Instant;
++import java.util.Comparator;
++import java.util.Locale;
++import java.util.Optional;
++import java.util.concurrent.Executors;
++import java.util.concurrent.ScheduledExecutorService;
++import java.util.concurrent.TimeUnit;
++import java.util.concurrent.atomic.AtomicBoolean;
++import java.util.concurrent.atomic.LongAdder;
++import java.util.concurrent.locks.ReentrantLock;
++import java.util.stream.Collectors;
++import java.util.stream.Stream;
++
++import com.google.common.annotations.VisibleForTesting;
++import org.apache.logging.log4j.LogManager;
++import org.apache.logging.log4j.Logger;
++import org.logstash.DLQEntry;
++import org.logstash.Event;
++import org.logstash.FieldReference;
++import org.logstash.FileLockFactory;
++import org.logstash.Timestamp;
++
++import static org.logstash.common.io.RecordIOWriter.RECORD_HEADER_SIZE;
++import static org.logstash.common.io.RecordIOReader.SegmentStatus;
++
++public final class DeadLetterQueueWriter implements Closeable {
++
++    @VisibleForTesting
++    static final String SEGMENT_FILE_PATTERN = "%d.log";
++    @VisibleForTesting
++    static final String DISCARDED_EVENTS_METRIC_KEY = "discarded_events";
++    @VisibleForTesting
++    static final String LAST_ERROR_METRIC_KEY = "last_error";
++    private static final Logger logger = LogManager.getLogger(DeadLetterQueueWriter.class);
++    private enum FinalizeWhen {ALWAYS, ONLY_IF_STALE};
++    private static final String TEMP_FILE_PATTERN = "%d.log.tmp";
++    private static final String LOCK_FILE = ".lock";
++    private final ReentrantLock lock = new ReentrantLock();
++    private static final FieldReference DEAD_LETTER_QUEUE_METADATA_KEY =
++        FieldReference.from(String.format("%s[dead_letter_queue]", Event.METADATA_BRACKETS));
++    private final long maxSegmentSize;
++    private final long maxQueueSize;
++    private final QueueStorageType storageType;
++    private final NamespacedMetric metric;
++    private LongAdder currentQueueSize;
++    private final Path queuePath;
++    private final FileLock fileLock;
++    private volatile RecordIOWriter currentWriter;
++    private int currentSegmentIndex;
++    private Timestamp lastEntryTimestamp;
++    private Duration flushInterval;
++    private Instant lastWrite;
++    private final AtomicBoolean open = new AtomicBoolean(true);
++    private ScheduledExecutorService flushScheduler;
++
++    public DeadLetterQueueWriter(final Path queuePath, final long maxSegmentSize, final long maxQueueSize,
++                                 final Duration flushInterval) throws IOException {
++        this(queuePath, maxSegmentSize, maxQueueSize, flushInterval, QueueStorageType.DROP_NEWER, null);
++    }
++
++    public DeadLetterQueueWriter(final Path queuePath, final long maxSegmentSize, final long maxQueueSize,
++                                 final Duration flushInterval, final QueueStorageType storageType) throws IOException {
++        this(queuePath, maxSegmentSize, maxQueueSize, flushInterval, storageType, null);
++    }
++
++    public DeadLetterQueueWriter(final Path queuePath, final long maxSegmentSize, final long maxQueueSize,
++                                 final Duration flushInterval, final QueueStorageType storageType,
++                                 final NamespacedMetric metric) throws IOException {
++        this.fileLock = FileLockFactory.obtainLock(queuePath, LOCK_FILE);
++        this.queuePath = queuePath;
++        this.maxSegmentSize = maxSegmentSize;
++        this.maxQueueSize = maxQueueSize;
++        this.storageType = storageType;
++        this.metric = metric;
++        this.flushInterval = flushInterval;
++        this.currentQueueSize = new LongAdder();
++        this.currentQueueSize.add(getStartupQueueSize());
++
++        cleanupTempFiles();
++        currentSegmentIndex = getSegmentPaths(queuePath)
++                .map(s -> s.getFileName().toString().split("\\.")[0])
++                .mapToInt(Integer::parseInt)
++                .max().orElse(0);
++        nextWriter();
++        this.lastEntryTimestamp = Timestamp.now();
++        createFlushScheduler();
++    }
+ 
+     private AbstractNamespacedMetricExt dlqMetric;
+ 

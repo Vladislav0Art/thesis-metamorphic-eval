@@ -1,0 +1,203 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/Captor.java b/src/main/java/org/mockito/Captor.java
+index 0de9f72b2..aac3f231e 100644
+--- a/src/main/java/org/mockito/Captor.java
++++ b/src/main/java/org/mockito/Captor.java
+@@ -11,7 +11,7 @@ import java.lang.annotation.RetentionPolicy;
+ import java.lang.annotation.Target;
+ 
+ /**
+- * Allows shorthand {@link org.mockito.ArgumentCaptor} creation on fields.
++ * Allows shorthand {@link org.mockito.ArgumentCaptor} creation on fields and parameters.
+  *
+  * <p>Example:
+  * <pre class="code"><code class="java">
+@@ -46,6 +46,6 @@ import java.lang.annotation.Target;
+  * @since 1.8.3
+  */
+ @Retention(RetentionPolicy.RUNTIME)
+-@Target(ElementType.FIELD)
++@Target({ElementType.FIELD, ElementType.PARAMETER})
+ @Documented
+ public @interface Captor {}
+diff --git a/src/main/java/org/mockito/internal/configuration/CaptorAnnotationProcessor.java b/src/main/java/org/mockito/internal/configuration/CaptorAnnotationProcessor.java
+index 600583be5..7ce5e1d1d 100644
+--- a/src/main/java/org/mockito/internal/configuration/CaptorAnnotationProcessor.java
++++ b/src/main/java/org/mockito/internal/configuration/CaptorAnnotationProcessor.java
+@@ -5,6 +5,7 @@
+ package org.mockito.internal.configuration;
+ 
+ import java.lang.reflect.Field;
++import java.lang.reflect.Type;
+ 
+ import org.mockito.ArgumentCaptor;
+ import org.mockito.Captor;
+@@ -12,21 +13,24 @@ import org.mockito.exceptions.base.MockitoException;
+ import org.mockito.internal.util.reflection.GenericMaster;
+ 
+ /**
+- * Instantiate {@link ArgumentCaptor} a field annotated by &#64;Captor.
++ * Instantiate {@link ArgumentCaptor} on a field or parameter annotated by &#64;Captor.
+  */
+ public class CaptorAnnotationProcessor implements FieldAnnotationProcessor<Captor> {
+     @Override
+     public Object process(Captor annotation, Field field) {
+-        Class<?> type = field.getType();
++        return process(annotation, field.getType(), field.getGenericType(), field.getName());
++    }
++
++    public static Object process(Captor annotation, Class<?> type, Type genericType, String name) {
+         if (!ArgumentCaptor.class.isAssignableFrom(type)) {
+             throw new MockitoException(
+                     "@Captor field must be of the type ArgumentCaptor.\n"
+                             + "Field: '"
+-                            + field.getName()
++                            + name
+                             + "' has wrong type\n"
+                             + "For info how to use @Captor annotations see examples in javadoc for MockitoAnnotations class.");
+         }
+-        Class<?> cls = new GenericMaster().getGenericType(field);
++        Class<?> cls = new GenericMaster().getGenericType(genericType);
+         return ArgumentCaptor.forClass(cls);
+     }
+ }
+diff --git a/src/main/java/org/mockito/internal/util/reflection/GenericMaster.java b/src/main/java/org/mockito/internal/util/reflection/GenericMaster.java
+index be3db7f97..6cbda54c2 100644
+--- a/src/main/java/org/mockito/internal/util/reflection/GenericMaster.java
++++ b/src/main/java/org/mockito/internal/util/reflection/GenericMaster.java
+@@ -16,7 +16,10 @@ public class GenericMaster {
+      * @param field the field to inspect
+      */
+     public Class<?> getGenericType(Field field) {
+-        Type generic = field.getGenericType();
++        return getGenericType(field.getGenericType());
++    }
++
++    public Class<?> getGenericType(Type generic) {
+         if (generic instanceof ParameterizedType) {
+             Type actual = ((ParameterizedType) generic).getActualTypeArguments()[0];
+             if (actual instanceof Class) {
+diff --git a/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/MockitoExtension.java b/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/MockitoExtension.java
+index 220b7f450..3c9e3d27c 100644
+--- a/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/MockitoExtension.java
++++ b/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/MockitoExtension.java
+@@ -20,10 +20,12 @@ import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
+ import org.junit.jupiter.api.extension.ParameterContext;
+ import org.junit.jupiter.api.extension.ParameterResolutionException;
+ import org.junit.jupiter.api.extension.ParameterResolver;
++import org.mockito.Captor;
+ import org.mockito.Mock;
+ import org.mockito.Mockito;
+ import org.mockito.MockitoSession;
+ import org.mockito.ScopedMock;
++import org.mockito.internal.configuration.CaptorAnnotationProcessor;
+ import org.mockito.internal.configuration.MockAnnotationProcessor;
+ import org.mockito.internal.configuration.plugins.Plugins;
+ import org.mockito.internal.session.MockitoSessionLoggerAdapter;
+@@ -187,22 +189,27 @@ public class MockitoExtension implements BeforeEachCallback, AfterEachCallback,
+     }
+ 
+     @Override
+-    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext context) throws ParameterResolutionException {
+-        return parameterContext.isAnnotated(Mock.class);
++    public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext context)
++            throws ParameterResolutionException {
++        return parameterContext.isAnnotated(Mock.class)
++                || parameterContext.isAnnotated(Captor.class);
+     }
+ 
+     @Override
+-    @SuppressWarnings("unchecked")
+-    public Object resolveParameter(ParameterContext parameterContext, ExtensionContext context) throws ParameterResolutionException {
+-        final Parameter parameter = parameterContext.getParameter();
+-        Object mock = MockAnnotationProcessor.processAnnotationForMock(
+-            parameterContext.findAnnotation(Mock.class).get(),
+-            parameter.getType(),
+-            parameter::getParameterizedType,
+-            parameter.getName());
+-        if (mock instanceof ScopedMock) {
+-            context.getStore(MOCKITO).get(MOCKS, Set.class).add(mock);
++    public Object resolveParameter(ParameterContext parameterContext, ExtensionContext context)
++            throws ParameterResolutionException {
++        Parameter parameter = parameterContext.getParameter();
++        if (parameterContext.isAnnotated(Mock.class)) {
++            return MockAnnotationProcessor.processAnnotationForMock(
++                    parameterContext.findAnnotation(Mock.class).get(),
++                    parameter.getType(),
++                    parameter::getParameterizedType,
++                    parameter.getName());
+         }
+-        return mock;
++        return CaptorAnnotationProcessor.process(
++                parameterContext.findAnnotation(Captor.class).get(),
++                parameter.getType(),
++                parameter.getParameterizedType(),
++                parameter.getName());
+     }
+ }
+diff --git a/subprojects/junit-jupiter/src/test/java/org/mockitousage/JunitJupiterTest.java b/subprojects/junit-jupiter/src/test/java/org/mockitousage/JunitJupiterTest.java
+index 31abe2e61..2996a41ed 100644
+--- a/subprojects/junit-jupiter/src/test/java/org/mockitousage/JunitJupiterTest.java
++++ b/subprojects/junit-jupiter/src/test/java/org/mockitousage/JunitJupiterTest.java
+@@ -4,10 +4,13 @@
+  */
+ package org.mockitousage;
+ 
++import java.util.List;
+ import java.util.function.Function;
+ import org.junit.jupiter.api.Nested;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.ArgumentCaptor;
++import org.mockito.Captor;
+ import org.mockito.InjectMocks;
+ import org.mockito.Mock;
+ import org.mockito.Mockito;
+@@ -47,6 +50,12 @@ class JunitJupiterTest {
+         assertThat(MockUtil.getMockName(localMock).toString()).isEqualTo("overriddenName");
+     }
+ 
++    @Test
++    void initializes_captor_parameters(@Captor ArgumentCaptor<List<String>> captor) {
++        assertThat(captor).isNotNull();
++        assertThat(captor.getAllValues()).isEmpty();
++    }
++
+     @Nested
+     class NestedTestWithConstructorParameter {
+         private final Function<Integer, String> constructorMock;
+@@ -62,6 +71,21 @@ class JunitJupiterTest {
+         }
+     }
+ 
++    @Nested
++    class NestedTestWithCaptorConstructorParameter {
++        private final ArgumentCaptor<List<String>> constructorCaptor;
++
++        NestedTestWithCaptorConstructorParameter(@Captor ArgumentCaptor<List<String>> constructorCaptor) {
++            this.constructorCaptor = constructorCaptor;
++        }
++
++        @Test
++        void can_inject_into_constructor_captor_parameter() {
++            assertThat(constructorCaptor).isNotNull();
++            assertThat(constructorCaptor.getAllValues()).isEmpty();
++        }
++    }
++
+     @Nested
+     class NestedTestWithExtraMock {
+         @Mock Runnable nestedMock;

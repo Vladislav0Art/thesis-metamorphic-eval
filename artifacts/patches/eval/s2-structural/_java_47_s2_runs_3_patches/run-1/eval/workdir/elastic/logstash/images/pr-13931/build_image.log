@@ -1,0 +1,2113 @@
+[2026-05-02 13:08:35,334] [docker_util.py] [INFO]: Start building image `mswebench/elastic_m_logstash:pr-13931`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/patches/eval/s2-structural/java_47_s2_runs_3_patches/run-1/eval/workdir/elastic/logstash/images/pr-13931`
+[2026-05-02 13:08:35,903] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/elastic_m_logstash:base
+[2026-05-02 13:08:35,903] [docker_util.py] [INFO]: 
+[2026-05-02 13:08:35,920] [docker_util.py] [INFO]: ---> 177a0c933542
+[2026-05-02 13:08:35,921] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-05-02 13:08:35,921] [docker_util.py] [INFO]: 
+[2026-05-02 13:08:38,502] [docker_util.py] [INFO]: ---> 0bec96d0c922
+[2026-05-02 13:08:38,502] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-05-02 13:08:38,502] [docker_util.py] [INFO]: 
+[2026-05-02 13:08:39,993] [docker_util.py] [INFO]: ---> 4ffff01a982b
+[2026-05-02 13:08:39,994] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-05-02 13:08:39,994] [docker_util.py] [INFO]: 
+[2026-05-02 13:08:40,934] [docker_util.py] [INFO]: ---> 596f62afd269
+[2026-05-02 13:08:40,934] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-05-02 13:08:40,934] [docker_util.py] [INFO]: 
+[2026-05-02 13:08:41,663] [docker_util.py] [INFO]: ---> a066c2d71477
+[2026-05-02 13:08:41,664] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-05-02 13:08:41,664] [docker_util.py] [INFO]: 
+[2026-05-02 13:08:42,245] [docker_util.py] [INFO]: ---> 2ab91600acb6
+[2026-05-02 13:08:42,245] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-05-02 13:08:42,245] [docker_util.py] [INFO]: 
+[2026-05-02 13:08:42,866] [docker_util.py] [INFO]: ---> 7828c7433d42
+[2026-05-02 13:08:42,867] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-05-02 13:08:42,867] [docker_util.py] [INFO]: 
+[2026-05-02 13:08:43,440] [docker_util.py] [INFO]: ---> 0bcea3e7da02
+[2026-05-02 13:08:43,440] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-05-02 13:08:43,440] [docker_util.py] [INFO]: 
+[2026-05-02 13:08:43,546] [docker_util.py] [INFO]: ---> Running in 5512c8410238
+[2026-05-02 13:08:44,340] [docker_util.py] [INFO]: HEAD is now at 74d9f5b56 Exclude non-runtime dependencies for snyk scans of jar dependencies (#19039)
+[2026-05-02 13:08:44,404] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-05-02 13:08:44,618] [docker_util.py] [INFO]: [91mNote: switching to '7df02cc828c894a619687a41a7ff961461c276d3'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at 7df02cc82 Update Jackson databind in ingest-converter tool (#13900) (#13917)
+[0m
+[2026-05-02 13:08:44,703] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-05-02 13:08:44,717] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:08:44,814] [docker_util.py] [INFO]: Downloading https://services.gradle.org/distributions/gradle-7.2-bin.zip
+[2026-05-02 13:08:46,550] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:46,844] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:47,034] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:47,317] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:47,704] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:48,216] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:48,547] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:48,883] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:49,504] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:49,861] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:50,825] [docker_util.py] [INFO]: 10%.
+[2026-05-02 13:08:54,188] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:55,179] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:56,146] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:56,800] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:57,663] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:58,271] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:58,923] [docker_util.py] [INFO]: .
+[2026-05-02 13:08:59,885] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:01,083] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:01,483] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:01,999] [docker_util.py] [INFO]: 20%.
+[2026-05-02 13:09:02,451] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:02,740] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:03,083] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:03,623] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:07,544] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:09,650] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:10,649] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:11,408] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:12,124] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:12,780] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:13,396] [docker_util.py] [INFO]: 30%.
+[2026-05-02 13:09:14,211] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:14,918] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:15,559] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:16,325] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:17,125] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:20,395] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:21,380] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:22,198] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:23,068] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:24,248] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:25,129] [docker_util.py] [INFO]: 40%.
+[2026-05-02 13:09:25,725] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:26,295] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:27,185] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:28,142] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:28,805] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:29,193] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:29,555] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:29,870] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:30,182] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:30,486] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:30,807] [docker_util.py] [INFO]: 50
+[2026-05-02 13:09:30,807] [docker_util.py] [INFO]: %.
+[2026-05-02 13:09:31,115] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:31,533] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:31,792] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:32,128] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:32,286] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:32,460] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:32,647] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:32,843] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:33,094] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:33,320] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:33,473] [docker_util.py] [INFO]: 60%.
+[2026-05-02 13:09:33,666] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:33,845] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:34,061] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:34,271] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:34,468] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:34,694] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:34,893] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:35,089] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:35,223] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:35,403] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:35,591] [docker_util.py] [INFO]: 70%.
+[2026-05-02 13:09:35,765] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:35,933] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:36,128] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:36,380] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:36,609] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:36,774] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:36,988] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:37,170] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:37,376] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:37,957] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:38,749] [docker_util.py] [INFO]: 80%.
+[2026-05-02 13:09:39,698] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:40,607] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:42,276] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:43,642] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:44,546] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:45,364] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:46,194] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:47,309] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:49,759] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:50,717] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:51,187] [docker_util.py] [INFO]: 90%.
+[2026-05-02 13:09:51,732] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:52,197] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:52,708] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:53,258] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:53,879] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:54,263] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:54,658] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:55,061] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:55,510] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:55,993] [docker_util.py] [INFO]: .
+[2026-05-02 13:09:56,008] [docker_util.py] [INFO]: 100%
+[2026-05-02 13:09:56,733] [docker_util.py] [INFO]: 
+[2026-05-02 13:09:56,733] [docker_util.py] [INFO]: Welcome to Gradle 7.2!
+[2026-05-02 13:09:56,733] [docker_util.py] [INFO]: Here are the highlights of this release:
+ - Toolchain support for Scala
+ - More cache hits when Java source files have platform-specific line endings
+ - More resilient remote HTTP build cache behavior
+
+For more details see https://docs.gradle.org/7.2/release-notes.html
+[2026-05-02 13:09:56,734] [docker_util.py] [INFO]: To honour the JVM settings for this build a single-use Daemon process will be forked. See https://docs.gradle.org/7.2/userguide/gradle_daemon.html#sec:disabling_the_daemon.
+[2026-05-02 13:09:56,734] [docker_util.py] [INFO]: 
+[2026-05-02 13:09:57,326] [docker_util.py] [INFO]: Daemon will be stopped at the end of the build
+[2026-05-02 13:09:59,128] [docker_util.py] [INFO]: > Task :buildSrc:compileJava NO-SOURCE
+[2026-05-02 13:10:04,926] [docker_util.py] [INFO]: 
+[2026-05-02 13:10:04,928] [docker_util.py] [INFO]: > Task :buildSrc:compileGroovy
+[2026-05-02 13:10:04,928] [docker_util.py] [INFO]: 
+[2026-05-02 13:10:04,928] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:10:05,926] [docker_util.py] [INFO]: > Task :buildSrc:processResources NO-SOURCE
+> Task :buildSrc:classes
+[2026-05-02 13:10:06,026] [docker_util.py] [INFO]: > Task :buildSrc:jar
+> Task :buildSrc:assemble
+> Task :buildSrc:compileTestJava NO-SOURCE
+[2026-05-02 13:10:08,026] [docker_util.py] [INFO]: > Task :buildSrc:compileTestGroovy
+[2026-05-02 13:10:08,128] [docker_util.py] [INFO]: > Task :buildSrc:processTestResources NO-SOURCE
+> Task :buildSrc:testClasses
+[2026-05-02 13:10:10,026] [docker_util.py] [INFO]: > Task :buildSrc:test
+[2026-05-02 13:10:10,026] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:10:11,126] [docker_util.py] [INFO]: > Task :buildSrc:check
+[2026-05-02 13:10:11,126] [docker_util.py] [INFO]: > Task :buildSrc:build
+[2026-05-02 13:11:09,727] [docker_util.py] [INFO]: > Task :clean UP-TO-DATE
+> Task :benchmark-cli:clean UP-TO-DATE
+[2026-05-02 13:11:09,727] [docker_util.py] [INFO]: > Task :dependencies-report:clean UP-TO-DATE
+> Task :ingest-converter:clean UP-TO-DATE
+> Task :logstash-core:cleanGemjar UP-TO-DATE
+[2026-05-02 13:11:09,727] [docker_util.py] [INFO]: > Task :logstash-core:clean UP-TO-DATE
+[2026-05-02 13:11:09,727] [docker_util.py] [INFO]: > Task :logstash-core-benchmarks:clean UP-TO-DATE
+[2026-05-02 13:11:09,727] [docker_util.py] [INFO]: 
+[2026-05-02 13:11:09,727] [docker_util.py] [INFO]: > Task :logstash-integration-tests:clean UP-TO-DATE
+> Task :logstash-xpack:clean UP-TO-DATE
+[2026-05-02 13:11:09,827] [docker_util.py] [INFO]: > Task :compileJava NO-SOURCE
+> Task :processResources NO-SOURCE
+> Task :classes UP-TO-DATE
+> Task :compileTestJava NO-SOURCE
+[2026-05-02 13:11:09,828] [docker_util.py] [INFO]: > Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :test NO-SOURCE
+[2026-05-02 13:11:12,327] [docker_util.py] [INFO]: > Task :benchmark-cli:compileJava
+> Task :benchmark-cli:processResources
+> Task :benchmark-cli:classes
+[2026-05-02 13:11:17,128] [docker_util.py] [INFO]: > Task :benchmark-cli:compileTestJava
+> Task :benchmark-cli:processTestResources
+> Task :benchmark-cli:testClasses
+[2026-05-02 13:11:19,126] [docker_util.py] [INFO]: 
+[2026-05-02 13:11:19,126] [docker_util.py] [INFO]: > Task :benchmark-cli:test
+[2026-05-02 13:11:19,126] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:11:23,726] [docker_util.py] [INFO]: org.logstash.benchmark.cli.LsMetricsMonitorTest > parsesCpuUsage PASSED
+[2026-05-02 13:11:28,826] [docker_util.py] [INFO]: org.logstash.benchmark.cli.LsMetricsMonitorTest > parsesFilteredCount PASSED
+
+--------------------------------------------------------------------
+|  Results: SUCCESS (2 tests, 2 successes, 0 failures, 0 skipped)  |
+--------------------------------------------------------------------
+[2026-05-02 13:11:29,026] [docker_util.py] [INFO]: > Task :dependencies-report:compileJava
+> Task :dependencies-report:processResources
+> Task :dependencies-report:classes
+[2026-05-02 13:11:29,026] [docker_util.py] [INFO]: 
+[2026-05-02 13:11:29,126] [docker_util.py] [INFO]: > Task :dependencies-report:compileTestJava
+> Task :dependencies-report:processTestResources
+> Task :dependencies-report:testClasses
+[2026-05-02 13:11:29,426] [docker_util.py] [INFO]: > Task :dependencies-report:test
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithConflictingLicenses PASSED
+[2026-05-02 13:11:29,426] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:11:29,426] [docker_util.py] [INFO]: org.logstash.dependencies.ReportGeneratorTest > testReportWithUnacceptableLicenses STANDARD_OUT
+    Generated report with 16 dependencies (2 unknown or unacceptable licenses, 0 unknown or missing notices).
+
+    Add complying licenses (using the SPDX license ID from https://spdx.org/licenses) with URLs for the libraries listed below to tools/dependencies-report/src/main/resources/licenseMapping.csv:
+    "bundler:1.16.1"
+    "com.fasterxml.jackson.core:jackson-core:2.7.3"
+    The following 43 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    bundler
+    com.fasterxml.jackson.core:jackson-core
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    march_hare
+    method_source
+    metriks
+    numerizer
+[2026-05-02 13:11:29,426] [docker_util.py] [INFO]: org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+[2026-05-02 13:11:29,426] [docker_util.py] [INFO]: org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+[2026-05-02 13:11:29,426] [docker_util.py] [INFO]: 
+[2026-05-02 13:11:29,426] [docker_util.py] [INFO]: org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithUnacceptableLicenses PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testSuccessfulReport STANDARD_OUT
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: Generated report with 16 dependencies (0 unknown or unacceptable licenses, 0 unknown or missing notices).
+
+    The following 41 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: org.codehaus.janino:janino
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: org.eclipse.core:org.eclipse.core.commands
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: org.slf4j:slf4j-api
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testSuccessfulReport PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithUnusedLicenses STANDARD_OUT
+    Generated report with 16 dependencies (0 unknown or unacceptable licenses, 0 unknown or missing notices).
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: The following 42 license mappings were specified but unused:
+    UNKNOWNgzip
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: UNKNOWNjls-grok
+    avl_tree
+    co.elastic:noNoticeDep
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    filewatch
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: gelfd
+    gmetric
+    jls-lumberjack
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: webhdfs
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: 
+[2026-05-02 13:11:29,427] [docker_util.py] [INFO]: webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithUnusedLicenses PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingLicenses STANDARD_OUT
+    Generated report with 16 dependencies (2 unknown or unacceptable licenses, 0 unknown or missing notices).
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: Add complying licenses (using the SPDX license ID from https://spdx.org/licenses) with URLs for the libraries listed below to tools/dependencies-report/src/main/resources/licenseMapping.csv:
+    "commons-io:commons-io:2.5"
+    "filesize:0.0.4"
+    The following 43 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: com.google.guava:guava
+    commons-io:commons-io
+    filesize
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    march_hare
+    method_source
+    metriks
+    numerizer
+    org.apache.logging.log4j:log4j-api
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingLicenses PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingNotices STANDARD_OUT
+    Generated report with 13 dependencies (1 unknown or unacceptable licenses, 1 unknown or missing notices).
+
+    Add complying licenses (using the SPDX license ID from https://spdx.org/licenses) with URLs for the libraries listed below to tools/dependencies-report/src/main/resources/licenseMapping.csv:
+    "co.elastic:noNoticeDep:0.0.1"
+    The following NOTICE.txt entries are missing, please add them:
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: LS_HOME/tools/dependencies-report/src/main/resources/notices/co.elastic!noNoticeDep-NOTICE.txt
+    The following 45 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.errorprone:javac-shaded
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: com.google.googlejavaformat:google-java-format
+    com.google.guava:guava
+    commons-io:commons-io
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    junit:junit
+    march_hare
+    method_source
+    metriks
+    numerizer
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: org.apache.logging.log4j:log4j-slf4j-impl
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: org.codehaus.janino:commons-compiler
+    org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: org.eclipse.equinox:org.eclipse.equinox.preferences
+    org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingNotices PASSED
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingUrls STANDARD_OUT
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: Generated report with 16 dependencies (2 unknown or unacceptable licenses, 0 unknown or missing notices).
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: Add complying licenses (using the SPDX license ID from https://spdx.org/licenses) with URLs for the libraries listed below to tools/dependencies-report/src/main/resources/licenseMapping.csv:
+    "json-parser:"
+    "org.codehaus.janino:commons-compiler:3.0.8"
+    The following 43 license mappings were specified but unused:
+    UNKNOWNgzip
+    UNKNOWNjls-grok
+    avl_tree
+    com.fasterxml.jackson.dataformat:jackson-dataformat-cbor
+    com.google.googlejavaformat:google-java-format
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: com.google.guava:guava
+    filewatch
+    gelfd
+    gmetric
+    jls-lumberjack
+    json-parser
+    march_hare
+    method_source
+    metriks
+    numerizer
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: org.apache.logging.log4j:log4j-api
+    org.apache.logging.log4j:log4j-core
+    org.apache.logging.log4j:log4j-slf4j-impl
+    org.codehaus.janino:commons-compiler
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: org.codehaus.janino:janino
+    org.eclipse.core:org.eclipse.core.commands
+    org.eclipse.core:org.eclipse.core.contenttype
+    org.eclipse.core:org.eclipse.core.expressions
+    org.eclipse.core:org.eclipse.core.filesystem
+    org.eclipse.core:org.eclipse.core.jobs
+    org.eclipse.core:org.eclipse.core.resources
+    org.eclipse.core:org.eclipse.core.runtime
+    org.eclipse.equinox:org.eclipse.equinox.app
+    org.eclipse.equinox:org.eclipse.equinox.common
+    org.eclipse.equinox:org.eclipse.equinox.preferences
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: org.eclipse.equinox:org.eclipse.equinox.registry
+    org.eclipse.jdt:org.eclipse.jdt.core
+    org.eclipse.osgi:org.eclipse.osgi
+    org.eclipse.text:org.eclipse.text
+    org.jruby:jruby-complete
+    org.slf4j:slf4j-api
+    rspec-sequencing
+    rubyzip
+    snappy-jars
+    snmp
+    stud
+    webhdfs
+    webrick
+
+org.logstash.dependencies.ReportGeneratorTest > testReportWithMissingUrls PASSED
+
+--------------------------------------------------------------------
+|  Results: SUCCESS (7 tests, 7 successes, 0 failures, 0 skipped)  |
+[2026-05-02 13:11:29,428] [docker_util.py] [INFO]: --------------------------------------------------------------------
+[2026-05-02 13:11:29,826] [docker_util.py] [INFO]: > Task :ingest-converter:compileJava
+[2026-05-02 13:11:29,826] [docker_util.py] [INFO]: > Task :ingest-converter:processResources NO-SOURCE
+> Task :ingest-converter:classes
+[2026-05-02 13:11:31,027] [docker_util.py] [INFO]: > Task :ingest-converter:compileTestJava
+> Task :ingest-converter:processTestResources
+[2026-05-02 13:11:31,029] [docker_util.py] [INFO]: > Task :ingest-converter:testClasses
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: > Task :ingest-converter:test
+
+org.logstash.ingest.JsonTest > convertsConvertProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.JsonTest > convertsConvertProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.JsonTest > convertsConvertProcessorCorrectly[2] PASSED
+
+org.logstash.ingest.DateTest > convertsDateFieldCorrectly[0] PASSED
+
+org.logstash.ingest.DateTest > convertsDateFieldCorrectly[1] PASSED
+
+org.logstash.ingest.DateTest > convertsDateFieldCorrectly[2] PASSED
+
+org.logstash.ingest.GrokTest > convertsGrokFieldCorrectly[0] PASSED
+
+org.logstash.ingest.GrokTest > convertsGrokFieldCorrectly[1] PASSED
+
+org.logstash.ingest.GrokTest > convertsGrokFieldCorrectly[2] PASSED
+
+org.logstash.ingest.GeoIpTest > convertsGeoIpFieldCorrectly[0] PASSED
+
+org.logstash.ingest.GeoIpTest > convertsGeoIpFieldCorrectly[1] PASSED
+
+org.logstash.ingest.SetTest > convertsSetProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.SetTest > convertsSetProcessorCorrectly[1] PASSED
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: org.logstash.ingest.SetTest > convertsSetProcessorCorrectly[2] PASSED
+
+org.logstash.ingest.ConvertTest > convertsConvertProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.ConvertTest > convertsConvertProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.ConvertTest > convertsConvertProcessorCorrectly[2] PASSED
+
+org.logstash.ingest.ConvertTest > convertsConvertProcessorCorrectly[3] PASSED
+
+org.logstash.ingest.LowercaseTest > convertsAppendProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.LowercaseTest > convertsAppendProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.AppendTest > convertsAppendProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.AppendTest > convertsAppendProcessorCorrectly[1] PASSED
+
+org.logstash.ingest.AppendTest > convertsAppendProcessorCorrectly[2] PASSED
+
+org.logstash.ingest.GsubTest > convertsGsubCorrectly[0] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[0] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[0] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[1] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[1] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[2] STANDARD_OUT
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[2] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[3] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[3] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[4] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[5] PASSED
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[6] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[7] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[8] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[9] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[9] PASSED
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[10] STANDARD_OUT
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[10] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[11] STANDARD_OUT
+    WARN Found unrecognized processor named: grok
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[11] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[12] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[13] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[14] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[15] PASSED
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[16] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[17] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[18] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[19]
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[20] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[21] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[22] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[23] PASSED
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[24] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[25] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[26] PASSED
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[27] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[28] PASSED
+
+org.logstash.ingest.PipelineTest > convertsComplexCaseCorrectly[29]
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: PASSED
+
+org.logstash.ingest.RenameTest > convertsConvertProcessorCorrectly[0] PASSED
+
+org.logstash.ingest.RenameTest > convertsConvertProcessorCorrectly[1] PASSED
+
+----------------------------------------------------------------------
+|  Results: SUCCESS (56 tests, 56 successes, 0 failures, 0 skipped)  |
+----------------------------------------------------------------------
+[2026-05-02 13:11:31,526] [docker_util.py] [INFO]: > Task :markTestAliasDefinitions
+> Task :copyPluginTestAlias_java
+[2026-05-02 13:11:31,627] [docker_util.py] [INFO]: > Task :copyPluginTestAlias_ruby
+> Task :copyPluginTestAlias
+> Task :jar
+> Task :assemble
+> Task :buildCustomJRuby SKIPPED
+> Task :installCustomJRuby SKIPPED
+[2026-05-02 13:11:33,626] [docker_util.py] [INFO]: > Task :downloadJRuby
+Download https://repo1.maven.org/maven2/org/jruby/jruby-dist/9.2.20.1/jruby-dist-9.2.20.1-bin.tar.gz
+[2026-05-02 13:11:39,326] [docker_util.py] [INFO]: > Task :verifyFile
+[2026-05-02 13:11:39,826] [docker_util.py] [INFO]: > Task :downloadAndInstallJRuby
+> Task :benchmark-cli:jar
+[2026-05-02 13:11:40,726] [docker_util.py] [INFO]: > Task :benchmark-cli:shadowJar
+> Task :benchmark-cli:assemble
+> Task :dependencies-report:jar
+[2026-05-02 13:11:40,926] [docker_util.py] [INFO]: > Task :dependencies-report:shadowJar
+> Task :dependencies-report:assemble
+> Task :ingest-converter:jar
+[2026-05-02 13:11:41,126] [docker_util.py] [INFO]: > Task :ingest-converter:shadowJar
+> Task :ingest-converter:assemble
+[2026-05-02 13:11:50,826] [docker_util.py] [INFO]: > Task :logstash-core:compileJava
+[2026-05-02 13:11:50,826] [docker_util.py] [INFO]: [91mNote: Processing Log4j annotations
+Note: Annotations processed
+Note: Processing Log4j annotations
+Note: No elements to process
+[0m
+[2026-05-02 13:11:53,426] [docker_util.py] [INFO]: > Task :markAliasDefinitions
+[2026-05-02 13:11:53,526] [docker_util.py] [INFO]: > Task :copyPluginAlias_java
+> Task :copyPluginAlias_ruby
+> Task :copyPluginAlias NO-SOURCE
+> Task :logstash-core:processResources
+> Task :logstash-core:classes
+> Task :logstash-core:jar
+[2026-05-02 13:11:54,727] [docker_util.py] [INFO]: > Task :logstash-core:copyRuntimeLibs
+[2026-05-02 13:11:54,827] [docker_util.py] [INFO]: > Task :logstash-core:sourcesJar
+> Task :logstash-core:copyGemjar
+[2026-05-02 13:11:56,826] [docker_util.py] [INFO]: > Task :logstash-core:javadoc
+[2026-05-02 13:11:56,826] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:11:57,926] [docker_util.py] [INFO]: > Task :logstash-core:javadocJar
+> Task :logstash-core:assemble
+[2026-05-02 13:12:11,626] [docker_util.py] [INFO]: > Task :logstash-core-benchmarks:compileJava
+> Task :logstash-core-benchmarks:processResources
+> Task :logstash-core-benchmarks:classes
+> Task :logstash-core-benchmarks:jar
+> Task :logstash-core-benchmarks:assemble
+> Task :logstash-integration-tests:compileJava NO-SOURCE
+> Task :logstash-integration-tests:processResources NO-SOURCE
+> Task :logstash-integration-tests:classes UP-TO-DATE
+> Task :logstash-integration-tests:jar
+> Task :logstash-integration-tests:assemble
+> Task :logstash-xpack:compileJava NO-SOURCE
+> Task :logstash-xpack:processResources NO-SOURCE
+> Task :logstash-xpack:classes UP-TO-DATE
+> Task :logstash-xpack:jar
+[2026-05-02 13:12:11,626] [docker_util.py] [INFO]: > Task :logstash-xpack:assemble
+[2026-05-02 13:12:41,626] [docker_util.py] [INFO]: > Task :installBundler
+[2026-05-02 13:12:42,826] [docker_util.py] [INFO]: Fetching bundler-2.7.2.gem
+[2026-05-02 13:12:43,627] [docker_util.py] [INFO]: [91mERROR:  Error installing bundler:
+	bundler requires Ruby version >= 3.2.0. The current ruby version is 2.5.8.0.
+[0m
+[2026-05-02 13:12:43,826] [docker_util.py] [INFO]: > Task :bootstrap FAILED
+[2026-05-02 13:12:43,826] [docker_util.py] [INFO]: [91mLoadError: no such file to load -- bundler
+  require at org/jruby/RubyKernel.java:974
+  require at uri:classloader:/META-INF/jruby.home/lib/ruby/stdlib/rubygems/core_ext/kernel_require.rb:83
+  invoke! at /home/logstash/lib/bootstrap/bundler.rb:115
+   <main> at <script>:1
+[0m
+[2026-05-02 13:12:48,526] [docker_util.py] [INFO]: > Task :logstash-core:compileTestJava
+[2026-05-02 13:12:48,626] [docker_util.py] [INFO]: > Task :logstash-core:processTestResources
+> Task :logstash-core:testClasses
+[2026-05-02 13:12:50,626] [docker_util.py] [INFO]: > Task :logstash-core:javaTests
+
+org.logstash.secret.SecretIdentifierTest > testBasic PASSED
+
+org.logstash.secret.SecretIdentifierTest > testColon PASSED
+
+org.logstash.secret.SecretIdentifierTest > testCase PASSED
+
+org.logstash.secret.SecretIdentifierTest > testFromExternal PASSED
+
+org.logstash.secret.SecretIdentifierTest > testFromExternalInvalid PASSED
+
+org.logstash.secret.SecretIdentifierTest > testNullKey PASSED
+
+org.logstash.secret.SecretIdentifierTest > testEmptyKey PASSED
+
+org.logstash.secret.store.SecretStoreUtilTest > testAsciiCharToBytes PASSED
+
+org.logstash.secret.store.SecretStoreUtilTest > testClear PASSED
+
+org.logstash.secret.store.SecretStoreUtilTest > testBase64EncodeBytes PASSED
+
+org.logstash.secret.store.SecretStoreUtilTest > testBase64EncodeChars PASSED
+
+org.logstash.secret.store.SecretStoreUtilTest > testBase64EncodeBytesToChars
+[2026-05-02 13:12:50,626] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 13:12:50,626] [docker_util.py] [INFO]: PASSED
+
+org.logstash.secret.store.SecretStoreUtilTest > testObfuscate PASSED
+
+org.logstash.secret.store.SecretStoreUtilTest > testAsciiBytesToChar PASSED
+
+org.logstash.secret.store.SecretStoreFactoryTest > testAlternativeImplementation PASSED
+
+org.logstash.secret.store.SecretStoreFactoryTest > testAlternativeImplementationInvalid PASSED
+
+org.logstash.secret.store.SecretStoreFactoryTest > testDefaultLoadWithEnvPass STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:49.603 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit9875356647001939384/junit2991245672916402604/logstash.keystore
+
+org.logstash.secret.store.SecretStoreFactoryTest > testDefaultLoadWithEnvPass PASSED
+
+org.logstash.secret.store.SecretStoreFactoryTest > testCreateLoad STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:49.657 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit26663771038063637/junit16204412899506333028/logstash.keystore
+
+org.logstash.secret.store.SecretStoreFactoryTest > testCreateLoad PASSED
+
+org.logstash.secret.store.SecretStoreFactoryTest > testErrorLoading STANDARD_OUT
+[2026-05-02 13:12:50,627] [docker_util.py] [INFO]: [WARN ] 2026-05-02 19:12:49.702 [Test worker] JavaKeyStore - keystore.file configuration is not defined
+
+org.logstash.secret.store.SecretStoreFactoryTest > testErrorLoading PASSED
+
+org.logstash.secret.store.SecureConfigTest > testClearedAdd PASSED
+
+org.logstash.secret.store.SecureConfigTest > testClearedGet PASSED
+
+org.logstash.secret.store.SecureConfigTest > test PASSED
+
+org.logstash.secret.store.SecureConfigTest > testClearedClone PASSED
+[2026-05-02 13:12:50,627] [docker_util.py] [INFO]: org.logstash.secret.store.backend.JavaKeyStoreTest > retrieveWithInvalidInput STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:49.717 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit4082793821707920856/junit6453652121195462275/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > retrieveWithInvalidInput PASSED
+[2026-05-02 13:12:50,627] [docker_util.py] [INFO]: org.logstash.secret.store.backend.JavaKeyStoreTest > tamperedKeystore STANDARD_OUT
+[2026-05-02 13:12:50,627] [docker_util.py] [INFO]: [INFO ] 2026-05-02 19:12:49.722 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit2787970016820962649/junit10024214770390866365/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > tamperedKeystore PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > invalidDirectory STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:49.727 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit8138494259701494765/junit5897685391956563025/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > invalidDirectory PASSED
+[2026-05-02 13:12:50,627] [docker_util.py] [INFO]: 
+[2026-05-02 13:12:50,627] [docker_util.py] [INFO]: org.logstash.secret.store.backend.JavaKeyStoreTest > testEmptyNotAllowedOnExisting STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:49.733 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit13942373970784147321/junit5860711047529128037/logstash.keystore
+    [INFO ] 2026-05-02 19:12:49.737 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit13942373970784147321/junit2718120827755320393/alt.logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testEmptyNotAllowedOnExisting PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > basicTest STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:49.742 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit7463617683913656119/junit10748229770152201104/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > basicTest PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > wrongPassword STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:49.758 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit14696976418504421007/junit9283132200918525917/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > wrongPassword PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > isLogstashKeystore STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:49.764 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit9017902638862134343/junit3560424299884619040/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > isLogstashKeystore PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testExternalUpdateList STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:49.786 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit12570140748010053838/junit1152241403446158841/logstash.keystore
+    [INFO ] 2026-05-02 19:12:49.791 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit12570140748010053838/junit10291290968499288516/alt.logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testExternalUpdateList PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testExternalUpdateRead STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:49.834 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit11900894951837723785/junit9805353803877458546/logstash.keystore
+[2026-05-02 13:12:50,627] [docker_util.py] [INFO]: [INFO ] 2026-05-02 19:12:49.840 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit11900894951837723785/junit10623627191273863465/alt.logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testExternalUpdateRead PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testLoadNotCreated STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:49.866 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit8542609816372179625/junit13269649245212185832/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testLoadNotCreated PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > notLogstashKeystoreNoMarker STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:49.871 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit5165534808917613951/junit7277891819536168810/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > notLogstashKeystoreNoMarker PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testRestrictivePermissions STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:49.878 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit16268536791946525139/junit925189830627669568/logstash.keystore
+    [INFO ] 2026-05-02 19:12:49.881 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit16268536791946525139/junit17148284640260385621/alt.logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testRestrictivePermissions PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testFileLock STANDARD_OUT
+[2026-05-02 13:12:50,627] [docker_util.py] [INFO]: [INFO ] 2026-05-02 19:12:49.886 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit4168955125093202923/junit8289023453562326462/logstash.keystore
+[2026-05-02 13:12:52,026] [docker_util.py] [INFO]: org.logstash.secret.store.backend.JavaKeyStoreTest > testFileLock PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testGeneratedSecret STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.005 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit11084637908780809622/junit2661461334342944136/logstash.keystore
+    [INFO ] 2026-05-02 19:12:52.008 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit11084637908780809622/junit3107796147430951519/alt.logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testGeneratedSecret PASSED
+[2026-05-02 13:12:52,126] [docker_util.py] [INFO]: org.logstash.secret.store.backend.JavaKeyStoreTest > overwriteExisting STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.022 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit728273144529605940/junit14830904840528288010/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > overwriteExisting PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > notLogstashKeystore STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.042 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit2440351465049564466/junit5160273843702139317/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > notLogstashKeystore PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testDefaultPermissions STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.047 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit15017371912030468835/junit8467547955421353998/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testDefaultPermissions PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testEmptyNotAllowedOnCreate STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.051 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit819690322517811357/junit16410518600565205953/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testEmptyNotAllowedOnCreate PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testWithRealSecondJvm SKIPPED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > retrieveMissingSecret STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.055 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit1615592649295136203/junit9253552440218876288/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > retrieveMissingSecret PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > readExisting STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.059 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit4615737062663954162/junit15612799394958777732/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > readExisting PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testExternalUpdatePersist STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.096 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit12484801983282731114/junit14267285475578131900/logstash.keystore
+    [INFO ] 2026-05-02 19:12:52.100 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit12484801983282731114/junit7434195302113893240/alt.logstash.keystore
+[2026-05-02 13:12:52,226] [docker_util.py] [INFO]: org.logstash.secret.store.backend.JavaKeyStoreTest > testExternalUpdatePersist PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > concurrentReadTest STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.139 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit12776260574744770430/junit7903058351858038190/logstash.keystore
+[2026-05-02 13:12:52,926] [docker_util.py] [INFO]: org.logstash.secret.store.backend.JavaKeyStoreTest > concurrentReadTest PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testAlreadyCreated STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.878 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit16431111696733752497/junit3100050170421588167/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testAlreadyCreated PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testDelete STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.881 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit391213778504869892/junit9777372557633037016/logstash.keystore
+    [INFO ] 2026-05-02 19:12:52.886 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit391213778504869892/junit944710620680910716/alt.logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testDelete PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testLargeKeysAndValues STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.895 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit10487455239393433026/junit1269330592049297358/logstash.keystore
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testLargeKeysAndValues PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > purgeMissingSecret STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.919 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit15591026594220145545/junit9122864823303365703/logstash.keystore
+[2026-05-02 13:12:53,026] [docker_util.py] [INFO]: org.logstash.secret.store.backend.JavaKeyStoreTest > purgeMissingSecret PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > readWriteListDelete STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:52.925 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit7782070536874504998/junit2809608292506834746/logstash.keystore
+[2026-05-02 13:12:53,226] [docker_util.py] [INFO]: org.logstash.secret.store.backend.JavaKeyStoreTest > readWriteListDelete PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testNoPathDefined STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:53.140 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit17399386547713110439/junit1094383731520838674/logstash.keystore
+    [WARN ] 2026-05-02 19:12:53.140 [Test worker] JavaKeyStore - keystore.file configuration is not defined
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testNoPathDefined PASSED
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testNonAscii STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:53.143 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit17030177663037840808/junit11118303374934819463/logstash.keystore
+    [INFO ] 2026-05-02 19:12:53.147 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit17030177663037840808/junit11118303374934819463/logstash.keystore.nonAscii
+
+org.logstash.secret.store.backend.JavaKeyStoreTest > testNonAscii PASSED
+
+org.logstash.secret.cli.SecretStoreCliTest > testAdd STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:53.197 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit10434781414006277329/junit13189153116956039493/logstash.keystore
+[2026-05-02 13:12:53,326] [docker_util.py] [INFO]: org.logstash.secret.cli.SecretStoreCliTest > testAdd PASSED
+
+org.logstash.secret.cli.SecretStoreCliTest > testBadCommand PASSED
+
+org.logstash.secret.cli.SecretStoreCliTest > testList PASSED
+
+org.logstash.secret.cli.SecretStoreCliTest > testRemoveMissing STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:53.279 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit1053165639279094570/junit10197642294314195246/logstash.keystore
+
+    Enter value for e1e3dc99-fac6-472e-a635-806bf0945072: Added 'e1e3dc99-fac6-472e-a635-806bf0945072' to the Logstash keystore.
+[2026-05-02 13:12:53,426] [docker_util.py] [INFO]: org.logstash.secret.cli.SecretStoreCliTest > testRemoveMissing PASSED
+
+org.logstash.secret.cli.SecretStoreCliTest > testHelpList PASSED
+
+org.logstash.secret.cli.SecretStoreCliTest > testHelpCreate PASSED
+
+org.logstash.secret.cli.SecretStoreCliTest > testHelpAdd PASSED
+
+org.logstash.secret.cli.SecretStoreCliTest > testHelpRemove PASSED
+
+org.logstash.secret.cli.SecretStoreCliTest > testAddEmptyValue STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:53.366 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit5881277229585491076/junit14434458050808039737/logstash.keystore
+
+org.logstash.secret.cli.SecretStoreCliTest > testAddEmptyValue PASSED
+
+org.logstash.secret.cli.SecretStoreCliTest > testCreateNewAllNo PASSED
+
+org.logstash.secret.cli.SecretStoreCliTest > testCreateNoEnvironmentWarning PASSED
+[2026-05-02 13:12:53,526] [docker_util.py] [INFO]: org.logstash.secret.cli.SecretStoreCliTest > testCreateNewAllYes STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:53.445 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit8666318430225183504/junit8005326537786919493/logstash.keystore
+
+org.logstash.secret.cli.SecretStoreCliTest > testCreateNewAllYes PASSED
+
+org.logstash.secret.cli.SecretStoreCliTest > testDoubleCreateWarning STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:53.478 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit14471046468247213190/junit17468251108744951999/logstash.keystore
+
+org.logstash.secret.cli.SecretStoreCliTest > testDoubleCreateWarning PASSED
+
+org.logstash.secret.cli.SecretStoreCliTest > testRemove STANDARD_OUT
+    [INFO ] 2026-05-02 19:12:53.517 [Test worker] JavaKeyStore - Created Logstash keystore at /tmp/junit837740943705429009/junit5576487500699744836/logstash.keystore
+[2026-05-02 13:12:53,626] [docker_util.py] [INFO]: Enter value for 1bb05620-441a-4c0a-8b5a-dbb403f69041: Added '1bb05620-441a-4c0a-8b5a-dbb403f69041' to the Logstash keystore.
+
+
+org.logstash.secret.cli.SecretStoreCliTest > testRemove PASSED
+
+org.logstash.FieldReferenceTest > testParseInvalidDoubleCloseBrackets PASSED
+
+org.logstash.FieldReferenceTest > testParse3FieldsPath PASSED
+
+org.logstash.FieldReferenceTest > testParseLiteralSquareBrackets PASSED
+
+org.logstash.FieldReferenceTest > testEmbeddedSingleReference PASSED
+
+org.logstash.FieldReferenceTest > testParseNestingSquareBrackets PASSED
+
+org.logstash.FieldReferenceTest > testParseInvalidLotsOfOpenBrackets PASSED
+[2026-05-02 13:12:54,826] [docker_util.py] [INFO]: org.logstash.FieldReferenceTest > testRubyCacheUpperBound PASSED
+
+org.logstash.FieldReferenceTest > testParseInvalidEmbeddedDeepReference PASSED
+
+org.logstash.FieldReferenceTest > testParseEmptyString PASSED
+
+org.logstash.FieldReferenceTest > testParse2FieldsPath PASSED
+
+org.logstash.FieldReferenceTest > deduplicatesTimestamp PASSED
+
+org.logstash.FieldReferenceTest > testParseSingleFieldPath PASSED
+
+org.logstash.FieldReferenceTest > testParseInvalidOnlyCloseBracket PASSED
+
+org.logstash.FieldReferenceTest > testParseInvalidMissingMiddleBracket PASSED
+
+org.logstash.FieldReferenceTest > testParseSingleBareField PASSED
+
+org.logstash.FieldReferenceTest > testParseInvalidNoCloseBracket PASSED
+
+org.logstash.FieldReferenceTest > testParseInvalidEmbeddedDeepReference2 PASSED
+
+org.logstash.FieldReferenceTest > testParseInvalidNoInitialOpenBracket PASSED
+
+org.logstash.FieldReferenceTest > testParseInvalidOnlyOpenBracket PASSED
+
+org.logstash.FieldReferenceTest > testParseChainedNestingSquareBrackets PASSED
+
+org.logstash.FieldReferenceTest > testCacheUpperBound PASSED
+
+org.logstash.FieldReferenceTest > testEmbeddedDeepReference PASSED
+
+org.logstash.execution.ShutdownWatcherExtTest > testShouldForceShutdown STANDARD_OUT
+    [WARN ] 2026-05-02 19:12:54.768 [pool-4-thread-1] ShutdownWatcherExt - #<Object:0x4e82064b>
+    [ERROR] 2026-05-02 19:12:54.770 [pool-4-thread-1] ShutdownWatcherExt - The shutdown process appears to be stalled due to busy or blocked plugins. Check the logs for more information.
+    [WARN ] 2026-05-02 19:12:54.770 [pool-4-thread-1] ShutdownWatcherExt - #<Object:0x4e82064b>
+    [WARN ] 2026-05-02 19:12:54.770 [pool-4-thread-1] ShutdownWatcherExt - #<Object:0x4e82064b>
+    [FATAL] 2026-05-02 19:12:54.770 [pool-4-thread-1] ShutdownWatcherExt - Forcefully quitting Logstash ...
+
+org.logstash.execution.ShutdownWatcherExtTest > testShouldForceShutdown PASSED
+
+org.logstash.common.DeadLetterQueueFactoryTest > testOpenableAfterRelease PASSED
+
+org.logstash.common.DeadLetterQueueFactoryTest > testSameBeforeRelease PASSED
+[2026-05-02 13:12:55,026] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueReaderTest > testBlockBoundary PASSED
+[2026-05-02 13:12:57,526] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueReaderTest > testFlushAfterSegmentComplete PASSED
+[2026-05-02 13:13:00,726] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueReaderTest > testMultiFlushAfterSegmentComplete PASSED
+[2026-05-02 13:13:00,827] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueReaderTest > testFlushAfterWriterClose PASSED
+
+org.logstash.common.io.DeadLetterQueueReaderTest > testSeek PASSED
+[2026-05-02 13:13:00,927] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueReaderTest > testBlockAndSegmentBoundary PASSED
+[2026-05-02 13:13:01,026] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueReaderTest > testBlockBoundaryMultiple PASSED
+
+org.logstash.common.io.DeadLetterQueueReaderTest > testFlushAfterDelay STANDARD_OUT
+    events per block= 15
+[2026-05-02 13:13:05,527] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueReaderTest > testFlushAfterDelay PASSED
+
+org.logstash.common.io.DeadLetterQueueReaderTest > testWriteStopSmallWriteSeekByTimestamp PASSED
+[2026-05-02 13:13:05,627] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueReaderTest > testConcurrentWriteReadRandomEventSize PASSED
+
+org.logstash.common.io.DeadLetterQueueReaderTest > testWriteStopBigWriteSeekByTimestamp PASSED
+
+org.logstash.common.io.DeadLetterQueueReaderTest > testSeekToMiddleOfRemovedLog PASSED
+[2026-05-02 13:13:06,129] [docker_util.py] [INFO]: 
+[2026-05-02 13:13:06,129] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueReaderTest > testReadFromTwoSegments
+[2026-05-02 13:13:06,129] [docker_util.py] [INFO]: PASSED
+[2026-05-02 13:13:06,129] [docker_util.py] [INFO]: 
+[2026-05-02 13:13:06,129] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueReaderTest > testSeekToStartOfRemovedLog
+[2026-05-02 13:13:06,129] [docker_util.py] [INFO]: PASSED
+[2026-05-02 13:13:06,130] [docker_util.py] [INFO]: 
+[2026-05-02 13:13:06,528] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueReaderTest > testWriteReadRandomEventSize PASSED
+[2026-05-02 13:13:06,827] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueReaderTest > testRereadFinalBlock PASSED
+[2026-05-02 13:13:08,827] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueWriterTest > testDoesNotWriteBeyondLimit STANDARD_OUT
+    [ERROR] 2026-05-02 19:13:08.734 [Test worker] DeadLetterQueueWriter - cannot write event to DLQ(path: /tmp/junit17443058582976153176/junit3905827514604370022): reached maxQueueSize of 1185
+[2026-05-02 13:13:10,827] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueWriterTest > testDoesNotWriteBeyondLimit PASSED
+
+org.logstash.common.io.DeadLetterQueueWriterTest > testWrite PASSED
+
+org.logstash.common.io.DeadLetterQueueWriterTest > testUncleanCloseOfPreviousWriter PASSED
+
+org.logstash.common.io.DeadLetterQueueWriterTest > testLockFileManagement PASSED
+
+org.logstash.common.io.DeadLetterQueueWriterTest > testDoesNotWriteMessagesAlreadyRoutedThroughDLQ STANDARD_OUT
+    [WARN ] 2026-05-02 19:13:10.740 [Test worker] DeadLetterQueueWriter - Event previously submitted to dead letter queue. Skipping...
+
+org.logstash.common.io.DeadLetterQueueWriterTest > testDoesNotWriteMessagesAlreadyRoutedThroughDLQ PASSED
+[2026-05-02 13:13:14,927] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueWriterTest > testSlowFlush PASSED
+[2026-05-02 13:13:15,027] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueWriterTest > testCloseFlush PASSED
+
+org.logstash.common.io.DeadLetterQueueWriterTest > testFileLocking PASSED
+[2026-05-02 13:13:16,427] [docker_util.py] [INFO]: org.logstash.common.io.DeadLetterQueueWriterTest > testNotFlushed PASSED
+
+org.logstash.common.io.RecordIOReaderTest > testObviouslyInvalidSegment STANDARD_OUT
+    [WARN ] 2026-05-02 19:13:16.367 [Test worker] RecordIOReader - Error reading segment file /tmp/junit3830491978292009307/test
+    java.lang.IllegalStateException: Invalid version on DLQ data file /tmp/junit3830491978292009307/test. Expected version: 1. Version found on file:  
+    	at org.logstash.common.io.RecordIOReader.<init>(RecordIOReader.java:86) ~[main/:?]
+    	at org.logstash.common.io.RecordIOReader.getSegmentStatus(RecordIOReader.java:358) [main/:?]
+    	at org.logstash.common.io.RecordIOReaderTest.testObviouslyInvalidSegment(RecordIOReaderTest.java:180) [test/:?]
+    	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+    	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:?]
+    	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+    	at java.lang.reflect.Method.invoke(Method.java:566) ~[?:?]
+    	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50) [junit-4.12.jar:4.12]
+    	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12) [junit-4.12.jar:4.12]
+    	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47) [junit-4.12.jar:4.12]
+    	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17) [junit-4.12.jar:4.12]
+    	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26) [junit-4.12.jar:4.12]
+    	at org.junit.rules.ExternalResource$1.evaluate(ExternalResource.java:48) [junit-4.12.jar:4.12]
+    	at org.junit.rules.RunRules.evaluate(RunRules.java:20) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325) [junit-4.12.jar:4.12]
+[2026-05-02 13:13:16,428] [docker_util.py] [INFO]: at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78) [junit-4.12.jar:4.12]
+    	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner.run(ParentRunner.java:363) [junit-4.12.jar:4.12]
+    	at org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor.runTestClass(JUnitTestClassExecutor.java:110) [gradle-testing-jvm-7.2.jar:7.2]
+    	at org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor.execute(JUnitTestClassExecutor.java:58) [gradle-testing-jvm-7.2.jar:7.2]
+    	at org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor.execute(JUnitTestClassExecutor.java:38) [gradle-testing-jvm-7.2.jar:7.2]
+    	at org.gradle.api.internal.tasks.testing.junit.AbstractJUnitTestClassProcessor.processTestClass(AbstractJUnitTestClassProcessor.java:62) [gradle-testing-jvm-7.2.jar:7.2]
+    	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.processTestClass(SuiteTestClassProcessor.java:51) [gradle-testing-base-7.2.jar:7.2]
+    	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+    	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:?]
+    	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+    	at java.lang.reflect.Method.invoke(Method.java:566) ~[?:?]
+    	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36) [gradle-messaging-7.2.jar:7.2]
+    	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24) [gradle-messaging-7.2.jar:7.2]
+[2026-05-02 13:13:16,428] [docker_util.py] [INFO]: at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33) [gradle-messaging-7.2.jar:7.2]
+    	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:94) [gradle-messaging-7.2.jar:7.2]
+    	at com.sun.proxy.$Proxy2.processTestClass(Unknown Source) [?:?]
+    	at org.gradle.api.internal.tasks.testing.worker.TestWorker$2.run(TestWorker.java:176) [gradle-testing-base-7.2.jar:7.2]
+    	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:129) [gradle-testing-base-7.2.jar:7.2]
+    	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:100) [gradle-testing-base-7.2.jar:7.2]
+    	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:60) [gradle-testing-base-7.2.jar:7.2]
+    	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56) [gradle-worker-processes-7.2.jar:7.2]
+    	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:133) [gradle-worker-processes-7.2.jar:7.2]
+    	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:71) [gradle-worker-processes-7.2.jar:7.2]
+    	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69) [gradle-worker.jar:?]
+    	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74) [gradle-worker.jar:?]
+
+org.logstash.common.io.RecordIOReaderTest > testObviouslyInvalidSegment PASSED
+
+org.logstash.common.io.RecordIOReaderTest > testVersionMismatch PASSED
+
+org.logstash.common.io.RecordIOReaderTest > testSeekBlockSizeEvents PASSED
+
+org.logstash.common.io.RecordIOReaderTest > testReadMiddle PASSED
+
+org.logstash.common.io.RecordIOReaderTest > testEmptySegment PASSED
+[2026-05-02 13:13:16,428] [docker_util.py] [INFO]: org.logstash.common.io.RecordIOReaderTest > testReadEmptyBlock PASSED
+
+org.logstash.common.io.RecordIOReaderTest > testFind PASSED
+
+org.logstash.common.io.RecordIOReaderTest > testPartiallyWrittenSegment STANDARD_OUT
+    [WARN ] 2026-05-02 19:13:16.403 [Test worker] RecordIOReader - Error reading segment file /tmp/junit17133886326829967474/test
+[2026-05-02 13:13:16,428] [docker_util.py] [INFO]: java.lang.IllegalStateException: invalid checksum of record
+    	at org.logstash.common.io.RecordIOReader.getRecord(RecordIOReader.java:246) ~[main/:?]
+    	at org.logstash.common.io.RecordIOReader.readEvent(RecordIOReader.java:262) ~[main/:?]
+    	at org.logstash.common.io.RecordIOReader.getSegmentStatus(RecordIOReader.java:363) [main/:?]
+    	at org.logstash.common.io.RecordIOReaderTest.testPartiallyWrittenSegment(RecordIOReaderTest.java:189) [test/:?]
+    	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+    	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:?]
+    	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+    	at java.lang.reflect.Method.invoke(Method.java:566) ~[?:?]
+    	at org.junit.runners.model.FrameworkMethod$1.runReflectiveCall(FrameworkMethod.java:50) [junit-4.12.jar:4.12]
+    	at org.junit.internal.runners.model.ReflectiveCallable.run(ReflectiveCallable.java:12) [junit-4.12.jar:4.12]
+    	at org.junit.runners.model.FrameworkMethod.invokeExplosively(FrameworkMethod.java:47) [junit-4.12.jar:4.12]
+    	at org.junit.internal.runners.statements.InvokeMethod.evaluate(InvokeMethod.java:17) [junit-4.12.jar:4.12]
+    	at org.junit.internal.runners.statements.RunBefores.evaluate(RunBefores.java:26) [junit-4.12.jar:4.12]
+    	at org.junit.rules.ExternalResource$1.evaluate(ExternalResource.java:48) [junit-4.12.jar:4.12]
+    	at org.junit.rules.RunRules.evaluate(RunRules.java:20) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner.runLeaf(ParentRunner.java:325) [junit-4.12.jar:4.12]
+    	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:78) [junit-4.12.jar:4.12]
+    	at org.junit.runners.BlockJUnit4ClassRunner.runChild(BlockJUnit4ClassRunner.java:57) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner$3.run(ParentRunner.java:290) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner$1.schedule(ParentRunner.java:71) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner.runChildren(ParentRunner.java:288) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner.access$000(ParentRunner.java:58) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner$2.evaluate(ParentRunner.java:268) [junit-4.12.jar:4.12]
+    	at org.junit.runners.ParentRunner.run(ParentRunner.java:363) [junit-4.12.jar:4.12]
+    	at org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor.runTestClass(JUnitTestClassExecutor.java:110) [gradle-testing-jvm-7.2.jar:7.2]
+    	at org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor.execute(JUnitTestClassExecutor.java:58) [gradle-testing-jvm-7.2.jar:7.2]
+    	at org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor.execute(JUnitTestClassExecutor.java:38) [gradle-testing-jvm-7.2.jar:7.2]
+[2026-05-02 13:13:16,428] [docker_util.py] [INFO]: at org.gradle.api.internal.tasks.testing.junit.AbstractJUnitTestClassProcessor.processTestClass(AbstractJUnitTestClassProcessor.java:62) [gradle-testing-jvm-7.2.jar:7.2]
+    	at org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor.processTestClass(SuiteTestClassProcessor.java:51) [gradle-testing-base-7.2.jar:7.2]
+    	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+    	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:?]
+    	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+    	at java.lang.reflect.Method.invoke(Method.java:566) ~[?:?]
+    	at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:36) [gradle-messaging-7.2.jar:7.2]
+[2026-05-02 13:13:16,428] [docker_util.py] [INFO]: at org.gradle.internal.dispatch.ReflectionDispatch.dispatch(ReflectionDispatch.java:24) [gradle-messaging-7.2.jar:7.2]
+    	at org.gradle.internal.dispatch.ContextClassLoaderDispatch.dispatch(ContextClassLoaderDispatch.java:33) [gradle-messaging-7.2.jar:7.2]
+    	at org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler.invoke(ProxyDispatchAdapter.java:94) [gradle-messaging-7.2.jar:7.2]
+[2026-05-02 13:13:16,428] [docker_util.py] [INFO]: at com.sun.proxy.$Proxy2.processTestClass(Unknown Source) [?:?]
+    	at org.gradle.api.internal.tasks.testing.worker.TestWorker$2.run(TestWorker.java:176) [gradle-testing-base-7.2.jar:7.2]
+    	at org.gradle.api.internal.tasks.testing.worker.TestWorker.executeAndMaintainThreadName(TestWorker.java:129) [gradle-testing-base-7.2.jar:7.2]
+[2026-05-02 13:13:16,428] [docker_util.py] [INFO]: at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:100) [gradle-testing-base-7.2.jar:7.2]
+    	at org.gradle.api.internal.tasks.testing.worker.TestWorker.execute(TestWorker.java:60) [gradle-testing-base-7.2.jar:7.2]
+    	at org.gradle.process.internal.worker.child.ActionExecutionWorker.execute(ActionExecutionWorker.java:56) [gradle-worker-processes-7.2.jar:7.2]
+    	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:133) [gradle-worker-processes-7.2.jar:7.2]
+    	at org.gradle.process.internal.worker.child.SystemApplicationClassLoaderWorker.call(SystemApplicationClassLoaderWorker.java:71) [gradle-worker-processes-7.2.jar:7.2]
+    	at worker.org.gradle.process.internal.worker.GradleWorkerMain.run(GradleWorkerMain.java:69) [gradle-worker.jar:?]
+    	at worker.org.gradle.process.internal.worker.GradleWorkerMain.main(GradleWorkerMain.java:74) [gradle-worker.jar:?]
+
+org.logstash.common.io.RecordIOReaderTest > testPartiallyWrittenSegment PASSED
+
+org.logstash.common.io.RecordIOReaderTest > testVersion PASSED
+
+org.logstash.common.io.RecordIOReaderTest > testSeekToStartFromEndWithNextRecordPresent PASSED
+
+org.logstash.common.io.RecordIOReaderTest > testSeekDoubleBlockSizeEvents PASSED
+
+org.logstash.common.io.RecordIOReaderTest > testSeekToStartFromEndWithoutNextRecord PASSED
+[2026-05-02 13:13:16,428] [docker_util.py] [INFO]: org.logstash.common.io.RecordIOReaderTest > testReadWhileWriteAcrossBoundary PASSED
+
+org.logstash.common.io.RecordIOReaderTest > testSeekHalfBlockSizeEvents PASSED
+
+org.logstash.common.io.RecordIOReaderTest > testValidSegment PASSED
+
+org.logstash.common.io.RecordIOWriterTest > testSingleComplete PASSED
+
+org.logstash.common.io.RecordIOWriterTest > testFitsInTwoBlocks PASSED
+[2026-05-02 13:13:16,428] [docker_util.py] [INFO]: org.logstash.common.io.RecordIOWriterTest > testFitsInThreeBlocks PASSED
+[2026-05-02 13:13:16,428] [docker_util.py] [INFO]: 
+[2026-05-02 13:13:16,527] [docker_util.py] [INFO]: org.logstash.common.io.RecordIOWriterTest > testReadWhileWrite PASSED
+
+org.logstash.common.ConfigVariableExpanderTest > testSimpleExpansion PASSED
+
+org.logstash.common.ConfigVariableExpanderTest > testExpansionWithoutVariable PASSED
+
+org.logstash.common.ConfigVariableExpanderTest > testPrecedenceOfEnvironmentVariableValue PASSED
+
+org.logstash.common.ConfigVariableExpanderTest > testExpansionWithDefaultValue PASSED
+
+org.logstash.common.ConfigVariableExpanderTest > testNonStringValueReturnsUnchanged PASSED
+
+org.logstash.common.ConfigVariableExpanderTest > testPrecedenceOfSecretStoreValue PASSED
+
+org.logstash.common.ConfigVariableExpanderTest > testExpansionWithoutValueThrows PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldThrowWhenMissingAField[0] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldInstantiateCleanlyWhenParamsAreGood[0] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldThrowWhenMissingAField[1] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldInstantiateCleanlyWhenParamsAreGood[1] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldThrowWhenMissingAField[2] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldInstantiateCleanlyWhenParamsAreGood[2] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldThrowWhenMissingAField[3] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldInstantiateCleanlyWhenParamsAreGood[3] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldThrowWhenMissingAField[4] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldInstantiateCleanlyWhenParamsAreGood[4] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldThrowWhenMissingAField[5] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldInstantiateCleanlyWhenParamsAreGood[5] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldThrowWhenMissingAField[6] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldInstantiateCleanlyWhenParamsAreGood[6]
+[2026-05-02 13:13:16,527] [docker_util.py] [INFO]: PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldThrowWhenMissingAField[7] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldInstantiateCleanlyWhenParamsAreGood[7] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldThrowWhenMissingAField[8] PASSED
+
+org.logstash.common.SourceWithMetadataTest > itShouldInstantiateCleanlyWhenParamsAreGood[8] PASSED
+
+org.logstash.common.FsUtilTest > trueIfEnoughSpace PASSED
+
+org.logstash.common.FsUtilTest > falseIfNotEnoughSpace PASSED
+
+org.logstash.TimestampTest > testMicroseconds PASSED
+
+org.logstash.TimestampTest > testUTC PASSED
+
+org.logstash.TimestampTest > testEpochMillis PASSED
+
+org.logstash.TimestampTest > testCircularIso8601 PASSED
+
+org.logstash.TimestampTest > testToIso8601 PASSED
+
+org.logstash.AccessorsTest > testBareBracketsGet PASSED
+
+org.logstash.AccessorsTest > testBareBracketsPut PASSED
+
+org.logstash.AccessorsTest > testInvalidPath PASSED
+
+org.logstash.AccessorsTest > testDel PASSED
+
+org.logstash.AccessorsTest > testDeepListGet PASSED
+
+org.logstash.AccessorsTest > testListIndexOutOfBounds PASSED
+
+org.logstash.AccessorsTest > testBareGet PASSED
+
+org.logstash.AccessorsTest > testBarePut PASSED
+
+org.logstash.AccessorsTest > testStaleTargetCache PASSED
+
+org.logstash.AccessorsTest > testAbsentDeepMapGet PASSED
+
+org.logstash.AccessorsTest > testInvalidIdList
+[2026-05-02 13:13:16,527] [docker_util.py] [INFO]: PASSED
+
+org.logstash.AccessorsTest > testAbsentBareGet PASSED
+
+org.logstash.AccessorsTest > testSetOnNonMapOrList PASSED
+
+org.logstash.AccessorsTest > testAbsentDeepListGet PASSED
+
+org.logstash.AccessorsTest > testNilInclude PASSED
+
+org.logstash.AccessorsTest > testDeepMapGet PASSED
+
+org.logstash.AccessorsTest > testDeepMapSet PASSED
+[2026-05-02 13:13:16,527] [docker_util.py] [INFO]: org.logstash.launchers.JvmOptionsParserTest > testParseOptionWithFixedVersion PASSED
+
+org.logstash.launchers.JvmOptionsParserTest > testParseOptionVersionRange PASSED
+
+org.logstash.launchers.JvmOptionsParserTest > testErrorLinesAreReportedCorrectly PASSED
+
+org.logstash.launchers.JvmOptionsParserTest > test_LS_JAVA_OPTS_isUsedWhenNoJvmOptionsIsAvailable PASSED
+
+org.logstash.launchers.JvmOptionsParserTest > testParseOptionGreaterThanVersion PASSED
+
+org.logstash.launchers.JvmOptionsParserTest > testParseCommentLine PASSED
+
+org.logstash.JavafierTest > testRubyBignum PASSED
+
+org.logstash.ClonerTest > testRubyStringCloning PASSED
+[2026-05-02 13:13:16,527] [docker_util.py] [INFO]: org.logstash.ClonerTest > testRubyStringCloningAndAppend PASSED
+
+org.logstash.ClonerTest > testRubyStringCloningMemoryOptimization PASSED
+
+org.logstash.ClonerTest > testRubyStringCloningAndChangeOriginal PASSED
+
+org.logstash.log.PluginDeprecationLoggerTest > testJavaPluginUsesDeprecationLogger PASSED
+[2026-05-02 13:13:16,627] [docker_util.py] [INFO]: org.logstash.log.PipelineRoutingAppenderTest > routingTest PASSED
+
+org.logstash.log.LogstashLoggerContextFactoryTest > testGetContextAlwaysReturnsTheSameObject PASSED
+
+org.logstash.log.DefaultDeprecationLoggerTest > testDeprecationLoggerWriteOut_root PASSED
+
+org.logstash.log.DefaultDeprecationLoggerTest > testDeprecationLoggerWriteOut_nested PASSED
+
+org.logstash.log.PipelineRoutingFilterTest > testShouldLetEventFlowIfSeparateLogFeatureIsEnabledAndTheEventIsNotPipelineTagged PASSED
+
+org.logstash.log.PipelineRoutingFilterTest > testDenyEventFlowIfSeparateLogFeatureIsEnabledAndTheEventIsPipelineTagged PASSED
+
+org.logstash.log.PipelineRoutingFilterTest > testShouldLetEventFlowIfSeparateLogFeatureIsDisabled PASSED
+
+org.logstash.log.LogstashConfigurationFactoryTest > testAppenderPerPipelineIsCreatedAfterLogLine PASSED
+
+org.logstash.log.LogstashConfigurationFactoryTest > testDisableAppenderPerPipelineIsCreatedAfterLogLine PASSED
+[2026-05-02 13:13:16,727] [docker_util.py] [INFO]: org.logstash.log.CustomLogEventTests > testJSONLayout PASSED
+
+org.logstash.log.CustomLogEventTests > testPatternLayout PASSED
+
+org.logstash.config.ir.graph.QueueVertexTest > testConstruction PASSED
+
+org.logstash.config.ir.graph.IfVertexTest > testDoesNotAcceptNonBooleanEdges PASSED
+
+org.logstash.config.ir.graph.IfVertexTest > testEdgeTypeHandling PASSED
+
+org.logstash.config.ir.graph.IfVertexTest > testIfVertexCreation PASSED
+
+org.logstash.config.ir.graph.algorithms.DepthFirstTest > testDFSBasic PASSED
+
+org.logstash.config.ir.graph.algorithms.DepthFirstTest > testReverseDFSVertex PASSED
+
+org.logstash.config.ir.graph.algorithms.DepthFirstTest > testDFSReverse PASSED
+
+org.logstash.config.ir.graph.algorithms.DepthFirstTest > testDFSVertex PASSED
+
+org.logstash.config.ir.graph.algorithms.TopologicalSortTest > testGraphCycleDetection PASSED
+
+org.logstash.config.ir.graph.algorithms.TopologicalSortTest > testSortOrder PASSED
+
+org.logstash.config.ir.graph.algorithms.GraphDiffTest > testIdenticalGraphs PASSED
+
+org.logstash.config.ir.graph.algorithms.GraphDiffTest > testDifferentSimpleGraphs PASSED
+
+org.logstash.config.ir.graph.algorithms.BreadthFirstTest > testBFSBasic PASSED
+
+org.logstash.config.ir.graph.PlainEdgeTest > creationDoesNotRaiseException PASSED
+
+org.logstash.config.ir.graph.PlainEdgeTest > testFactoryCreationDoesNotRaiseException PASSED
+
+org.logstash.config.ir.graph.EdgeTest > testBasicEdge PASSED
+
+org.logstash.config.ir.graph.GraphTest > testThreadingMulti PASSED
+
+org.logstash.config.ir.graph.GraphTest > testThreadingTyped PASSED
+
+org.logstash.config.ir.graph.GraphTest > testGraphCycleDetection PASSED
+
+org.logstash.config.ir.graph.GraphTest > testThreading PASSED
+
+org.logstash.config.ir.graph.GraphTest > copyTest PASSED
+
+org.logstash.config.ir.graph.GraphTest > testGraphBasics PASSED
+
+org.logstash.config.ir.graph.GraphTest > chainingIntoMultipleRoots PASSED
+[2026-05-02 13:13:16,727] [docker_util.py] [INFO]: org.logstash.config.ir.graph.GraphTest > chaining PASSED
+
+org.logstash.config.ir.graph.GraphTest > complexConsistencyTest PASSED
+
+org.logstash.config.ir.graph.GraphTest > SimpleConsistencyTest PASSED
+
+org.logstash.config.ir.graph.VertexTest > TestVertexBasics PASSED
+
+org.logstash.config.ir.graph.VertexTest > testPartialLeafOnConnectedVertex PASSED
+
+org.logstash.config.ir.graph.VertexTest > testIsLeafAndRoot PASSED
+
+org.logstash.config.ir.graph.VertexTest > testPartialLeafOnUnconnectedVertex PASSED
+
+org.logstash.config.ir.graph.BooleanEdgeTest > testBasicBooleanEdgeProperties PASSED
+
+org.logstash.config.ir.graph.BooleanEdgeTest > testFactoryCreation PASSED
+
+org.logstash.config.ir.graph.PluginVertexTest > testConstructionIdHandlingWhenExplicitId PASSED
+
+org.logstash.config.ir.graph.PluginVertexTest > testConstructionIdHandlingWhenNoExplicitId PASSED
+
+org.logstash.config.ir.compiler.CommonActionsTest > testAddType PASSED
+
+org.logstash.config.ir.compiler.CommonActionsTest > testRemoveField PASSED
+
+org.logstash.config.ir.compiler.CommonActionsTest > testAddField PASSED
+
+org.logstash.config.ir.compiler.CommonActionsTest > testRemoveFieldFromMetadata PASSED
+
+org.logstash.config.ir.compiler.CommonActionsTest > testAddTag PASSED
+
+org.logstash.config.ir.compiler.CommonActionsTest > testRemoveTag PASSED
+[2026-05-02 13:13:17,128] [docker_util.py] [INFO]: org.logstash.config.ir.compiler.DatasetCompilerTest > compilesSplitDataset PASSED
+
+org.logstash.config.ir.compiler.DatasetCompilerTest > compilesOutputDataset PASSED
+
+org.logstash.config.ir.expression.ExpressionSubstitutionTest > noRegexSubstitution PASSED
+
+org.logstash.config.ir.expression.ExpressionSubstitutionTest > nestedBinaryBooleanSubstitution PASSED
+
+org.logstash.config.ir.expression.ExpressionSubstitutionTest > basicBinaryBooleanSubstitution PASSED
+
+org.logstash.config.ir.expression.ExpressionSubstitutionTest > basicUnaryBooleanSubstitution PASSED
+
+org.logstash.config.ir.imperative.DSLTest > testComposeSingle PASSED
+
+org.logstash.config.ir.imperative.DSLTest > testDSLComplexEquality PASSED
+
+org.logstash.config.ir.imperative.DSLTest > testDSLOnePluginEquality PASSED
+
+org.logstash.config.ir.imperative.DSLTest > testComposeMulti PASSED
+
+org.logstash.config.ir.imperative.DSLTest > testComposedPluginEquality PASSED
+
+org.logstash.config.ir.imperative.IfStatementTest > testEmptyIf PASSED
+
+org.logstash.config.ir.imperative.IfStatementTest > testIfWithOneTrueStatement PASSED
+
+org.logstash.config.ir.imperative.IfStatementTest > testIfWithOneTrueOneFalseStatement PASSED
+
+org.logstash.config.ir.imperative.IfStatementTest > testIfWithOneFalseStatement PASSED
+
+org.logstash.config.ir.imperative.ImperativeToGraphtest > convertComplexExpression PASSED
+
+org.logstash.config.ir.imperative.ImperativeToGraphtest > convertSimpleExpression PASSED
+
+org.logstash.config.ir.imperative.ImperativeToGraphtest > deepDanglingPartialLeaves PASSED
+
+org.logstash.config.ir.imperative.ImperativeToGraphtest > testIdsDontAffectSourceComponentEquality PASSED
+
+org.logstash.config.ir.imperative.ImperativeToGraphtest > convertComplexExpressionWithTerminal PASSED
+
+org.logstash.config.ir.PipelineIRTest > hashingWithoutOriginalSource PASSED
+
+org.logstash.config.ir.PipelineIRTest > hashingWithOriginalSource PASSED
+
+org.logstash.config.ir.PipelineIRTest > testPipelineCreation PASSED
+
+org.logstash.FileLockFactoryTest > LockReleaseLock PASSED
+
+org.logstash.FileLockFactoryTest > ObtainLockOnLocked PASSED
+
+org.logstash.FileLockFactoryTest > LockReleaseLockObtainLockRelease PASSED
+
+org.logstash.FileLockFactoryTest > ObtainLockOnNonLocked PASSED
+
+org.logstash.FileLockFactoryTest > ReleaseNullLock PASSED
+
+org.logstash.FileLockFactoryTest > ReleaseUnobtainedLock PASSED
+[2026-05-02 13:13:17,227] [docker_util.py] [INFO]: 
+[2026-05-02 13:13:17,227] [docker_util.py] [INFO]: org.logstash.FileLockFactoryTest > crossJvmObtainLockOnLocked PASSED
+
+org.logstash.FileLockFactoryTest > LockReleaseLockObtainLock PASSED
+
+org.logstash.FileLockFactoryTest > ObtainLockOnOtherLocked PASSED
+
+org.logstash.StringInterpolationTest > testMultipleLevelField PASSED
+
+org.logstash.StringInterpolationTest > TestEpochSeconds PASSED
+
+org.logstash.StringInterpolationTest > TestValueIsArray PASSED
+
+org.logstash.StringInterpolationTest > testCompletelyStaticTemplate PASSED
+
+org.logstash.StringInterpolationTest > testUnclosedTag PASSED
+
+org.logstash.StringInterpolationTest > testMissingKey PASSED
+
+org.logstash.StringInterpolationTest > TestStringIsOneDateTag PASSED
+
+org.logstash.StringInterpolationTest > TestFieldRef PASSED
+
+org.logstash.StringInterpolationTest > TestMixDateAndFields PASSED
+
+org.logstash.StringInterpolationTest > TestEpoch PASSED
+
+org.logstash.StringInterpolationTest > TestValueIsHash PASSED
+
+org.logstash.StringInterpolationTest > testDateFormatter PASSED
+
+org.logstash.StringInterpolationTest > testOneLevelField PASSED
+
+org.logstash.ValuefierTest > testConcreteJavaProxy PASSED
+
+org.logstash.ValuefierTest > testJodaDateTIme
+[2026-05-02 13:13:17,229] [docker_util.py] [INFO]: PASSED
+
+org.logstash.ValuefierTest > testUnhandledObject PASSED
+
+org.logstash.ValuefierTest > testMapJavaProxy PASSED
+
+org.logstash.ValuefierTest > testArrayJavaProxy PASSED
+
+org.logstash.ValuefierTest > testRubyTime PASSED
+
+org.logstash.ValuefierTest > scratch PASSED
+
+org.logstash.EventTest > testSimpleIntegerFieldToJson PASSED
+
+org.logstash.EventTest > testTimestampFieldToJson PASSED
+
+org.logstash.EventTest > removeMetadata PASSED
+
+org.logstash.EventTest > testGetFieldList PASSED
+
+org.logstash.EventTest > testFromJsonWithBlankString PASSED
+
+org.logstash.EventTest > removeMetadataField PASSED
+
+org.logstash.EventTest > unwrapsJavaProxyValues PASSED
+
+org.logstash.EventTest > testSimpleStringFieldToJson PASSED
+
+org.logstash.EventTest > testFromJsonWithValidJsonMap PASSED
+
+org.logstash.EventTest > testSimpleDecimalFieldToJson PASSED
+
+org.logstash.EventTest > testFromJsonWithInvalidJsonArray1 PASSED
+
+org.logstash.EventTest > testFromJsonWithInvalidJsonArray2 PASSED
+
+org.logstash.EventTest > testDeepMapFieldToJson PASSED
+
+org.logstash.EventTest > testFromJsonWithNull PASSED
+
+org.logstash.EventTest > testDeepGetField PASSED
+
+org.logstash.EventTest > testClone PASSED
+
+org.logstash.EventTest > testToMap PASSED
+
+org.logstash.EventTest > queueableInterfaceRoundTrip PASSED
+
+org.logstash.EventTest > testTagOnEmptyTagsField PASSED
+
+org.logstash.EventTest > testFromJsonWithValidJsonArrayOfMap PASSED
+
+org.logstash.EventTest > testFromJsonWithInvalidJsonString PASSED
+
+org.logstash.EventTest > toBinaryRoundtrip PASSED
+
+org.logstash.EventTest > testBooleanFieldToJson PASSED
+
+org.logstash.EventTest > testSimpleLongFieldToJson PASSED
+
+org.logstash.EventTest > metadataFieldsShouldBeValuefied PASSED
+
+org.logstash.EventTest > testFromJsonWithPartialInvalidJsonArray PASSED
+
+org.logstash.EventTest > toStringWithTimestamp PASSED
+
+org.logstash.EventTest > testTagOnExistingTagsField PASSED
+
+org.logstash.EventTest > testBareToJson PASSED
+
+org.logstash.EventTest > testFromJsonWithEmptyString PASSED
+
+org.logstash.EventTest > toBinaryRoundtripNonAscii PASSED
+
+org.logstash.EventTest > testAppend PASSED
+
+org.logstash.EventTest > metadataRootShouldBeValuefied PASSED
+
+org.logstash.EventTest > toBinaryRoundtripSubstring PASSED
+
+org.logstash.EventTest > testAppendLists PASSED
+
+org.logstash.EventTest > toStringWithoutTimestamp PASSED
+
+org.logstash.EventTest > testSimpleMultipleFieldToJson PASSED
+
+org.logstash.EventTest > bigNumsBinaryRoundtrip PASSED
+
+org.logstash.instrument.metrics.gauge.RubyTimeStampGaugeTest > set PASSED
+
+org.logstash.instrument.metrics.gauge.RubyTimeStampGaugeTest > getValue PASSED
+
+org.logstash.instrument.metrics.gauge.UnknownGaugeTest > set PASSED
+
+org.logstash.instrument.metrics.gauge.UnknownGaugeTest > getValue PASSED
+[2026-05-02 13:13:17,328] [docker_util.py] [INFO]: org.logstash.instrument.metrics.gauge.RubyHashGaugeTest > set PASSED
+
+org.logstash.instrument.metrics.gauge.RubyHashGaugeTest > getValue PASSED
+
+org.logstash.instrument.metrics.gauge.BooleanGaugeTest > set PASSED
+
+org.logstash.instrument.metrics.gauge.BooleanGaugeTest > getValue PASSED
+
+org.logstash.instrument.metrics.gauge.TextGaugeTest > set PASSED
+
+org.logstash.instrument.metrics.gauge.TextGaugeTest > getValue PASSED
+
+org.logstash.instrument.metrics.gauge.NumberGaugeTest > set PASSED
+
+org.logstash.instrument.metrics.gauge.NumberGaugeTest > getValue PASSED
+
+org.logstash.instrument.metrics.gauge.LazyDelegatingGaugeTest > set PASSED
+
+org.logstash.instrument.metrics.gauge.LazyDelegatingGaugeTest > getValue PASSED
+
+org.logstash.instrument.metrics.counter.LongCounterTest > increment PASSED
+
+org.logstash.instrument.metrics.counter.LongCounterTest > incrementByValue PASSED
+
+org.logstash.instrument.metrics.counter.LongCounterTest > type PASSED
+
+org.logstash.instrument.metrics.counter.LongCounterTest > incrementByNegativeValue PASSED
+
+org.logstash.instrument.metrics.counter.LongCounterTest > noInitialValue PASSED
+
+org.logstash.instrument.metrics.counter.LongCounterTest > incrementByNegativeLongValue PASSED
+
+org.logstash.instrument.metrics.counter.LongCounterTest > getValue PASSED
+
+org.logstash.instrument.metrics.MetricTypeTest > ensurePassivity PASSED
+
+org.logstash.plugins.AliasRegistryTest > testLoadAliasesFromYAML PASSED
+[2026-05-02 13:13:17,527] [docker_util.py] [INFO]: org.logstash.plugins.AliasRegistryTest > testProductionConfigAliasesGemsExists PASSED
+
+org.logstash.plugins.ConfigurationImplTest > testBrokenConfig PASSED
+
+org.logstash.plugins.ConfigurationImplTest > testDefaultValues PASSED
+
+org.logstash.plugins.ConfigurationImplTest > testBadUriThrows PASSED
+
+org.logstash.plugins.ConfigurationImplTest > testBadDefaultUriThrows PASSED
+
+org.logstash.plugins.ConfigurationImplTest > testBooleanValues PASSED
+
+org.logstash.plugins.ConfigurationImplTest > testConfiguration PASSED
+
+org.logstash.plugins.ConfigurationImplTest > testPasswordDefaultValue PASSED
+
+org.logstash.plugins.ConfigurationImplTest > testUriValue PASSED
+
+org.logstash.plugins.ConfigurationImplTest > testDowncastFromLongToDouble PASSED
+
+org.logstash.plugins.ConfigurationImplTest > testDefaultCodec PASSED
+
+org.logstash.plugins.ConfigurationImplTest > testUriDefaultValue PASSED
+
+org.logstash.plugins.ConfigurationImplTest > testPassword PASSED
+
+org.logstash.plugins.codecs.LineTest > testEncodeWithUtf8 PASSED
+
+org.logstash.plugins.codecs.LineTest > testDecodeWithCharset PASSED
+
+org.logstash.plugins.codecs.LineTest > testDecodeWithMulticharTrailingDelimiter PASSED
+
+org.logstash.plugins.codecs.LineTest > testClone PASSED
+
+org.logstash.plugins.codecs.LineTest > testFlush PASSED
+
+org.logstash.plugins.codecs.LineTest > testEncodeWithFormat PASSED
+
+org.logstash.plugins.codecs.LineTest > testSimpleDecode PASSED
+
+org.logstash.plugins.codecs.LineTest > testEncodeWithCharset PASSED
+
+org.logstash.plugins.codecs.LineTest > testDecodeAcrossMultibyteCharBoundary PASSED
+
+org.logstash.plugins.codecs.LineTest > testDecodeCustomDelimiter PASSED
+
+org.logstash.plugins.codecs.LineTest > testDecodeDefaultDelimiter PASSED
+
+org.logstash.plugins.codecs.LineTest > testDecodeWithMulticharDelimiter PASSED
+
+org.logstash.plugins.codecs.LineTest > testDecodeOnDelimiterOnly PASSED
+
+org.logstash.plugins.codecs.LineTest > testDecodeWithTrailingDelimiter PASSED
+
+org.logstash.plugins.codecs.LineTest > testDecodeWithUtf8 PASSED
+
+org.logstash.plugins.codecs.LineTest > testEncode PASSED
+
+org.logstash.plugins.codecs.LineTest > testSuccessiveDecodesWithTrailingDelimiter PASSED
+
+org.logstash.plugins.codecs.PlainTest > testEncodeWithUtf8 PASSED
+
+org.logstash.plugins.codecs.PlainTest > testDecodeWithCharset PASSED
+
+org.logstash.plugins.codecs.PlainTest > testClone PASSED
+
+org.logstash.plugins.codecs.PlainTest > testEncodeWithFormat PASSED
+
+org.logstash.plugins.codecs.PlainTest > testSimpleDecode PASSED
+
+org.logstash.plugins.codecs.PlainTest > testEncodeWithCharset PASSED
+
+org.logstash.plugins.codecs.PlainTest > testEmptyDecode PASSED
+
+org.logstash.plugins.codecs.PlainTest > testDecodeWithUtf8 PASSED
+
+org.logstash.plugins.outputs.StdoutTest > testUnderlyingStreamIsNotClosed PASSED
+
+org.logstash.plugins.outputs.StdoutTest > testEventLargerThanBuffer PASSED
+
+org.logstash.plugins.outputs.StdoutTest > testEvents PASSED
+
+org.logstash.plugins.pipeline.PipelineBusTest > activeSenderPreventsPrune PASSED
+
+org.logstash.plugins.pipeline.PipelineBusTest > whenInBlockingModeInputsShutdownLast PASSED
+
+org.logstash.plugins.pipeline.PipelineBusTest > registerUnregisterListenerUpdatesOutputs PASSED
+
+org.logstash.plugins.pipeline.PipelineBusTest > sendingEmptyListToNowhereStillReturns PASSED
+
+org.logstash.plugins.pipeline.PipelineBusTest > senderRegisterUnregister PASSED
+
+org.logstash.plugins.pipeline.PipelineBusTest > listenUnlistenUpdatesOutputReceivers PASSED
+
+org.logstash.plugins.pipeline.PipelineBusTest > activeListenerPreventsPrune PASSED
+[2026-05-02 13:13:19,527] [docker_util.py] [INFO]: org.logstash.plugins.pipeline.PipelineBusTest > missingInputEventuallySucceeds PASSED
+
+org.logstash.plugins.pipeline.PipelineBusTest > whenInDefaultNonBlockingModeInputsShutdownInstantly PASSED
+
+org.logstash.plugins.pipeline.PipelineBusTest > subscribeUnsubscribe PASSED
+
+org.logstash.plugins.PluginValidatorTest > testValidCodecPlugin PASSED
+
+org.logstash.plugins.PluginValidatorTest > testValidOutputPlugin PASSED
+
+org.logstash.plugins.PluginValidatorTest > testValidInputPlugin PASSED
+
+org.logstash.plugins.PluginValidatorTest > testInvalidInputPlugin SKIPPED
+
+org.logstash.plugins.PluginValidatorTest > testValidFilterPlugin PASSED
+
+org.logstash.plugins.filters.UuidTest > testUuidWithOverwrite PASSED
+
+org.logstash.plugins.filters.UuidTest > testUuidWithoutOverwrite PASSED
+
+org.logstash.plugins.filters.UuidTest > testUuidWithoutRequiredConfigThrows PASSED
+[2026-05-02 13:13:19,627] [docker_util.py] [INFO]: org.logstash.plugins.inputs.StdinTest > testSimpleEvent PASSED
+
+org.logstash.plugins.inputs.StdinTest > testUtf8Events PASSED
+[2026-05-02 13:13:19,727] [docker_util.py] [INFO]: org.logstash.plugins.inputs.StdinTest > testEvents PASSED
+
+org.logstash.plugins.PluginUtilValidateConfigTest > testValidateConfig[0: optional config items, none provided] PASSED
+
+org.logstash.plugins.PluginUtilValidateConfigTest > testValidateConfig[1: optional config items, some provided] PASSED
+
+org.logstash.plugins.PluginUtilValidateConfigTest > testValidateConfig[2: optional config items, all provided] PASSED
+
+org.logstash.plugins.PluginUtilValidateConfigTest > testValidateConfig[3: optional config items, too many provided] PASSED
+
+org.logstash.plugins.PluginUtilValidateConfigTest > testValidateConfig[4: required config items, all provided] PASSED
+
+org.logstash.plugins.PluginUtilValidateConfigTest > testValidateConfig[5: required config items, some provided] PASSED
+
+org.logstash.plugins.PluginUtilValidateConfigTest > testValidateConfig[6: required config items, too many provided] PASSED
+
+org.logstash.plugins.PluginUtilValidateConfigTest > testValidateConfig[7: optional+required config items, some provided] PASSED
+
+org.logstash.plugins.PluginUtilValidateConfigTest > testValidateConfig[8: optional+required config items, some missing] PASSED
+
+org.logstash.plugins.PluginUtilValidateConfigTest > testValidateConfig[9: optional+required config items, some missing, some invalid] PASSED
+
+org.logstash.DLQEntryTest > testSerDe PASSED
+
+org.logstash.DLQEntryTest > testConstruct
+[2026-05-02 13:13:19,727] [docker_util.py] [INFO]: PASSED
+
+org.logstash.instruments.monitors.HotThreadMonitorTest > testAllThreadsHaveWaitedInformation PASSED
+[2026-05-02 13:13:20,027] [docker_util.py] [INFO]: org.logstash.instruments.monitors.HotThreadMonitorTest > testStackTraceSizeOption PASSED
+
+org.logstash.instruments.monitors.HotThreadMonitorTest > testOptionsOrderingCpu PASSED
+
+org.logstash.instruments.monitors.HotThreadMonitorTest > testAllThreadsHaveThreadState PASSED
+
+org.logstash.instruments.monitors.HotThreadMonitorTest > testAllThreadsHaveCpuTime PASSED
+
+org.logstash.instruments.monitors.HotThreadMonitorTest > testAllThreadsHaveBlockedInformation PASSED
+[2026-05-02 13:13:20,027] [docker_util.py] [INFO]: org.logstash.instruments.monitors.HotThreadMonitorTest > testAllThreadsHaveStackTraces PASSED
+
+org.logstash.instruments.monitors.HotThreadMonitorTest > testOptionsOrderingBlocked PASSED
+
+org.logstash.instruments.monitors.HotThreadMonitorTest > testOptionsOrderingWait PASSED
+
+org.logstash.instruments.monitors.HotThreadMonitorTest > testThreadsReportsGenerated PASSED
+
+org.logstash.instruments.monitors.ProcessMonitorTest > testReportFDStats PASSED
+
+org.logstash.instruments.monitors.ProcessMonitorTest > testReportMemStats PASSED
+
+org.logstash.instruments.monitors.ProcessMonitorTest > testReportCpuStats PASSED
+
+org.logstash.instruments.monitors.SystemMonitorTest > systemMonitorTest PASSED
+
+org.logstash.instruments.monitors.MemoryMonitorTest > testEachHeapSpaceRepresented PASSED
+
+org.logstash.instruments.monitors.MemoryMonitorTest > testAllStatsAreAvailableForHeap PASSED
+
+org.logstash.instruments.monitors.MemoryMonitorTest > testAllStatsAreAvailableForNonHeap PASSED
+
+org.logstash.util.CloudSettingIdTest > testWithRealWorldInput PASSED
+
+org.logstash.util.CloudSettingIdTest > testNullInputMakesAllGettersReturnNull PASSED
+
+org.logstash.util.CloudSettingIdTest > testGivenAcceptableInputEmptyKibanaUUID PASSED
+
+org.logstash.util.CloudSettingIdTest > testAccessorsWithAcceptableInput PASSED
+
+org.logstash.util.CloudSettingIdTest > testThrowExceptionWhenKibanaSegmentSegmentIsUndefined PASSED
+
+org.logstash.util.CloudSettingIdTest > testWhenCloudIdContainsPortDescriptionForESAndKibana PASSED
+
+org.logstash.util.CloudSettingIdTest > testThrowExceptionWhenElasticSegmentSegmentIsUndefined PASSED
+[2026-05-02 13:13:20,027] [docker_util.py] [INFO]: org.logstash.util.CloudSettingIdTest > testWhenCloudIdDefinesExtraData PASSED
+
+org.logstash.util.CloudSettingIdTest > testDecodingWithoutLabelSegment PASSED
+
+org.logstash.util.CloudSettingIdTest > testNullInputDoenstThrowAnException PASSED
+
+org.logstash.util.CloudSettingIdTest > testThrowExceptionWhenAtLeatOneSegmentIsEmpty PASSED
+
+org.logstash.util.CloudSettingIdTest > testThrowExceptionWhenMalformedValueIsGiven PASSED
+
+org.logstash.util.CloudSettingIdTest > testWhenCloudIdContainsCloudPort PASSED
+
+org.logstash.util.CloudSettingIdTest > testWhenCloudIdDefinesCloudPortAndKibanaPort PASSED
+
+org.logstash.util.CloudSettingIdTest > testWhenCloudIdOnlyDefinesKibanaPort PASSED
+
+org.logstash.util.CloudSettingAuthTest > testThrowExceptionWhenGivenStringWhichIsEmpty PASSED
+
+org.logstash.util.CloudSettingAuthTest > testThrowExceptionWhenGivenStringWithoutPassword PASSED
+
+org.logstash.util.CloudSettingAuthTest > testNullInputDoenstThrowAnException PASSED
+
+org.logstash.util.CloudSettingAuthTest > testThrowExceptionWhenGivenStringWithoutSeparatorOrPassword PASSED
+
+org.logstash.util.CloudSettingAuthTest > testWhenGivenStringWhichIsCloudAuthSetTheString PASSED
+
+org.logstash.util.CloudSettingAuthTest > testThrowExceptionWhenGivenStringWithoutUsername PASSED
+[2026-05-02 13:13:20,127] [docker_util.py] [INFO]: org.logstash.ackedqueue.PqRepairTest > testRecreateCorruptCheckPoint PASSED
+[2026-05-02 13:13:20,327] [docker_util.py] [INFO]: org.logstash.ackedqueue.PqRepairTest > testRemoveUselessCheckpoint PASSED
+[2026-05-02 13:13:20,427] [docker_util.py] [INFO]: org.logstash.ackedqueue.PqRepairTest > testRemoveTempCheckPoint PASSED
+[2026-05-02 13:13:20,527] [docker_util.py] [INFO]: org.logstash.ackedqueue.PqRepairTest > testRecreateMissingCheckPoint PASSED
+[2026-05-02 13:13:20,627] [docker_util.py] [INFO]: org.logstash.ackedqueue.PqRepairTest > testRemoveBrokenPage PASSED
+
+org.logstash.ackedqueue.io.FileCheckpointIOTest > read PASSED
+
+org.logstash.ackedqueue.io.FileCheckpointIOTest > write PASSED
+
+org.logstash.ackedqueue.io.LongVectorTest > storesAndResizes PASSED
+
+org.logstash.ackedqueue.io.LongVectorTest > storesVectorAndResizes PASSED
+
+org.logstash.ackedqueue.io.IntVectorTest > storesAndResizes PASSED
+
+org.logstash.ackedqueue.io.FileMmapIOTest > roundTrip PASSED
+
+org.logstash.ackedqueue.io.MmapPageIOTest > adjustToExistingCapacity PASSED
+[2026-05-02 13:13:20,727] [docker_util.py] [INFO]: org.logstash.ackedqueue.QueueTest > writeWhenPageEqualsQueueSize PASSED
+
+org.logstash.ackedqueue.QueueTest > ackingMakesQueueNotFullAgainTest PASSED
+
+org.logstash.ackedqueue.QueueTest > fullyAckedHeadPageBeheadingTest PASSED
+[2026-05-02 13:13:20,827] [docker_util.py] [INFO]: org.logstash.ackedqueue.QueueTest > getsPersistedByteSizeCorrectly PASSED
+[2026-05-02 13:13:23,427] [docker_util.py] [INFO]: org.logstash.ackedqueue.QueueTest > reachMaxUnreadWithAcking PASSED
+
+org.logstash.ackedqueue.QueueTest > testAckedCount PASSED
+[2026-05-02 13:13:25,827] [docker_util.py] [INFO]: org.logstash.ackedqueue.QueueTest > randomAcking PASSED
+[2026-05-02 13:13:35,627] [docker_util.py] [INFO]: org.logstash.ackedqueue.QueueTest > reachMaxUnread PASSED
+
+org.logstash.ackedqueue.QueueTest > lockIsReleasedUponOpenException PASSED
+
+org.logstash.ackedqueue.QueueTest > pageCapacityChangeOnExistingQueue PASSED
+
+org.logstash.ackedqueue.QueueTest > canReadBatchZeroSize PASSED
+[2026-05-02 13:13:35,727] [docker_util.py] [INFO]: org.logstash.ackedqueue.QueueTest > queueStillFullAfterPartialPageAckTest PASSED
+[2026-05-02 13:13:35,827] [docker_util.py] [INFO]: org.logstash.ackedqueue.QueueTest > reachMaxSizeTest PASSED
+
+org.logstash.ackedqueue.QueueTest > singleWriteRead PASSED
+
+org.logstash.ackedqueue.QueueTest > queueStableUnderStressLowCapacity SKIPPED
+[2026-05-02 13:13:35,927] [docker_util.py] [INFO]: org.logstash.ackedqueue.QueueTest > resumeWriteOnNoLongerFullQueueTest PASSED
+
+org.logstash.ackedqueue.QueueTest > testZeroByteFullyAckedPageOnOpen PASSED
+
+org.logstash.ackedqueue.QueueTest > testZeroByteFullyAckedHeadPageOnOpen PASSED
+[2026-05-02 13:13:37,427] [docker_util.py] [INFO]: org.logstash.ackedqueue.QueueTest > maximizeBatch PASSED
+
+org.logstash.ackedqueue.QueueTest > singleWriteMultiRead PASSED
+[2026-05-02 13:13:41,527] [docker_util.py] [INFO]: org.logstash.ackedqueue.QueueTest > getsPersistedByteSizeCorrectlyForFullyAckedDeletedTailPages PASSED
+
+org.logstash.ackedqueue.QueueTest > writeMultiPageWithInOrderAcking PASSED
+
+org.logstash.ackedqueue.QueueTest > throwsWhenNotEnoughDiskFree PASSED
+
+org.logstash.ackedqueue.QueueTest > writeMultiPageWithInOrderAckingCheckpoints PASSED
+[2026-05-02 13:13:56,527] [docker_util.py] [INFO]: org.logstash.ackedqueue.QueueTest > concurrentWritesTest PASSED
+
+org.logstash.ackedqueue.QueueTest > queueStableUnderStressHugeCapacity SKIPPED
+
+org.logstash.ackedqueue.QueueTest > multiWriteSamePage PASSED
+
+org.logstash.ackedqueue.QueueTest > getsPersistedByteSizeCorrectlyForUnopened PASSED
+
+org.logstash.ackedqueue.QueueTest > newQueue PASSED
+[2026-05-02 13:13:56,627] [docker_util.py] [INFO]: org.logstash.ackedqueue.QueueTest > writeMultiPage PASSED
+
+org.logstash.ackedqueue.QueueTest > inEmpty PASSED
+
+org.logstash.ackedqueue.QueueTest > writeToFullyAckedHeadpage PASSED
+[2026-05-02 13:13:56,627] [docker_util.py] [INFO]: org.logstash.ackedqueue.CheckpointTest > newInstance PASSED
+
+org.logstash.ackedqueue.HeadPageTest > newHeadPage PASSED
+
+org.logstash.ackedqueue.HeadPageTest > pageWrite PASSED
+
+org.logstash.ackedqueue.HeadPageTest > pageWriteAndReadMulti PASSED
+[2026-05-02 13:13:56,729] [docker_util.py] [INFO]: org.logstash.ackedqueue.HeadPageTest > pageWriteAndReadSingle PASSED
+
+org.logstash.ackedqueue.HeadPageTest > inEmpty PASSED
+
+org.logstash.KeyNodeTest > testOneNullElementJoin PASSED
+
+org.logstash.KeyNodeTest > testTwoElementWithTailingNullJoin PASSED
+
+org.logstash.KeyNodeTest > testTwoElementWithLeadingNullJoin PASSED
+
+org.logstash.KeyNodeTest > testOneElementJoin PASSED
+
+org.logstash.KeyNodeTest > testTwoElementJoin PASSED
+
+org.logstash.KeyNodeTest > testNoElementJoin PASSED
+
+org.logstash.KeyNodeTest > testListInListJoin PASSED
+
+org.logstash.ext.TimestampTest > testClone PASSED
+
+org.logstash.ext.JrubyMemoryReadClientExtTest > testInflightBatchesTracking PASSED
+[2026-05-02 13:13:56,929] [docker_util.py] [INFO]: org.logstash.ext.JrubyTimestampExtLibraryTest > testConstructFromRubyDateTime PASSED
+
+org.logstash.ext.JrubyTimestampExtLibraryTest > testCompareAnyType PASSED
+
+org.logstash.ext.JrubyTimestampExtLibraryTest > testConsistentEql PASSED
+
+org.logstash.ext.JrubyTimestampExtLibraryTest > testConstructorNew PASSED
+
+org.logstash.ext.JrubyTimestampExtLibraryTest > testConstructorNow PASSED
+
+org.logstash.ext.JrubyTimestampExtLibraryTest > testRaiseOnInvalidFormat PASSED
+
+org.logstash.ext.JrubyEventExtLibraryTest > shouldSetJavaProxy PASSED
+
+org.logstash.ext.JrubyEventExtLibraryTest > correctlyHandlesNonAsciiKeys PASSED
+
+org.logstash.ext.JrubyEventExtLibraryTest > correctlyRaiseRubyRuntimeErrorWhenGivenInvalidFieldReferencesInMap PASSED
+
+org.logstash.ext.JrubyEventExtLibraryTest > correctlyRaiseRubyRuntimeErrorWhenGivenInvalidFieldReferences PASSED
+
+org.logstash.RubyfierTest > testDeepWithBigInteger PASSED
+
+org.logstash.RubyfierTest > testDeepWithInteger PASSED
+
+org.logstash.RubyfierTest > testDeepMapWithDouble PASSED
+
+org.logstash.RubyfierTest > testDeepWithFloat PASSED
+
+org.logstash.RubyfierTest > testDeepListWithInteger PASSED
+
+org.logstash.RubyfierTest > testDeepMapWithString PASSED
+
+org.logstash.RubyfierTest > testDeepMapWithFloat PASSED
+
+org.logstash.RubyfierTest > testDeepWithDouble PASSED
+
+org.logstash.RubyfierTest > testDeepWithString PASSED
+
+org.logstash.RubyfierTest > testDeepListWithDouble PASSED
+
+org.logstash.RubyfierTest > testDeepMapWithInteger PASSED
+
+org.logstash.RubyfierTest > testDeepListWithBigDecimal PASSED
+
+org.logstash.RubyfierTest > testDeepListWithString PASSED
+
+org.logstash.RubyfierTest > testDeepWithBigDecimal PASSED
+
+org.logstash.RubyfierTest > testDeepMapWithBigDecimal PASSED
+
+org.logstash.RubyfierTest > testDeepListWithFloat PASSED
+[2026-05-02 13:13:57,027] [docker_util.py] [INFO]: 
+[2026-05-02 13:13:57,029] [docker_util.py] [INFO]: ------------------------------------------------------------------------
+|  Results: SUCCESS (558 tests, 554 successes, 0 failures, 4 skipped)  |
+------------------------------------------------------------------------
+[2026-05-02 13:13:57,127] [docker_util.py] [INFO]: > Task :logstash-core-benchmarks:compileTestJava NO-SOURCE
+> Task :logstash-core-benchmarks:processTestResources NO-SOURCE
+> Task :logstash-core-benchmarks:testClasses UP-TO-DATE
+[2026-05-02 13:13:57,127] [docker_util.py] [INFO]: > Task :logstash-core-benchmarks:test SKIPPED
+[2026-05-02 13:13:59,429] [docker_util.py] [INFO]: > Task :logstash-integration-tests:compileTestJava
+[2026-05-02 13:13:59,432] [docker_util.py] [INFO]: > Task :logstash-integration-tests:processTestResources NO-SOURCE
+> Task :logstash-integration-tests:testClasses
+> Task :logstash-integration-tests:test NO-SOURCE
+[2026-05-02 13:13:59,528] [docker_util.py] [INFO]: > Task :logstash-xpack:compileTestJava
+> Task :logstash-xpack:processTestResources NO-SOURCE
+> Task :logstash-xpack:testClasses
+[2026-05-02 13:13:59,529] [docker_util.py] [INFO]: [91m
+FAILURE: Build failed with an exception.
+
+* Where:
+Script '/home/logstash/rubyUtils.gradle' line: 157
+
+* What went wrong:
+Execution failed for task ':bootstrap'.
+> (LoadError) no such file to load -- bundler
+
+* Try:
+Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
+
+* Get more help at https://help.gradle.org[0m
+[2026-05-02 13:13:59,529] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 13:13:59,531] [docker_util.py] [INFO]: 62 actionable tasks: 54 executed, 8 up-to-date
+[2026-05-02 13:13:59,531] [docker_util.py] [INFO]: [91m
+BUILD FAILED in 5m 14s
+[0m
+[2026-05-02 13:14:26,239] [docker_util.py] [INFO]: ---> Removed intermediate container 5512c8410238
+[2026-05-02 13:14:26,240] [docker_util.py] [INFO]: ---> ef20ddd5ebf1
+[2026-05-02 13:14:26,240] [docker_util.py] [INFO]: sha256:ef20ddd5ebf1d40d0f429e6b6fc07fd7cc8cf0ebf95f1e1259153049bf811804
+[2026-05-02 13:14:26,253] [docker_util.py] [INFO]: Successfully built ef20ddd5ebf1
+[2026-05-02 13:14:26,285] [docker_util.py] [INFO]: Successfully tagged mswebench/elastic_m_logstash:pr-13931
+[2026-05-02 13:14:26,285] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/patches/eval/s2-structural/java_47_s2_runs_3_patches/run-1/eval/workdir/elastic/logstash/images/pr-13931) build success: mswebench/elastic_m_logstash:pr-13931

@@ -1,0 +1,99 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..236ed6a4a 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -90,24 +90,34 @@ allprojects {
+       showStackTraces true
+       enableAssertions false
+ 
+-      // set options for log level DEBUG and INFO
+-      debug {
+-        events "started", "passed", "skipped", "failed", "standardOut", "standardError"
+-        exceptionFormat "full"
+-      }
+-      info.events = debug.events
+-      info.exceptionFormat = debug.exceptionFormat
+-
+-      afterSuite { desc, result ->
+-        if (!desc.parent) { // will match the outermost suite
+-          def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+-          def startItem = '|  ', endItem = '  |'
+-          def repeatLength = startItem.length() + output.length() + endItem.length()
+-          println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+-        }
+-      }
+-    }
+-  }
++setup_java() {
++  # set the path to java into JAVACMD which will be picked up by JRuby to launch itself
++  if [ -z "$JAVACMD" ]; then
++    setup_bundled_jdk_part
++    BUNDLED_JDK_VERSION_FILE="${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION"
++    BUNDLED_JDK_VERSION=""
++    if [ -r "$BUNDLED_JDK_VERSION_FILE" ]; then
++      BUNDLED_JDK_VERSION="$(cat "$BUNDLED_JDK_VERSION_FILE")"
++    fi
++    JAVACMD_TEST=`command -v java`
++    if [ -n "$LS_JAVA_HOME" ]; then
++      echo "Using LS_JAVA_HOME defined java: ${LS_JAVA_HOME}."
++      if [ -x "$LS_JAVA_HOME/bin/java" ]; then
++        JAVACMD="$LS_JAVA_HOME/bin/java"
++        if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
++          if [ -n "$BUNDLED_JDK_VERSION" ]; then
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK (${BUNDLED_JDK_VERSION})."
++          else
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          fi
++        fi
++      else
++        echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."
++      fi
++    elif [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
++      echo "Using bundled JDK: ${LOGSTASH_HOME}/${BUNDLED_JDK_PART}"
++      JAVACMD="${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java"
++    fi
+ }
+ 
+ subprojects {
+@@ -860,7 +870,27 @@ tasks.register("copyJdk", Copy) {
+     description = "Download, unpack and copy the JDK"
+     // CLI project properties: -Pjdk_bundle_os=[windows|linux|darwin] -Pjdk_arch=[arm64|x86_64]
+     doLast {
++        String osName = selectOsType()
++        String releaseFilePath = osName == "darwin" ? "${project.ext.jdkBundlingDirectory}/Contents/Home/release" : "${project.ext.jdkBundlingDirectory}/release"
++        File releaseFile = file(releaseFilePath)
++        if (!releaseFile.exists()) {
++            throw new GradleException("Could not find bundled JDK release file at ${releaseFile}")
++        }
++
++        String implementorVersion = releaseFile.readLines().findResult { line ->
++            def matcher = (line =~ /^IMPLEMENTOR_VERSION="(.*)"$/)
++            matcher.matches() ? matcher.group(1) : null
++        }
++
++        if (!implementorVersion) {
++            throw new GradleException("Could not determine bundled JDK version from ${releaseFile}")
++        }
++
++        File versionFile = file("${project.ext.jdkBundlingDirectory}/VERSION")
++        versionFile.text = "${implementorVersion}\n"
++
+         System.out.println "Download location is ${project.ext.jdkDownloadLocation}, Decompressing ${project.ext.jdkDirectory} to \"${project.ext.jdkBundlingDirectory}\""
++        System.out.println "Bundled JDK version is ${implementorVersion}"
+     }
+ }
+ 

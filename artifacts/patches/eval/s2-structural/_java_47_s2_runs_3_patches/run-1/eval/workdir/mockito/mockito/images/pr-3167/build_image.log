@@ -1,0 +1,927 @@
+[2026-05-02 12:43:43,314] [docker_util.py] [INFO]: Start building image `mswebench/mockito_m_mockito:pr-3167`, working directory is `/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/patches/eval/s2-structural/java_47_s2_runs_3_patches/run-1/eval/workdir/mockito/mockito/images/pr-3167`
+[2026-05-02 12:43:43,878] [docker_util.py] [INFO]: Step 1/9 : FROM mswebench/mockito_m_mockito:base
+[2026-05-02 12:43:43,878] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:43,912] [docker_util.py] [INFO]: ---> fda52827992a
+[2026-05-02 12:43:43,912] [docker_util.py] [INFO]: Step 2/9 : COPY fix.patch /home/
+[2026-05-02 12:43:43,912] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:47,641] [docker_util.py] [INFO]: ---> 26af3f55d1c7
+[2026-05-02 12:43:47,641] [docker_util.py] [INFO]: Step 3/9 : COPY test.patch /home/
+[2026-05-02 12:43:47,641] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:48,482] [docker_util.py] [INFO]: ---> dc8c27b48341
+[2026-05-02 12:43:48,482] [docker_util.py] [INFO]: Step 4/9 : COPY check_git_changes.sh /home/
+[2026-05-02 12:43:48,482] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:49,199] [docker_util.py] [INFO]: ---> e19281217cd2
+[2026-05-02 12:43:49,199] [docker_util.py] [INFO]: Step 5/9 : COPY prepare.sh /home/
+[2026-05-02 12:43:49,199] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:50,135] [docker_util.py] [INFO]: ---> fb37227da75f
+[2026-05-02 12:43:50,136] [docker_util.py] [INFO]: Step 6/9 : COPY run.sh /home/
+[2026-05-02 12:43:50,136] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:51,076] [docker_util.py] [INFO]: ---> 5e017e991e8b
+[2026-05-02 12:43:51,076] [docker_util.py] [INFO]: Step 7/9 : COPY test-run.sh /home/
+[2026-05-02 12:43:51,076] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:51,886] [docker_util.py] [INFO]: ---> dc99f1970ada
+[2026-05-02 12:43:51,886] [docker_util.py] [INFO]: Step 8/9 : COPY fix-run.sh /home/
+[2026-05-02 12:43:51,886] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:52,664] [docker_util.py] [INFO]: ---> c2c0cacaa17b
+[2026-05-02 12:43:52,664] [docker_util.py] [INFO]: Step 9/9 : RUN bash /home/prepare.sh
+[2026-05-02 12:43:52,664] [docker_util.py] [INFO]: 
+[2026-05-02 12:43:52,767] [docker_util.py] [INFO]: ---> Running in 5bbba9dd5c13
+[2026-05-02 12:43:53,442] [docker_util.py] [INFO]: HEAD is now at 32f06eb83 Bump codecov/codecov-action from 5 to 6 (#3800)
+[2026-05-02 12:43:53,492] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-05-02 12:43:53,653] [docker_util.py] [INFO]: [91mNote: switching to 'b6554b29ed6c204a0dd4b8a670877fe0ba2e808b'.
+
+You are in 'detached HEAD' state. You can look around, make experimental
+changes and commit them, and you can discard any commits you make in this
+state without impacting any branches by switching back to a branch.
+
+If you want to create a new branch to retain commits you create, you may
+do so (now or later) by using -c with the switch command. Example:
+
+  git switch -c <new-branch-name>
+
+Or undo this operation with:
+
+  git switch -
+
+Turn off this advice by setting config variable advice.detachedHead to false
+
+HEAD is now at b6554b29e Fix interference between spies when spying on records (#3173)
+[0m
+[2026-05-02 12:43:53,846] [docker_util.py] [INFO]: [detached HEAD f5843a7a2] Apply `metamorphic_base_patch` transformation to base commit
+ 1 file changed, 527 insertions(+), 526 deletions(-)
+[2026-05-02 12:43:53,897] [docker_util.py] [INFO]: check_git_changes: No uncommitted changes
+[2026-05-02 12:43:53,906] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:43:54,042] [docker_util.py] [INFO]: Downloading https://services.gradle.org/distributions/gradle-8.4-bin.zip
+[2026-05-02 12:43:55,935] [docker_util.py] [INFO]: .
+[2026-05-02 12:43:56,899] [docker_util.py] [INFO]: .
+[2026-05-02 12:43:57,791] [docker_util.py] [INFO]: .
+[2026-05-02 12:43:58,622] [docker_util.py] [INFO]: .
+[2026-05-02 12:43:59,237] [docker_util.py] [INFO]: .
+[2026-05-02 12:43:59,839] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:00,430] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:01,050] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:01,708] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:02,370] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:02,882] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:03,365] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:03,899] [docker_util.py] [INFO]: 10%
+[2026-05-02 12:44:03,900] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:04,384] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:04,934] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:05,401] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:05,891] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:06,489] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:07,412] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:08,195] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:09,469] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:10,672] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:11,909] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:12,770] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:13,795] [docker_util.py] [INFO]: 20%.
+[2026-05-02 12:44:14,923] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:16,806] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:17,994] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:18,702] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:19,769] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:21,780] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:22,859] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:24,017] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:25,303] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:26,696] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:28,146] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:29,684] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:31,954] [docker_util.py] [INFO]: 30%.
+[2026-05-02 12:44:33,380] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:34,701] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:36,115] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:37,055] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:37,981] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:38,683] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:39,242] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:39,802] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:40,323] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:40,797] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:41,285] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:41,796] [docker_util.py] [INFO]: 40%.
+[2026-05-02 12:44:42,294] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:43,125] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:45,051] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:46,343] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:47,185] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:47,998] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:49,228] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:50,548] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:51,481] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:52,196] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:52,731] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:53,222] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:53,835] [docker_util.py] [INFO]: 50%.
+[2026-05-02 12:44:54,449] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:55,090] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:56,375] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:57,613] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:58,139] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:58,595] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:59,008] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:59,473] [docker_util.py] [INFO]: .
+[2026-05-02 12:44:59,926] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:00,470] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:01,054] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:01,770] [docker_util.py] [INFO]: 60%.
+[2026-05-02 12:45:02,184] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:02,827] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:03,403] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:03,911] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:04,426] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:04,795] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:05,194] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:05,547] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:05,924] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:06,338] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:06,753] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:07,082] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:07,477] [docker_util.py] [INFO]: 70%.
+[2026-05-02 12:45:07,881] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:08,277] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:08,682] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:09,072] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:09,510] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:09,952] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:10,414] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:11,088] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:11,666] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:12,249] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:12,747] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:13,328] [docker_util.py] [INFO]: 80%.
+[2026-05-02 12:45:13,850] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:14,430] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:14,832] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:15,078] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:15,330] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:15,576] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:15,863] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:16,114] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:16,368] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:16,636] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:16,876] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:17,146] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:17,407] [docker_util.py] [INFO]: 90%.
+[2026-05-02 12:45:17,701] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:17,958] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:18,221] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:18,454] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:18,719] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:18,979] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:19,240] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:19,497] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:19,743] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:19,975] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:20,253] [docker_util.py] [INFO]: .
+[2026-05-02 12:45:20,478] [docker_util.py] [INFO]: 100%
+[2026-05-02 12:45:21,426] [docker_util.py] [INFO]: 
+[2026-05-02 12:45:21,427] [docker_util.py] [INFO]: Welcome to Gradle 8.4!
+[2026-05-02 12:45:21,427] [docker_util.py] [INFO]: Here are the highlights of this release:
+ - Compiling and testing with Java 21
+[2026-05-02 12:45:21,427] [docker_util.py] [INFO]: - Faster Java compilation on Windows
+ - Role focused dependency configurations creation
+[2026-05-02 12:45:21,427] [docker_util.py] [INFO]: For more details see https://docs.gradle.org/8.4/release-notes.html
+[2026-05-02 12:45:21,427] [docker_util.py] [INFO]: Starting a Gradle Daemon (subsequent builds will be faster)
+[2026-05-02 12:45:21,427] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:23,733] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:23,736] [docker_util.py] [INFO]: > Configure project :
+Building version '5.7.1-SNAPSHOT'
+  - reason: shipkit-auto-version deduced snapshot based on tag: 'v5.7.0'
+[2026-05-02 12:47:36,527] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,528] [docker_util.py] [INFO]: > Task :bom:assemble
+[2026-05-02 12:47:36,530] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 12:47:36,530] [docker_util.py] [INFO]: > Task :bom:check UP-TO-DATE
+[2026-05-02 12:47:36,530] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,530] [docker_util.py] [INFO]: > Task :bom:build UP-TO-DATE
+[2026-05-02 12:47:36,530] [docker_util.py] [INFO]: > Task :junit-jupiter:processResources NO-SOURCE
+[2026-05-02 12:47:36,530] [docker_util.py] [INFO]: > Task :groovyTest:compileJava NO-SOURCE
+[2026-05-02 12:47:36,530] [docker_util.py] [INFO]: > Task :inlineTest:processResources NO-SOURCE
+[2026-05-02 12:47:36,530] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,530] [docker_util.py] [INFO]: > Task :groovyInlineTest:compileJava
+[2026-05-02 12:47:36,530] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,530] [docker_util.py] [INFO]: > Task :memory-test:processResources NO-SOURCE
+[2026-05-02 12:47:36,530] [docker_util.py] [INFO]: > Task :module-test:processResources NO-SOURCE
+[2026-05-02 12:47:36,530] [docker_util.py] [INFO]: > Task :extTest:compileJava NO-SOURCE
+[2026-05-02 12:47:36,531] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:compileJava NO-SOURCE
+> Task :junitJupiterParallelTest:compileJava NO-SOURCE
+> Task :junitJupiterExtensionTest:compileJava NO-SOURCE
+> Task :errorprone:processResources NO-SOURCE
+> Task :java21:processResources NO-SOURCE
+> Task :kotlinTest:checkKotlinGradlePluginConfigurationErrors
+> Task :kotlinReleaseCoroutinesTest:checkKotlinGradlePluginConfigurationErrors
+> Task :java21:processTestResources NO-SOURCE
+[2026-05-02 12:47:36,532] [docker_util.py] [INFO]: > Task :groovyTest:compileGroovy NO-SOURCE
+> Task :junitJupiterInlineMockMakerExtensionTest:processResources NO-SOURCE
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: > Task :extTest:processResources
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: > Task :groovyInlineTest:compileGroovy
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: > Task :java21:licenseMain
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:classes
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: > Task :groovyTest:processResources
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:compileKotlin
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:processResources
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: > Task :memory-test:processTestResources
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: > Task :module-test:processTestResources
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: > Task :kotlinTest:compileKotlin
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:processResources
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,628] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,629] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:classes
+[2026-05-02 12:47:36,629] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 12:47:36,629] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,630] [docker_util.py] [INFO]: > Task :extTest:classes
+[2026-05-02 12:47:36,630] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 12:47:36,630] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,631] [docker_util.py] [INFO]: > Task :groovyTest:classes
+[2026-05-02 12:47:36,631] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 12:47:36,631] [docker_util.py] [INFO]: > Task :memory-test:licenseMain
+[2026-05-02 12:47:36,631] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,631] [docker_util.py] [INFO]: > Task :module-test:licenseMain
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: > Task :inlineTest:processTestResources
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:classes
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: UP-TO-DATE
+> Task :groovyInlineTest:processResources NO-SOURCE
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:compileJava
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: > Task :groovyInlineTest:classes
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: > Task :kotlinTest:compileJava
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:processResources
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: > Task :inlineTest:licenseMain
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:classes
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: > Task :kotlinTest:processResources
+[2026-05-02 12:47:36,632] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,633] [docker_util.py] [INFO]: > Task :kotlinTest:classes UP-TO-DATE
+> Task :kotlinTest:jar
+[2026-05-02 12:47:36,633] [docker_util.py] [INFO]: > Task :junit-jupiter:sourcesJar
+> Task :groovyInlineTest:jar
+[2026-05-02 12:47:36,633] [docker_util.py] [INFO]: > Task :kotlinTest:assemble
+> Task :junitJupiterParallelTest:jar
+> Task :junitJupiterExtensionTest:jar
+> Task :junitJupiterInlineMockMakerExtensionTest:jar
+> Task :groovyInlineTest:assemble
+[2026-05-02 12:47:36,633] [docker_util.py] [INFO]: > Task :groovyTest:jar
+[2026-05-02 12:47:36,633] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,633] [docker_util.py] [INFO]: > Task :android:processResources
+> Task :errorprone:sourcesJar
+[2026-05-02 12:47:36,634] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:assemble
+> Task :junitJupiterExtensionTest:assemble
+> Task :kotlinReleaseCoroutinesTest:jar
+> Task :junit-jupiter:processTestResources NO-SOURCE
+> Task :junitJupiterExtensionTest:checkstyleMain NO-SOURCE
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: > Task :groovyInlineTest:checkstyleMain NO-SOURCE
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: > Task :groovyTest:assemble
+> Task :junitJupiterParallelTest:assemble
+> Task :kotlinReleaseCoroutinesTest:assemble
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:checkstyleMain
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:checkstyleMain NO-SOURCE
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: > Task :kotlinTest:checkstyleMain
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:checkstyleMain
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: > Task :groovyInlineTest:processTestResources
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: > Task :groovyTest:checkstyleMain NO-SOURCE
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: > Task :errorprone:processTestResources NO-SOURCE
+> Task :groovyInlineTest:licenseMain NO-SOURCE
+> Task :groovyTest:processTestResources
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,635] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:processTestResources
+[2026-05-02 12:47:36,636] [docker_util.py] [INFO]: > Task :kotlinTest:processTestResources
+[2026-05-02 12:47:36,636] [docker_util.py] [INFO]: > Task :groovyTest:licenseMain NO-SOURCE
+> Task :kotlinReleaseCoroutinesTest:licenseMain NO-SOURCE
+> Task :junitJupiterParallelTest:processTestResources
+[2026-05-02 12:47:36,636] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,636] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:licenseMain
+[2026-05-02 12:47:36,636] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,636] [docker_util.py] [INFO]: > Task :kotlinTest:licenseMain NO-SOURCE
+> Task :junitJupiterExtensionTest:processTestResources
+[2026-05-02 12:47:36,636] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:36,637] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:licenseMain
+[2026-05-02 12:47:36,637] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,638] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:processTestResources
+[2026-05-02 12:47:36,638] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:licenseMain
+[2026-05-02 12:47:36,638] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:47:36,638] [docker_util.py] [INFO]: > Task :android:sourcesJar
+[2026-05-02 12:47:36,727] [docker_util.py] [INFO]: > Task :android:processTestResources NO-SOURCE
+> Task :groovyInlineTest:licenseTest UP-TO-DATE
+> Task :errorprone:licenseMain UP-TO-DATE
+> Task :memory-test:licenseTest UP-TO-DATE
+> Task :groovyTest:licenseTest UP-TO-DATE
+> Task :groovyInlineTest:license UP-TO-DATE
+> Task :module-test:licenseTest UP-TO-DATE
+> Task :junitJupiterParallelTest:licenseTest UP-TO-DATE
+> Task :module-test:license UP-TO-DATE
+> Task :java21:licenseTest UP-TO-DATE
+> Task :junit-jupiter:licenseMain UP-TO-DATE
+> Task :kotlinTest:licenseTest UP-TO-DATE
+> Task :kotlinTest:license UP-TO-DATE
+> Task :groovyTest:license UP-TO-DATE
+> Task :junitJupiterExtensionTest:licenseTest UP-TO-DATE
+> Task :java21:license UP-TO-DATE
+[2026-05-02 12:47:36,727] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:license
+[2026-05-02 12:47:36,727] [docker_util.py] [INFO]: UP-TO-DATE
+[2026-05-02 12:47:36,727] [docker_util.py] [INFO]: > Task :memory-test:license UP-TO-DATE
+> Task :junitJupiterParallelTest:license UP-TO-DATE
+> Task :junitJupiterInlineMockMakerExtensionTest:licenseTest UP-TO-DATE
+> Task :osgi-test:compileJava NO-SOURCE
+> Task :junitJupiterInlineMockMakerExtensionTest:license UP-TO-DATE
+> Task :android:licenseMain UP-TO-DATE
+[2026-05-02 12:47:36,727] [docker_util.py] [INFO]: > Task :programmatic-test:processResources NO-SOURCE
+> Task :inlineTest:licenseTest UP-TO-DATE
+> Task :osgi-test:processResources NO-SOURCE
+> Task :inlineTest:license UP-TO-DATE
+> Task :osgi-test:classes UP-TO-DATE
+> Task :android:licenseTest NO-SOURCE
+> Task :android:license UP-TO-DATE
+> Task :programmatic-test:processTestResources NO-SOURCE
+> Task :proxy:processResources
+[2026-05-02 12:47:36,727] [docker_util.py] [INFO]: > Task :errorprone:licenseTest UP-TO-DATE
+> Task :errorprone:license UP-TO-DATE
+> Task :programmatic-test:licenseMain NO-SOURCE
+> Task :subclass:processResources
+> Task :junit-jupiter:licenseTest UP-TO-DATE
+> Task :junit-jupiter:license UP-TO-DATE
+[2026-05-02 12:47:36,731] [docker_util.py] [INFO]: > Task :osgi-test:jar
+> Task :osgi-test:assemble
+> Task :programmatic-test:licenseTest UP-TO-DATE
+[2026-05-02 12:47:36,731] [docker_util.py] [INFO]: > Task :osgi-test:checkstyleMain NO-SOURCE
+> Task :proxy:sourcesJar
+> Task :programmatic-test:license UP-TO-DATE
+> Task :subclass:sourcesJar
+> Task :proxy:processTestResources NO-SOURCE
+> Task :subclass:processTestResources NO-SOURCE
+> Task :subclass:licenseMain UP-TO-DATE
+> Task :proxy:licenseMain UP-TO-DATE
+> Task :subclass:licenseTest UP-TO-DATE
+> Task :subclass:license UP-TO-DATE
+> Task :proxy:licenseTest UP-TO-DATE
+> Task :proxy:license UP-TO-DATE
+[2026-05-02 12:47:36,827] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:licenseTest UP-TO-DATE
+> Task :extTest:jar
+> Task :extTest:assemble
+> Task :kotlinReleaseCoroutinesTest:license UP-TO-DATE
+> Task :extTest:checkstyleMain NO-SOURCE
+> Task :extTest:processTestResources
+> Task :extTest:licenseMain NO-SOURCE
+[2026-05-02 12:47:36,827] [docker_util.py] [INFO]: > Task :extTest:licenseTest UP-TO-DATE
+> Task :extTest:license UP-TO-DATE
+> Task :junit-jupiter:osgiProperties
+[2026-05-02 12:47:37,227] [docker_util.py] [INFO]: > Task :errorprone:generatePomFileForJavaLibraryPublication
+> Task :proxy:generatePomFileForJavaLibraryPublication
+> Task :junit-jupiter:generatePomFileForJavaLibraryPublication
+> Task :subclass:generatePomFileForJavaLibraryPublication
+[2026-05-02 12:47:37,227] [docker_util.py] [INFO]: > Task :android:generatePomFileForJavaLibraryPublication
+[2026-05-02 12:47:42,227] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:42,227] [docker_util.py] [INFO]: > Task :compileJava
+[2026-05-02 12:47:42,227] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:47:43,927] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:43,928] [docker_util.py] [INFO]: > Task :osgi-test:compileOtherBundleJava
+[2026-05-02 12:47:43,928] [docker_util.py] [INFO]: > Task :osgi-test:processOtherBundleResources NO-SOURCE
+> Task :osgi-test:otherBundleClasses
+[2026-05-02 12:47:43,928] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:47:47,027] [docker_util.py] [INFO]: > Task :osgi-test:processTestResources NO-SOURCE
+> Task :osgi-test:processTestBundleResources NO-SOURCE
+> Task :osgi-test:licenseMain NO-SOURCE
+> Task :osgi-test:licenseOtherBundle UP-TO-DATE
+> Task :osgi-test:licenseTest UP-TO-DATE
+> Task :osgi-test:licenseTestBundle UP-TO-DATE
+> Task :osgi-test:license UP-TO-DATE
+[2026-05-02 12:47:47,227] [docker_util.py] [INFO]: > Task :osgi-test:otherBundle
+[2026-05-02 12:47:48,827] [docker_util.py] [INFO]: > Task :osgi-test:checkstyleOtherBundle
+[2026-05-02 12:47:49,927] [docker_util.py] [INFO]: > Task :compileJava
+[2026-05-02 12:47:49,927] [docker_util.py] [INFO]: [91mNote: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: /home/mockito/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPlugins.java uses or overrides a deprecated API that is marked for removal.
+Note: Recompile with -Xlint:removal for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+[0m
+[2026-05-02 12:47:50,732] [docker_util.py] [INFO]: > Task :copyMockMethodDispatcher
+> Task :programmatic-test:compileJava NO-SOURCE
+> Task :subclass:compileJava NO-SOURCE
+> Task :memory-test:compileJava NO-SOURCE
+> Task :proxy:compileJava NO-SOURCE
+> Task :inlineTest:compileJava NO-SOURCE
+> Task :subclass:classes
+> Task :proxy:classes
+> Task :programmatic-test:classes UP-TO-DATE
+> Task :inlineTest:classes UP-TO-DATE
+> Task :module-test:compileJava NO-SOURCE
+> Task :java21:compileJava NO-SOURCE
+> Task :module-test:classes UP-TO-DATE
+> Task :memory-test:classes UP-TO-DATE
+> Task :java21:classes UP-TO-DATE
+> Task :processResources NO-SOURCE
+> Task :classes
+> Task :module-test:jar
+> Task :module-test:assemble
+> Task :memory-test:jar
+> Task :module-test:checkstyleMain NO-SOURCE
+> Task :programmatic-test:jar
+> Task :inlineTest:jar
+> Task :inlineTest:assemble
+> Task :proxy:jar
+> Task :programmatic-test:assemble
+> Task :inlineTest:checkstyleMain NO-SOURCE
+> Task :memory-test:assemble
+> Task :proxy:javadoc SKIPPED
+> Task :java21:jar
+> Task :java21:assemble
+> Task :subclass:jar
+> Task :subclass:javadoc SKIPPED
+> Task :memory-test:checkstyleMain NO-SOURCE
+> Task :java21:checkstyleMain NO-SOURCE
+> Task :programmatic-test:checkstyleMain NO-SOURCE
+[2026-05-02 12:47:50,829] [docker_util.py] [INFO]: > Task :proxy:javadocJar
+> Task :proxy:assemble
+> Task :proxy:checkstyleMain NO-SOURCE
+> Task :subclass:javadocJar
+> Task :subclass:assemble
+> Task :subclass:checkstyleMain NO-SOURCE
+[2026-05-02 12:47:51,727] [docker_util.py] [INFO]: > Task :jar
+> Task :groovyInlineTest:compileTestJava NO-SOURCE
+> Task :groovyTest:compileTestJava NO-SOURCE
+[2026-05-02 12:47:52,728] [docker_util.py] [INFO]: > Task :android:compileJava
+[2026-05-02 12:47:52,728] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:52,728] [docker_util.py] [INFO]: > Task :android:classes
+> Task :android:jar
+> Task :android:javadoc SKIPPED
+> Task :android:javadocJar
+[2026-05-02 12:47:52,731] [docker_util.py] [INFO]: > Task :android:assemble
+[2026-05-02 12:47:52,732] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:52,732] [docker_util.py] [INFO]: > Task :errorprone:compileJava
+[2026-05-02 12:47:52,732] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:47:53,028] [docker_util.py] [INFO]: > Task :osgi-test:compileTestJava
+> Task :android:compileTestJava NO-SOURCE
+[2026-05-02 12:47:53,028] [docker_util.py] [INFO]: > Task :android:testClasses UP-TO-DATE
+[2026-05-02 12:47:53,028] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:53,029] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:47:53,029] [docker_util.py] [INFO]: > Task :junit-jupiter:compileJava
+[2026-05-02 12:47:53,132] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:53,132] [docker_util.py] [INFO]: > Task :android:checkstyleTest NO-SOURCE
+[2026-05-02 12:47:53,132] [docker_util.py] [INFO]: > Task :android:test NO-SOURCE
+[2026-05-02 12:47:53,132] [docker_util.py] [INFO]: > Task :android:retryTest SKIPPED
+[2026-05-02 12:47:53,132] [docker_util.py] [INFO]: > Task :android:generateMetadataFileForJavaLibraryPublication
+[2026-05-02 12:47:53,132] [docker_util.py] [INFO]: SKIPPED
+[2026-05-02 12:47:53,132] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:53,132] [docker_util.py] [INFO]: > Task :module-test:compileTestJava
+[2026-05-02 12:47:53,132] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:53,132] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:47:53,229] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:53,229] [docker_util.py] [INFO]: > Task :android:publishJavaLibraryPublicationToMavenLocal
+[2026-05-02 12:47:53,229] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:53,229] [docker_util.py] [INFO]: > Task :osgi-test:testClasses
+[2026-05-02 12:47:53,229] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:53,229] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:53,229] [docker_util.py] [INFO]: > Task :inlineTest:compileTestJava
+[2026-05-02 12:47:53,229] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:53,229] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 12:47:53,230] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:47:54,229] [docker_util.py] [INFO]: > Task :android:checkstyleMain
+[2026-05-02 12:47:54,229] [docker_util.py] [INFO]: > Task :android:check
+> Task :android:build
+[2026-05-02 12:47:54,229] [docker_util.py] [INFO]: > Task :memory-test:compileTestJava
+[2026-05-02 12:47:54,231] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:54,231] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 12:47:54,231] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:47:54,627] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:54,627] [docker_util.py] [INFO]: > Task :subclass:compileTestJava
+[2026-05-02 12:47:54,627] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:54,627] [docker_util.py] [INFO]: > Task :subclass:testClasses
+[2026-05-02 12:47:54,627] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:54,627] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:54,627] [docker_util.py] [INFO]: > Task :java21:compileTestJava
+[2026-05-02 12:47:54,628] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:54,628] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 12:47:54,628] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:47:55,233] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:55,233] [docker_util.py] [INFO]: > Task :subclass:checkstyleTest
+[2026-05-02 12:47:55,234] [docker_util.py] [INFO]: > Task :programmatic-test:compileTestJava
+[2026-05-02 12:47:55,234] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:55,234] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 12:47:55,234] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:47:56,028] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:56,029] [docker_util.py] [INFO]: > Task :osgi-test:compileTestBundleJava
+[2026-05-02 12:47:56,032] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:56,032] [docker_util.py] [INFO]: > Task :osgi-test:testBundleClasses
+[2026-05-02 12:47:56,032] [docker_util.py] [INFO]: > Task :junit-jupiter:classes
+[2026-05-02 12:47:56,032] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:56,032] [docker_util.py] [INFO]: > Task :proxy:compileTestJava
+[2026-05-02 12:47:56,033] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:56,033] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:47:56,128] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:56,129] [docker_util.py] [INFO]: > Task :junit-jupiter:jar
+[2026-05-02 12:47:56,130] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:56,130] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:56,130] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:47:56,130] [docker_util.py] [INFO]: > Task :javadoc
+[2026-05-02 12:47:56,228] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:56,231] [docker_util.py] [INFO]: > Task :osgi-test:checkstyleTestBundle
+[2026-05-02 12:47:56,231] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:57,228] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:57,228] [docker_util.py] [INFO]: > Task :memory-test:compileTestJava
+[2026-05-02 12:47:57,228] [docker_util.py] [INFO]: [91mNote: /home/mockito/subprojects/memory-test/src/test/java/org/mockito/memorytest/LocationFactoryAllocationRateTest.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+[0m
+[2026-05-02 12:47:57,329] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:57,329] [docker_util.py] [INFO]: > Task :java21:testClasses
+
+> Task :subclass:test
+[2026-05-02 12:47:57,329] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:47:57,928] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:57,929] [docker_util.py] [INFO]: > Task :java21:checkstyleTest
+[2026-05-02 12:47:58,028] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:compileTestJava
+[2026-05-02 12:47:58,028] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:58,028] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:testClasses
+[2026-05-02 12:47:58,127] [docker_util.py] [INFO]: > Task :osgi-test:checkstyleTest
+[2026-05-02 12:47:58,228] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:58,228] [docker_util.py] [INFO]: > Task :junit-jupiter:javadoc
+[2026-05-02 12:47:58,228] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:58,228] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 12:47:58,229] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:47:58,328] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:58,328] [docker_util.py] [INFO]: > Task :junit-jupiter:javadocJar
+> Task :junit-jupiter:assemble
+[2026-05-02 12:47:58,328] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:58,428] [docker_util.py] [INFO]: > Task :memory-test:testClasses
+[2026-05-02 12:47:58,627] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:checkstyleTest
+[2026-05-02 12:47:58,633] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:58,827] [docker_util.py] [INFO]: > Task :memory-test:checkstyleTest
+[2026-05-02 12:47:58,828] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:58,828] [docker_util.py] [INFO]: > Task :groovyInlineTest:compileTestGroovy
+[2026-05-02 12:47:58,828] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:47:58,928] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:58,928] [docker_util.py] [INFO]: > Task :junit-jupiter:checkstyleMain
+[2026-05-02 12:47:58,929] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:58,930] [docker_util.py] [INFO]: > Task :groovyTest:compileTestGroovy
+[2026-05-02 12:47:58,930] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:58,930] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:47:59,031] [docker_util.py] [INFO]: > Task :osgi-test:testBundle
+[2026-05-02 12:47:59,127] [docker_util.py] [INFO]: > Task :programmatic-test:testClasses
+[2026-05-02 12:47:59,128] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:59,227] [docker_util.py] [INFO]: > Task :errorprone:classes
+[2026-05-02 12:47:59,227] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:59,329] [docker_util.py] [INFO]: > Task :errorprone:jar
+[2026-05-02 12:47:59,330] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:59,331] [docker_util.py] [INFO]: > Task :module-test:testClasses
+[2026-05-02 12:47:59,331] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:59,433] [docker_util.py] [INFO]: > Task :programmatic-test:checkstyleTest
+[2026-05-02 12:47:59,433] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:59,727] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 12:47:59,828] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:compileTestJava
+> Task :junitJupiterInlineMockMakerExtensionTest:testClasses
+[2026-05-02 12:47:59,933] [docker_util.py] [INFO]: > Task :inlineTest:testClasses
+> Task :junitJupiterInlineMockMakerExtensionTest:checkstyleTest
+[2026-05-02 12:47:59,933] [docker_util.py] [INFO]: 
+[2026-05-02 12:47:59,933] [docker_util.py] [INFO]: > Task :java21:test
+[2026-05-02 12:47:59,933] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 12:47:59,933] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:00,027] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:00,027] [docker_util.py] [INFO]: > Task :module-test:checkstyleTest
+[2026-05-02 12:48:00,027] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:00,133] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:compileTestJava
+[2026-05-02 12:48:00,133] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:00,133] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:testClasses
+[2026-05-02 12:48:00,133] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:00,133] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:00,133] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:test
+[2026-05-02 12:48:00,133] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:00,133] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 12:48:00,133] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:00,627] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:00,627] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:checkstyleTest
+[2026-05-02 12:48:00,627] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:00,828] [docker_util.py] [INFO]: > Task :inlineTest:checkstyleTest
+[2026-05-02 12:48:00,828] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:00,828] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended[0m
+[2026-05-02 12:48:00,828] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:00,828] [docker_util.py] [INFO]: > Task :javadocJar
+[2026-05-02 12:48:00,828] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:00,828] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:00,828] [docker_util.py] [INFO]: > Task :memory-test:test
+[2026-05-02 12:48:00,828] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:00,828] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 12:48:00,828] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:01,532] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:01,532] [docker_util.py] [INFO]: > Task :sourcesJar
+[2026-05-02 12:48:01,532] [docker_util.py] [INFO]: > Task :assemble
+[2026-05-02 12:48:01,532] [docker_util.py] [INFO]: > Task :osgi-test:test
+[2026-05-02 12:48:01,532] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:01,532] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:48:01,828] [docker_util.py] [INFO]: > Task :errorprone:javadoc
+[2026-05-02 12:48:01,828] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:48:02,029] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:48:02,029] [docker_util.py] [INFO]: > Task :groovyTest:testClasses
+> Task :groovyTest:checkstyleTest NO-SOURCE
+
+> Task :module-test:test
+[2026-05-02 12:48:02,528] [docker_util.py] [INFO]: > Task :groovyInlineTest:testClasses
+[2026-05-02 12:48:02,528] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 12:48:02,528] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:48:02,528] [docker_util.py] [INFO]: > Task :groovyInlineTest:checkstyleTest NO-SOURCE
+
+> Task :inlineTest:test
+[2026-05-02 12:48:03,643] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:03,645] [docker_util.py] [INFO]: > Task :junit-jupiter:compileTestJava
+[2026-05-02 12:48:03,645] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:48:03,645] [docker_util.py] [INFO]: > Task :junit-jupiter:testClasses
+
+> Task :junitJupiterInlineMockMakerExtensionTest:test
+[2026-05-02 12:48:04,548] [docker_util.py] [INFO]: > Task :java21:check
+> Task :java21:build
+
+> Task :junitJupiterParallelTest:test
+[2026-05-02 12:48:04,548] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:48:05,128] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,128] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended[0m
+[2026-05-02 12:48:05,129] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:05,129] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,129] [docker_util.py] [INFO]: > Task :programmatic-test:test
+[2026-05-02 12:48:05,129] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,129] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 12:48:05,129] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:05,232] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,232] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended[0m
+[2026-05-02 12:48:05,233] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:05,233] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,233] [docker_util.py] [INFO]: > Task :groovyTest:test
+[2026-05-02 12:48:05,233] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,233] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 12:48:05,233] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:05,428] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,430] [docker_util.py] [INFO]: > Task :errorprone:javadocJar
+[2026-05-02 12:48:05,434] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,434] [docker_util.py] [INFO]: > Task :errorprone:assemble
+[2026-05-02 12:48:05,437] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,437] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,441] [docker_util.py] [INFO]: > Task :groovyInlineTest:test
+[2026-05-02 12:48:05,441] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 12:48:05,441] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,441] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:05,527] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,532] [docker_util.py] [INFO]: > Task :junit-jupiter:checkstyleTest
+[2026-05-02 12:48:05,533] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,535] [docker_util.py] [INFO]: > Task :proxy:testClasses
+[2026-05-02 12:48:05,541] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:05,930] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended[0m
+[2026-05-02 12:48:05,941] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:06,129] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended[0m
+[2026-05-02 12:48:06,132] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:06,132] [docker_util.py] [INFO]: > Task :proxy:checkstyleTest
+[2026-05-02 12:48:06,135] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:06,331] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended[0m
+[2026-05-02 12:48:06,332] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:06,538] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:06,540] [docker_util.py] [INFO]: > Task :junit-jupiter:test
+[2026-05-02 12:48:06,540] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:06,540] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai[0m
+[2026-05-02 12:48:06,543] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:06,931] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:06,931] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended[0m
+[2026-05-02 12:48:06,931] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:07,229] [docker_util.py] [INFO]: > Task :errorprone:checkstyleMain
+[2026-05-02 12:48:07,827] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended[0m
+[2026-05-02 12:48:07,830] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:08,429] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: [0m
+[2026-05-02 12:48:08,433] [docker_util.py] [INFO]: [91mSharing is only supported for boot loader classes because bootstrap classpath has been appended[0m
+[2026-05-02 12:48:08,435] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:08,828] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 12:48:09,134] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:48:09,134] [docker_util.py] [INFO]: > Task :proxy:test
+[2026-05-02 12:48:09,330] [docker_util.py] [INFO]: > Task :junitJupiterExtensionTest:check
+> Task :junitJupiterExtensionTest:build
+> Task :subclass:retryTest SKIPPED
+[2026-05-02 12:48:09,431] [docker_util.py] [INFO]: > Task :subclass:check
+> Task :subclass:generateMetadataFileForJavaLibraryPublication SKIPPED
+> Task :subclass:publishJavaLibraryPublicationToMavenLocal
+> Task :subclass:build
+[2026-05-02 12:48:10,333] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 12:48:10,530] [docker_util.py] [INFO]: [91mNote: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+[0m
+[2026-05-02 12:48:10,531] [docker_util.py] [INFO]: > Task :errorprone:compileTestJava
+[2026-05-02 12:48:10,928] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:check
+[2026-05-02 12:48:10,928] [docker_util.py] [INFO]: > Task :junitJupiterParallelTest:build
+[2026-05-02 12:48:11,429] [docker_util.py] [INFO]: > Task :animalsnifferMain
+[2026-05-02 12:48:11,429] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 12:48:11,429] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:11,827] [docker_util.py] [INFO]: > Task :errorprone:testClasses
+[2026-05-02 12:48:12,428] [docker_util.py] [INFO]: > Task :errorprone:checkstyleTest
+[2026-05-02 12:48:12,727] [docker_util.py] [INFO]: > Task :proxy:retryTest SKIPPED
+> Task :proxy:check
+> Task :proxy:generateMetadataFileForJavaLibraryPublication SKIPPED
+> Task :proxy:publishJavaLibraryPublicationToMavenLocal
+> Task :proxy:build
+[2026-05-02 12:48:12,929] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:48:12,930] [docker_util.py] [INFO]: > Task :programmatic-test:test
+[2026-05-02 12:48:13,427] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:13,429] [docker_util.py] [INFO]: > Task :groovyTest:check
+[2026-05-02 12:48:13,432] [docker_util.py] [INFO]: > Task :groovyTest:build
+[2026-05-02 12:48:14,027] [docker_util.py] [INFO]: > Task :osgi-test:check
+[2026-05-02 12:48:14,027] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:14,027] [docker_util.py] [INFO]: > Task :osgi-test:build
+[2026-05-02 12:48:14,027] [docker_util.py] [INFO]: > Task :errorprone:test
+[2026-05-02 12:48:14,027] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+WARNING: package com.sun.tools.javac.type not in jdk.compiler
+[0m
+[2026-05-02 12:48:14,327] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:14,330] [docker_util.py] [INFO]: > Task :groovyInlineTest:check
+[2026-05-02 12:48:14,330] [docker_util.py] [INFO]: > Task :groovyInlineTest:build
+[2026-05-02 12:48:14,629] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:check
+[2026-05-02 12:48:14,629] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:14,629] [docker_util.py] [INFO]: > Task :junitJupiterInlineMockMakerExtensionTest:build
+[2026-05-02 12:48:14,933] [docker_util.py] [INFO]: > Task :module-test:check
+[2026-05-02 12:48:14,933] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:14,934] [docker_util.py] [INFO]: > Task :module-test:build
+[2026-05-02 12:48:14,934] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:16,028] [docker_util.py] [INFO]: > Task :checkstyleMain
+[2026-05-02 12:48:16,627] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended[0m
+[2026-05-02 12:48:16,630] [docker_util.py] [INFO]: [91m
+[0m
+[2026-05-02 12:48:19,727] [docker_util.py] [INFO]: > Task :junit-jupiter:retryTest SKIPPED
+[2026-05-02 12:48:19,835] [docker_util.py] [INFO]: > Task :programmatic-test:check
+> Task :programmatic-test:build
+[2026-05-02 12:48:20,732] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:compileTestKotlin
+[2026-05-02 12:48:20,732] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:20,732] [docker_util.py] [INFO]: > Task :kotlinTest:compileTestKotlin
+[2026-05-02 12:48:20,732] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:20,929] [docker_util.py] [INFO]: > Task :errorprone:retryTest SKIPPED
+[2026-05-02 12:48:20,929] [docker_util.py] [INFO]: > Task :errorprone:check
+> Task :errorprone:generateMetadataFileForJavaLibraryPublication SKIPPED
+[2026-05-02 12:48:21,028] [docker_util.py] [INFO]: > Task :errorprone:publishJavaLibraryPublicationToMavenLocal
+> Task :errorprone:build
+[2026-05-02 12:48:21,427] [docker_util.py] [INFO]: > Task :junit-jupiter:verifyOSGi
+[2026-05-02 12:48:21,430] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:21,430] [docker_util.py] [INFO]: > Task :junit-jupiter:check
+> Task :junit-jupiter:generateMetadataFileForJavaLibraryPublication SKIPPED
+> Task :junit-jupiter:publishJavaLibraryPublicationToMavenLocal
+> Task :junit-jupiter:build
+[2026-05-02 12:48:21,827] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:compileTestJava
+[2026-05-02 12:48:21,828] [docker_util.py] [INFO]: NO-SOURCE
+[2026-05-02 12:48:21,828] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:testClasses
+> Task :kotlinReleaseCoroutinesTest:checkstyleTest NO-SOURCE
+[2026-05-02 12:48:22,028] [docker_util.py] [INFO]: > Task :inlineTest:check
+[2026-05-02 12:48:22,028] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:22,030] [docker_util.py] [INFO]: > Task :inlineTest:build
+[2026-05-02 12:48:22,030] [docker_util.py] [INFO]: 
+[2026-05-02 12:48:22,527] [docker_util.py] [INFO]: > Task :kotlinTest:compileTestJava NO-SOURCE
+> Task :kotlinTest:testClasses
+> Task :kotlinTest:checkstyleTest NO-SOURCE
+[2026-05-02 12:48:23,028] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 12:48:23,028] [docker_util.py] [INFO]: > Task :memory-test:check
+> Task :memory-test:build
+[2026-05-02 12:48:23,633] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 12:48:23,827] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:test
+[2026-05-02 12:48:23,827] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:48:24,328] [docker_util.py] [INFO]: > Task :kotlinReleaseCoroutinesTest:check
+> Task :kotlinReleaseCoroutinesTest:build
+[2026-05-02 12:48:24,527] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:48:24,528] [docker_util.py] [INFO]: > Task :kotlinTest:test
+[2026-05-02 12:48:25,027] [docker_util.py] [INFO]: > Task :kotlinTest:check
+> Task :kotlinTest:build
+[2026-05-02 12:48:29,927] [docker_util.py] [INFO]: > Task :compileTestJava
+[2026-05-02 12:48:29,928] [docker_util.py] [INFO]: [91mNote: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use or override a deprecated API that is marked for removal.
+Note: Recompile with -Xlint:removal for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+[0m
+[2026-05-02 12:48:30,227] [docker_util.py] [INFO]: > Task :processTestResources NO-SOURCE
+> Task :createTestResources
+> Task :testClasses
+[2026-05-02 12:48:30,327] [docker_util.py] [INFO]: > Task :licenseMain UP-TO-DATE
+> Task :licenseTest UP-TO-DATE
+> Task :license UP-TO-DATE
+[2026-05-02 12:48:30,927] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 12:48:31,127] [docker_util.py] [INFO]: > Task :extTest:compileTestJava
+> Task :extTest:testClasses
+[2026-05-02 12:48:31,227] [docker_util.py] [INFO]: > Task :extTest:checkstyleTest
+[2026-05-02 12:48:31,527] [docker_util.py] [INFO]: > Task :checkstyleTest
+[2026-05-02 12:48:32,327] [docker_util.py] [INFO]: > Task :test
+[2026-05-02 12:48:32,327] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:48:33,328] [docker_util.py] [INFO]: > Task :extTest:test
+
+> Task :extTest:check
+> Task :extTest:build
+[2026-05-02 12:48:33,328] [docker_util.py] [INFO]: [91mPicked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+[0m
+[2026-05-02 12:48:57,128] [docker_util.py] [INFO]: [91mOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[0m
+[2026-05-02 12:49:20,228] [docker_util.py] [INFO]: > Task :retryTest SKIPPED
+> Task :removeTestResources
+> Task :check
+> Task :generateMetadataFileForJavaLibraryPublication SKIPPED
+> Task :generatePomFileForJavaLibraryPublication
+> Task :publishJavaLibraryPublicationToMavenLocal
+> Task :build
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.4/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 5m 26s
+158 actionable tasks: 131 executed, 27 up-to-date
+[2026-05-02 12:49:47,984] [docker_util.py] [INFO]: ---> Removed intermediate container 5bbba9dd5c13
+[2026-05-02 12:49:47,985] [docker_util.py] [INFO]: ---> 2e669962fce6
+[2026-05-02 12:49:47,985] [docker_util.py] [INFO]: sha256:2e669962fce6b105995c22d703de3981c0acb942b52f065dbe3d4ddcb363bf81
+[2026-05-02 12:49:47,999] [docker_util.py] [INFO]: Successfully built 2e669962fce6
+[2026-05-02 12:49:48,027] [docker_util.py] [INFO]: Successfully tagged mswebench/mockito_m_mockito:pr-3167
+[2026-05-02 12:49:48,028] [docker_util.py] [INFO]: image(/Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/artifacts/patches/eval/s2-structural/java_47_s2_runs_3_patches/run-1/eval/workdir/mockito/mockito/images/pr-3167) build success: mswebench/mockito_m_mockito:pr-3167

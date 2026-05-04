@@ -1,0 +1,112 @@
+
+diff --git a/.gitignore b/.gitignore
+index 5bda0b93..e930bdfb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -18,3 +18,8 @@ local.properties
+ build
+ 
+ .DS_Store
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/gson/src/main/java/com/google/gson/internal/$Gson$Types.java b/gson/src/main/java/com/google/gson/internal/$Gson$Types.java
+index adea605f..12d4d809 100644
+--- a/gson/src/main/java/com/google/gson/internal/$Gson$Types.java
++++ b/gson/src/main/java/com/google/gson/internal/$Gson$Types.java
+@@ -334,26 +334,31 @@ public final class $Gson$Types {
+   }
+ 
+   public static Type resolve(Type context, Class<?> contextRawType, Type toResolve) {
+-    return resolve(context, contextRawType, toResolve, new HashSet<TypeVariable>());
++    return resolve(context, contextRawType, toResolve, new HashMap<TypeVariable<?>, Type>());
+   }
+ 
+   private static Type resolve(Type context, Class<?> contextRawType, Type toResolve,
+-                              Collection<TypeVariable> visitedTypeVariables) {
++                              Map<TypeVariable<?>, Type> visitedTypeVariables) {
+     // this implementation is made a little more complicated in an attempt to avoid object-creation
+     while (true) {
+       if (toResolve instanceof TypeVariable) {
+         TypeVariable<?> typeVariable = (TypeVariable<?>) toResolve;
+-        if (visitedTypeVariables.contains(typeVariable)) {
+-          // cannot reduce due to infinite recursion
+-          return toResolve;
+-        } else {
+-          visitedTypeVariables.add(typeVariable);
++        Type previouslyResolved = visitedTypeVariables.get(typeVariable);
++        if (previouslyResolved != null) {
++          return previouslyResolved;
+         }
+-        toResolve = resolveTypeVariable(context, contextRawType, typeVariable);
+-        if (toResolve == typeVariable) {
+-          return toResolve;
++
++        visitedTypeVariables.put(typeVariable, typeVariable);
++        Type resolved = resolveTypeVariable(context, contextRawType, typeVariable);
++        if (resolved == typeVariable) {
++          return resolved;
+         }
+ 
++        Type recursivelyResolved = resolve(context, contextRawType, resolved, visitedTypeVariables);
++        visitedTypeVariables.put(typeVariable, recursivelyResolved);
++        return recursivelyResolved;
++
++
+       } else if (toResolve instanceof Class && ((Class<?>) toResolve).isArray()) {
+         Class<?> original = (Class<?>) toResolve;
+         Type componentType = original.getComponentType();
+diff --git a/gson/src/test/java/com/google/gson/functional/EnumTest.java b/gson/src/test/java/com/google/gson/functional/EnumTest.java
+index 66b855eb..76726219 100644
+--- a/gson/src/test/java/com/google/gson/functional/EnumTest.java
++++ b/gson/src/test/java/com/google/gson/functional/EnumTest.java
+@@ -158,6 +158,20 @@ public class EnumTest extends TestCase {
+     assertTrue(bar.contains(Roshambo.PAPER));
+     assertFalse(bar.contains(Roshambo.SCISSORS));
+   }
++  public void testEnumDeserializationThroughRecursiveTypeVariables() {
++    RoshamboSetCollection actual =
++        gson.fromJson("{\"collection\":[\"ROCK\",\"SCISSORS\"]}", RoshamboSetCollection.class);
++
++    assertEquals(EnumSet.of(Roshambo.ROCK, Roshambo.SCISSORS), actual.collection);
++  }
++
++  private static class RoshamboSetCollection extends SetCollection<Roshambo> {}
++
++  private static class SetCollection<T> extends BaseCollection<T, Set<T>> {}
++
++  private static class BaseCollection<U, C extends Collection<U>> {
++    C collection;
++  }
+ 
+   public enum Roshambo {
+     ROCK {
+diff --git a/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java b/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java
+index aaa577b5..1233fee6 100644
+--- a/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java
++++ b/gson/src/test/java/com/google/gson/internal/bind/RecursiveTypesResolveTest.java
+@@ -104,11 +104,20 @@ public class RecursiveTypesResolveTest extends TestCase {
+     assertNotNull(adapter);
+   }
+ 
+-  public void testRecursiveTypeVariablesResolve12() throws Exception {
++  public void testRecursiveTypeVariablesResolve2() throws Exception {
+     TypeAdapter<TestType2> adapter = new Gson().getAdapter(TestType2.class);
+     assertNotNull(adapter);
+   }
+-}
++  public void testRecursiveTypeVariableWithRepeatedReference() {
++    TypeAdapter<RepeatedReferenceSubclass> adapter = new Gson().getAdapter(RepeatedReferenceSubclass.class);
++    assertNotNull(adapter);
++  }
+ 
++  private static class RepeatedReferenceBase<U, C extends java.util.Collection<U>> {
++    C collection;
++  }
+ 
++  private static class RepeatedReferenceMid<T> extends RepeatedReferenceBase<T, java.util.Set<T>> {}
+ 
++  private static class RepeatedReferenceSubclass extends RepeatedReferenceMid<String> {}
++}

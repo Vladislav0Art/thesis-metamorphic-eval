@@ -1,0 +1,12 @@
+diff --git a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
+index c1acde992..4151fc58b 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
++++ b/core/src/main/java/com/alibaba/fastjson2/writer/ObjectWriterBaseModule.java
+@@ -834,6 +834,7 @@ public class ObjectWriterBaseModule
+                 Class<?> serializer = jsonType.serializer();
+                 if (ObjectWriter.class.isAssignableFrom(serializer)) {
+                     beanInfo.serializer = serializer;
++                    beanInfo.writeEnumAsJavaBean = true;
+                 }
+ 
+                 Class<? extends Filter>[] serializeFilters = jsonType.serializeFilters();
