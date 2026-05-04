@@ -309,6 +309,113 @@ def _filter_hunk(
     return filtered_hunk, fixes
 
 
+# ── Correction patch generation ────────────────────────────────────────────────
+
+def _correction_hunk_for_reorder(hunk: Hunk) -> Hunk:
+    """Return a hunk that, when applied to the morphed file, restores original import order."""
+    correction_lines = []
+    for l in hunk.lines:
+        if l.line_type == 'context':
+            correction_lines.append(HunkLine('context', l.content))
+        elif l.line_type == 'added':
+            correction_lines.append(HunkLine('removed', l.content))
+        elif l.line_type == 'removed':
+            correction_lines.append(HunkLine('added', l.content))
+    return Hunk(
+        old_start=hunk.new_start,
+        old_count=hunk.new_count,
+        new_start=hunk.new_start,
+        new_count=hunk.old_count,
+        trailing=hunk.trailing,
+        lines=correction_lines,
+    )
+
+
+def _correction_hunk_for_wildcard(hunk: Hunk, drop_set: set) -> Optional[Hunk]:
+    """Return a hunk that, when applied to the morphed file, adds back wildcard/blank lines."""
+    correction_lines = []
+    for i, l in enumerate(hunk.lines):
+        if l.line_type == 'context':
+            correction_lines.append(HunkLine('context', l.content))
+        elif l.line_type == 'added':
+            # Was added by CodeCocoon → now present in morphed file → context in correction
+            correction_lines.append(HunkLine('context', l.content))
+        elif l.line_type == 'removed':
+            if i in drop_set:
+                # Noise removal → add it back to the morphed file
+                correction_lines.append(HunkLine('added', l.content))
+            # else: real removal → not in morphed file, skip
+
+    if not any(l.line_type == 'added' for l in correction_lines):
+        return None
+
+    old_count = sum(1 for l in correction_lines if l.line_type in ('context', 'removed'))
+    new_count = sum(1 for l in correction_lines if l.line_type in ('context', 'added'))
+    return Hunk(
+        old_start=hunk.new_start,
+        old_count=old_count,
+        new_start=hunk.new_start,
+        new_count=new_count,
+        trailing=hunk.trailing,
+        lines=correction_lines,
+    )
+
+
+def generate_noise_correction_patch(patch: str, logger=None) -> Optional[str]:
+    """Generate a patch to apply to the MORPHED files to undo CodeCocoon import noise.
+
+    The returned patch applies to the morphed branch working tree (not to the original
+    base commit).  Apply it with `git apply`, then commit, to produce a corrected HEAD.
+
+    Returns None when no import noise is detected.
+    """
+    if not patch:
+        return None
+
+    file_diffs = _parse_patch(patch)
+    result_fds: List[FileDiff] = []
+
+    for file_diff in file_diffs:
+        file_path = file_diff.file_path()
+        correction_hunks: List[Hunk] = []
+
+        for hunk in file_diff.hunks:
+            if _is_import_reorder(hunk):
+                correction_hunks.append(_correction_hunk_for_reorder(hunk))
+                if logger:
+                    logger.info(
+                        f"  [correction] import_reorder in {file_path}: {hunk.header()}"
+                    )
+                continue
+
+            wc_indices = _wildcard_removal_indices(hunk)
+            if wc_indices:
+                drop_set = _expand_with_adjacent_blank_removals(hunk.lines, wc_indices)
+                ch = _correction_hunk_for_wildcard(hunk, drop_set)
+                if ch is not None:
+                    correction_hunks.append(ch)
+                    if logger:
+                        logger.info(
+                            f"  [correction] wildcard_import_removal in {file_path}: {hunk.header()}"
+                        )
+
+        if not correction_hunks:
+            continue
+
+        # Minimal header sufficient for `git apply`
+        correction_header = [
+            f"--- a/{file_path}",
+            f"+++ b/{file_path}",
+        ]
+        result_fds.append(FileDiff(header_lines=correction_header, hunks=correction_hunks))
+
+    if not result_fds:
+        return None
+
+    parts = [fd.render() for fd in result_fds]
+    return '\n'.join(parts) + '\n'
+
+
 # ── Public entry point ─────────────────────────────────────────────────────────
 
 def filter_import_changes(

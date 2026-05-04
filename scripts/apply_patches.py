@@ -25,17 +25,17 @@ cd "$REPO_DIR"
 
 ERR=$(git apply --whitespace=nowarn "$SCRIPT_DIR/fix.patch" 2>&1)
 if [ $? -ne 0 ]; then
-    printf "FAILED\\n%s" "$ERR" > "$REPO_DIR/verdict.txt"
+    printf "FAILED (fix.patch)\\n%s" "$ERR" > "$SCRIPT_DIR/verdict.txt"
     exit 1
 fi
 
 ERR=$(git apply --whitespace=nowarn "$SCRIPT_DIR/test.patch" 2>&1)
 if [ $? -ne 0 ]; then
-    printf "FAILED\\n%s" "$ERR" > "$REPO_DIR/verdict.txt"
+    printf "FAILED (test.patch)\\n%s" "$ERR" > "$SCRIPT_DIR/verdict.txt"
     exit 1
 fi
 
-echo "PASSED" > "$REPO_DIR/verdict.txt"
+echo "PASSED" > "$SCRIPT_DIR/verdict.txt"
 """
 
 
@@ -74,6 +74,20 @@ def _process_instance(entry: dict, repos_dir: str) -> tuple[bool, str]:
     if not clone_repository(repo_url, repo_dir, base_sha, logger):
         return False, ""
 
+    # Write patch files and fix-run.sh before touching the repo
+    for filename, content in [
+        ("metamorphic_base.patch", metamorphic_base_patch),
+        ("fix.patch", fix_patch),
+        ("test.patch", test_patch),
+    ]:
+        with open(os.path.join(instance_dir, filename), "w") as f:
+            f.write(content)
+
+    fix_run_sh = os.path.join(instance_dir, "fix-run.sh")
+    with open(fix_run_sh, "w") as f:
+        f.write(_FIX_RUN_SH)
+    run_cli_command("chmod", ["+x", fix_run_sh])
+
     if not apply_patch(repo_dir, metamorphic_base_patch, logger):
         logger.error(f"[{instance_id}] Failed to apply metamorphic_base_patch")
         return False, ""
@@ -83,22 +97,6 @@ def _process_instance(entry: dict, repos_dir: str) -> tuple[bool, str]:
         logger.error(f"[{instance_id}] Failed to commit metamorphic_base_patch")
         return False, ""
 
-    # Write patch files
-    for filename, content in [
-        ("metamorphic_base.patch", metamorphic_base_patch),
-        ("fix.patch", fix_patch),
-        ("test.patch", test_patch),
-    ]:
-        path = os.path.join(instance_dir, filename)
-        with open(path, "w") as f:
-            f.write(content)
-
-    # Write and chmod fix-run.sh
-    fix_run_sh = os.path.join(instance_dir, "fix-run.sh")
-    with open(fix_run_sh, "w") as f:
-        f.write(_FIX_RUN_SH)
-    run_cli_command("chmod", ["+x", fix_run_sh])
-
     # Run fix-run.sh
     logger.info(f"[{instance_id}] Running fix-run.sh")
     stdout, stderr, rc = run_cli_command("bash", [fix_run_sh])
@@ -107,7 +105,7 @@ def _process_instance(entry: dict, repos_dir: str) -> tuple[bool, str]:
     if stderr:
         logger.debug(f"[{instance_id}] fix-run stderr: {stderr}")
 
-    verdict_path = os.path.join(repo_dir, "verdict.txt")
+    verdict_path = os.path.join(instance_dir, "verdict.txt")
     if not os.path.exists(verdict_path):
         logger.error(f"[{instance_id}] verdict.txt not found after running fix-run.sh")
         return False, verdict_path
@@ -143,6 +141,10 @@ def main():
         missing = wanted - found
         if missing:
             logger.warning(f"Instance IDs not found in input: {', '.join(sorted(missing))}")
+        print(f"\nProcessing {len(entries)} instance(s):")
+        for e in entries:
+            print(f"  - {e['instance_id']}")
+        print()
 
     if not entries:
         logger.error("No entries to process.")

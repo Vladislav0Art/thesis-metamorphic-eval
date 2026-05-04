@@ -33,13 +33,13 @@ logger = logging.getLogger(__name__)
 
 
 def _fmt_duration(ms: int) -> str:
-    """Format milliseconds as 'X min Y s (N ms)' or 'Y s (N ms)'."""
+    """Format milliseconds as 'X min Y s' or 'Y s'."""
     s = ms // 1000
     m = s // 60
     s_rem = s % 60
     if m > 0:
-        return f"{m} min {s_rem} s ({ms} ms)"
-    return f"{s_rem} s ({ms} ms)"
+        return f"{m} min {s_rem} s"
+    return f"{s_rem} s"
 
 
 RENAMING_MOVING_TRANSFORMATION_IDS = {
