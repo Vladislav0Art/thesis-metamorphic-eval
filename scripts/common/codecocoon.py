@@ -96,6 +96,37 @@ def execute_rewrite_problem_statement(
     return CodeCocoonResult(stdout=stdout, stderr=stderr, return_code=code)
 
 
+def execute_agent_fix_hunks(
+    codecocoon_dir: str,
+    input_file: str,
+    env_vars: Dict[str, str | None],
+    logger,
+    batch_size: int = 10,
+    max_agent_iterations: int = 70,
+) -> CodeCocoonResult:
+    """Execute CodeCocoon agentFixHunks gradle task.
+
+    Reads the unwanted-hunks JSON file and invokes a Koog AI agent to
+    revert IntelliJ import noise directly in the source files.
+    """
+    logger.info(
+        f"Executing agentFixHunks with input: {input_file} "
+        f"(batchSize={batch_size}, maxAgentIterations={max_agent_iterations})"
+    )
+    stdout, stderr, code = run_cli_command(
+        './gradlew',
+        [
+            'agentFixHunks',
+            f'-Pinput={input_file}',
+            f'-PbatchSize={batch_size}',
+            f'-PmaxAgentIterations={max_agent_iterations}',
+        ],
+        cwd=codecocoon_dir,
+        env={**os.environ, **env_vars},
+    )
+    return CodeCocoonResult(stdout=stdout, stderr=stderr, return_code=code)
+
+
 def execute_codecocoon(
     codecocoon_dir: str,
     config_path: str,

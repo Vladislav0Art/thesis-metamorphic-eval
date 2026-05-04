@@ -25,17 +25,17 @@ cd "$REPO_DIR"
 
 ERR=$(git apply --whitespace=nowarn "$SCRIPT_DIR/fix.patch" 2>&1)
 if [ $? -ne 0 ]; then
-    printf "FAILED\\n%s" "$ERR" > "$REPO_DIR/verdict.txt"
+    printf "FAILED (fix.patch)\\n%s" "$ERR" > "$SCRIPT_DIR/verdict.txt"
     exit 1
 fi
 
 ERR=$(git apply --whitespace=nowarn "$SCRIPT_DIR/test.patch" 2>&1)
 if [ $? -ne 0 ]; then
-    printf "FAILED\\n%s" "$ERR" > "$REPO_DIR/verdict.txt"
+    printf "FAILED (test.patch)\\n%s" "$ERR" > "$SCRIPT_DIR/verdict.txt"
     exit 1
 fi
 
-echo "PASSED" > "$REPO_DIR/verdict.txt"
+echo "PASSED" > "$SCRIPT_DIR/verdict.txt"
 """
 
 
@@ -107,7 +107,7 @@ def _process_instance(entry: dict, repos_dir: str) -> tuple[bool, str]:
     if stderr:
         logger.debug(f"[{instance_id}] fix-run stderr: {stderr}")
 
-    verdict_path = os.path.join(repo_dir, "verdict.txt")
+    verdict_path = os.path.join(instance_dir, "verdict.txt")
     if not os.path.exists(verdict_path):
         logger.error(f"[{instance_id}] verdict.txt not found after running fix-run.sh")
         return False, verdict_path

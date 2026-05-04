@@ -102,3 +102,32 @@ skip_existing_entries: true
 # updating the problem statement is a correctness requirement in that case (not optional).
 # Default: false
 rewrite_problem_statement: false
+
+# Whether to run the CodeCocoon `agentFixHunks` task after each of the three morph passes
+# (base, test, fix).  When true:
+#   1. import-noise hunks (import reorders, wildcard import removals) are collected from the
+#      metamorphic patch and written to  .codecocoon-artifacts/{base|test|fix}_unwanted_hunks.json
+#   2. The Koog AI agent (./gradlew agentFixHunks -Pinput=<file>) reverts those changes
+#      directly in the source files.
+#   3. The agent's changes are committed as a separate "filter" commit on the same branch.
+#   4. The morph patch is recomputed against the corrected commit.
+#   5. Cross-branch diffs (new_morphed_test/fix_patch) are computed after ALL three branches
+#      are corrected, so import noise cancels out on both sides.
+# Requires the agentFixHunks Gradle task to be present in the CodeCocoon-Plugin build.
+# If the agent returns a non-zero exit code the original patches are kept unchanged.
+# Default: false
+fix_import_hunks_with_agent: false
+
+# Number of import-noise hunks the agent processes in a single Gradle invocation.
+# Larger batches reduce the number of Gradle startups but give the agent more to fix at once.
+# Only used when fix_import_hunks_with_agent is true.
+# Passed as -PbatchSize to agentFixHunks.
+# Default: 8
+fix_hunks_batch_size: 8
+
+# Maximum number of iterations the Koog agent is allowed to run per batch.
+# Increase if the agent consistently times out on complex import blocks.
+# Only used when fix_import_hunks_with_agent is true.
+# Passed as -PmaxAgentIterations to agentFixHunks.
+# Default: 70
+fix_hunks_max_agent_iterations: 70

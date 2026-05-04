@@ -19,7 +19,7 @@ change that was removed.
 
 import re
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 # ── Regexes ────────────────────────────────────────────────────────────────────
@@ -186,6 +186,42 @@ def _parse_patch(patch: str) -> List[FileDiff]:
 
 # ── Detection ──────────────────────────────────────────────────────────────────
 
+def _compute_import_blocks(hunk: Hunk) -> Tuple[List[Dict], List[Dict]]:
+    """Return ``(original_block, current_block)`` for a reorder hunk.
+
+    Each block is a list of ``{"line": int, "import": str}`` dicts covering
+    *every* import visible in that version of the file window, including context
+    lines that didn't change.  Line numbers are absolute (from the hunk header).
+
+    ``original_block`` — import order as it was before CodeCocoon (old-file).
+    ``current_block``  — import order as it is now in the file (new-file); this
+    is what the agent will see when it opens the file.
+    """
+    original: List[Dict] = []
+    current:  List[Dict] = []
+    old_line = hunk.old_start
+    new_line = hunk.new_start
+
+    for l in hunk.lines:
+        if l.line_type == 'context':
+            if _IMPORT_RE.match(l.content.lstrip()):
+                original.append({"line": old_line, "import": l.content})
+                current.append( {"line": new_line, "import": l.content})
+            old_line += 1
+            new_line += 1
+        elif l.line_type == 'removed':
+            if _IMPORT_RE.match(l.content.lstrip()):
+                original.append({"line": old_line, "import": l.content})
+            old_line += 1
+        elif l.line_type == 'added':
+            if _IMPORT_RE.match(l.content.lstrip()):
+                current.append({"line": new_line, "import": l.content})
+            new_line += 1
+        # meta lines ("\ No newline at end of file") don't advance line counters
+
+    return original, current
+
+
 def _is_import_reorder(hunk: Hunk) -> bool:
     """Return True iff every changed line is an import AND removed-set == added-set."""
     changed = [l for l in hunk.lines if l.line_type in ('added', 'removed')]
@@ -309,7 +345,117 @@ def _filter_hunk(
     return filtered_hunk, fixes
 
 
-# ── Public entry point ─────────────────────────────────────────────────────────
+# ── Public entry points ────────────────────────────────────────────────────────
+
+def collect_unwanted_hunks(patch: str, logger=None) -> List[Dict]:
+    """Return a list of structured dicts describing every import-noise hunk in *patch*.
+
+    Each dict carries enough information for an AI agent to locate and revert
+    the noise in the source files:
+
+      - ``file``            relative path of the affected file
+      - ``hunk_type``       ``"import_reorder"`` or ``"wildcard_import_removal"``
+      - ``description``     human-readable explanation of the problem and the fix
+      - ``hunk_header``     the ``@@ ... @@`` line as it appears in the diff
+      - ``old_start_line``  first line of the old-file window
+      - ``old_line_count``  number of lines in the old-file window
+      - ``new_start_line``  first line of the new-file window
+      - ``new_line_count``  number of lines in the new-file window
+      - ``action``          one-sentence instruction for the agent
+      - ``full_hunk_diff``  the complete rendered hunk text (for reference)
+
+    Import-reorder dicts also carry:
+      - ``original_order``  list of import lines as they appeared BEFORE CodeCocoon (``-`` lines)
+      - ``reordered_to``    list of import lines as CodeCocoon left them (``+`` lines — unwanted)
+
+    Wildcard-removal dicts also carry:
+      - ``removed_wildcards`` list of wildcard import lines that were dropped
+    """
+    if not patch:
+        return []
+
+    file_diffs = _parse_patch(patch)
+    result: List[Dict] = []
+
+    for file_diff in file_diffs:
+        file_path = file_diff.file_path()
+
+        for hunk in file_diff.hunks:
+            if _is_import_reorder(hunk):
+                original_import_block, current_import_block = _compute_import_blocks(hunk)
+                first_orig_line    = original_import_block[0]["line"] if original_import_block else hunk.old_start
+                first_current_line = current_import_block[0]["line"]  if current_import_block  else hunk.new_start
+                result.append({
+                    "file": file_path,
+                    "hunk_type": "import_reorder",
+                    "description": (
+                        "IntelliJ's import optimizer reshuffled existing imports without adding "
+                        "or removing any statement. The exact same set of import lines appears in "
+                        "a different order. This is noise: the file must be restored to use the "
+                        "ORIGINAL import order. "
+                        f"'original_import_block' lists ALL imports in this region as they were "
+                        f"BEFORE CodeCocoon (starting at line {first_orig_line} in the original file), "
+                        f"including context lines whose absolute positions did not change. "
+                        f"'current_import_block' lists the SAME imports as they appear NOW in the "
+                        f"file (starting at line {first_current_line}). "
+                        "The import sets are identical — only the order differs."
+                    ),
+                    "hunk_header": hunk.header(),
+                    "old_start_line": hunk.old_start,
+                    "old_line_count": hunk.old_count,
+                    "new_start_line": hunk.new_start,
+                    "new_line_count": hunk.new_count,
+                    "original_import_block": original_import_block,
+                    "current_import_block":  current_import_block,
+                    "action": (
+                        f"In the file '{file_path}', locate the import block starting around "
+                        f"line {first_current_line} (as shown in 'current_import_block') and "
+                        "reorder the imports so they appear in the exact sequence given by "
+                        "'original_import_block'. "
+                        "Do not add or remove any import statement — only change their order."
+                    ),
+                    "full_hunk_diff": hunk.render(),
+                })
+                continue
+
+            wc_indices = _wildcard_removal_indices(hunk)
+            if wc_indices:
+                drop_set = _expand_with_adjacent_blank_removals(hunk.lines, wc_indices)
+                removed_wildcards = [
+                    hunk.lines[i].content
+                    for i in sorted(drop_set)
+                    if hunk.lines[i].content.strip()
+                ]
+                result.append({
+                    "file": file_path,
+                    "hunk_type": "wildcard_import_removal",
+                    "description": (
+                        "IntelliJ's import optimizer removed one or more wildcard import "
+                        "statements (e.g., 'import static pkg.*;'). These must be restored "
+                        "because no explicit replacements were added, so their removal would "
+                        "break compilation."
+                    ),
+                    "hunk_header": hunk.header(),
+                    "old_start_line": hunk.old_start,
+                    "old_line_count": hunk.old_count,
+                    "new_start_line": hunk.new_start,
+                    "new_line_count": hunk.new_count,
+                    "removed_wildcards": removed_wildcards,
+                    "action": (
+                        "In the file, add back each import line listed in 'removed_wildcards' "
+                        "to the import section. Position them where they originally appeared "
+                        "(around line new_start_line). Do not modify any other imports."
+                    ),
+                    "full_hunk_diff": hunk.render(),
+                })
+
+    if logger and result:
+        logger.info(
+            f"collect_unwanted_hunks: found {len(result)} import-noise hunk(s) "
+            f"across {len({h['file'] for h in result})} file(s)"
+        )
+    return result
+
 
 def filter_import_changes(
     patch: str,

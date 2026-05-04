@@ -57,6 +57,9 @@ class TransformConfig:
     override: bool = False                              # delete and recreate strategy branches if they already exist
     skip_existing_entries: bool = True                  # skip entries whose instance_id is already present in the output file
     rewrite_problem_statement: bool = False             # run rewriteProblemStatement after all code transformations
+    fix_import_hunks_with_agent: bool = False           # run agentFixHunks after each morph to revert IntelliJ import noise
+    fix_hunks_batch_size: int = 10                      # number of hunks per agent batch (passed as -PbatchSize to agentFixHunks)
+    fix_hunks_max_agent_iterations: int = 70            # max Koog agent iterations per batch (passed as -PmaxAgentIterations)
 
 
 def validate_config(config: TransformConfig) -> None:

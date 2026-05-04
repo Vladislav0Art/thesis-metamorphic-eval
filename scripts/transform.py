@@ -33,13 +33,13 @@ logger = logging.getLogger(__name__)
 
 
 def _fmt_duration(ms: int) -> str:
-    """Format milliseconds as 'X min Y s (N ms)' or 'Y s (N ms)'."""
+    """Format milliseconds as 'X min Y s' or 'Y s'."""
     s = ms // 1000
     m = s // 60
     s_rem = s % 60
     if m > 0:
-        return f"{m} min {s_rem} s ({ms} ms)"
-    return f"{s_rem} s ({ms} ms)"
+        return f"{m} min {s_rem} s"
+    return f"{s_rem} s"
 
 
 RENAMING_MOVING_TRANSFORMATION_IDS = {
@@ -85,6 +85,9 @@ def load_transform_config(config_filepath: str) -> TransformConfig:
         override=raw.get('override', False),
         skip_existing_entries=raw.get('skip_existing_entries', True),
         rewrite_problem_statement=raw.get('rewrite_problem_statement', False),
+        fix_import_hunks_with_agent=raw.get('fix_import_hunks_with_agent', False),
+        fix_hunks_batch_size=raw.get('fix_hunks_batch_size', 10),
+        fix_hunks_max_agent_iterations=raw.get('fix_hunks_max_agent_iterations', 70),
     )
 
 
@@ -151,6 +154,9 @@ def process_entry(
     transform_test_files: bool,
     override: bool,
     rewrite_problem_statement: bool,
+    fix_import_hunks_with_agent: bool,
+    fix_hunks_batch_size: int = 10,
+    fix_hunks_max_agent_iterations: int = 70,
 ) -> ProcessEntryResult:
     """Process a single entry through the transformation pipeline."""
     instance_id = entry['instance_id']
@@ -212,6 +218,9 @@ def process_entry(
             env_vars=env_vars,
             transform_test_files=transform_test_files,
             override=override,
+            fix_import_hunks_with_agent=fix_import_hunks_with_agent,
+            fix_hunks_batch_size=fix_hunks_batch_size,
+            fix_hunks_max_agent_iterations=fix_hunks_max_agent_iterations,
             logger=logger,
         )
         errors.extend(morph_outcome.errors)
@@ -335,18 +344,21 @@ def main():
     config: TransformConfig = load_transform_config(args.config)
 
     logger.info(f"""Config loaded from {args.config}:
-      input:                     {config.input}
-      output:                    {config.output}
-      strategy:                  {config.strategy}
-      codecocoon:                {config.codecocoon}
-      transformations:           {config.transformations}
-      repos:                     {config.repos}
-      env_filepath:              {config.env_filepath}
-      additional_envs_filepath:  {config.additional_envs_filepath}
-      transform_test_files:      {config.transform_test_files}
-      override:                  {config.override}
-      skip_existing_entries:     {config.skip_existing_entries}
-      rewrite_problem_statement: {config.rewrite_problem_statement}
+      input:                       {config.input}
+      output:                      {config.output}
+      strategy:                    {config.strategy}
+      codecocoon:                  {config.codecocoon}
+      transformations:             {config.transformations}
+      repos:                       {config.repos}
+      env_filepath:                {config.env_filepath}
+      additional_envs_filepath:    {config.additional_envs_filepath}
+      transform_test_files:        {config.transform_test_files}
+      override:                    {config.override}
+      skip_existing_entries:       {config.skip_existing_entries}
+      rewrite_problem_statement:   {config.rewrite_problem_statement}
+      fix_import_hunks_with_agent: {config.fix_import_hunks_with_agent}
+      fix_hunks_batch_size:        {config.fix_hunks_batch_size}
+      fix_hunks_max_agent_iterations: {config.fix_hunks_max_agent_iterations}
     """)
 
     try:
@@ -417,6 +429,9 @@ def main():
             transform_test_files=config.transform_test_files,
             override=config.override,
             rewrite_problem_statement=config.rewrite_problem_statement,
+            fix_import_hunks_with_agent=config.fix_import_hunks_with_agent,
+            fix_hunks_batch_size=config.fix_hunks_batch_size,
+            fix_hunks_max_agent_iterations=config.fix_hunks_max_agent_iterations,
         )
         entry_ms = int((time.monotonic() - entry_start) * 1000)
         append_jsonl(config.output, result.entry)
