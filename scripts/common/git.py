@@ -243,6 +243,10 @@ def commit_changes(
         return False
 
 
+def build_github_url(org: str, repo: str) -> str:
+    return f"https://github.com/{org}/{repo}.git"
+
+
 def extract_changed_files(patch: str, logger) -> List[str]:
     """Extract file paths from a git diff patch."""
     files = []

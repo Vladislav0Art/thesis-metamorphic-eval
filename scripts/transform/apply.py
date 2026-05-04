@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, NamedTuple, Optional
 
 from common.git import (
+    build_github_url,
     clone_repository,
     diff_between_commits,
     branch_exists,
@@ -101,13 +102,6 @@ def _run_rewrite_problem_statement(
 
 
 
-def _build_github_url(org: str, repo: str) -> str:
-    """Build GitHub repository URL."""
-    return f"https://github.com/{org}/{repo}.git"
-
-
-
-
 def _apply_code_morphing(
     entry: Dict,
     strategy: str,
@@ -144,7 +138,7 @@ def _apply_code_morphing(
     }
 
     # Step 1: Clone repository
-    repo_url = _build_github_url(entry['org'], entry['repo'])
+    repo_url = build_github_url(entry['org'], entry['repo'])
     repo_dir = os.path.join(repos_dir, strategy, instance_id, "repo")
     base_sha = entry['base']['sha']
 
