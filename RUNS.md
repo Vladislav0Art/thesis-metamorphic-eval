@@ -313,33 +313,6 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 | `googlecontainertools__jib-4035`<br>`googlecontainertools/jib:pr-4035` | m | 0/5 | - | unresolved |
 
 
-selected (20 benchmarks):
-
-resolved (s1-renaming):
-"mockito/mockito:pr-3424", 0/5 -
-"mockito/mockito:pr-3129", 1/5 e
-"google/gson:pr-1555",     2/5 -
-"google/gson:pr-1391",     5/5 -
-"fasterxml/jackson-databind:pr-2036", 0/5 -
-"fasterxml/jackson-databind:pr-1923", 0/5 e
-"elastic/logstash:pr-16681",  3/5 m
-"elastic/logstash:pr-16579",  0/5 h
-"elastic/logstash:pr-13914".  0/5 m
-
-
-unresolved (s1-renaming):
-"google/gson:pr-1093", 2/5 m
-"fasterxml/jackson-core:pr-370", 1/5 m
-"fasterxml/jackson-core:pr-183", 1/5 e
-"elastic/logstash:pr-14981", 4/5 m
-"elastic/logstash:pr-14970", 4/5 -
-
-"alibaba/fastjson2:pr-82", 0/5 e
-"mockito/mockito:pr-3167",   0/5 m
-"fasterxml/jackson-core:pr-174",     0/5 m
-"apache/dubbo:pr-11781", 0/5 m
-"googlecontainertools/jib:pr-4144",   0/5 m
-"googlecontainertools/jib:pr-4035",   0/5 m
 
 
 
