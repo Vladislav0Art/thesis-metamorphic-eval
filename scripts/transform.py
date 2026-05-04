@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import logging
+import time
 import yaml
 from pathlib import Path
 from typing import Dict, List
@@ -29,6 +30,16 @@ See transform.example.yaml in the repository root for a fully annotated config t
 configure_logging(log_filename="transform.log", level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+
+
+def _fmt_duration(ms: int) -> str:
+    """Format milliseconds as 'X min Y s (N ms)' or 'Y s (N ms)'."""
+    s = ms // 1000
+    m = s // 60
+    s_rem = s % 60
+    if m > 0:
+        return f"{m} min {s_rem} s ({ms} ms)"
+    return f"{s_rem} s ({ms} ms)"
 
 
 RENAMING_MOVING_TRANSFORMATION_IDS = {
@@ -372,6 +383,7 @@ def main():
 
     n_attempted = 0
     failed_entries: list[tuple[str, list[str]]] = []
+    total_start = time.monotonic()
 
     for i, entry in enumerate(entries, 1):
         instance_id = entry["instance_id"]
@@ -393,6 +405,7 @@ def main():
                     instance_env_vars[env_var.name] = env_var.value
                 break
 
+        entry_start = time.monotonic()
         result = process_entry(
             entry=entry,
             strategy=config.strategy,
@@ -405,8 +418,10 @@ def main():
             override=config.override,
             rewrite_problem_statement=config.rewrite_problem_statement,
         )
+        entry_ms = int((time.monotonic() - entry_start) * 1000)
         append_jsonl(config.output, result.entry)
 
+        logger.info(f"processing of instance_id '{instance_id}' completed in: {_fmt_duration(entry_ms)}")
         issues = result.errors + result.warnings  # combined for display; errors first
         if result.errors:
             failed_entries.append((instance_id, issues))
@@ -414,10 +429,13 @@ def main():
             logger.error(f"====== ❌ Completed entry '{instance_id}' ({i}/{len(entries)}) with errors:{issues_str}")
         elif result.warnings:
             issues_str = ''.join([f"\n     - {w}" for w in result.warnings])
-            logger.warning(f"====== ⚠️  Completed entry '{instance_id}' ({i}/{len(entries)}) with warnings:{issues_str}")
+            logger.warning(f"====== ⛔️ Completed entry '{instance_id}' ({i}/{len(entries)}) with warnings:{issues_str}")
         else:
             logger.info(f"====== ✅ Completed entry '{instance_id}' ({i}/{len(entries)}) ======")
         logger.info("==========================================================================")
+
+    total_ms = int((time.monotonic() - total_start) * 1000)
+    avg_ms = (total_ms // n_attempted) if n_attempted > 0 else 0
 
     n_succeeded = n_attempted - len(failed_entries)
     logger.info("")
@@ -428,6 +446,7 @@ def main():
         for fid, fissues in failed_entries:
             issues_str = ''.join([f"\n     - {e}" for e in fissues])
             logger.error(f"  {fid}:{issues_str}")
+    logger.info(f"Total completion time: {_fmt_duration(total_ms)} (avg per instance id: {_fmt_duration(avg_ms)})")
     logger.info("==========================================================================")
 
 

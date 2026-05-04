@@ -180,6 +180,7 @@ Helper functions are split across ``scripts/evaluate/``:
 import argparse
 import logging
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -204,6 +205,17 @@ from evaluate.resume import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _fmt_duration(ms: int) -> str:
+    """Format milliseconds as 'X min Y s (N ms)' or 'Y s (N ms)'."""
+    s = ms // 1000
+    m = s // 60
+    s_rem = s % 60
+    if m > 0:
+        return f"{m} min {s_rem} s ({ms} ms)"
+    return f"{s_rem} s ({ms} ms)"
+
 
 # Maps step names (as they appear in run.steps) to their Step subclasses.
 # Add new steps here as the pipeline grows.
@@ -268,8 +280,10 @@ def run_evaluation(config: EvalConfig, config_filepath: str) -> None:
             )
 
     # ── N-run loop ────────────────────────────────────────────────────────────
+    total_start = time.monotonic()
     for run_number in range(1, config.run.N + 1):
         run_dir = workdir / f"run-{run_number}"
+        run_start = time.monotonic()
 
         logger.info("")
         logger.info("=" * 70)
@@ -362,7 +376,9 @@ def run_evaluation(config: EvalConfig, config_filepath: str) -> None:
             step_class  = _STEP_REGISTRY[step_name]
             step        = step_class(step_config)
 
+            step_start = time.monotonic()
             result: StepResult = step.run(run_dir, context)
+            step_ms = int((time.monotonic() - step_start) * 1000)
 
             context[step_name] = result
             # Guard against duplicates when the step is being retried on resume.
@@ -375,6 +391,7 @@ def run_evaluation(config: EvalConfig, config_filepath: str) -> None:
 
             if not result.success:
                 logger.error(f"  Step '{step_name}' failed: {result.error}")
+                logger.error(f"  Step '{step_name}' duration: {_fmt_duration(step_ms)}")
                 logger.error(
                     f"  Partial results saved to: {run_dir / 'result.json'}"
                 )
@@ -384,10 +401,11 @@ def run_evaluation(config: EvalConfig, config_filepath: str) -> None:
                 )
                 sys.exit(1)
 
-            logger.info(f"  Step '{step_name}' completed successfully.")
+            logger.info(f"  Step '{step_name}' completed successfully in {_fmt_duration(step_ms)}.")
 
+        run_ms = int((time.monotonic() - run_start) * 1000)
         logger.info("")
-        logger.info(f"  Run {run_number} complete.  Manifest: {run_dir / 'result.json'}")
+        logger.info(f"  Run {run_number} complete in {_fmt_duration(run_ms)}.  Manifest: {run_dir / 'result.json'}")
 
     # ── Cross-run metrics summary ─────────────────────────────────────────────
     # Always attempt: write_metrics_summary handles agent-only, eval-only, and
@@ -397,9 +415,11 @@ def run_evaluation(config: EvalConfig, config_filepath: str) -> None:
     write_metrics_summary(workdir, config.run.N)
 
     # ── Summary ───────────────────────────────────────────────────────────────
+    total_ms = int((time.monotonic() - total_start) * 1000)
     logger.info("")
     logger.info("=" * 70)
     logger.info(f"  All {config.run.N} run(s) completed successfully.")
+    logger.info(f"  Total execution time: {_fmt_duration(total_ms)}")
     logger.info(f"  Log     : {workdir / 'evaluate.log'}")
     logger.info(f"  Metrics : {workdir / 'metrics_summary.json'}")
     logger.info("=" * 70)
