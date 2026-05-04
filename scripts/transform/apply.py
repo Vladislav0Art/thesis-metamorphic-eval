@@ -11,14 +11,11 @@ from common.git import (
     delete_branch,
     checkout_branch,
     extract_changed_files,
-    apply_patch,
-    commit_all_changes,
-    get_head_sha,
 )
 from common.codecocoon import generate_codecocoon_config, execute_rewrite_problem_statement
 from transform.models import Patch, MorphResult
 from transform.morph import morph, insert_metamorphic_log, parse_transformation_summary
-from transform.patch_filter import filter_import_changes, generate_noise_correction_patch
+from transform.patch_filter import filter_import_changes
 
 # ─── Internal result types ────────────────────────────────────────────────────
 
@@ -103,41 +100,6 @@ def _run_rewrite_problem_statement(
     return raw, None
 
 
-
-
-def _apply_noise_correction_inplace(
-    repo_dir: str,
-    morph_patch: str,
-    patch_label: str,
-    logger,
-) -> str:
-    """Apply in-place correction for import noise to the current branch.
-
-    Generates a correction patch (the reverse of the noise changes), applies it
-    to the working tree, and commits.  Returns the new HEAD SHA, which equals the
-    incoming HEAD SHA when there is no noise or the correction fails.
-    """
-    current_sha = get_head_sha(repo_dir, logger) or ''
-
-    correction = generate_noise_correction_patch(morph_patch, logger)
-    if correction is None:
-        logger.info("No import noise detected, skipping correction.")
-        return current_sha
-
-    ok = apply_patch(repo_dir, correction, logger)
-    if not ok:
-        logger.warning(
-            f"[{patch_label}] Noise correction patch did not apply cleanly — "
-            "leaving branch unchanged."
-        )
-        return current_sha
-
-    commit_all_changes(
-        repo_dir,
-        f"[filter] Revert import noise ({patch_label})",
-        logger,
-    )
-    return get_head_sha(repo_dir, logger) or current_sha
 
 
 def _apply_code_morphing(
@@ -284,13 +246,8 @@ def _apply_code_morphing(
     metamorphic_base_commit: str = base_morph_result.last_commit_sha
     metamorphic_base_patch:  str = base_morph_result.metamorphic_patch
 
-    base_import_fixes = filter_import_changes(metamorphic_base_patch, logger, patch_label='base patch').fixes
-    corrected_base_sha = _apply_noise_correction_inplace(repo_dir, metamorphic_base_patch, 'base', logger)
-    if corrected_base_sha != metamorphic_base_commit:
-        metamorphic_base_commit = corrected_base_sha
-        metamorphic_base_patch = diff_between_commits(repo_dir, base_sha, corrected_base_sha, logger) \
-                                  or metamorphic_base_patch
-        logger.info(f"Base noise correction applied. New commit: {metamorphic_base_commit}")
+    base_filter = filter_import_changes(metamorphic_base_patch, logger, patch_label='base patch')
+    metamorphic_base_patch = base_filter.filtered_patch
 
     strategy_entry["repo"] = {
         "instance_id": instance_id,
@@ -305,7 +262,7 @@ def _apply_code_morphing(
         },
         "commit": metamorphic_base_commit,
         "branch": base_branch,
-        "import_fixes": [f.__dict__ for f in base_import_fixes],
+        "import_fixes": [f.__dict__ for f in base_filter.fixes],
     }
     insert_metamorphic_log(
         strategy_entry=strategy_entry, label="base_metamorphic_transformation_log",
@@ -344,14 +301,6 @@ def _apply_code_morphing(
     _metamorphic_test_patch = test_morph_result.metamorphic_patch
     logger.info(f"Test metamorphic transformation complete. Commit: {metamorphic_test_commit}")
 
-    test_import_fixes = filter_import_changes(_metamorphic_test_patch, logger, patch_label='test patch').fixes
-    corrected_test_sha = _apply_noise_correction_inplace(repo_dir, _metamorphic_test_patch, 'test', logger)
-    if corrected_test_sha != metamorphic_test_commit:
-        metamorphic_test_commit = corrected_test_sha
-        _metamorphic_test_patch = diff_between_commits(repo_dir, base_sha, corrected_test_sha, logger) \
-                                   or _metamorphic_test_patch
-        logger.info(f"Test noise correction applied. New commit: {metamorphic_test_commit}")
-
     strategy_entry["metamorphic_patches"]["test"] = {
         "patch": {
             "description": "CodeCocoon transformations applied on the base commit with original test_patch pre-applied (base + test_patch)",
@@ -378,6 +327,9 @@ def _apply_code_morphing(
         logger.error("Failed to generate new_morphed_test_patch")
         return _MorphingOutcome(result=None, errors=errors + ["new_morphed_test_patch generation failed (empty diff)"], warnings=warnings)
 
+    test_filter = filter_import_changes(new_morphed_test_patch, logger, patch_label='test patch')
+    new_morphed_test_patch = test_filter.filtered_patch
+
     strategy_entry["metamorphic_patches"]["test"]["original_patch"] = test_patch
     strategy_entry["metamorphic_patches"]["test"]["new_morphed_test_patch"] = {
         "description": (
@@ -386,7 +338,7 @@ def _apply_code_morphing(
             "(replaces original `test_patch` field)"
         ),
         "value": new_morphed_test_patch,
-        "import_fixes": [f.__dict__ for f in test_import_fixes],
+        "import_fixes": [f.__dict__ for f in test_filter.fixes],
     }
 
     # Step 4d: Fix morph
@@ -420,14 +372,6 @@ def _apply_code_morphing(
     _metamorphic_fix_patch = fix_morph_result.metamorphic_patch
     logger.info(f"Fix metamorphic transformation complete. Commit: {metamorphic_fix_commit}")
 
-    fix_import_fixes = filter_import_changes(_metamorphic_fix_patch, logger, patch_label='fix patch').fixes
-    corrected_fix_sha = _apply_noise_correction_inplace(repo_dir, _metamorphic_fix_patch, 'fix', logger)
-    if corrected_fix_sha != metamorphic_fix_commit:
-        metamorphic_fix_commit = corrected_fix_sha
-        _metamorphic_fix_patch = diff_between_commits(repo_dir, base_sha, corrected_fix_sha, logger) \
-                                  or _metamorphic_fix_patch
-        logger.info(f"Fix noise correction applied. New commit: {metamorphic_fix_commit}")
-
     strategy_entry["metamorphic_patches"]["fix"] = {
         "patch": {
             "description": "CodeCocoon transformations applied on the base commit with original fix_patch pre-applied (base + fix_patch)",
@@ -454,6 +398,9 @@ def _apply_code_morphing(
         logger.error("Failed to generate new_morphed_fix_patch")
         return _MorphingOutcome(result=None, errors=errors + ["new_morphed_fix_patch generation failed (empty diff)"], warnings=warnings)
 
+    fix_filter = filter_import_changes(new_morphed_fix_patch, logger, patch_label='fix patch')
+    new_morphed_fix_patch = fix_filter.filtered_patch
+
     strategy_entry["metamorphic_patches"]["fix"]["original_patch"] = fix_patch
     strategy_entry["metamorphic_patches"]["fix"]["new_morphed_fix_patch"] = {
         "description": (
@@ -462,7 +409,7 @@ def _apply_code_morphing(
             "(replaces original `fix_patch` field)"
         ),
         "value": new_morphed_fix_patch,
-        "import_fixes": [f.__dict__ for f in fix_import_fixes],
+        "import_fixes": [f.__dict__ for f in fix_filter.fixes],
     }
 
     logger.info(

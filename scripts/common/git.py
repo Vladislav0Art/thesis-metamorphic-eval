@@ -16,14 +16,11 @@ def clone_repository(
     """Clone a repository and checkout a specific commit."""
     try:
         if os.path.exists(target_dir):
-            logger.info(f"Repository already exists at {target_dir}, resetting to {sha}")
-            stdout, stderr, code = run_cli_command('git', ['reset', '--hard', sha], cwd=target_dir)
+            logger.info(f"Repository already exists at {target_dir}")
+            # Ensure we're on the correct commit
+            stdout, stderr, code = run_cli_command('git', ['checkout', sha], cwd=target_dir)
             if code != 0:
-                logger.error(f"Failed to reset to {sha}: {stderr}")
-                return False
-            stdout, stderr, code = run_cli_command('git', ['clean', '-fd'], cwd=target_dir)
-            if code != 0:
-                logger.error(f"Failed to clean working tree: {stderr}")
+                logger.error(f"Failed to checkout {sha}: {stderr}")
                 return False
             return True
 
@@ -244,19 +241,6 @@ def commit_changes(
     except Exception as e:
         logger.error(f"Commit failed: {e}")
         return False
-
-
-def get_head_sha(repo_dir: str, logger) -> Optional[str]:
-    """Return the current HEAD commit SHA."""
-    try:
-        stdout, stderr, code = run_cli_command('git', ['rev-parse', 'HEAD'], cwd=repo_dir)
-        if code != 0:
-            logger.error(f"Failed to get HEAD SHA: {stderr}")
-            return None
-        return stdout.strip()
-    except Exception as e:
-        logger.error(f"get_head_sha failed: {e}")
-        return None
 
 
 def build_github_url(org: str, repo: str) -> str:
