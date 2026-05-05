@@ -1,0 +1,54 @@
+
+diff --git a/.gitignore b/.gitignore
+index 0eb7f3d19e..ffba84c210 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -54,3 +54,6 @@ dubbo-demo/dubbo-demo-native/dubbo-demo-native-consumer/src/main/generated
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/resources/META-INF/native-image
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/generated
+ 
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+index 61b37db84b..b8cbfe7247 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+@@ -277,7 +277,7 @@ public final class URLStrParser {
+         if (isEncoded) {
+             String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (valueStart > valueEnd) {
+                 value = name;
+             } else {
+                 value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+@@ -290,7 +290,7 @@ public final class URLStrParser {
+         } else {
+             String name = str.substring(nameStart, valueStart - 1);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (valueStart > valueEnd) {
+                 value = name;
+             } else {
+                 value = str.substring(valueStart, valueEnd);
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+index aea2001306..55ac78fedc 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+@@ -44,6 +44,8 @@ class URLStrParserTest {
+         testCases.add("file:/path/to/file.txt");
+         testCases.add("dubbo://fe80:0:0:0:894:aeec:f37d:23e1%en0/path?abc=abc");
+         testCases.add("dubbo://[fe80:0:0:0:894:aeec:f37d:23e1]:20880/path?abc=abc");
++        // empty value test (issue: empty values should be empty string, not the key name)
++        testCases.add("nacos://10.20.0.100:8848?username=&password=&namespace=");
+ 
+         errorDecodedCases.add("dubbo:192.168.1.1");
+         errorDecodedCases.add("://192.168.1.1");
+@@ -80,4 +82,4 @@ class URLStrParserTest {
+         });
+     }
+ 
+-}
+\ No newline at end of file
++}

@@ -1,0 +1,137 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..a066f5d76 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -474,7 +474,27 @@ public enum MapperFeature implements ConfigFeature
+      *
+      * @since 2.9
+      */
+-    IGNORE_MERGE_FOR_UNMERGEABLE(true)
++    IGNORE_MERGE_FOR_UNMERGEABLE(true),
++
++    /**
++     * Feature that determines whether the declared base type of a polymorphic value
++     * is used as the "default implementation" when no type identifier is present in
++     * the JSON, unless a specific defaultImpl has been set in the annotation.
++     *<p>
++     * When enabled, if no type id (property in the JSON) is found when deserializing
++     * a polymorphic type, Jackson will try to use the declared base type as default
++     * implementation. This is useful for cases like:
++     * <pre>
++     * objectMapper.readValue(jsonWithoutTypeId, ConcreteClass.class);
++     * </pre>
++     * where <code>ConcreteClass</code> has a type annotation (inherited from an interface
++     * or superclass), but the JSON data does not include the type id property.
++     *<p>
++     * Feature is disabled by default.
++     *
++     * @since 2.10
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false)
+ 
+     ;
+ 
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
+index 17d5ec72f..eba4c3f63 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
+@@ -123,7 +123,14 @@ public class StdTypeResolverBuilder
+         JavaType defaultImpl;
+ 
+         if (_defaultImpl == null) {
+-            defaultImpl = null;
++            // 20-Mar-2016, tatu: As per [databind#1649] (related to [databind#1376]),
++            //   allow use of base type as default implementation, if so configured.
++            if (config.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && !baseType.isAbstract()) {
++                defaultImpl = baseType;
++            } else {
++                defaultImpl = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java
+new file mode 100644
+index 000000000..9a8b14932
+--- /dev/null
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java
+@@ -0,0 +1,65 @@
++package com.fasterxml.jackson.databind.jsontype;
++
++import com.fasterxml.jackson.annotation.JsonTypeInfo;
++import com.fasterxml.jackson.databind.*;
++import junit.framework.TestCase;
++
++public class UseBaseTypeAsDefaultImplTest extends TestCase {
++
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
++    public interface MyInterface {
++        String getName();
++        void setName(String name);
++    }
++
++    public static class MyClass implements MyInterface {
++        private String name;
++        public String getName() { return name; }
++        public void setName(String name) { this.name = name; }
++    }
++
++    // Test 1: without the feature enabled, missing type id should fail
++    public void testWithoutFeatureFails() throws Exception {
++        ObjectMapper mapper = new ObjectMapper();
++        // Disable the feature to ensure it fails
++        mapper.disable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        String jsonWithoutTypeId = "{\"name\":\"test\"}";
++        try {
++            mapper.readValue(jsonWithoutTypeId, MyClass.class);
++            fail("Expected exception due to missing type id");
++        } catch (Exception e) {
++            // expected
++        }
++    }
++
++    // Test 2: with the feature enabled, missing type id should use base type as default impl
++    public void testWithFeatureSucceeds() throws Exception {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        String jsonWithoutTypeId = "{\"name\":\"test\"}";
++        MyClass result = mapper.readValue(jsonWithoutTypeId, MyClass.class);
++        assertNotNull(result);
++        assertEquals("test", result.getName());
++        System.out.println("testWithFeatureSucceeds passed: name=" + result.getName());
++    }
++
++    // Test 3: with the feature enabled, JSON with type id should still work
++    public void testWithFeatureAndTypeIdSucceeds() throws Exception {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        String jsonWithTypeId = "{\"name\":\"test\",\"type\":\".UseBaseTypeAsDefaultImplTest$MyClass\"}";
++        MyInterface result = mapper.readValue(jsonWithTypeId, MyInterface.class);
++        assertNotNull(result);
++        assertEquals("test", result.getName());
++        System.out.println("testWithFeatureAndTypeIdSucceeds passed: name=" + result.getName());
++    }
++
++    public static void main(String[] args) throws Exception {
++        UseBaseTypeAsDefaultImplTest test = new UseBaseTypeAsDefaultImplTest();
++        test.testWithoutFeatureFails();
++        System.out.println("testWithoutFeatureFails passed");
++        test.testWithFeatureSucceeds();
++        test.testWithFeatureAndTypeIdSucceeds();
++        System.out.println("All tests passed!");
++    }
++}

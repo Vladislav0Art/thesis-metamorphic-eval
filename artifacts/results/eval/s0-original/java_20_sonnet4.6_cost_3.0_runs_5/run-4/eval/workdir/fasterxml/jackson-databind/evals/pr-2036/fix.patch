@@ -1,0 +1,108 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..5a71ef331 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -474,7 +474,19 @@ public enum MapperFeature implements ConfigFeature
+      *
+      * @since 2.9
+      */
+-    IGNORE_MERGE_FOR_UNMERGEABLE(true)
++    IGNORE_MERGE_FOR_UNMERGEABLE(true),
++
++    /**
++     * Feature that determines whether the declared base type of a polymorphic value
++     * is used as the "default implementation" when no type id is available (or is
++     * not recognized). This can be used as an alternative to specifying default
++     * implementation via annotation ({@link com.fasterxml.jackson.annotation.JsonTypeInfo#defaultImpl}).
++     *<p>
++     * Feature is disabled by default.
++     *
++     * @since 2.10
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false)
+ 
+     ;
+ 
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
+index 17d5ec72f..dc406daf5 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
+@@ -123,7 +123,12 @@ public class StdTypeResolverBuilder
+         JavaType defaultImpl;
+ 
+         if (_defaultImpl == null) {
+-            defaultImpl = null;
++            if (config.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && !baseType.isAbstract()) {
++                defaultImpl = baseType;
++            } else {
++                defaultImpl = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java
+new file mode 100644
+index 000000000..a421ffebe
+--- /dev/null
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java
+@@ -0,0 +1,46 @@
++package com.fasterxml.jackson.databind.jsontype;
++
++import com.fasterxml.jackson.annotation.JsonTypeInfo;
++import com.fasterxml.jackson.databind.*;
++
++public class UseBaseTypeAsDefaultImplTest extends BaseMapTest
++{
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
++    interface MyInterface {
++        String getName();
++        void setName(String name);
++    }
++
++    static class MyClass implements MyInterface {
++        private String name;
++        public String getName() { return name; }
++        public void setName(String name) { this.name = name; }
++    }
++
++    // Test that with USE_BASE_TYPE_AS_DEFAULT_IMPL enabled, a concrete class
++    // can be deserialized even if the type property is missing in the JSON
++    public void testUseBaseTypeAsDefaultImpl() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++
++        // JSON without type property, but we know the concrete type
++        String json = "{\"name\":\"testName\"}";
++        MyClass result = mapper.readValue(json, MyClass.class);
++        assertNotNull(result);
++        assertEquals("testName", result.getName());
++    }
++
++    // Test that without the feature, the exception is still thrown
++    public void testWithoutFeatureStillFails() throws Exception
++    {
++        ObjectMapper mapper = newObjectMapper();
++        String json = "{\"name\":\"testName\"}";
++        try {
++            mapper.readValue(json, MyClass.class);
++            fail("Should have thrown an exception when type property is missing");
++        } catch (Exception e) {
++            // expected
++        }
++    }
++}

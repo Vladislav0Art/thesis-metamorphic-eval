@@ -1,0 +1,50 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+index ff251034..b82f4069 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+@@ -194,6 +194,32 @@ public class JsonPointer
+         return _headSegment;
+     }
+ 
++    /**
++     * Method that returns the last path element of this pointer, if it
++     * has any: if not (this pointer is empty), will return null.
++     * For example, for "/a/b/c" this would return a pointer
++     * for "/c".
++     *<p>
++     * This is a method that may be useful for handling JSON Patch
++     * operations that operate on the last element of an array.
++     *
++     * @return Last path element of this pointer, if any; null if none (this
++     *    pointer refers to root)
++     *
++     * @since 2.5
++     */
++    public JsonPointer last() {
++        JsonPointer current = this;
++        if (current == EMPTY) {
++            return null;
++        }
++        JsonPointer next;
++        while ((next = current._nextSegment) != EMPTY) {
++            current = next;
++        }
++        return current;
++    }
++
+     /*
+     /**********************************************************
+     /* Standard method overrides

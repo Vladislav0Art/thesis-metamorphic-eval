@@ -1,0 +1,135 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..f8d2a4b96 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -474,7 +474,27 @@ public enum MapperFeature implements ConfigFeature
+      *
+      * @since 2.9
+      */
+-    IGNORE_MERGE_FOR_UNMERGEABLE(true)
++    IGNORE_MERGE_FOR_UNMERGEABLE(true),
++
++    /**
++     * Feature that determines whether the declared base type of a polymorphic
++     * value is to be used as the "default implementation" (in the absence of a
++     * more specific type indicator), in case no explicit default implementation
++     * is specified via {@code @JsonTypeInfo.defaultImpl}.
++     *<p>
++     * This feature is useful when deserializing JSON that lacks type information,
++     * and you know the concrete class that you want to use. For example, if you
++     * call {@code objectMapper.readValue(json, ConcreteClass.class)} and
++     * {@code ConcreteClass} implements an interface annotated with
++     * {@code @JsonTypeInfo}, but the JSON does not contain the type property,
++     * enabling this feature will make Jackson use {@code ConcreteClass} as the
++     * default implementation rather than throwing an exception.
++     *<p>
++     * Feature is disabled by default.
++     *
++     * @since 2.10
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false)
+ 
+     ;
+ 
+diff --git a/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java b/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java
+index 73c99d40e..78213a2a8 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java
++++ b/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java
+@@ -1570,10 +1570,14 @@ nonAnnotatedParamIndex, ctor);
+         }
+         // May need to figure out default implementation, if none found yet
+         // (note: check for abstract type is not 100% mandatory, more of an optimization)
+-        if ((b.getDefaultImpl() == null) && baseType.isAbstract()) {
+-            JavaType defaultType = mapAbstractType(config, baseType);
+-            if ((defaultType != null) && !defaultType.hasRawClass(baseType.getRawClass())) {
+-                b = b.defaultImpl(defaultType.getRawClass());
++        if (b.getDefaultImpl() == null) {
++            if (baseType.isAbstract()) {
++                JavaType defaultType = mapAbstractType(config, baseType);
++                if ((defaultType != null) && !defaultType.hasRawClass(baseType.getRawClass())) {
++                    b = b.defaultImpl(defaultType.getRawClass());
++                }
++            } else if (config.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)) {
++                b = b.defaultImpl(baseType.getRawClass());
+             }
+         }
+         // 05-Apt-2018, tatu: Since we get non-mapping exception due to various limitations,
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java
+new file mode 100644
+index 000000000..a73436ae1
+--- /dev/null
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java
+@@ -0,0 +1,60 @@
++package com.fasterxml.jackson.databind.jsontype;
++
++import com.fasterxml.jackson.annotation.JsonTypeInfo;
++import com.fasterxml.jackson.databind.BaseMapTest;
++import com.fasterxml.jackson.databind.MapperFeature;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
++
++/**
++ * Test for MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL
++ */
++public class UseBaseTypeAsDefaultImplTest extends BaseMapTest
++{
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
++    public interface MyInterface {
++        String getName();
++        void setName(String name);
++    }
++
++    public static class MyClass implements MyInterface {
++        private String name;
++        public String getName() { return name; }
++        public void setName(String name) { this.name = name; }
++    }
++
++    // Test that without the feature, missing type info throws an exception
++    public void testWithoutFeature() throws Exception {
++        ObjectMapper mapper = new ObjectMapper();
++        String json = "{\"name\":\"test\"}";
++        try {
++            mapper.readValue(json, MyClass.class);
++            fail("Should have thrown InvalidTypeIdException");
++        } catch (InvalidTypeIdException e) {
++            // expected
++        }
++    }
++
++    // Test that with the feature enabled, the base type is used as default impl
++    public void testWithFeature() throws Exception {
++        ObjectMapper mapper = new ObjectMapper()
++                .enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        String json = "{\"name\":\"test\"}";
++        MyClass result = mapper.readValue(json, MyClass.class);
++        assertNotNull(result);
++        assertEquals("test", result.getName());
++    }
++
++    // Test that with the feature enabled, type info in JSON still works
++    public void testWithFeatureAndTypeInfo() throws Exception {
++        ObjectMapper mapper = new ObjectMapper()
++                .enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        // Full class name for inner static class
++        String className = MyClass.class.getName();
++        String json = "{\"type\":\"" + className + "\",\"name\":\"test\"}";
++        MyInterface result = mapper.readValue(json, MyInterface.class);
++        assertNotNull(result);
++        assertTrue(result instanceof MyClass);
++        assertEquals("test", result.getName());
++    }
++}

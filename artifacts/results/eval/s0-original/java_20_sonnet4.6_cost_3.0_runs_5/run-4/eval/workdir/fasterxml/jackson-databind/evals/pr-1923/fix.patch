@@ -1,0 +1,80 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1271c273b..1077e3bcb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeValidator.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeValidator.java
+index 45a76169f..9577937c9 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeValidator.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeValidator.java
+@@ -80,7 +80,7 @@ public class SubTypeValidator
+             // 18-Dec-2017, tatu: As per [databind#1855], need bit more sophisticated handling
+             //    for some Spring framework types
+             if (full.startsWith(PREFIX_STRING)) {
+-                for (Class<?> cls = raw; cls != Object.class; cls = cls.getSuperclass()) {
++                for (Class<?> cls = raw; cls != null && cls != Object.class; cls = cls.getSuperclass()) {
+                     String name = cls.getSimpleName();
+                     // looking for "AbstractBeanFactoryPointcutAdvisor" but no point to allow any is there?
+                     if ("AbstractPointcutAdvisor".equals(name)
+diff --git a/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java b/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
+index 87ee570da..18c6895eb 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
++++ b/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
+@@ -1,8 +1,8 @@
+ package com.fasterxml.jackson.databind.interop;
+ 
+ import org.springframework.jacksontest.BogusApplicationContext;
++import org.springframework.jacksontest.BogusInterface;
+ import org.springframework.jacksontest.BogusPointcutAdvisor;
+-
+ import com.fasterxml.jackson.annotation.JsonTypeInfo;
+ import com.fasterxml.jackson.databind.*;
+ 
+@@ -76,6 +76,28 @@ public class IllegalTypesCheckTest extends BaseMapTest
+         _testIllegalType(BogusApplicationContext.class);
+     }
+ 
++    // // // Tests for [databind#1980]
++    public void testSpringInterface1980() throws Exception
++    {
++        // Spring interfaces that don't match blocked patterns should not cause NPE
++        // (they also should not be blocked as "illegal types")
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
++        String json = aposToQuotes("{'v':['org.springframework.jacksontest.BogusInterface','/tmp/foobar.txt']}");
++        try {
++            mapper.readValue(json, PolyWrapper.class);
++            fail("Should not pass");
++        } catch (JsonMappingException e) {
++            // Should NOT be NPE, and should NOT be a "security" exception
++            // (since BogusInterface is not in the blocked list)
++            // Just verify it's not NPE
++            if (e.getCause() instanceof NullPointerException) {
++                fail("Should not throw NullPointerException for Spring interface");
++            }
++        }
++    }
++
++
+     // 17-Aug-2017, tatu: Ideally would test handling of 3rd party types, too,
+     //    but would require adding dependencies. This may be practical when
+     //    checking done by module, but for now let's not do that for databind.
+diff --git a/src/test/java/org/springframework/jacksontest/BogusInterface.java b/src/test/java/org/springframework/jacksontest/BogusInterface.java
+new file mode 100644
+index 000000000..4ad3fcc8a
+--- /dev/null
++++ b/src/test/java/org/springframework/jacksontest/BogusInterface.java
+@@ -0,0 +1,5 @@
++package org.springframework.jacksontest;
++
++public interface BogusInterface {
++    String getValue();
++}

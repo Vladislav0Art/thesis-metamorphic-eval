@@ -1,0 +1,54 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index b6a0ff2ce..2a5066ab8 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -601,6 +601,9 @@ public interface JSON {
+         }
+         JSONReader jsonReader = JSONReader.of(text);
+         try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
+             jsonReader.skipValue();
+         } catch (JSONException error) {
+             return false;
+@@ -642,6 +645,9 @@ public interface JSON {
+         }
+         JSONReader jsonReader = JSONReader.of(bytes);
+         try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
+             jsonReader.skipValue();
+         } catch (JSONException error) {
+             return false;
+@@ -686,6 +692,9 @@ public interface JSON {
+         }
+         JSONReader jsonReader = JSONReader.of(bytes, offset, length, charset);
+         try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
+             jsonReader.skipValue();
+         } catch (JSONException error) {
+             return false;
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 32ab096bf..fd89c05f7 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -32,6 +32,11 @@ public class JSONTest {
+         assertTrue(JSON.isValidArray("[]"));
+         assertFalse(JSON.isValidArray("{}"));
+     }
++    @Test
++    public void test_isValid_0() {
++        assertTrue(JSON.isValid("{}"));
++        assertFalse(JSON.isValid("[]"));
++    }
+ 
+     @Test
+     public void test_parseArray_0() {

@@ -1,0 +1,38 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index b6a0ff2ce..5a77c5ba0 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -601,6 +601,9 @@ public interface JSON {
+         }
+         JSONReader jsonReader = JSONReader.of(text);
+         try {
++            if (!jsonReader.isObject() && !jsonReader.isArray()) {
++                return false;
++            }
+             jsonReader.skipValue();
+         } catch (JSONException error) {
+             return false;
+@@ -642,6 +645,9 @@ public interface JSON {
+         }
+         JSONReader jsonReader = JSONReader.of(bytes);
+         try {
++            if (!jsonReader.isObject() && !jsonReader.isArray()) {
++                return false;
++            }
+             jsonReader.skipValue();
+         } catch (JSONException error) {
+             return false;
+@@ -686,6 +692,9 @@ public interface JSON {
+         }
+         JSONReader jsonReader = JSONReader.of(bytes, offset, length, charset);
+         try {
++            if (!jsonReader.isObject() && !jsonReader.isArray()) {
++                return false;
++            }
+             jsonReader.skipValue();
+         } catch (JSONException error) {
+             return false;
