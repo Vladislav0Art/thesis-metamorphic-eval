@@ -120,6 +120,7 @@ def _fix_import_hunks_with_agent(
     diff_anchor: Optional[str] = None,
     batch_size: int = 10,
     max_agent_iterations: int = 70,
+    max_retries: int = 3,
 ) -> Tuple[str, str, Dict]:
     """Revert IntelliJ import noise from the current branch using an AI agent.
 
@@ -132,6 +133,10 @@ def _fix_import_hunks_with_agent(
         the anchor is the corrected base commit rather than a within-branch parent)
       - ``{morph_commit}~1`` otherwise (the commit just before CodeCocoon ran)
 
+    When the agent exits 0 but produces no file changes (a known transient Koog
+    agent issue), the call is retried up to ``max_retries`` additional times.
+    Non-zero exit codes are not retried.
+
     Returns ``(updated_commit_sha, updated_patch, agent_log_dict)``.
     On skip (no noise) or on failure to read back a new SHA, the original
     commit and patch are returned unchanged.
@@ -141,6 +146,7 @@ def _fix_import_hunks_with_agent(
         "skipped": False,
         "unwanted_hunk_count": 0,
         "hunks_file": None,
+        "total_attempts": 0,
         "agent_return_code": None,
         "agent_stdout": None,
         "agent_stderr": None,
@@ -183,51 +189,88 @@ def _fix_import_hunks_with_agent(
         agent_log["hunks_file"] = hunks_file
         logger.info(f"[{patch_label}] Agent input JSON written to: {hunks_file}")
 
-        # Run the agent task
-        agent_result = execute_agent_fix_hunks(
-            codecocoon_dir=codecocoon_dir,
-            input_file=hunks_file,
-            env_vars=env_vars,
-            logger=logger,
-            batch_size=batch_size,
-            max_agent_iterations=max_agent_iterations,
-        )
-        agent_log["agent_return_code"] = agent_result.return_code
-        agent_log["agent_stdout"]      = agent_result.stdout
-        agent_log["agent_stderr"]      = agent_result.stderr
+        # Run the agent task with retry.
+        # Retry only when the agent exits 0 but makes no file changes — a known
+        # transient issue where the Koog agent reports success but doesn't write
+        # the modifications to disk.  Non-zero exit is a hard failure; don't retry.
+        total_attempts = max_retries + 1
+        sha_after_commit: Optional[str] = None
+        successful_attempt: Optional[int] = None
 
-        logger.info(
-            f"[{patch_label}] agentFixHunks finished (return_code={agent_result.return_code}). "
-            "stdout/stderr stored in metamorphic entry agent_fix_log."
-        )
-        if agent_result.return_code != 0:
-            logger.warning(
-                f"[{patch_label}] agentFixHunks returned non-zero exit code "
-                f"{agent_result.return_code}. Returning original patches unchanged."
+        for attempt in range(1, total_attempts + 1):
+            attempt_tag = f"attempt {attempt}/{total_attempts}"
+            logger.info(
+                f"[{patch_label}] Running agentFixHunks ({attempt_tag}, "
+                f"batchSize={batch_size}, maxAgentIterations={max_agent_iterations})..."
             )
-            return morph_commit, morph_patch, agent_log
 
-        # Commit whatever the agent changed (if anything).
-        # Compare SHA before/after to detect whether a real commit happened.
-        sha_before_commit = get_head_sha(repo_dir, logger) or morph_commit
-        commit_all_changes(
-            repo_dir,
-            f"[filter] Agent fix import noise ({patch_label})",
-            logger,
-        )
-        sha_after_commit = get_head_sha(repo_dir, logger)
-
-        if not sha_after_commit or sha_after_commit == sha_before_commit:
-            logger.warning(
-                f"[{patch_label}] No file changes were committed after agentFixHunks "
-                "(agent may have made no modifications). Original commit retained."
+            agent_result = execute_agent_fix_hunks(
+                codecocoon_dir=codecocoon_dir,
+                input_file=hunks_file,
+                env_vars=env_vars,
+                logger=logger,
+                batch_size=batch_size,
+                max_agent_iterations=max_agent_iterations,
             )
+            # Always store the last attempt's stdout/stderr for the audit log.
+            agent_log["agent_return_code"] = agent_result.return_code
+            agent_log["agent_stdout"]      = agent_result.stdout
+            agent_log["agent_stderr"]      = agent_result.stderr
+            agent_log["total_attempts"]    = attempt
+
+            logger.info(
+                f"[{patch_label}] agentFixHunks finished ({attempt_tag}, "
+                f"return_code={agent_result.return_code}). "
+                "stdout/stderr stored in metamorphic entry agent_fix_log."
+            )
+
+            if agent_result.return_code != 0:
+                logger.warning(
+                    f"[{patch_label}] agentFixHunks returned non-zero exit code "
+                    f"{agent_result.return_code} ({attempt_tag}). "
+                    "Returning original patches unchanged (no retry on non-zero exit)."
+                )
+                return morph_commit, morph_patch, agent_log
+
+            # Commit whatever the agent wrote to disk (if anything).
+            # Compare SHA before/after to detect whether a real commit happened.
+            sha_before_commit = get_head_sha(repo_dir, logger) or morph_commit
+            commit_all_changes(
+                repo_dir,
+                f"[filter] Agent fix import noise ({patch_label})",
+                logger,
+            )
+            sha_after_commit = get_head_sha(repo_dir, logger)
+
+            if sha_after_commit and sha_after_commit != sha_before_commit:
+                successful_attempt = attempt
+                logger.info(
+                    f"[{patch_label}] File changes committed on {attempt_tag}. "
+                    f"New HEAD: {sha_after_commit}."
+                )
+                break
+
+            # No changes — decide whether to retry.
+            if attempt < total_attempts:
+                logger.warning(
+                    f"[{patch_label}] {attempt_tag}: agentFixHunks exited 0 but made no "
+                    f"file changes. Retrying... ({total_attempts - attempt} attempt(s) left)"
+                )
+            else:
+                logger.warning(
+                    f"[{patch_label}] All {total_attempts} attempt(s) produced no file "
+                    "changes after agentFixHunks. Original commit retained."
+                )
+                return morph_commit, morph_patch, agent_log
+
+        if not sha_after_commit or sha_after_commit == morph_commit:
+            # Shouldn't be reachable, but guard defensively.
             return morph_commit, morph_patch, agent_log
 
         agent_log["corrected_commit"] = sha_after_commit
         logger.info(
             f"[{patch_label}] Agent correction committed: {sha_after_commit} "
-            f"(was: {morph_commit})."
+            f"(was: {morph_commit}, succeeded on attempt {successful_attempt}/{total_attempts})."
         )
 
         # Recompute the morph patch from the anchor to the new corrected commit.
@@ -277,6 +320,7 @@ def _apply_code_morphing(
     logger,
     fix_hunks_batch_size: int = 10,
     fix_hunks_max_agent_iterations: int = 70,
+    fix_hunks_max_retries: int = 3,
 ) -> _MorphingOutcome:
     """Run all CodeCocoon code-morphing steps (Steps 1–5).
 
@@ -580,6 +624,7 @@ def _apply_code_morphing(
             diff_anchor=metamorphic_base_commit,
             batch_size=fix_hunks_batch_size,
             max_agent_iterations=fix_hunks_max_agent_iterations,
+            max_retries=fix_hunks_max_retries,
         )
         strategy_entry["metamorphic_patches"]["test"]["commit"] = metamorphic_test_commit
         strategy_entry["metamorphic_patches"]["test"]["new_morphed_test_patch"]["value"] = new_morphed_test_patch
@@ -710,6 +755,7 @@ def _apply_code_morphing(
             diff_anchor=metamorphic_base_commit,
             batch_size=fix_hunks_batch_size,
             max_agent_iterations=fix_hunks_max_agent_iterations,
+            max_retries=fix_hunks_max_retries,
         )
         strategy_entry["metamorphic_patches"]["fix"]["commit"] = metamorphic_fix_commit
         strategy_entry["metamorphic_patches"]["fix"]["new_morphed_fix_patch"]["value"] = new_morphed_fix_patch

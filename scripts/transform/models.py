@@ -60,6 +60,7 @@ class TransformConfig:
     fix_import_hunks_with_agent: bool = False           # run agentFixHunks after each morph to revert IntelliJ import noise
     fix_hunks_batch_size: int = 10                      # number of hunks per agent batch (passed as -PbatchSize to agentFixHunks)
     fix_hunks_max_agent_iterations: int = 70            # max Koog agent iterations per batch (passed as -PmaxAgentIterations)
+    fix_hunks_max_retries: int = 3                      # retries when agent exits 0 but makes no file changes (total attempts = max_retries + 1)
 
 
 def validate_config(config: TransformConfig) -> None:

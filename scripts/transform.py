@@ -88,6 +88,7 @@ def load_transform_config(config_filepath: str) -> TransformConfig:
         fix_import_hunks_with_agent=raw.get('fix_import_hunks_with_agent', False),
         fix_hunks_batch_size=raw.get('fix_hunks_batch_size', 10),
         fix_hunks_max_agent_iterations=raw.get('fix_hunks_max_agent_iterations', 70),
+        fix_hunks_max_retries=raw.get('fix_hunks_max_retries', 3),
     )
 
 
@@ -157,6 +158,7 @@ def process_entry(
     fix_import_hunks_with_agent: bool,
     fix_hunks_batch_size: int = 10,
     fix_hunks_max_agent_iterations: int = 70,
+    fix_hunks_max_retries: int = 3,
 ) -> ProcessEntryResult:
     """Process a single entry through the transformation pipeline."""
     instance_id = entry['instance_id']
@@ -221,6 +223,7 @@ def process_entry(
             fix_import_hunks_with_agent=fix_import_hunks_with_agent,
             fix_hunks_batch_size=fix_hunks_batch_size,
             fix_hunks_max_agent_iterations=fix_hunks_max_agent_iterations,
+            fix_hunks_max_retries=fix_hunks_max_retries,
             logger=logger,
         )
         errors.extend(morph_outcome.errors)
@@ -359,6 +362,7 @@ def main():
       fix_import_hunks_with_agent: {config.fix_import_hunks_with_agent}
       fix_hunks_batch_size:        {config.fix_hunks_batch_size}
       fix_hunks_max_agent_iterations: {config.fix_hunks_max_agent_iterations}
+      fix_hunks_max_retries:          {config.fix_hunks_max_retries}
     """)
 
     try:
@@ -432,6 +436,7 @@ def main():
             fix_import_hunks_with_agent=config.fix_import_hunks_with_agent,
             fix_hunks_batch_size=config.fix_hunks_batch_size,
             fix_hunks_max_agent_iterations=config.fix_hunks_max_agent_iterations,
+            fix_hunks_max_retries=config.fix_hunks_max_retries,
         )
         entry_ms = int((time.monotonic() - entry_start) * 1000)
         append_jsonl(config.output, result.entry)

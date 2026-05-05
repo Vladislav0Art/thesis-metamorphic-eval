@@ -131,3 +131,13 @@ fix_hunks_batch_size: 8
 # Passed as -PmaxAgentIterations to agentFixHunks.
 # Default: 70
 fix_hunks_max_agent_iterations: 70
+
+# Number of additional retries when agentFixHunks exits 0 but writes no file changes.
+# This is a known transient issue with the Koog agent where it reports "applied: true"
+# in its JSON output but doesn't write the modifications to disk.
+# Total attempts = fix_hunks_max_retries + 1.
+# Non-zero exit codes are never retried (they indicate a hard failure).
+# Set to 0 to disable retrying (one attempt only).
+# Only used when fix_import_hunks_with_agent is true.
+# Default: 3
+fix_hunks_max_retries: 3
