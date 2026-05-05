@@ -354,7 +354,8 @@ def collect_unwanted_hunks(patch: str, logger=None) -> List[Dict]:
     the noise in the source files:
 
       - ``file``            relative path of the affected file
-      - ``hunk_type``       ``"import_reorder"`` or ``"wildcard_import_removal"``
+      - ``hunk_type``       ``"import_reorder"``, ``"wildcard_import_removal"``, or
+                            ``"import_cross_hunk_move"``
       - ``description``     human-readable explanation of the problem and the fix
       - ``hunk_header``     the ``@@ ... @@`` line as it appears in the diff
       - ``old_start_line``  first line of the old-file window
@@ -365,11 +366,15 @@ def collect_unwanted_hunks(patch: str, logger=None) -> List[Dict]:
       - ``full_hunk_diff``  the complete rendered hunk text (for reference)
 
     Import-reorder dicts also carry:
-      - ``original_order``  list of import lines as they appeared BEFORE CodeCocoon (``-`` lines)
-      - ``reordered_to``    list of import lines as CodeCocoon left them (``+`` lines — unwanted)
+      - ``original_import_block``  all imports in the hunk window BEFORE CodeCocoon
+      - ``current_import_block``   all imports in the hunk window as they are NOW
 
     Wildcard-removal dicts also carry:
-      - ``removed_wildcards`` list of wildcard import lines that were dropped
+      - ``removed_wildcards``  import lines (and blank lines as "") that were removed
+
+    Cross-hunk-move dicts also carry:
+      - ``cross_move_role``   ``"spurious_addition"`` or ``"missing_import"``
+      - ``moved_imports``     list of import lines participating in the move
     """
     if not patch:
         return []
@@ -379,9 +384,12 @@ def collect_unwanted_hunks(patch: str, logger=None) -> List[Dict]:
 
     for file_diff in file_diffs:
         file_path = file_diff.file_path()
+        flagged_hunk_indices: set = set()
 
-        for hunk in file_diff.hunks:
+        # ── Pass 1: per-hunk noise (reorders and wildcard removals) ──────────────
+        for hunk_idx, hunk in enumerate(file_diff.hunks):
             if _is_import_reorder(hunk):
+                flagged_hunk_indices.add(hunk_idx)
                 original_import_block, current_import_block = _compute_import_blocks(hunk)
                 first_orig_line    = original_import_block[0]["line"] if original_import_block else hunk.old_start
                 first_current_line = current_import_block[0]["line"]  if current_import_block  else hunk.new_start
@@ -420,6 +428,7 @@ def collect_unwanted_hunks(patch: str, logger=None) -> List[Dict]:
 
             wc_indices = _wildcard_removal_indices(hunk)
             if wc_indices:
+                flagged_hunk_indices.add(hunk_idx)
                 drop_set = _expand_with_adjacent_blank_removals(hunk.lines, wc_indices)
                 # Include blank lines (as "") so the agent knows to restore them too.
                 # Adjacent blank lines between import groups are removed by IntelliJ alongside
@@ -452,6 +461,105 @@ def collect_unwanted_hunks(patch: str, logger=None) -> List[Dict]:
                         "represent blank separator lines. Position them where they originally "
                         "appeared (around line new_start_line). Do not modify any other "
                         "imports."
+                    ),
+                    "full_hunk_diff": hunk.render(),
+                })
+
+        # ── Pass 2: cross-hunk import move detection ──────────────────────────────
+        # When IntelliJ moves an import far enough that git creates two separate hunks
+        # (one adding it at the new position, one removing it from the original), neither
+        # hunk individually satisfies _is_import_reorder.  Detect them here by finding
+        # imports that appear in both the global added-set and removed-set of UNFLAGGED hunks.
+        file_added_imports:   set = set()
+        file_removed_imports: set = set()
+        for hunk_idx, hunk in enumerate(file_diff.hunks):
+            if hunk_idx in flagged_hunk_indices:
+                continue  # already accounted for by pass 1
+            for line in hunk.lines:
+                if line.line_type == 'added' and _IMPORT_RE.match(line.content.lstrip()):
+                    file_added_imports.add(line.content)
+                elif line.line_type == 'removed' and _IMPORT_RE.match(line.content.lstrip()):
+                    file_removed_imports.add(line.content)
+
+        cross_moved = file_added_imports & file_removed_imports
+        if cross_moved:
+            for hunk_idx, hunk in enumerate(file_diff.hunks):
+                if hunk_idx in flagged_hunk_indices:
+                    continue
+
+                changed = [l for l in hunk.lines if l.line_type in ('added', 'removed')]
+                if not changed:
+                    continue
+
+                # All non-blank changed lines must be imports in cross_moved.
+                # A hunk with any real (non-moved) change is not pure import noise.
+                non_blank = [l for l in changed if l.content.strip()]
+                if not non_blank:
+                    continue
+                if not all(_IMPORT_RE.match(l.content.lstrip()) for l in non_blank):
+                    continue
+                if not all(l.content in cross_moved for l in non_blank):
+                    continue
+
+                flagged_hunk_indices.add(hunk_idx)
+                added_imps   = [l.content for l in non_blank if l.line_type == 'added']
+                removed_imps = [l.content for l in non_blank if l.line_type == 'removed']
+
+                if added_imps and not removed_imps:
+                    role = "spurious_addition"
+                    moved = added_imps
+                    role_desc = (
+                        "it spuriously adds the import(s) at a new position — "
+                        "this insertion must be reverted (the import should not be here)"
+                    )
+                    action_detail = (
+                        f"REMOVE the following import(s) from around line {hunk.new_start} "
+                        "— IntelliJ's optimizer inserted them here while moving them away "
+                        "from their original location: "
+                        + ", ".join(f"'{i}'" for i in moved)
+                    )
+                elif removed_imps and not added_imps:
+                    role = "missing_import"
+                    moved = removed_imps
+                    role_desc = (
+                        "it incorrectly removes the import(s) from their original position "
+                        "— this removal must be reverted (the import should stay here)"
+                    )
+                    action_detail = (
+                        f"ADD BACK the following import(s) at around line {hunk.new_start} "
+                        "— IntelliJ's optimizer removed them from here while moving them "
+                        "to a new location: "
+                        + ", ".join(f"'{i}'" for i in moved)
+                    )
+                else:
+                    role = "mixed"
+                    moved = list({l.content for l in non_blank})
+                    role_desc = "it mixes additions and removals of cross-hunk moved imports"
+                    action_detail = (
+                        f"Revert the import changes around line {hunk.new_start} — "
+                        "these are cross-hunk import moves by IntelliJ's optimizer"
+                    )
+
+                result.append({
+                    "file": file_path,
+                    "hunk_type": "import_cross_hunk_move",
+                    "cross_move_role": role,
+                    "moved_imports": moved,
+                    "description": (
+                        "IntelliJ's import optimizer moved import statement(s) between two "
+                        "distant locations in the file, producing two separate diff hunks that "
+                        "cannot be detected as a single reorder. Together they form a "
+                        "cross-hunk import move that must be reverted. "
+                        f"This hunk is the '{role}' side of the move: {role_desc}."
+                    ),
+                    "hunk_header": hunk.header(),
+                    "old_start_line": hunk.old_start,
+                    "old_line_count": hunk.old_count,
+                    "new_start_line": hunk.new_start,
+                    "new_line_count": hunk.new_count,
+                    "action": (
+                        f"In the file '{file_path}': {action_detail}. "
+                        "Do not modify any other imports."
                     ),
                     "full_hunk_diff": hunk.render(),
                 })

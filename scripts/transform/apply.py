@@ -177,10 +177,14 @@ def _fix_import_hunks_with_agent(
                 "CodeCocoon. They must be reverted so the metamorphic patch contains only "
                 "intentional transformations. "
                 "For 'import_reorder': restore the original import order shown in "
-                "'original_import_block' (the order BEFORE CodeCocoon reordered them). "
-                "The file currently contains the order shown in 'current_import_block'. "
-                "For 'wildcard_import_removal': add back the wildcard import line(s) listed "
-                "in 'removed_wildcards'."
+                "'original_import_block' (the order BEFORE CodeCocoon reordered them); "
+                "the file currently contains the order shown in 'current_import_block'. "
+                "For 'wildcard_import_removal': add back every entry in 'removed_wildcards' "
+                "(empty-string entries are blank separator lines). "
+                "For 'import_cross_hunk_move': the optimizer moved an import between two "
+                "distant positions, producing two separate hunks. The 'spurious_addition' "
+                "hunk must have its import removed; the 'missing_import' hunk must have its "
+                "import added back. The 'action' field for each hunk gives the exact instruction."
             ),
             "hunks": unwanted,
         }
