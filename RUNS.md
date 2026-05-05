@@ -15,15 +15,15 @@
 | s4-combined          | ❌        | ❌            | ❌                        | ❌                             |
 
 
-### Runs for 47 benchmarks (full)
+### Runs for 20/47 benchmarks (20/full)
 
-| Step                 | Transform | Patches Check | Evaluation (GPT-5.4)     | Evaluation (Claude-Sonnet-4.6) |
-|----------------------|-----------|---------------|--------------------------|--------------------------------|
-| s0-original          | N/A       | N/A           | ✅ `N=5`                 | ❌                             |
-| s1-renaming          | ✅ ?/47   | 🔵 ?/47       | ❌                        | ❌                             |
-| s2-structural        | ✅ ?/47   | 🔵 ?/47       | ❌                        | ❌                             |
-| s3-problem-statement | ✅        | ❌            | ✅ `N=5`                  | ❌                             |
-| s4-combined          | ❌        | ❌            | ❌                        | ❌                             |
+| Step                 | Transform | Patches Check | Evaluation (GPT-5.4)      | Evaluation (Claude-Sonnet-4.6) |
+|----------------------|-----------|------ --------|---------------------------|--------------------------------|
+| s0-original          | N/A       | N/A           | ✅ `N=5` (47)             | ✅ `N=5` (20)                  |
+| s1-renaming          | 🔵 20     | ❌             | ❌                        | ❌                             |
+| s2-structural        | ❌ 20     | ❌             | ❌                        | ❌                             |
+| s3-problem-statement | ✅ 47     | ❌             | ✅ `N=5` (47)             | 🔵 `N=5` (20)                  |
+| s4-combined          | ❌        | ❌             | ❌                        | ❌                             |
 
 
 1. s1-renaming:
@@ -292,9 +292,9 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 | instance_id | difficulty | baseline (s0) | s1-renaming (patches) | s1 status |
 |---|:---:|:---:|:---:|:---:|
 | `mockito__mockito-3424`<br>`mockito/mockito:pr-3424` | - | 0/5 | + | resolved |
-| `mockito__mockito-3129`<br>`mockito/mockito:pr-3129` | e | 1/5 | + | resolved |
-| `google__gson-1555`<br>`google/gson:pr-1555` | - | 2/5 | + | resolved |
-| `google__gson-1391`<br>`google/gson:pr-1391` | - | 5/5 | + | resolved |
+| `mockito__mockito-3129`<br>`mockito/mockito:pr-3129` | - | 1/5 | + | resolved |
+| `mockito__mockito-3220`<br>`mockito/mockito:pr-3220` | - | 0/5 | + | unresolved |
+| `mockito__mockito-3173`<br>`mockito/mockito:pr-3173` | - | 0/5 | - | unresolved |
 | `fasterxml__jackson-databind-2036`<br>`fasterxml/jackson-databind:pr-2036` | - | 0/5 | + | resolved |
 | `fasterxml__jackson-databind-1923`<br>`fasterxml/jackson-databind:pr-1923` | e | 0/5 | + | resolved |
 | `elastic__logstash-16681`<br>`elastic/logstash:pr-16681` | m | 3/5 | + | resolved |
@@ -314,7 +314,7 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 
 
 ```bash
-instance_ids='mockito__mockito-3424,mockito__mockito-3129,google__gson-1555,google__gson-1391,fasterxml__jackson-databind-2036,fasterxml__jackson-databind-1923,elastic__logstash-16681,elastic__logstash-16579,elastic__logstash-13914,google__gson-1093,fasterxml__jackson-core-370,fasterxml__jackson-core-183,elastic__logstash-14981,elastic__logstash-14970,alibaba__fastjson2-82,mockito__mockito-3167,fasterxml__jackson-core-174,apache__dubbo-11781,googlecontainertools__jib-4144,googlecontainertools__jib-4035'
+instance_ids='alibaba__fastjson2-82,apache__dubbo-11781,elastic__logstash-16681,elastic__logstash-16579,elastic__logstash-14981,elastic__logstash-14970,elastic__logstash-13914,fasterxml__jackson-core-370,fasterxml__jackson-core-183,fasterxml__jackson-core-174,fasterxml__jackson-databind-2036,fasterxml__jackson-databind-1923,google__gson-1093,googlecontainertools__jib-4144,googlecontainertools__jib-4035,mockito__mockito-3424,mockito__mockito-3220,mockito__mockito-3173,mockito__mockito-3167,mockito__mockito-3129'
 ```
 
 
