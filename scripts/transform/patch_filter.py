@@ -421,19 +421,23 @@ def collect_unwanted_hunks(patch: str, logger=None) -> List[Dict]:
             wc_indices = _wildcard_removal_indices(hunk)
             if wc_indices:
                 drop_set = _expand_with_adjacent_blank_removals(hunk.lines, wc_indices)
+                # Include blank lines (as "") so the agent knows to restore them too.
+                # Adjacent blank lines between import groups are removed by IntelliJ alongside
+                # the wildcard import and must also be added back.
                 removed_wildcards = [
                     hunk.lines[i].content
                     for i in sorted(drop_set)
-                    if hunk.lines[i].content.strip()
                 ]
                 result.append({
                     "file": file_path,
                     "hunk_type": "wildcard_import_removal",
                     "description": (
                         "IntelliJ's import optimizer removed one or more wildcard import "
-                        "statements (e.g., 'import static pkg.*;'). These must be restored "
-                        "because no explicit replacements were added, so their removal would "
-                        "break compilation."
+                        "statements (e.g., 'import static pkg.*;') and any adjacent blank "
+                        "separator lines. These must all be restored: entries in "
+                        "'removed_wildcards' with an empty string (\"\") represent blank "
+                        "lines that were also removed and must be added back alongside the "
+                        "import statements."
                     ),
                     "hunk_header": hunk.header(),
                     "old_start_line": hunk.old_start,
@@ -442,9 +446,12 @@ def collect_unwanted_hunks(patch: str, logger=None) -> List[Dict]:
                     "new_line_count": hunk.new_count,
                     "removed_wildcards": removed_wildcards,
                     "action": (
-                        "In the file, add back each import line listed in 'removed_wildcards' "
-                        "to the import section. Position them where they originally appeared "
-                        "(around line new_start_line). Do not modify any other imports."
+                        "In the file, add back every entry in 'removed_wildcards' to the "
+                        "import section, preserving their relative order. Import lines "
+                        "contain the import statement text; empty-string entries (\"\") "
+                        "represent blank separator lines. Position them where they originally "
+                        "appeared (around line new_start_line). Do not modify any other "
+                        "imports."
                     ),
                     "full_hunk_diff": hunk.render(),
                 })

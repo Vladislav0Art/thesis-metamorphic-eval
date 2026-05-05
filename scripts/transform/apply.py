@@ -431,30 +431,34 @@ def _apply_code_morphing(
     logger.info(f"Base metamorphic transformation complete. Commit: {metamorphic_base_commit}")
 
     # Step 1b: Agent fix for base patch (optional)
-    if fix_import_hunks_with_agent:
-        logger.info("=================================================================================")
-        logger.info("===== STEP 1b: agentFixHunks — revert import noise in metamorphic_base_patch =====")
-        logger.info("=================================================================================")
-        metamorphic_base_commit, metamorphic_base_patch, agent_fix_base_log = _fix_import_hunks_with_agent(
-            repo_dir=repo_dir,
-            artifacts_dir=artifacts_dir,
-            morph_patch=metamorphic_base_patch,
-            morph_commit=metamorphic_base_commit,
-            patch_label="base",
-            codecocoon_dir=codecocoon_dir,
-            env_vars=env_vars,
-            logger=logger,
-            batch_size=fix_hunks_batch_size,
-            max_agent_iterations=fix_hunks_max_agent_iterations,
-        )
-        strategy_entry["metamorphic_patches"]["base"]["patch"]["value"] = metamorphic_base_patch
-        strategy_entry["metamorphic_patches"]["base"]["commit"] = metamorphic_base_commit
-        strategy_entry["metamorphic_patches"]["base"]["agent_fix_log"] = agent_fix_base_log
-        logger.info(
-            f"Base agent fix complete. "
-            f"Corrected commit: {metamorphic_base_commit} "
-            f"({'changed' if not agent_fix_base_log.get('skipped') and agent_fix_base_log.get('corrected_commit') else 'unchanged'})"
-        )
+    # DISABLED: per-branch fixes are skipped — noise in metamorphic_base_patch cancels out
+    # in the cross-branch diffs when CodeCocoon applies the same reordering on all branches.
+    # Cross-branch noise (when CodeCocoon reorders on base but is a no-op on test/fix) is
+    # caught by steps 3b and 5b instead.  Re-enable if metamorphic_base_patch noise matters.
+    # if fix_import_hunks_with_agent:
+    #     logger.info("=================================================================================")
+    #     logger.info("===== STEP 1b: agentFixHunks — revert import noise in metamorphic_base_patch =====")
+    #     logger.info("=================================================================================")
+    #     metamorphic_base_commit, metamorphic_base_patch, agent_fix_base_log = _fix_import_hunks_with_agent(
+    #         repo_dir=repo_dir,
+    #         artifacts_dir=artifacts_dir,
+    #         morph_patch=metamorphic_base_patch,
+    #         morph_commit=metamorphic_base_commit,
+    #         patch_label="base",
+    #         codecocoon_dir=codecocoon_dir,
+    #         env_vars=env_vars,
+    #         logger=logger,
+    #         batch_size=fix_hunks_batch_size,
+    #         max_agent_iterations=fix_hunks_max_agent_iterations,
+    #     )
+    #     strategy_entry["metamorphic_patches"]["base"]["patch"]["value"] = metamorphic_base_patch
+    #     strategy_entry["metamorphic_patches"]["base"]["commit"] = metamorphic_base_commit
+    #     strategy_entry["metamorphic_patches"]["base"]["agent_fix_log"] = agent_fix_base_log
+    #     logger.info(
+    #         f"Base agent fix complete. "
+    #         f"Corrected commit: {metamorphic_base_commit} "
+    #         f"({'changed' if not agent_fix_base_log.get('skipped') and agent_fix_base_log.get('corrected_commit') else 'unchanged'})"
+    #     )
 
     # Step 4b: Test morph
     logger.info("===================================================================")
@@ -501,34 +505,35 @@ def _apply_code_morphing(
     )
 
     # Step 2b: Agent fix for test patch (optional)
-    if fix_import_hunks_with_agent:
-        logger.info("==================================================================================")
-        logger.info("===== STEP 2b: agentFixHunks — revert import noise in metamorphic_test_patch =====")
-        logger.info("==================================================================================")
-        metamorphic_test_commit, _metamorphic_test_patch, agent_fix_test_log = _fix_import_hunks_with_agent(
-            repo_dir=repo_dir,
-            artifacts_dir=artifacts_dir,
-            morph_patch=_metamorphic_test_patch,
-            morph_commit=metamorphic_test_commit,
-            patch_label="test",
-            codecocoon_dir=codecocoon_dir,
-            env_vars=env_vars,
-            logger=logger,
-            batch_size=fix_hunks_batch_size,
-            max_agent_iterations=fix_hunks_max_agent_iterations,
-        )
-        strategy_entry["metamorphic_patches"]["test"]["patch"]["value"] = _metamorphic_test_patch
-        strategy_entry["metamorphic_patches"]["test"]["commit"] = metamorphic_test_commit
-        strategy_entry["metamorphic_patches"]["test"]["agent_fix_log"] = agent_fix_test_log
-        logger.info(
-            f"Test agent fix complete. "
-            f"Corrected commit: {metamorphic_test_commit} "
-            f"({'changed' if not agent_fix_test_log.get('skipped') and agent_fix_test_log.get('corrected_commit') else 'unchanged'})"
-        )
+    # DISABLED: see step 1b comment — per-branch fixes skipped; 3b catches cross-branch noise.
+    # if fix_import_hunks_with_agent:
+    #     logger.info("==================================================================================")
+    #     logger.info("===== STEP 2b: agentFixHunks — revert import noise in metamorphic_test_patch =====")
+    #     logger.info("==================================================================================")
+    #     metamorphic_test_commit, _metamorphic_test_patch, agent_fix_test_log = _fix_import_hunks_with_agent(
+    #         repo_dir=repo_dir,
+    #         artifacts_dir=artifacts_dir,
+    #         morph_patch=_metamorphic_test_patch,
+    #         morph_commit=metamorphic_test_commit,
+    #         patch_label="test",
+    #         codecocoon_dir=codecocoon_dir,
+    #         env_vars=env_vars,
+    #         logger=logger,
+    #         batch_size=fix_hunks_batch_size,
+    #         max_agent_iterations=fix_hunks_max_agent_iterations,
+    #     )
+    #     strategy_entry["metamorphic_patches"]["test"]["patch"]["value"] = _metamorphic_test_patch
+    #     strategy_entry["metamorphic_patches"]["test"]["commit"] = metamorphic_test_commit
+    #     strategy_entry["metamorphic_patches"]["test"]["agent_fix_log"] = agent_fix_test_log
+    #     logger.info(
+    #         f"Test agent fix complete. "
+    #         f"Corrected commit: {metamorphic_test_commit} "
+    #         f"({'changed' if not agent_fix_test_log.get('skipped') and agent_fix_test_log.get('corrected_commit') else 'unchanged'})"
+    #     )
 
     # Step 4c: Generate new_morphed_test_patch
-    # NOTE: both metamorphic_base_commit and metamorphic_test_commit are already corrected
-    #       (if fix_import_hunks_with_agent=True) so the cross-branch diff is noise-free.
+    # NOTE: metamorphic_base_commit and metamorphic_test_commit are NOT pre-corrected
+    #       (per-branch fixes 1b/2b are disabled). Cross-branch noise is caught by step 3b.
     logger.info("=====================================================")
     logger.info("===== STEP 3: Generating new_morphed_test_patch =====")
     logger.info("=====================================================")
@@ -630,34 +635,35 @@ def _apply_code_morphing(
     )
 
     # Step 4b: Agent fix for fix patch (optional)
-    if fix_import_hunks_with_agent:
-        logger.info("=================================================================================")
-        logger.info("===== STEP 4b: agentFixHunks — revert import noise in metamorphic_fix_patch =====")
-        logger.info("=================================================================================")
-        metamorphic_fix_commit, _metamorphic_fix_patch, agent_fix_fix_log = _fix_import_hunks_with_agent(
-            repo_dir=repo_dir,
-            artifacts_dir=artifacts_dir,
-            morph_patch=_metamorphic_fix_patch,
-            morph_commit=metamorphic_fix_commit,
-            patch_label="fix",
-            codecocoon_dir=codecocoon_dir,
-            env_vars=env_vars,
-            logger=logger,
-            batch_size=fix_hunks_batch_size,
-            max_agent_iterations=fix_hunks_max_agent_iterations,
-        )
-        strategy_entry["metamorphic_patches"]["fix"]["patch"]["value"] = _metamorphic_fix_patch
-        strategy_entry["metamorphic_patches"]["fix"]["commit"] = metamorphic_fix_commit
-        strategy_entry["metamorphic_patches"]["fix"]["agent_fix_log"] = agent_fix_fix_log
-        logger.info(
-            f"Fix agent fix complete. "
-            f"Corrected commit: {metamorphic_fix_commit} "
-            f"({'changed' if not agent_fix_fix_log.get('skipped') and agent_fix_fix_log.get('corrected_commit') else 'unchanged'})"
-        )
+    # DISABLED: see step 1b comment — per-branch fixes skipped; 5b catches cross-branch noise.
+    # if fix_import_hunks_with_agent:
+    #     logger.info("=================================================================================")
+    #     logger.info("===== STEP 4b: agentFixHunks — revert import noise in metamorphic_fix_patch =====")
+    #     logger.info("=================================================================================")
+    #     metamorphic_fix_commit, _metamorphic_fix_patch, agent_fix_fix_log = _fix_import_hunks_with_agent(
+    #         repo_dir=repo_dir,
+    #         artifacts_dir=artifacts_dir,
+    #         morph_patch=_metamorphic_fix_patch,
+    #         morph_commit=metamorphic_fix_commit,
+    #         patch_label="fix",
+    #         codecocoon_dir=codecocoon_dir,
+    #         env_vars=env_vars,
+    #         logger=logger,
+    #         batch_size=fix_hunks_batch_size,
+    #         max_agent_iterations=fix_hunks_max_agent_iterations,
+    #     )
+    #     strategy_entry["metamorphic_patches"]["fix"]["patch"]["value"] = _metamorphic_fix_patch
+    #     strategy_entry["metamorphic_patches"]["fix"]["commit"] = metamorphic_fix_commit
+    #     strategy_entry["metamorphic_patches"]["fix"]["agent_fix_log"] = agent_fix_fix_log
+    #     logger.info(
+    #         f"Fix agent fix complete. "
+    #         f"Corrected commit: {metamorphic_fix_commit} "
+    #         f"({'changed' if not agent_fix_fix_log.get('skipped') and agent_fix_fix_log.get('corrected_commit') else 'unchanged'})"
+    #     )
 
     # Step 4e: Generate new_morphed_fix_patch
-    # NOTE: both metamorphic_base_commit and metamorphic_fix_commit are already corrected
-    #       (if fix_import_hunks_with_agent=True) so the cross-branch diff is noise-free.
+    # NOTE: metamorphic_base_commit and metamorphic_fix_commit are NOT pre-corrected
+    #       (per-branch fixes 1b/2b/4b are disabled). Cross-branch noise is caught by step 5b.
     logger.info("====================================================")
     logger.info("===== STEP 5: Generating new_morphed_fix_patch =====")
     logger.info("====================================================")
