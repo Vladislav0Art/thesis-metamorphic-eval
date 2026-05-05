@@ -20,10 +20,10 @@
 | Step                 | Transform | Patches Check | Evaluation (GPT-5.4)      | Evaluation (Claude-Sonnet-4.6) |
 |----------------------|-----------|------ --------|---------------------------|--------------------------------|
 | s0-original          | N/A       | N/A           | ✅ `N=5` (47)             | ✅ `N=5` (20)                  |
-| s1-renaming          | 🔵 20     | ❌             | ❌                        | ❌                             |
-| s2-structural        | ❌ 20     | ❌             | ❌                        | ❌                             |
-| s3-problem-statement | ✅ 47     | ❌             | ✅ `N=5` (47)             | 🔵 `N=5` (20)                  |
-| s4-combined          | ❌        | ❌             | ❌                        | ❌                             |
+| s1-renaming          | 🔵 20 V   | ❌             | ❌                        | ❌                             |
+| s2-structural        | 🔵 20 D   | ❌             | ❌                        | ❌                             |
+| s3-problem-statement | ✅ 47     | ❌             | ✅ `N=5` (47)             | 🔵 `N=5` (20) V                |
+| s4-combined          | 🔵 20 D   | ❌             | ❌                        | ❌                             |
 
 
 1. s1-renaming:
