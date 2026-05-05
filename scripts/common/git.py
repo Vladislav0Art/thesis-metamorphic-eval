@@ -259,6 +259,24 @@ def get_head_sha(repo_dir: str, logger) -> Optional[str]:
         return None
 
 
+def discard_working_tree_changes(repo_dir: str, logger) -> bool:
+    """Discard all uncommitted changes in the working tree (reset tracked files + remove untracked)."""
+    try:
+        stdout, stderr, code = run_cli_command('git', ['reset', '--hard', 'HEAD'], cwd=repo_dir)
+        if code != 0:
+            logger.warning(f"git reset --hard HEAD failed: {stderr}")
+            return False
+        stdout, stderr, code = run_cli_command('git', ['clean', '-fd'], cwd=repo_dir)
+        if code != 0:
+            logger.warning(f"git clean -fd failed: {stderr}")
+            return False
+        logger.info("Discarded all uncommitted working tree changes.")
+        return True
+    except Exception as e:
+        logger.warning(f"discard_working_tree_changes failed: {e}")
+        return False
+
+
 def build_github_url(org: str, repo: str) -> str:
     return f"https://github.com/{org}/{repo}.git"
 

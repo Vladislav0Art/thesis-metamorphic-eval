@@ -394,6 +394,7 @@ def collect_unwanted_hunks(patch: str, logger=None) -> List[Dict]:
                 first_orig_line    = original_import_block[0]["line"] if original_import_block else hunk.old_start
                 first_current_line = current_import_block[0]["line"]  if current_import_block  else hunk.new_start
                 result.append({
+                    "id": f"hunk-{len(result)}",
                     "file": file_path,
                     "hunk_type": "import_reorder",
                     "description": (
@@ -438,6 +439,7 @@ def collect_unwanted_hunks(patch: str, logger=None) -> List[Dict]:
                     for i in sorted(drop_set)
                 ]
                 result.append({
+                    "id": f"hunk-{len(result)}",
                     "file": file_path,
                     "hunk_type": "wildcard_import_removal",
                     "description": (
@@ -541,6 +543,7 @@ def collect_unwanted_hunks(patch: str, logger=None) -> List[Dict]:
                     )
 
                 result.append({
+                    "id": f"hunk-{len(result)}",
                     "file": file_path,
                     "hunk_type": "import_cross_hunk_move",
                     "cross_move_role": role,

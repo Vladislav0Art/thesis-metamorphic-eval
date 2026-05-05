@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Dict, List, Optional
 import yaml
 import os
 from dataclasses import dataclass
@@ -103,24 +103,33 @@ def execute_agent_fix_hunks(
     logger,
     batch_size: int = 10,
     max_agent_iterations: int = 70,
+    output_file: Optional[str] = None,
 ) -> CodeCocoonResult:
     """Execute CodeCocoon agentFixHunks gradle task.
 
     Reads the unwanted-hunks JSON file and invokes a Koog AI agent to
     revert IntelliJ import noise directly in the source files.
+
+    When *output_file* is provided, the task writes a JSON file there with
+    the IDs of hunks that were successfully fixed:
+        {"fixed": ["hunk-0", "hunk-2", ...]}
     """
     logger.info(
         f"Executing agentFixHunks with input: {input_file} "
-        f"(batchSize={batch_size}, maxAgentIterations={max_agent_iterations})"
+        f"(batchSize={batch_size}, maxAgentIterations={max_agent_iterations}"
+        + (f", outputFile={output_file}" if output_file else "") + ")"
     )
+    args = [
+        'agentFixHunks',
+        f'-Pinput={input_file}',
+        f'-PbatchSize={batch_size}',
+        f'-PmaxAgentIterations={max_agent_iterations}',
+    ]
+    if output_file is not None:
+        args.append(f'-Poutput={output_file}')
     stdout, stderr, code = run_cli_command(
         './gradlew',
-        [
-            'agentFixHunks',
-            f'-Pinput={input_file}',
-            f'-PbatchSize={batch_size}',
-            f'-PmaxAgentIterations={max_agent_iterations}',
-        ],
+        args,
         cwd=codecocoon_dir,
         env={**os.environ, **env_vars},
     )

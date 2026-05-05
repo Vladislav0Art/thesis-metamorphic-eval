@@ -124,21 +124,19 @@ def _fix_import_hunks_with_agent(
 ) -> Tuple[str, str, Dict]:
     """Revert IntelliJ import noise from the current branch using an AI agent.
 
-    Collects import-noise hunks from *morph_patch*, writes a JSON input file for
-    the ``agentFixHunks`` Gradle task, runs the task, commits any file changes,
-    and recomputes the morph patch.
+    Collects import-noise hunks from *morph_patch* (each assigned a stable
+    ``hunk-N`` ID) and runs up to ``max_retries + 1`` incremental attempts.
+    Each attempt feeds only the yet-unfixed hunks to ``agentFixHunks``; the
+    Gradle task reports which IDs it fixed via an output JSON file, and the next
+    attempt receives only the remainder.  File changes accumulate on disk across
+    attempts and are committed once after the loop.
 
-    The diff anchor used to recompute the patch after the agent commit is:
-      - ``diff_anchor`` when explicitly provided (used for cross-branch passes where
-        the anchor is the corrected base commit rather than a within-branch parent)
-      - ``{morph_commit}~1`` otherwise (the commit just before CodeCocoon ran)
-
-    When the agent exits 0 but produces no file changes (a known transient Koog
-    agent issue), the call is retried up to ``max_retries`` additional times.
-    Non-zero exit codes are not retried.
+    The diff anchor used to recompute the patch after the final commit is:
+      - ``diff_anchor`` when explicitly provided (cross-branch passes)
+      - ``{morph_commit}~1`` otherwise (parent of the CodeCocoon commit)
 
     Returns ``(updated_commit_sha, updated_patch, agent_log_dict)``.
-    On skip (no noise) or on failure to read back a new SHA, the original
+    On skip (no noise) or when no file changes are committed, the original
     commit and patch are returned unchanged.
     """
     agent_log: Dict = {
@@ -168,53 +166,64 @@ def _fix_import_hunks_with_agent(
             f"{len({h['file'] for h in unwanted})} file(s). Preparing agent input..."
         )
 
-        hunks_file = os.path.join(artifacts_dir, f"{patch_label}_unwanted_hunks.json")
-        agent_input = {
-            "repo_root": repo_dir,
-            "patch_label": patch_label,
-            "description": (
-                "These hunks are side-effects of IntelliJ's import optimizer running inside "
-                "CodeCocoon. They must be reverted so the metamorphic patch contains only "
-                "intentional transformations. "
-                "For 'import_reorder': restore the original import order shown in "
-                "'original_import_block' (the order BEFORE CodeCocoon reordered them); "
-                "the file currently contains the order shown in 'current_import_block'. "
-                "For 'wildcard_import_removal': add back every entry in 'removed_wildcards' "
-                "(empty-string entries are blank separator lines). "
-                "For 'import_cross_hunk_move': the optimizer moved an import between two "
-                "distant positions, producing two separate hunks. The 'spurious_addition' "
-                "hunk must have its import removed; the 'missing_import' hunk must have its "
-                "import added back. The 'action' field for each hunk gives the exact instruction."
-            ),
-            "hunks": unwanted,
-        }
-        with open(hunks_file, 'w') as f:
-            json.dump(agent_input, f, indent=2)
-        agent_log["hunks_file"] = hunks_file
-        logger.info(f"[{patch_label}] Agent input JSON written to: {hunks_file}")
+        # Build ID→hunk lookup; track which hunks remain unfixed across attempts.
+        hunk_by_id: Dict[str, Dict] = {h["id"]: h for h in unwanted}
+        unfixed_ids: set = {h["id"] for h in unwanted}
 
-        # Run the agent task with retry.
-        # Retry only when the agent exits 0 but makes no file changes — a known
-        # transient issue where the Koog agent reports success but doesn't write
-        # the modifications to disk.  Non-zero exit is a hard failure; don't retry.
+        # Shared description field reused across all attempt-specific input files.
+        _agent_description = (
+            "These hunks are side-effects of IntelliJ's import optimizer running inside "
+            "CodeCocoon. They must be reverted so the metamorphic patch contains only "
+            "intentional transformations. "
+            "For 'import_reorder': restore the original import order shown in "
+            "'original_import_block' (the order BEFORE CodeCocoon reordered them); "
+            "the file currently contains the order shown in 'current_import_block'. "
+            "For 'wildcard_import_removal': add back every entry in 'removed_wildcards' "
+            "(empty-string entries are blank separator lines). "
+            "For 'import_cross_hunk_move': the optimizer moved an import between two "
+            "distant positions, producing two separate hunks. The 'spurious_addition' "
+            "hunk must have its import removed; the 'missing_import' hunk must have its "
+            "import added back. The 'action' field for each hunk gives the exact instruction."
+        )
+
+        # Write master file (all hunks) for reference in audit logs.
+        hunks_file = os.path.join(artifacts_dir, f"{patch_label}_unwanted_hunks.json")
+        with open(hunks_file, 'w') as f:
+            json.dump({"repo_root": repo_dir, "patch_label": patch_label,
+                       "description": _agent_description, "hunks": unwanted}, f, indent=2)
+        agent_log["hunks_file"] = hunks_file
+        logger.info(f"[{patch_label}] Master agent input JSON ({len(unwanted)} hunk(s)) written to: {hunks_file}")
+
+        # Incremental retry loop.
+        # Each attempt feeds only the yet-unfixed hunks; file changes accumulate on disk
+        # across attempts and are committed once after the loop completes.
         total_attempts = max_retries + 1
-        sha_after_commit: Optional[str] = None
-        successful_attempt: Optional[int] = None
 
         for attempt in range(1, total_attempts + 1):
             attempt_tag = f"attempt {attempt}/{total_attempts}"
+
+            # Write attempt-specific input with only the unfixed subset.
+            attempt_input_file  = os.path.join(artifacts_dir, f"{patch_label}_unwanted_hunks_attempt_{attempt}.json")
+            attempt_output_file = os.path.join(artifacts_dir, f"{patch_label}_fixed_hunks_attempt_{attempt}.json")
+            unfixed_hunks = [hunk_by_id[hid] for hid in sorted(unfixed_ids)]
+            with open(attempt_input_file, 'w') as f:
+                json.dump({"repo_root": repo_dir, "patch_label": patch_label,
+                           "description": _agent_description, "hunks": unfixed_hunks}, f, indent=2)
+
             logger.info(
                 f"[{patch_label}] Running agentFixHunks ({attempt_tag}, "
+                f"{len(unfixed_ids)} unfixed hunk(s), "
                 f"batchSize={batch_size}, maxAgentIterations={max_agent_iterations})..."
             )
 
             agent_result = execute_agent_fix_hunks(
                 codecocoon_dir=codecocoon_dir,
-                input_file=hunks_file,
+                input_file=attempt_input_file,
                 env_vars=env_vars,
                 logger=logger,
                 batch_size=batch_size,
                 max_agent_iterations=max_agent_iterations,
+                output_file=attempt_output_file,
             )
             # Always store the last attempt's stdout/stderr for the audit log.
             agent_log["agent_return_code"] = agent_result.return_code
@@ -232,59 +241,85 @@ def _fix_import_hunks_with_agent(
                 logger.warning(
                     f"[{patch_label}] agentFixHunks returned non-zero exit code "
                     f"{agent_result.return_code} ({attempt_tag}). "
-                    "Returning original patches unchanged (no retry on non-zero exit)."
-                )
-                return morph_commit, morph_patch, agent_log
-
-            # Commit whatever the agent wrote to disk (if anything).
-            # Compare SHA before/after to detect whether a real commit happened.
-            sha_before_commit = get_head_sha(repo_dir, logger) or morph_commit
-            commit_all_changes(
-                repo_dir,
-                f"[filter] Agent fix import noise ({patch_label})",
-                logger,
-            )
-            sha_after_commit = get_head_sha(repo_dir, logger)
-
-            if sha_after_commit and sha_after_commit != sha_before_commit:
-                successful_attempt = attempt
-                logger.info(
-                    f"[{patch_label}] File changes committed on {attempt_tag}. "
-                    f"New HEAD: {sha_after_commit}."
+                    "Committing any partial writes accumulated so far and stopping retries."
                 )
                 break
 
-            # No changes — decide whether to retry.
-            if attempt < total_attempts:
+            # Read agent output to determine which hunk IDs were fixed this attempt.
+            fixed_this_attempt: set = set()
+            if os.path.exists(attempt_output_file):
+                try:
+                    with open(attempt_output_file) as f:
+                        fixed_this_attempt = set(json.load(f).get("fixed", []))
+                except Exception as e:
+                    logger.warning(
+                        f"[{patch_label}] Failed to read agent output file "
+                        f"{attempt_output_file}: {e}. Treating as no progress this attempt."
+                    )
+            else:
                 logger.warning(
-                    f"[{patch_label}] {attempt_tag}: agentFixHunks exited 0 but made no "
-                    f"file changes. Retrying... ({total_attempts - attempt} attempt(s) left)"
+                    f"[{patch_label}] Agent output file not found: {attempt_output_file}. "
+                    "Treating as no progress this attempt."
+                )
+
+            unfixed_ids -= fixed_this_attempt
+
+            if not unfixed_ids:
+                logger.info(f"[{patch_label}] All {len(unwanted)} hunk(s) fixed after {attempt_tag}.")
+                break
+
+            if fixed_this_attempt:
+                logger.info(
+                    f"[{patch_label}] {len(fixed_this_attempt)} hunk(s) fixed on {attempt_tag}. "
+                    f"{len(unfixed_ids)} remain: {sorted(unfixed_ids)}."
                 )
             else:
                 logger.warning(
-                    f"[{patch_label}] All {total_attempts} attempt(s) produced no file "
-                    "changes after agentFixHunks. Original commit retained."
+                    f"[{patch_label}] No hunks fixed on {attempt_tag}. "
+                    f"{total_attempts - attempt} attempt(s) left."
                 )
-                return morph_commit, morph_patch, agent_log
 
-        if not sha_after_commit or sha_after_commit == morph_commit:
-            # Shouldn't be reachable, but guard defensively.
+            if attempt == total_attempts:
+                logger.warning(
+                    f"[{patch_label}] Retry limit reached. "
+                    f"{len(unfixed_ids)} hunk(s) remain unfixed: {sorted(unfixed_ids)}."
+                )
+
+        # Post-loop: commit all file changes accumulated across every attempt.
+        agent_log["unfixed_ids"] = sorted(unfixed_ids)
+        if unfixed_ids:
+            unfixed_files = sorted({hunk_by_id[hid]["file"] for hid in unfixed_ids})
+            logger.warning(
+                f"[{patch_label}] {len(unfixed_ids)}/{len(unwanted)} import-noise hunk(s) "
+                f"remain unfixed after all {total_attempts} attempt(s): {sorted(unfixed_ids)}. "
+                f"Affected file(s): {unfixed_files}"
+            )
+
+        sha_before_commit = get_head_sha(repo_dir, logger) or morph_commit
+        commit_all_changes(
+            repo_dir,
+            f"[filter] Agent fix import noise ({patch_label})",
+            logger,
+        )
+        sha_after_commit = get_head_sha(repo_dir, logger)
+
+        if not sha_after_commit or sha_after_commit == sha_before_commit:
+            logger.warning(
+                f"[{patch_label}] No file changes committed after all attempts. "
+                "Original patches retained."
+            )
             return morph_commit, morph_patch, agent_log
 
         agent_log["corrected_commit"] = sha_after_commit
+        n_fixed = len(unwanted) - len(unfixed_ids)
         logger.info(
-            f"[{patch_label}] Agent correction committed: {sha_after_commit} "
-            f"(was: {morph_commit}, succeeded on attempt {successful_attempt}/{total_attempts})."
+            f"[{patch_label}] Agent fixes committed: {sha_after_commit} "
+            f"(was: {morph_commit}, {n_fixed}/{len(unwanted)} hunk(s) fixed)."
         )
 
-        # Recompute the morph patch from the anchor to the new corrected commit.
-        # Default anchor is '{morph_commit}~1' (parent of the CodeCocoon commit), which works
-        # for within-branch passes:
-        #   base  → parent = base_sha          (no pre-patches on branch)
-        #   test  → parent = test_patch commit  (pre-committed before CodeCocoon)
-        #   fix   → parent = fix_patch commit   (pre-committed before CodeCocoon)
-        # For cross-branch passes the caller provides an explicit anchor (corrected base commit)
-        # so that the returned patch is the new cross-branch diff.
+        # Recompute the morph patch from the anchor to the corrected commit.
+        # Default anchor: '{morph_commit}~1' (parent of the CodeCocoon commit).
+        # Cross-branch callers supply an explicit anchor instead.
         actual_anchor = diff_anchor if diff_anchor is not None else f"{morph_commit}~1"
         new_patch = diff_between_commits(repo_dir, actual_anchor, sha_after_commit, logger)
         if not new_patch:
