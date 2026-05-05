@@ -121,6 +121,7 @@ def _fix_import_hunks_with_agent(
     batch_size: int = 10,
     max_agent_iterations: int = 70,
     max_retries: int = 3,
+    fix_hunks_override: bool = False,
 ) -> Tuple[str, str, Dict]:
     """Revert IntelliJ import noise from the current branch using an AI agent.
 
@@ -153,6 +154,25 @@ def _fix_import_hunks_with_agent(
     }
 
     try:
+        hunks_file = os.path.join(artifacts_dir, f"{patch_label}_unwanted_hunks.json")
+        clean_patch_file = os.path.join(artifacts_dir, f"{patch_label}_cleaned_patch.txt")
+
+        if not fix_hunks_override and os.path.exists(hunks_file):
+            if os.path.exists(clean_patch_file):
+                logger.info(
+                    f"[{patch_label}] Cached clean patch found ({clean_patch_file}); "
+                    "returning cached result (fix_hunks_override=False)."
+                )
+                with open(clean_patch_file) as f:
+                    cached_patch = f.read()
+                agent_log["skipped"] = True
+                agent_log["skip_reason"] = "cached_output_exists"
+                return morph_commit, cached_patch, agent_log
+            logger.info(
+                f"[{patch_label}] Master hunks file found but no cached clean patch — "
+                "running agent."
+            )
+
         unwanted = collect_unwanted_hunks(morph_patch, logger)
         agent_log["unwanted_hunk_count"] = len(unwanted)
 
@@ -187,7 +207,6 @@ def _fix_import_hunks_with_agent(
         )
 
         # Write master file (all hunks) for reference in audit logs.
-        hunks_file = os.path.join(artifacts_dir, f"{patch_label}_unwanted_hunks.json")
         with open(hunks_file, 'w') as f:
             json.dump({"repo_root": repo_dir, "patch_label": patch_label,
                        "description": _agent_description, "hunks": unwanted}, f, indent=2)
@@ -308,6 +327,8 @@ def _fix_import_hunks_with_agent(
                 f"[{patch_label}] No file changes committed after all attempts. "
                 "Original patches retained."
             )
+            with open(clean_patch_file, 'w') as f:
+                f.write(morph_patch)
             return morph_commit, morph_patch, agent_log
 
         agent_log["corrected_commit"] = sha_after_commit
@@ -327,12 +348,16 @@ def _fix_import_hunks_with_agent(
                 f"[{patch_label}] Recomputed patch is empty after agent fix — "
                 "this is unexpected. Retaining original patch."
             )
+            with open(clean_patch_file, 'w') as f:
+                f.write(morph_patch)
             return sha_after_commit, morph_patch, agent_log
 
         logger.info(
             f"[{patch_label}] Patch recomputed: {len(new_patch)} chars "
             f"(was {len(morph_patch)} chars before agent fix)."
         )
+        with open(clean_patch_file, 'w') as f:
+            f.write(new_patch)
         return sha_after_commit, new_patch, agent_log
 
     except Exception as e:
@@ -360,6 +385,7 @@ def _apply_code_morphing(
     fix_hunks_batch_size: int = 10,
     fix_hunks_max_agent_iterations: int = 70,
     fix_hunks_max_retries: int = 3,
+    fix_hunks_override: bool = False,
 ) -> _MorphingOutcome:
     """Run all CodeCocoon code-morphing steps (Steps 1–5).
 
@@ -664,6 +690,7 @@ def _apply_code_morphing(
             batch_size=fix_hunks_batch_size,
             max_agent_iterations=fix_hunks_max_agent_iterations,
             max_retries=fix_hunks_max_retries,
+            fix_hunks_override=fix_hunks_override,
         )
         strategy_entry["metamorphic_patches"]["test"]["commit"] = metamorphic_test_commit
         strategy_entry["metamorphic_patches"]["test"]["new_morphed_test_patch"]["value"] = new_morphed_test_patch
@@ -795,6 +822,7 @@ def _apply_code_morphing(
             batch_size=fix_hunks_batch_size,
             max_agent_iterations=fix_hunks_max_agent_iterations,
             max_retries=fix_hunks_max_retries,
+            fix_hunks_override=fix_hunks_override,
         )
         strategy_entry["metamorphic_patches"]["fix"]["commit"] = metamorphic_fix_commit
         strategy_entry["metamorphic_patches"]["fix"]["new_morphed_fix_patch"]["value"] = new_morphed_fix_patch

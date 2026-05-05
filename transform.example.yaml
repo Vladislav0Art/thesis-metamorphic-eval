@@ -141,3 +141,11 @@ fix_hunks_max_agent_iterations: 70
 # Only used when fix_import_hunks_with_agent is true.
 # Default: 3
 fix_hunks_max_retries: 3
+
+# When false (default), skip re-running the agentFixHunks and transformMetamorphicTexts steps
+# if their output files already exist in the artifacts directory.  Useful when rerunning a
+# transformation with override:true — the expensive agent/Gradle calls are bypassed and the
+# cached results from the previous run are reused instead.
+# Set to true to force these steps to execute regardless of whether cached files are present.
+# Default: false
+fix_hunks_override: false

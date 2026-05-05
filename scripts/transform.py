@@ -89,6 +89,7 @@ def load_transform_config(config_filepath: str) -> TransformConfig:
         fix_hunks_batch_size=raw.get('fix_hunks_batch_size', 10),
         fix_hunks_max_agent_iterations=raw.get('fix_hunks_max_agent_iterations', 70),
         fix_hunks_max_retries=raw.get('fix_hunks_max_retries', 3),
+        fix_hunks_override=raw.get('fix_hunks_override', False),
     )
 
 
@@ -159,6 +160,7 @@ def process_entry(
     fix_hunks_batch_size: int = 10,
     fix_hunks_max_agent_iterations: int = 70,
     fix_hunks_max_retries: int = 3,
+    fix_hunks_override: bool = False,
 ) -> ProcessEntryResult:
     """Process a single entry through the transformation pipeline."""
     instance_id = entry['instance_id']
@@ -224,6 +226,7 @@ def process_entry(
             fix_hunks_batch_size=fix_hunks_batch_size,
             fix_hunks_max_agent_iterations=fix_hunks_max_agent_iterations,
             fix_hunks_max_retries=fix_hunks_max_retries,
+            fix_hunks_override=fix_hunks_override,
             logger=logger,
         )
         errors.extend(morph_outcome.errors)
@@ -272,26 +275,41 @@ def process_entry(
         # 7a: transformMetamorphicTexts — required when rename/move transforms are present
         # so that renamed identifiers in code are reflected in the problem statement.
         if has_rename_move:
-            logger.info("Running transformMetamorphicTexts (rename/move transforms detected — required)")
-            tmt_result = execute_transform_metamorphic_texts(
-                codecocoon_dir=codecocoon_dir,
-                memory_file=memory_filepath,
-                input_file=ps_input,
-                output_file=ps_renamed,
-                env_vars=env_vars,
-                logger=logger,
-            )
-            tmt_log: Dict = {"applied": tmt_result.return_code == 0, "result": tmt_result.__dict__}
-            if tmt_result.return_code == 0:
+            if not fix_hunks_override and os.path.exists(ps_renamed):
+                logger.info(
+                    f"Cached transformMetamorphicTexts output found ({ps_renamed}); "
+                    "skipping task (fix_hunks_override=False)."
+                )
                 with open(ps_renamed) as f:
                     tmt_output = json.load(f)
-                tmt_log["output"] = tmt_output
+                tmt_log: Dict = {
+                    "applied": True,
+                    "skipped": True,
+                    "skip_reason": "cached_output_exists",
+                    "output": tmt_output,
+                }
                 current_ps_path = ps_renamed
-                logger.info("transformMetamorphicTexts succeeded")
             else:
-                msg = f"transformMetamorphicTexts failed (return_code={tmt_result.return_code})"
-                logger.error(f"{msg}; keeping original problem statement")
-                errors.append(msg)
+                logger.info("Running transformMetamorphicTexts (rename/move transforms detected — required)")
+                tmt_result = execute_transform_metamorphic_texts(
+                    codecocoon_dir=codecocoon_dir,
+                    memory_file=memory_filepath,
+                    input_file=ps_input,
+                    output_file=ps_renamed,
+                    env_vars=env_vars,
+                    logger=logger,
+                )
+                tmt_log: Dict = {"applied": tmt_result.return_code == 0, "result": tmt_result.__dict__}
+                if tmt_result.return_code == 0:
+                    with open(ps_renamed) as f:
+                        tmt_output = json.load(f)
+                    tmt_log["output"] = tmt_output
+                    current_ps_path = ps_renamed
+                    logger.info("transformMetamorphicTexts succeeded")
+                else:
+                    msg = f"transformMetamorphicTexts failed (return_code={tmt_result.return_code})"
+                    logger.error(f"{msg}; keeping original problem statement")
+                    errors.append(msg)
 
             strategy_entry["text_transformations"]["transform_metamorphic_texts"] = tmt_log
 
@@ -363,6 +381,7 @@ def main():
       fix_hunks_batch_size:        {config.fix_hunks_batch_size}
       fix_hunks_max_agent_iterations: {config.fix_hunks_max_agent_iterations}
       fix_hunks_max_retries:          {config.fix_hunks_max_retries}
+      fix_hunks_override:             {config.fix_hunks_override}
     """)
 
     try:
@@ -437,6 +456,7 @@ def main():
             fix_hunks_batch_size=config.fix_hunks_batch_size,
             fix_hunks_max_agent_iterations=config.fix_hunks_max_agent_iterations,
             fix_hunks_max_retries=config.fix_hunks_max_retries,
+            fix_hunks_override=config.fix_hunks_override,
         )
         entry_ms = int((time.monotonic() - entry_start) * 1000)
         append_jsonl(config.output, result.entry)
