@@ -155,15 +155,21 @@ def _fix_import_hunks_with_agent(
 
     try:
         hunks_file = os.path.join(artifacts_dir, f"{patch_label}_unwanted_hunks.json")
-        clean_patch_file = os.path.join(artifacts_dir, f"{patch_label}_cleaned_patch.txt")
+        clean_patch_file = os.path.join(artifacts_dir, f"{patch_label}_cleaned_patch.patch")
+        _clean_patch_legacy = os.path.join(artifacts_dir, f"{patch_label}_cleaned_patch.txt")
+        _existing_clean = (
+            clean_patch_file if os.path.exists(clean_patch_file)
+            else _clean_patch_legacy if os.path.exists(_clean_patch_legacy)
+            else None
+        )
 
         if not fix_hunks_override and os.path.exists(hunks_file):
-            if os.path.exists(clean_patch_file):
+            if _existing_clean is not None:
                 logger.info(
-                    f"[{patch_label}] Cached clean patch found ({clean_patch_file}); "
+                    f"[{patch_label}] Cached clean patch found ({_existing_clean}); "
                     "returning cached result (fix_hunks_override=False)."
                 )
-                with open(clean_patch_file) as f:
+                with open(_existing_clean) as f:
                     cached_patch = f.read()
                 agent_log["skipped"] = True
                 agent_log["skip_reason"] = "cached_output_exists"
@@ -837,6 +843,16 @@ def _apply_code_morphing(
         f"Code morphing complete for {instance_id} "
         f"(base: {base_branch}, test: {test_branch}, fix: {fix_branch})"
     )
+
+    patches_dir = os.path.join(artifacts_dir, "patches")
+    os.makedirs(patches_dir, exist_ok=True)
+    for _fname, _content in [
+        ("metamorphic_base.patch", metamorphic_base_patch),
+        ("new_morphed_test.patch", new_morphed_test_patch),
+        ("new_morphed_fix.patch",  new_morphed_fix_patch),
+    ]:
+        with open(os.path.join(patches_dir, _fname), 'w') as _f:
+            _f.write(_content)
 
     return _MorphingOutcome(
         result=_CodeMorphingResult(
