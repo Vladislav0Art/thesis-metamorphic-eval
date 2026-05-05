@@ -66,7 +66,8 @@ def _process_instance(entry: dict, repos_dir: str) -> tuple[bool, str]:
         logger.error(f"[{instance_id}] Missing required fields: {', '.join(missing)}")
         return False, ""
 
-    instance_dir = os.path.join(repos_dir, instance_id)
+    strategy = base.get("strategy")
+    instance_dir = os.path.join(repos_dir, strategy, instance_id) if strategy else os.path.join(repos_dir, instance_id)
     repo_dir = os.path.join(instance_dir, "repo")
     os.makedirs(instance_dir, exist_ok=True)
 
