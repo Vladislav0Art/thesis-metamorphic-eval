@@ -1,0 +1,62 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index b6a0ff2ce..ad9867b17 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -602,10 +602,10 @@ public interface JSON {
+         JSONReader jsonReader = JSONReader.of(text);
+         try {
+             jsonReader.skipValue();
++            return jsonReader.current() == EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -624,10 +624,10 @@ public interface JSON {
+                 return false;
+             }
+             jsonReader.skipValue();
++            return jsonReader.current() == EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSONReaderUTF16.java b/core/src/main/java/com/alibaba/fastjson2/JSONReaderUTF16.java
+index d8f8403f7..e3f4ca384 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSONReaderUTF16.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSONReaderUTF16.java
+@@ -1418,6 +1418,10 @@ final class JSONReaderUTF16 extends JSONReader {
+             case 'f':
+             case 'n':
+                 for (; ; ) {
++                    if (offset >= end) {
++                        ch = EOI;
++                        break;
++                    }
+                     ch = chars[offset++];
+                     if (ch == '}' || ch == ']') {
+                         break;
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSONReaderUTF8.java b/core/src/main/java/com/alibaba/fastjson2/JSONReaderUTF8.java
+index 6bb1d8ea0..e38f16a68 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSONReaderUTF8.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSONReaderUTF8.java
+@@ -1784,6 +1784,10 @@ class JSONReaderUTF8 extends JSONReader {
+             case 'f':
+             case 'n':
+                 for (; ; ) {
++                    if (offset >= end) {
++                        ch = EOI;
++                        break;
++                    }
+                     ch = (char) bytes[offset++];
+                     if (ch == '}' || ch == ']') {
+                         break;

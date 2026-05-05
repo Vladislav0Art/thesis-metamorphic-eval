@@ -1,0 +1,80 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+index ff251034..ad1d233b 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+@@ -193,6 +193,25 @@ public class JsonPointer
+     public JsonPointer head() {
+         return _headSegment;
+     }
++    
++    /**
++     * Accessor for getting the last segment of this pointer, i.e., the
++     * "leaf" segment. For example, for pointer "/a/b/c", this would
++     * return the pointer for "/c". For empty pointers, returns null.
++     *
++     * @since 2.5
++     */
++    public JsonPointer last() {
++        JsonPointer current = this;
++        if (current == EMPTY) {
++            return null;
++        }
++        JsonPointer next;
++        while ((next = current._nextSegment) != EMPTY) {
++            current = next;
++        }
++        return current;
++    }
+ 
+     /*
+     /**********************************************************
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 9ef13aa7..8d6ce444 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,32 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matches());
+         assertNull(ptr.tail());
+     }
++
++    // Test for last() method
++    public void testLast() throws Exception
++    {
++        // Test basic pointer
++        JsonPointer ptr = JsonPointer.compile("/Image/15/name");
++        JsonPointer last = ptr.last();
++        assertNotNull(last);
++        assertEquals("/name", last.toString());
++        assertEquals("name", last.getMatchingProperty());
++
++        // Test array append pointer (e.g., for JSON Patch)
++        JsonPointer ptrArray = JsonPointer.compile("/score/-");
++        JsonPointer lastArray = ptrArray.last();
++        assertNotNull(lastArray);
++        assertEquals("/-", lastArray.toString());
++        assertEquals("-", lastArray.getMatchingProperty());
++
++        // Test single-segment pointer
++        JsonPointer ptrSingle = JsonPointer.compile("/foo");
++        JsonPointer lastSingle = ptrSingle.last();
++        assertNotNull(lastSingle);
++        assertEquals("/foo", lastSingle.toString());
++
++        // Test empty pointer returns null
++        JsonPointer empty = JsonPointer.compile("");
++        assertNull(empty.last());
++    }
+ }

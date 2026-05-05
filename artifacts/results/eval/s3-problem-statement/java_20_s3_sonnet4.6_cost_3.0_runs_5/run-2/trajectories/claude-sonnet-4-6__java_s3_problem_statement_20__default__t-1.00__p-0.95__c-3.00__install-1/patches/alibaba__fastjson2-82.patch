@@ -1,0 +1,68 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index b6a0ff2ce..c2ba8b2d9 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -602,10 +602,10 @@ public interface JSON {
+         JSONReader jsonReader = JSONReader.of(text);
+         try {
+             jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -624,10 +624,10 @@ public interface JSON {
+                 return false;
+             }
+             jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -643,10 +643,10 @@ public interface JSON {
+         JSONReader jsonReader = JSONReader.of(bytes);
+         try {
+             jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -665,10 +665,10 @@ public interface JSON {
+                 return false;
+             }
+             jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -687,10 +687,10 @@ public interface JSON {
+         JSONReader jsonReader = JSONReader.of(bytes, offset, length, charset);
+         try {
+             jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**

@@ -1,0 +1,94 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..72e547779 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -474,7 +474,20 @@ public enum MapperFeature implements ConfigFeature
+      *
+      * @since 2.9
+      */
+-    IGNORE_MERGE_FOR_UNMERGEABLE(true)
++    IGNORE_MERGE_FOR_UNMERGEABLE(true),
++
++    /**
++     * Feature that determines whether the declared base type of a polymorphic value
++     * is used as the "default implementation" if no type information is available.
++     * This can be useful if the type discriminator is optional (e.g. the JSON was
++     * produced by a non-Jackson serializer that omits the type property when there is
++     * only one possible subtype), and the caller passes the concrete target type directly.
++     *<p>
++     * Feature is disabled by default.
++     *
++     * @since 2.10
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false)
+ 
+     ;
+ 
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java
+index 2b8e79fdf..81381cb71 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java
+@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
+ import com.fasterxml.jackson.databind.DeserializationFeature;
+ import com.fasterxml.jackson.databind.JavaType;
+ import com.fasterxml.jackson.databind.JsonDeserializer;
++import com.fasterxml.jackson.databind.MapperFeature;
+ import com.fasterxml.jackson.databind.deser.std.NullifyingDeserializer;
+ import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
+ import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
+@@ -205,6 +206,10 @@ public abstract class TypeDeserializerBase
+          *   to do swift mapping to null
+          */
+         if (_defaultImpl == null) {
++            if (ctxt.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && !_baseType.isAbstract()) {
++                return ctxt.findContextualValueDeserializer(_baseType, _property);
++            }
+             if (!ctxt.isEnabled(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)) {
+                 return NullifyingDeserializer.instance;
+             }
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+index 7d260c785..2cd3f235b 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+@@ -291,4 +291,27 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         assertEquals("{\"blah\":null}", json);
+     }
+     */
++
++    // [databind#2197]
++    public void testUseBaseTypeAsDefaultImpl() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++
++        // Test: concrete class provided, no type property in JSON -> should work
++        MyClass2197 result = mapper.readValue("{\"name\":\"test\"}", MyClass2197.class);
++        assertNotNull(result);
++        assertEquals("test", result.getName());
++    }
++
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
++    interface MyInterface2197 {
++        String getName();
++    }
++
++    static class MyClass2197 implements MyInterface2197 {
++        private String name;
++        public String getName() { return name; }
++        public void setName(String name) { this.name = name; }
++    }
+ }

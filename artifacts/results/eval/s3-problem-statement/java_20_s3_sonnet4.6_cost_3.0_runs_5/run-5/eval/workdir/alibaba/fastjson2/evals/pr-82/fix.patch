@@ -1,0 +1,17 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSONReaderStr.java b/core/src/main/java/com/alibaba/fastjson2/JSONReaderStr.java
+index 92bf492d6..94e7995c9 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSONReaderStr.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSONReaderStr.java
+@@ -41,7 +41,7 @@ final class JSONReaderStr extends JSONReader {
+             ch = str.charAt(offset);
+             while (ch <= ' ' && ((1L << ch) & SPACE) != 0) {
+                 this.offset++;
+-                if (this.offset >= length) {
++                if (this.offset >= end) {
+                     ch = EOI;
+                     return;
+                 }

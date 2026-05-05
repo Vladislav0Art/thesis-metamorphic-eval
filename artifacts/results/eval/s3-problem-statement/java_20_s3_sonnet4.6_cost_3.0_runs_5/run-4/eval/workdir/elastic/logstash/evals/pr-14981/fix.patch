@@ -1,0 +1,53 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index c60648423..40b690430 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -412,6 +412,9 @@ public final class DeadLetterQueueWriter implements Closeable {
+         byte[] eventBytes;
+         try (RecordIOReader recordReader = new RecordIOReader(segmentPath)) {
+             int blockId = lastBlockId;
++            if (blockId < 0) {
++                return Optional.empty();
++            }
+             do {
+                 recordReader.seekToBlock(blockId);
+                 eventBytes = recordReader.readEvent();
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 5702d169a..1fc825ccf 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -398,4 +398,20 @@ public class DeadLetterQueueWriterTest {
+             assertEquals(2, writeManager.getDroppedEvents());
+         }
+     }
++    @Test
++    public void testWriterCanInitializeWithOneByteSegmentFile() throws IOException {
++        // Create a 1-byte segment file (only the version byte) to simulate the case
++        // where the DLQ was initialized but no events were written
++        Path segmentFile = dir.resolve("1.log");
++        Files.write(segmentFile, new byte[]{1}); // VERSION_SIZE = 1 byte
++
++        // The writer should be able to initialize without throwing IllegalArgumentException
++        try (DeadLetterQueueWriter writer = DeadLetterQueueWriter
++                .newBuilder(dir, 1_000, 100_000, Duration.ofSeconds(1))
++                .build()) {
++            // Write an entry to verify the writer works correctly
++            DLQEntry entry = new DLQEntry(new Event(), "type", "id", "reason");
++            writer.writeEntry(entry);
++        }
++    }
+ }
