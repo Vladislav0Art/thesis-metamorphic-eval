@@ -313,6 +313,11 @@ python /Users/vartiukhov/dev/studies/hse/thesis/thesis-metamorphic-eval/scripts/
 | `googlecontainertools__jib-4035`<br>`googlecontainertools/jib:pr-4035` | m | 0/5 | - | unresolved |
 
 
+```bash
+instance_ids='mockito__mockito-3424,mockito__mockito-3129,google__gson-1555,google__gson-1391,fasterxml__jackson-databind-2036,fasterxml__jackson-databind-1923,elastic__logstash-16681,elastic__logstash-16579,elastic__logstash-13914,google__gson-1093,fasterxml__jackson-core-370,fasterxml__jackson-core-183,elastic__logstash-14981,elastic__logstash-14970,alibaba__fastjson2-82,mockito__mockito-3167,fasterxml__jackson-core-174,apache__dubbo-11781,googlecontainertools__jib-4144,googlecontainertools__jib-4035'
+```
+
+
 
 
 
