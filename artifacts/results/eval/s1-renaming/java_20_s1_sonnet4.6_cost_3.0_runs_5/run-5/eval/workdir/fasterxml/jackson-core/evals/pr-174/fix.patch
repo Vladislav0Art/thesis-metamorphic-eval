@@ -1,0 +1,72 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+index 4ec5b4c2..b7754b06 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+@@ -194,6 +194,24 @@ public class JsonPointerExpression
+         return _headSegment;
+     }
+ 
++    /**
++     * Accessor for getting the leaf of this pointer expression, i.e. the last segment.
++     * For instance, for expression "/score/-", this would return the JsonPointerExpression
++     * for "/-".
++     * Returns {@code null} if this expression is empty.
++     *
++     * @since 2.5
++     */
++    public JsonPointerExpression getLast() {
++        if (_nextSegment == null) {
++            return null;
++        }
++        if (_nextSegment.matchesExactly()) {
++            return this;
++        }
++        return _nextSegment.getLast();
++    }
++
+     /*
+     /**********************************************************
+     /* Standard method overrides
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 94220d64..0e13ab72 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,25 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesExactly());
+         assertNull(ptr.nextSegment());
+     }
++
++    public void testGetLast() throws Exception
++    {
++        // Test with "/score/-" - getLast should return the segment for "/-"
++        JsonPointerExpression ptr = JsonPointerExpression.compilePointer("/score/-");
++        JsonPointerExpression last = ptr.getLast();
++        assertNotNull(last);
++        assertEquals("-", last.getMatchingProperty());
++
++        // Test with a single segment - getLast should return that segment itself
++        ptr = JsonPointerExpression.compilePointer("/name");
++        last = ptr.getLast();
++        assertNotNull(last);
++        assertEquals("name", last.getMatchingProperty());
++
++        // Test with multiple segments - getLast should return the last segment
++        ptr = JsonPointerExpression.compilePointer("/Image/15/name");
++        last = ptr.getLast();
++        assertNotNull(last);
++        assertEquals("name", last.getMatchingProperty());
++    }
+ }

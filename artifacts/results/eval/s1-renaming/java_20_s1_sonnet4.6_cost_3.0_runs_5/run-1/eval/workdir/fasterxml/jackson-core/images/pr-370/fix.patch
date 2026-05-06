@@ -1,0 +1,82 @@
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+index 66e81b56..cd088a5a 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+@@ -884,26 +884,18 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+             return null;
+         }
+         _binaryValue = null;
+-        if (index == INT_RBRACKET) {
+-            _updateTokenLocation();
+-            if (!_parsingContext.inArray()) {
+-                _reportMismatchedEndMarker(index, '}');
+-            }
+-            _parsingContext = _parsingContext.clearAndGetParent();
+-            _currToken = JsonToken.END_ARRAY;
+-            return null;
+-        }
+-        if (index == INT_RCURLY) {
+-            _updateTokenLocation();
+-            if (!_parsingContext.inObject()) {
+-                _reportMismatchedEndMarker(index, ']');
+-            }
+-            _parsingContext = _parsingContext.clearAndGetParent();
+-            _currToken = JsonToken.END_OBJECT;
++        if (index == INT_RBRACKET || index == INT_RCURLY) {
++            _closeCurrentScope(index);
+             return null;
+         }
+         if (_parsingContext.expectComma()) {
+             index = _expectCommaAndSkip(index);
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if ((index == INT_RBRACKET) || (index == INT_RCURLY)) {
++                    _closeCurrentScope(index);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _updateTokenLocation();
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/UTF8JsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/UTF8JsonParser.java
+index b09b3791..d373a3ae 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/UTF8JsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/UTF8JsonParser.java
+@@ -762,20 +762,8 @@ public class UTF8JsonParser
+         _binaryValue = null;
+         _tokenInputRow = _currInputRow;
+ 
+-        if (index == INT_RBRACKET) {
+-            if (!_parsingContext.inArray()) {
+-                _reportMismatchedEndMarker(index, '}');
+-            }
+-            _parsingContext = _parsingContext.clearAndGetParent();
+-            _currToken = JsonToken.END_ARRAY;
+-            return null;
+-        }
+-        if (index == INT_RCURLY) {
+-            if (!_parsingContext.inObject()) {
+-                _reportMismatchedEndMarker(index, ']');
+-            }
+-            _parsingContext = _parsingContext.clearAndGetParent();
+-            _currToken = JsonToken.END_OBJECT;
++        if (index == INT_RBRACKET || index == INT_RCURLY) {
++            _closeCurrentScope(index);
+             return null;
+         }
+ 
+@@ -785,6 +773,15 @@ public class UTF8JsonParser
+                 _reportUnexpectedChar(index, "was expecting comma to separate "+_parsingContext.typeDesc()+" entries");
+             }
+             index = _skipWhitespace();
++
++            // Was that a trailing comma?
++            if (Feature.ALLOW_TRAILING_COMMA.enabledIn(_features)) {
++                if (index == INT_RBRACKET || index == INT_RCURLY) {
++                    _closeCurrentScope(index);
++                    return null;
++                }
++            }
++
+         }
+         if (!_parsingContext.inObject()) {
+             _nextTokenOutsideObject(index);

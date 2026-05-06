@@ -1,0 +1,18 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+index 7c4d0a9cb..3955e0faf 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+@@ -601,6 +601,9 @@ public interface JsonMapper {
+         }
+         JSONReader jsonParser = JSONReader.of(jsonString);
+         try {
++            if (!jsonParser.isObject()) {
++                return false;
++            }
+             jsonParser.skipValue();
+         } catch (JSONException parseException) {
+             return false;

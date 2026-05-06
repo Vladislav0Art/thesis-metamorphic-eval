@@ -1,0 +1,16 @@
+diff --git a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticationManager.java b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticationManager.java
+index f49c1452..b631dd90 100644
+--- a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticationManager.java
++++ b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticationManager.java
+@@ -72,9 +72,9 @@ public class RegistryAuthenticationManager {
+       @Nullable String clientAgent,
+       FailoverHttpClient webClient)
+       throws RegistryAuthenticationFailedException {
+-    // If the authentication method starts with 'basic ' (case insensitive), no registry
++    // If the authentication method starts with 'basic' (case insensitive), no registry
+     // authentication is needed.
+-    if (authMethod.matches("^(?i)(basic) .*")) {
++    if (authMethod.matches("^(?i)(basic).*")) {
+       return Optional.empty();
+     }
+ 

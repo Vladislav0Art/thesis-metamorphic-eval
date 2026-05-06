@@ -1,0 +1,47 @@
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/DelegateByteBuddyMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/DelegateByteBuddyMockMaker.java
+index 88787ef6b..63421b3bb 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/DelegateByteBuddyMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/DelegateByteBuddyMockMaker.java
+@@ -218,7 +218,7 @@ class DelegateByteBuddyMockMaker
+     private final DetachedThreadLocal<Map<Class<?>, BiConsumer<Object, MockedConstruction.Context>>>
+         constructionMockRegistry = new DetachedThreadLocal<>(DetachedThreadLocal.Cleaner.MANUAL);
+ 
+-    private final ThreadLocal<Boolean> inConstructionMode = ThreadLocal.withInitial(() -> false);
++    private final ThreadLocal<Class<?>> currentMockClass = ThreadLocal.withInitial(() -> null);
+ 
+     private final ThreadLocal<Object> activeSpy = new ThreadLocal<>();
+ 
+@@ -272,7 +272,9 @@ class DelegateByteBuddyMockMaker
+             targetClass -> {
+                     if (suspendedFlag.get()) {
+                         return false;
+-                    } else if (inConstructionMode.get() || currentConstructingClass.get() != null) {
++                    } else if ((currentMockClass.get() != null
++                                    && targetClass.isAssignableFrom(currentMockClass.get()))
++                            || currentConstructingClass.get() != null) {
+                         return true;
+                     }
+                     Map<Class<?>, ?> interceptorMap = constructionMockRegistry.get();
+@@ -290,7 +292,7 @@ class DelegateByteBuddyMockMaker
+                 };
+         ConstructionCallback constructionCallback =
+                 (targetClass, instanceObj, argsArray, paramTypeNames) -> {
+-                    if (inConstructionMode.get()) {
++                    if (currentMockClass.get() != null) {
+                         Object spyInstance = activeSpy.get();
+                         if (spyInstance == null) {
+                             return null;
+@@ -641,11 +643,11 @@ class DelegateByteBuddyMockMaker
+                     memberAccessorInstance.newInstance(
+                         chosenConstructor,
+                         constructionDispatcherCallback -> {
+-                                inConstructionMode.set(true);
++                                currentMockClass.set(clazz);
+                                 try {
+                                     return constructionDispatcherCallback.newInstance();
+                                 } finally {
+-                                    inConstructionMode.set(false);
++                                    currentMockClass.remove();
+                                 }
+                             },
+                         argsArray);

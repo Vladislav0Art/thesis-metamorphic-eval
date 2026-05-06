@@ -1,0 +1,97 @@
+
+diff --git a/.gitignore b/.gitignore
+index 0eb7f3d19e..ffba84c210 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -54,3 +54,6 @@ dubbo-demo/dubbo-demo-native/dubbo-demo-native-consumer/src/main/generated
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/resources/META-INF/native-image
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/generated
+ 
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+index 61b37db84b..e6e82f145b 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+@@ -271,34 +271,36 @@ public final class URLStrParser {
+         }
+ 
+         if (valueStart <= nameStart) {
+-            valueStart = valueEnd + 1;
+-        }
+-
+-        if (isEncoded) {
+-            String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
+-            String value;
+-            if (valueStart >= valueEnd) {
+-                value = name;
++            // no '=' sign found, key-only parameter: use key name as value (for backward compat)
++            if (isEncoded) {
++                String name = decodeComponent(str, nameStart, valueEnd, false, tempBuf);
++                URLItemCache.putParams(params, name, name);
++                if (name.startsWith(DEFAULT_KEY_PREFIX)) {
++                    params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), name);
++                }
+             } else {
+-                value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+-            }
+-            URLItemCache.putParams(params,name, value);
+-            // compatible with lower versions registering "default." keys
+-            if (name.startsWith(DEFAULT_KEY_PREFIX)) {
+-                params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
++                String name = str.substring(nameStart, valueEnd);
++                URLItemCache.putParams(params, name, name);
++                if (name.startsWith(DEFAULT_KEY_PREFIX)) {
++                    params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), name);
++                }
+             }
+         } else {
+-            String name = str.substring(nameStart, valueStart - 1);
+-            String value;
+-            if (valueStart >= valueEnd) {
+-                value = name;
++            // '=' sign found
++            if (isEncoded) {
++                String name = decodeComponent(str, nameStart, valueStart - 1, false, tempBuf);
++                String value = valueStart < valueEnd ? decodeComponent(str, valueStart, valueEnd, false, tempBuf) : EMPTY_STRING;
++                URLItemCache.putParams(params, name, value);
++                if (name.startsWith(DEFAULT_KEY_PREFIX)) {
++                    params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
++                }
+             } else {
+-                value = str.substring(valueStart, valueEnd);
+-            }
+-            URLItemCache.putParams(params, name, value);
+-            // compatible with lower versions registering "default." keys
+-            if (name.startsWith(DEFAULT_KEY_PREFIX)) {
+-                params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
++                String name = str.substring(nameStart, valueStart - 1);
++                String value = valueStart < valueEnd ? str.substring(valueStart, valueEnd) : EMPTY_STRING;
++                URLItemCache.putParams(params, name, value);
++                if (name.startsWith(DEFAULT_KEY_PREFIX)) {
++                    params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
++                }
+             }
+         }
+         return true;
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+index aea2001306..e9644a7a52 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+@@ -44,7 +44,7 @@ class URLStrParserTest {
+         testCases.add("file:/path/to/file.txt");
+         testCases.add("dubbo://fe80:0:0:0:894:aeec:f37d:23e1%en0/path?abc=abc");
+         testCases.add("dubbo://[fe80:0:0:0:894:aeec:f37d:23e1]:20880/path?abc=abc");
+-
++        testCases.add("nacos://10.20.0.100:8848?username=&password=&namespace=");
+         errorDecodedCases.add("dubbo:192.168.1.1");
+         errorDecodedCases.add("://192.168.1.1");
+         errorDecodedCases.add(":/192.168.1.1");
+@@ -80,4 +80,4 @@ class URLStrParserTest {
+         });
+     }
+ 
+-}
+\ No newline at end of file
++}

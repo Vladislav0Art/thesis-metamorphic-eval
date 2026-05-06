@@ -1,0 +1,78 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/MockitoDefaultPlugins.java b/src/main/java/org/mockito/internal/configuration/plugins/MockitoDefaultPlugins.java
+index d5146788e..0460ce4be 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/MockitoDefaultPlugins.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/MockitoDefaultPlugins.java
+@@ -114,4 +114,9 @@ public class MockitoDefaultPlugins implements MockitoPluginRegistry {
+     public MockMaker getInlineMockMaker() {
+         return createDefaultImplementation(MockMaker.class, DEFAULT_PLUGIN_MAP.get(INLINE_IDENTIFIER));
+     }
++
++    @Override
++    public MockMaker getMockMaker(String mockMakerKey) {
++        return org.mockito.internal.util.MockUtils.getMockMaker(mockMakerKey);
++    }
+ }
+diff --git a/src/main/java/org/mockito/internal/util/MockUtils.java b/src/main/java/org/mockito/internal/util/MockUtils.java
+index 33bfd6207..e3413769e 100644
+--- a/src/main/java/org/mockito/internal/util/MockUtils.java
++++ b/src/main/java/org/mockito/internal/util/MockUtils.java
+@@ -36,7 +36,7 @@ public class MockUtils {
+ 
+     private MockUtils() {}
+ 
+-    private static MockMaker getMockMaker(String makerKey) {
++    public static MockMaker getMockMaker(String makerKey) {
+         if (makerKey == null) {
+             return PRIMARY_MAKER;
+         }
+@@ -111,10 +111,10 @@ public class MockUtils {
+         getMockMaker(creationSettings.getMockMaker()).resetMock(createdInstance, replacementHandler, creationSettings);
+     }
+ 
+-    public static MockHandler<?> getMockHandler(Object createdInstance) {
+-        MockHandler resultHandler = getMockHandlerOrNull(createdInstance);
+-        if (resultHandler != null) {
+-            return resultHandler;
++    public static MockHandler getMockHandler(Object createdInstance) {
++        MockHandler handler = getMockHandlerOrNull(createdInstance);
++        if (handler != null) {
++            return handler;
+         } else {
+             throw new NotAMockException("Argument should be a mock, but is: " + createdInstance.getClass());
+         }
+diff --git a/src/main/java/org/mockito/plugins/MockitoPluginRegistry.java b/src/main/java/org/mockito/plugins/MockitoPluginRegistry.java
+index 651d420b3..6c6cca1c0 100644
+--- a/src/main/java/org/mockito/plugins/MockitoPluginRegistry.java
++++ b/src/main/java/org/mockito/plugins/MockitoPluginRegistry.java
+@@ -41,4 +41,17 @@ public interface MockitoPluginRegistry {
+      * @since 2.10.0
+      */
+     MockMaker getInlineMockMaker();
++
++    /**
++     * Returns a mock maker instance for the given mock maker type or alias.
++     * Unlike {@link #getInlineMockMaker()}, this method caches the mock maker instance so that
++     * repeated calls with the same key return the same instance. This is important for mock makers
++     * that keep global state (e.g. inline mock maker), so that multiple callers share the same
++     * instance and can properly coordinate their usage.
++     *
++     * @param mockMakerKey a fully qualified class name or a mock maker alias (e.g. {@code "mock-maker-inline"})
++     * @return a cached mock maker instance for the given type
++     * @since 4.8.0
++     */
++    MockMaker getMockMaker(String mockMakerKey);
+ }

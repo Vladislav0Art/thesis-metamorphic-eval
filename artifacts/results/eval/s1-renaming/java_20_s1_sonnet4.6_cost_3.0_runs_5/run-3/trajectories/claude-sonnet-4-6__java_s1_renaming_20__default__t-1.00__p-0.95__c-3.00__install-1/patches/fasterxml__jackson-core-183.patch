@@ -1,0 +1,41 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+index e14f6efb..5ddbe44e 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+@@ -304,7 +304,7 @@ public final class SegmentedTextBuffer
+             return (resultCharArray = cachedResultString.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!segmentsPresent)  return activeSegment;
++        if (!segmentsPresent)  return (activeSegment == null) ? EMPTY_CHARS : activeSegment;
+         // Nope, need to have/create a non-segmented array and return it
+         return contentsAsCharArray();
+     }
+@@ -498,6 +498,14 @@ public final class SegmentedTextBuffer
+             length -= toCopy;
+         } while (length > 0);
+     }
++    public void append(String sourceString, int srcOffset, int length)
++    {
++        appendChar(sourceString, srcOffset, length);
++    }
++    public void append(char[] sourceArr, int srcOffset, int length)
++    {
++        appendChar(sourceArr, srcOffset, length);
++    }
+ 
+     /*
+     /**********************************************************

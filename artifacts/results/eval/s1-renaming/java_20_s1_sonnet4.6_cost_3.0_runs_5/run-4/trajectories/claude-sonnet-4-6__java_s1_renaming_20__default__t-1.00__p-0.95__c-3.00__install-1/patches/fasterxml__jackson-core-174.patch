@@ -1,0 +1,77 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+index 4ec5b4c2..e2832fd5 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+@@ -193,6 +193,25 @@ public class JsonPointerExpression
+     public JsonPointerExpression headSegment() {
+         return _headSegment;
+     }
++    /**
++     * Accessor for getting the last segment of this pointer instance.
++     * For example, for pointer "/foo/bar", this would return a pointer
++     * equivalent to "/bar" (the last segment).
++     * For empty pointer, returns the empty pointer.
++     *
++     * @since 2.16
++     */
++    public JsonPointerExpression getLast() {
++        if (_nextSegment == null) {
++            // this is the EMPTY instance
++            return EMPTY;
++        }
++        if (_nextSegment._nextSegment == null) {
++            // _nextSegment is EMPTY, so this is the last segment
++            return this;
++        }
++        return _nextSegment.getLast();
++    }
+ 
+     /*
+     /**********************************************************
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 94220d64..f9077321 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,29 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesExactly());
+         assertNull(ptr.nextSegment());
+     }
++
++    public void testGetLast() throws Exception
++    {
++        // Test with multi-segment pointer
++        JsonPointerExpression ptr = JsonPointerExpression.compilePointer("/Image/15/name");
++        JsonPointerExpression last = ptr.getLast();
++        assertNotNull(last);
++        assertEquals("/name", last.toString());
++        assertEquals("name", last.getMatchingProperty());
++
++        // Test with single-segment pointer
++        JsonPointerExpression single = JsonPointerExpression.compilePointer("/score");
++        assertEquals("/score", single.getLast().toString());
++
++        // Test with array append scenario: /score/-
++        JsonPointerExpression arrayAppend = JsonPointerExpression.compilePointer("/score/-");
++        JsonPointerExpression lastOfArray = arrayAppend.getLast();
++        assertNotNull(lastOfArray);
++        assertEquals("/-", lastOfArray.toString());
++        assertEquals("-", lastOfArray.getMatchingProperty());
++
++        // Test with empty pointer
++        JsonPointerExpression empty = JsonPointerExpression.compilePointer("");
++        assertEquals("", empty.getLast().toString());
++    }
+ }

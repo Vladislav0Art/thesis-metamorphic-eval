@@ -1,0 +1,47 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+index 4ec5b4c2..cb670252 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+@@ -194,6 +194,29 @@ public class JsonPointerExpression
+         return _headSegment;
+     }
+ 
++    /**
++     * Method that returns the last segment (leaf) of this pointer expression.
++     * For example, for a pointer {@code /a/b/c}, this returns the segment
++     * representing {@code /c}. For an empty pointer, returns this.
++     *
++     * <p>This is especially useful when dealing with JSON Arrays: for pointer
++     * {@code /score/-} this returns {@code /-}, indicating append-to-end semantics.</p>
++     *
++     * @return The last segment of this pointer, or this if already empty/leaf
++     * @since 2.16
++     */
++    public JsonPointerExpression last() {
++        JsonPointerExpression current = this;
++        if (current == EMPTY) {
++            return current;
++        }
++        JsonPointerExpression next;
++        while ((next = current._nextSegment) != null && next != EMPTY) {
++            current = next;
++        }
++        return current;
++    }
++
+     /*
+     /**********************************************************
+     /* Standard method overrides

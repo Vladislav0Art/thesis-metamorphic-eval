@@ -1,0 +1,113 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index cccb9c476..b87118b50 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -57,4 +57,43 @@ describe  FileWatch::BufferedTokenizer  do
+       expect(subject.extract("foo||bar")).to eq(["foo"])
+     end
+   end
++
++  context 'with size limit' do
++    subject { FileWatch::BufferedTokenizer.new("\n", 10) }
++
++    it "should raise an error when the buffer exceeds the size limit" do
++      expect { subject.extract("a" * 11 + "\n") }.to raise_error(RuntimeError, /input buffer full/)
++    end
++
++    it "should reset after a buffer full error and correctly tokenize subsequent input" do
++      # First token is too big - causes buffer full
++      expect { subject.extract("a" * 11 + "\n") }.to raise_error(RuntimeError, /input buffer full/)
++      # Second token is fine - should be returned correctly
++      result = subject.extract("valid\n")
++      expect(result).to eq(["valid"])
++    end
++
++    it "should discard data until separator when buffer was full across multiple chunks" do
++      # Send oversized data in chunks
++      expect { subject.extract("a" * 11) }.to raise_error(RuntimeError, /input buffer full/)
++      # Still in the oversized token - no separator yet, should be discarded
++      expect(subject.extract("more_overflow_data")).to eq([])
++      # Now the separator arrives followed by valid data
++      result = subject.extract("\nvalid\n")
++      expect(result).to eq(["valid"])
++    end
++
++    it "should handle buffer full error followed by multiple valid tokens" do
++      expect { subject.extract("a" * 11 + "\n") }.to raise_error(RuntimeError, /input buffer full/)
++      result = subject.extract("foo\nbar\n")
++      expect(result).to eq(["foo", "bar"])
++    end
++
++    it "should handle the separator being in the same chunk as the end of the oversized token" do
++      expect { subject.extract("a" * 11) }.to raise_error(RuntimeError, /input buffer full/)
++      # The separator is in this chunk: discard tail of oversized token, return valid data
++      result = subject.extract("\nvalid\n")
++      expect(result).to eq(["valid"])
++    end
++  end
+ end
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+index 2d7b90bba..8490d471f 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+@@ -44,6 +44,7 @@ public class BufferedTokenizerExt extends RubyObject {
+     private int sizeLimit;
+     private boolean hasSizeLimit;
+     private int inputSize;
++    private boolean bufferFull = false;
+ 
+     public BufferedTokenizerExt(final Ruby runtime, final RubyClass metaClass) {
+         super(runtime, metaClass);
+@@ -59,6 +60,7 @@ public class BufferedTokenizerExt extends RubyObject {
+             this.hasSizeLimit = true;
+         }
+         this.inputSize = 0;
++        this.bufferFull = false;
+         return this;
+     }
+ 
+@@ -77,10 +79,29 @@ public class BufferedTokenizerExt extends RubyObject {
+     @SuppressWarnings("rawtypes")
+     public RubyArray extract(final ThreadContext context, IRubyObject data) {
+         final RubyArray entities = data.convertToString().split(delimiter, -1);
++        if (bufferFull) {
++            // When the buffer was full, we need to discard data until the next separator.
++            if (entities.size() > 1) {
++                // A separator was found in this chunk - discard the tail of the oversized
++                // token (everything before the first separator) and resume normal processing
++                entities.shift(context);
++                bufferFull = false;
++                // Fall through to process remaining entities normally
++            } else {
++                // No separator yet - keep discarding
++                return RubyUtil.RUBY.newArray();
++            }
++        }
+         if (hasSizeLimit) {
+             final int entitiesSize = ((RubyString) entities.first()).size();
+             if (inputSize + entitiesSize > sizeLimit) {
+-                throw new IllegalStateException("input buffer full");
++                // Clear the buffer and reset state
++                input.clear();
++                inputSize = 0;
++                // Only set bufferFull if no separator was found in this chunk;
++                // if there's a separator, the overflow token ended here.
++                bufferFull = entities.size() == 1;
++                throw context.runtime.newRuntimeError("input buffer full");
+             }
+             this.inputSize = inputSize + entitiesSize;
+         }

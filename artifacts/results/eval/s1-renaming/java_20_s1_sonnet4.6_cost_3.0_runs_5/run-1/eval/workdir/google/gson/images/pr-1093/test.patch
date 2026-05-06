@@ -1,0 +1,35 @@
+diff --git a/gson/src/test/java/com/google/gson/stream/JsonWriterTest.java b/gson/src/test/java/com/google/gson/stream/JsonWriterTest.java
+index 566aa5b4..53b33508 100644
+--- a/gson/src/test/java/com/google/gson/stream/JsonWriterTest.java
++++ b/gson/src/test/java/com/google/gson/stream/JsonWriterTest.java
+@@ -213,6 +213,30 @@ public final class JsonWriterTest extends TestCase {
+     }
+   }
+ 
++  public void testNonFiniteDoublesWhenLenient() throws IOException {
++    StringWriter stringWriter = new StringWriter();
++    JsonWriter jsonWriter = new JsonWriter(stringWriter);
++    jsonWriter.setLenient(true);
++    jsonWriter.startArray();
++    jsonWriter.value(Double.NaN);
++    jsonWriter.value(Double.NEGATIVE_INFINITY);
++    jsonWriter.value(Double.POSITIVE_INFINITY);
++    jsonWriter.closeArray();
++    assertEquals("[NaN,-Infinity,Infinity]", stringWriter.toString());
++  }
++
++  public void testNonFiniteBoxedDoublesWhenLenient() throws IOException {
++    StringWriter stringWriter = new StringWriter();
++    JsonWriter jsonWriter = new JsonWriter(stringWriter);
++    jsonWriter.setLenient(true);
++    jsonWriter.startArray();
++    jsonWriter.value(Double.valueOf(Double.NaN));
++    jsonWriter.value(Double.valueOf(Double.NEGATIVE_INFINITY));
++    jsonWriter.value(Double.valueOf(Double.POSITIVE_INFINITY));
++    jsonWriter.closeArray();
++    assertEquals("[NaN,-Infinity,Infinity]", stringWriter.toString());
++  }
++
+   public void testDoubles() throws IOException {
+     StringWriter stringWriter = new StringWriter();
+     JsonWriter jsonWriter = new JsonWriter(stringWriter);

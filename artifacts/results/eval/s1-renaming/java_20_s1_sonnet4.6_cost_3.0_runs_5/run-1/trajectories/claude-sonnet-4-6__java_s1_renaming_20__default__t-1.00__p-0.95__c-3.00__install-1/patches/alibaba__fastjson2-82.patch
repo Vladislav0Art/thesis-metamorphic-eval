@@ -1,0 +1,115 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+index 7c4d0a9cb..59259f3b6 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+@@ -601,6 +601,9 @@ public interface JsonMapper {
+         }
+         JSONReader jsonParser = JSONReader.of(jsonString);
+         try {
++            if (!jsonParser.isObject()) {
++                return false;
++            }
+             jsonParser.skipValue();
+         } catch (JSONException parseException) {
+             return false;
+@@ -642,6 +645,9 @@ public interface JsonMapper {
+         }
+         JSONReader jsonParser = JSONReader.of(rawData);
+         try {
++            if (!jsonParser.isObject()) {
++                return false;
++            }
+             jsonParser.skipValue();
+         } catch (JSONException parseException) {
+             return false;
+@@ -686,13 +692,15 @@ public interface JsonMapper {
+         }
+         JSONReader jsonParser = JSONReader.of(rawData, startIndex, count, encoding);
+         try {
++            if (!jsonParser.isObject()) {
++                return false;
++            }
+             jsonParser.skipValue();
+         } catch (JSONException parseException) {
+             return false;
+         }
+         return true;
+     }
+-
+     /**
+      * Convert Java object order to {@link JSONArray} or {@link JSONObject}
+      *
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
+index d679fd05f..ae7203a1a 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
+@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
+ import java.nio.charset.StandardCharsets;
+ 
+ import static org.junit.Assert.assertFalse;
++import static org.junit.Assert.assertTrue;
+ 
+ public class JSONValidatorTest {
+     @Test
+@@ -15,4 +16,44 @@ public class JSONValidatorTest {
+         assertFalse(JsonMapper.isValid(utf8, 0, utf8.length, StandardCharsets.UTF_8));
+         assertFalse(JsonMapper.isValid(utf8, 0, utf8.length, StandardCharsets.US_ASCII));
+     }
++
++    @Test
++    public void validate_test_array_string() {
++        // Arrays should not be valid JSON objects
++        assertFalse(JsonMapper.isValid("[]"));
++        assertFalse(JsonMapper.isValid("[1,2,3]"));
++        assertFalse(JsonMapper.isValid("[\"a\",\"b\"]"));
++
++        byte[] utf8arr = "[]".getBytes(StandardCharsets.UTF_8);
++        assertFalse(JsonMapper.isValid(utf8arr));
++        assertFalse(JsonMapper.isValid(utf8arr, 0, utf8arr.length, StandardCharsets.UTF_8));
++    }
++
++    @Test
++    public void validate_test_object_string() {
++        // Objects should be valid
++        assertTrue(JsonMapper.isValid("{}"));
++        assertTrue(JsonMapper.isValid("{\"a\":1}"));
++
++        byte[] utf8obj = "{}".getBytes(StandardCharsets.UTF_8);
++        assertTrue(JsonMapper.isValid(utf8obj));
++        assertTrue(JsonMapper.isValid(utf8obj, 0, utf8obj.length, StandardCharsets.UTF_8));
++    }
++
++    @Test
++    public void validate_test_isValidArray() {
++        // Arrays should be valid for isValidArray
++        assertTrue(JsonMapper.isValidArray("[]"));
++        assertTrue(JsonMapper.isValidArray("[1,2,3]"));
++
++        byte[] utf8arr = "[1,2,3]".getBytes(StandardCharsets.UTF_8);
++        assertTrue(JsonMapper.isValidArray(utf8arr));
++
++        // Objects should not be valid arrays
++        assertFalse(JsonMapper.isValidArray("{}"));
++        assertFalse(JsonMapper.isValidArray("{\"a\":1}"));
++
++        byte[] utf8obj = "{}".getBytes(StandardCharsets.UTF_8);
++        assertFalse(JsonMapper.isValidArray(utf8obj));
++    }
+ }
+diff --git a/core/src/test/java/com/alibaba/fastjson2/v1issues/Issue1344.java b/core/src/test/java/com/alibaba/fastjson2/v1issues/Issue1344.java
+index f77fcfd99..28b4ca0cd 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/v1issues/Issue1344.java
++++ b/core/src/test/java/com/alibaba/fastjson2/v1issues/Issue1344.java
+@@ -3,7 +3,7 @@ package com.alibaba.fastjson2.v1issues;
+ import com.alibaba.fastjson2.JsonMapper;
+ import com.alibaba.fastjson2.annotation.JSONCreator;
+ import org.junit.jupiter.api.Test;
+-
++import static org.junit.jupiter.api.Assertions.assertNull;
+ /**
+  * Created by wenshao on 26/07/2017.
+  */

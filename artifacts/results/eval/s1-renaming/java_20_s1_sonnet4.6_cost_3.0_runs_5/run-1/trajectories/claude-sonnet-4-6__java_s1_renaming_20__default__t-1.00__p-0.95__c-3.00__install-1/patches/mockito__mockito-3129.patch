@@ -1,0 +1,63 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/MockitoDefaultPlugins.java b/src/main/java/org/mockito/internal/configuration/plugins/MockitoDefaultPlugins.java
+index d5146788e..32c95c085 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/MockitoDefaultPlugins.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/MockitoDefaultPlugins.java
+@@ -114,4 +114,9 @@ public class MockitoDefaultPlugins implements MockitoPluginRegistry {
+     public MockMaker getInlineMockMaker() {
+         return createDefaultImplementation(MockMaker.class, DEFAULT_PLUGIN_MAP.get(INLINE_IDENTIFIER));
+     }
++
++    @Override
++    public MockMaker getMockMaker(String makerKey) {
++        return org.mockito.internal.util.MockUtils.getMockMaker(makerKey);
++    }
+ }
+diff --git a/src/main/java/org/mockito/internal/util/MockUtils.java b/src/main/java/org/mockito/internal/util/MockUtils.java
+index 33bfd6207..cf7b1b5c9 100644
+--- a/src/main/java/org/mockito/internal/util/MockUtils.java
++++ b/src/main/java/org/mockito/internal/util/MockUtils.java
+@@ -36,7 +36,7 @@ public class MockUtils {
+ 
+     private MockUtils() {}
+ 
+-    private static MockMaker getMockMaker(String makerKey) {
++    public static MockMaker getMockMaker(String makerKey) {
+         if (makerKey == null) {
+             return PRIMARY_MAKER;
+         }
+diff --git a/src/main/java/org/mockito/plugins/MockitoPluginRegistry.java b/src/main/java/org/mockito/plugins/MockitoPluginRegistry.java
+index 651d420b3..0cb07b4c9 100644
+--- a/src/main/java/org/mockito/plugins/MockitoPluginRegistry.java
++++ b/src/main/java/org/mockito/plugins/MockitoPluginRegistry.java
+@@ -41,4 +41,17 @@ public interface MockitoPluginRegistry {
+      * @since 2.10.0
+      */
+     MockMaker getInlineMockMaker();
++
++    /**
++     * Returns a mock maker instance identified by the given type or alias.
++     * Unlike {@link #getInlineMockMaker()}, this method returns the same instance every time it is
++     * called for the same {@code makerKey}, so it is safe to call this method multiple times.
++     *
++     * @param makerKey the fully qualified class name or alias of the mock maker, e.g.
++     *                 {@code "mock-maker-inline"} or {@code "mock-maker-subclass"}.
++     *                 Pass {@code null} to get the default mock maker.
++     * @return the mock maker instance
++     * @since 4.8.0
++     */
++    MockMaker getMockMaker(String makerKey);
+ }

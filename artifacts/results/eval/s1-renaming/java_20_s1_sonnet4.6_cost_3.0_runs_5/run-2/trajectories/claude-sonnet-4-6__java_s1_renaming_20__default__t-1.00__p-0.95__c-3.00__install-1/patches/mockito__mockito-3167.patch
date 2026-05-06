@@ -1,0 +1,96 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/ByteBuddyInlineMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/ByteBuddyInlineMockMaker.java
+index 5cb74f598..95fc9ccd2 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/ByteBuddyInlineMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/ByteBuddyInlineMockMaker.java
+@@ -347,6 +347,11 @@ class ByteBuddyInlineMockMaker
+                         true);
+     }
+ 
++    @Override
++    public <T> T createMock(MockCreationSettings<T> creationSettings, MockHandler mockHandlerImpl) {
++        return createInlineMock(creationSettings, mockHandlerImpl);
++    }
++
+     public <T> T createInlineMock(MockCreationSettings<T> creationSettings, MockHandler mockHandlerImpl) {
+         return createMockInstance(creationSettings, mockHandlerImpl, false);
+     }
+@@ -489,7 +494,8 @@ class ByteBuddyInlineMockMaker
+         }
+     }
+ 
+-    public void resetMockInstance(Object candidate, MockHandler replacementHandler, MockCreationSettings creationSettings) {
++    @Override
++    public void resetMock(Object candidate, MockHandler replacementHandler, MockCreationSettings creationSettings) {
+         MockMethodInterceptor methodInterceptorImpl =
+                 new MockMethodInterceptor(replacementHandler, creationSettings);
+         if (candidate instanceof Class<?>) {
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockMaker.java
+index 55bd5c42a..a4575c69a 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockMaker.java
+@@ -69,7 +69,7 @@ public class InlineByteBuddyMockMaker
+ 
+     @Override
+     public void resetMock(Object mock, MockHandler newHandler, MockCreationSettings settings) {
+-        inlineDelegateByteBuddyMockMaker.resetMockInstance(mock, newHandler, settings);
++        inlineDelegateByteBuddyMockMaker.resetMock(mock, newHandler, settings);
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java b/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
+index 27faed9d9..688229bb3 100644
+--- a/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
++++ b/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
+@@ -58,7 +58,8 @@ public class ReturnsDeepStubs implements Answer<Object>, Serializable {
+         if (emptyValue != null) {
+             return emptyValue;
+         }
+-        if (!typeMockabilityOf(rawType, mockSettings.getMockMaker()).mockable()) {
++        if (rawType.isEnum()
++                || !typeMockabilityOf(rawType, mockSettings.getMockMaker()).mockable()) {
+             if (invocation.getMethod().getReturnType().equals(rawType)) {
+                 return delegate().answer(invocation);
+             } else {
+diff --git a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+index 5e39714cf..09b782de0 100644
+--- a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
++++ b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+@@ -71,6 +71,13 @@ public class DeepStubbingTest extends TestBase {
+ 
+     static final class FinalClass {}
+ 
++    enum SomeEnum { VALUE1, VALUE2 }
++
++    interface WithEnumReturn {
++        SomeEnum getEnum();
++    }
++
++
+     interface First {
+         Second getSecond();
+ 
+@@ -376,4 +383,10 @@ public class DeepStubbingTest extends TestBase {
+ 
+         assertThat(mock.reverse().finalMethod()).isEqualTo(5L);
+     }
++
++    @Test
++    public void deep_stub_does_not_try_to_mock_enum() {
++        WithEnumReturn mock = mock(WithEnumReturn.class, RETURNS_DEEP_STUBS);
++        assertNull(mock.getEnum());
++    }
+ }

@@ -1,0 +1,114 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..0503497da 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -474,7 +474,24 @@ public enum MapperFeature implements ConfigFeature
+      *
+      * @since 2.9
+      */
+-    IGNORE_MERGE_FOR_UNMERGEABLE(true)
++    IGNORE_MERGE_FOR_UNMERGEABLE(true),
++
++    /*
++    /******************************************************
++    /* Polymorphic type handling features
++    /******************************************************
++     */
++
++    /**
++     * Feature that determines whether the base type of a polymorphic value is
++     * used as the "default implementation" if no type information is found in the
++     * JSON to deserialize.
++     *<p>
++     * Feature is disabled by default.
++     *
++     * @since 2.10
++     */
++    USE_BASE_TYPE_AS_FALLBACK_IMPLEMENTATION(false)
+ 
+     ;
+ 
+diff --git a/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java b/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java
+index 73c99d40e..c9a1f43b6 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java
++++ b/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java
+@@ -1570,10 +1570,14 @@ nonAnnotatedParamIndex, ctor);
+         }
+         // May need to figure out default implementation, if none found yet
+         // (note: check for abstract type is not 100% mandatory, more of an optimization)
+-        if ((b.getDefaultImpl() == null) && baseType.isAbstract()) {
+-            JavaType defaultType = mapAbstractType(config, baseType);
+-            if ((defaultType != null) && !defaultType.hasRawClass(baseType.getRawClass())) {
+-                b = b.defaultImpl(defaultType.getRawClass());
++        if (b.getDefaultImpl() == null) {
++            if (baseType.isAbstract()) {
++                JavaType defaultType = mapAbstractType(config, baseType);
++                if ((defaultType != null) && !defaultType.hasRawClass(baseType.getRawClass())) {
++                    b = b.defaultImpl(defaultType.getRawClass());
++                }
++            } else if (config.isEnabled(MapperFeature.USE_BASE_TYPE_AS_FALLBACK_IMPLEMENTATION)) {
++                b = b.defaultImpl(baseType.getRawClass());
+             }
+         }
+         // 05-Apt-2018, tatu: Since we get non-mapping exception due to various limitations,
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsFallbackTest.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsFallbackTest.java
+new file mode 100644
+index 000000000..05a8b6584
+--- /dev/null
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsFallbackTest.java
+@@ -0,0 +1,42 @@
++package com.fasterxml.jackson.databind.jsontype;
++
++import com.fasterxml.jackson.annotation.JsonTypeInfo;
++import com.fasterxml.jackson.databind.MapperFeature;
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.fasterxml.jackson.databind.BaseMapTest;
++
++public class UseBaseTypeAsFallbackTest extends BaseMapTest
++{
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
++    interface MyInterface {
++        String getName();
++        void setName(String name);
++    }
++
++    static class MyClass implements MyInterface {
++        private String name;
++        public String getName() { return name; }
++        public void setName(String name) { this.name = name; }
++    }
++
++    // Test that with feature enabled, deserialization works without type property
++    public void testBaseTypeAsFallback() throws Exception {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_FALLBACK_IMPLEMENTATION);
++        String json = "{\"name\":\"testName\"}";
++        MyClass result = mapper.readValue(json, MyClass.class);
++        assertEquals("testName", result.getName());
++    }
++
++    // Test that with feature disabled (default), deserialization fails without type property
++    public void testBaseTypeAsFallbackDisabledByDefault() throws Exception {
++        ObjectMapper mapper = new ObjectMapper();
++        String json = "{\"name\":\"testName\"}";
++        try {
++            mapper.readValue(json, MyClass.class);
++            fail("Should have thrown an exception without type info");
++        } catch (Exception e) {
++            // expected
++        }
++    }
++}

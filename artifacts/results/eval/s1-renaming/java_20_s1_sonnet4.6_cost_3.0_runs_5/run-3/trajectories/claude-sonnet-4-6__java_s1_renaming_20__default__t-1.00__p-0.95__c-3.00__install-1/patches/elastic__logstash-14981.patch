@@ -1,0 +1,59 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index c60648423..f0370aaae 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -409,6 +409,10 @@ public final class DeadLetterQueueWriter implements Closeable {
+      * */
+     private static Optional<Timestamp> readTimestampOfLastEventInSegment(Path segmentPath) throws IOException {
+         final int lastBlockId = (int) Math.ceil(((Files.size(segmentPath) - VERSION_SIZE) / (double) BLOCK_SIZE)) - 1;
++        if (lastBlockId < 0) {
++            // empty file, no event present
++            return Optional.empty();
++        }
+         byte[] eventBytes;
+         try (RecordIOReader recordReader = new RecordIOReader(segmentPath)) {
+             int blockId = lastBlockId;
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 5702d169a..bdaf3ae68 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -398,4 +398,25 @@ public class DeadLetterQueueWriterTest {
+             assertEquals(2, writeManager.getDroppedEvents());
+         }
+     }
++    @Test
++    public void testWriterWithExistingEmptySegment() throws Exception {
++        // Simulate the 1-byte segment file (only version byte) that caused the failure
++        Path segmentFile = dir.resolve("1.log");
++        Files.createFile(segmentFile);
++        // Write only the version byte
++        try (FileChannel channel = FileChannel.open(segmentFile, StandardOpenOption.WRITE)) {
++            java.nio.ByteBuffer versionBuffer = java.nio.ByteBuffer.allocate(1);
++            versionBuffer.put((byte) RecordIOWriter.VERSION);
++            versionBuffer.flip();
++            channel.write(versionBuffer);
++        }
++
++        // This should not throw an IllegalArgumentException
++        try (DeadLetterQueueWriter writer = DeadLetterQueueWriter
++                .newBuilder(dir, 1_000, 100_000, Duration.ofSeconds(1))
++                .build()) {
++            // Writer was initialized successfully without exception
++            assertTrue(Files.exists(dir));
++        }
++    }
+ }

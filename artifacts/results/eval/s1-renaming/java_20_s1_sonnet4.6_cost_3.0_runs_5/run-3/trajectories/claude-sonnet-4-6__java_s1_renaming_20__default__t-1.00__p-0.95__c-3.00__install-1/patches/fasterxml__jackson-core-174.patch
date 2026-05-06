@@ -1,0 +1,43 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+index 4ec5b4c2..c81052e5 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+@@ -194,6 +194,25 @@ public class JsonPointerExpression
+         return _headSegment;
+     }
+ 
++    /**
++     * Accessor for getting the last segment of this pointer expression.
++     * For a pointer like {@code /score/-}, would return the segment
++     * corresponding to {@code /-}.
++     * Returns null if this is an empty pointer (matching state).
++     *
++     * @since 2.5
++     */
++    public JsonPointerExpression getLast() {
++        if (matchesExactly()) {
++            return null;
++        }
++        JsonPointerExpression current = this;
++        while (!current._nextSegment.matchesExactly()) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
+     /*
+     /**********************************************************
+     /* Standard method overrides

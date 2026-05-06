@@ -1,0 +1,65 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..1c5e46e43 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -95,12 +95,21 @@ setup_java() {
+   if [ -z "$JAVACMD" ]; then
+     setup_bundled_jdk_part
+     JAVACMD_TEST=`command -v java`
++    # Read the bundled JDK version if available
++    BUNDLED_JDK_VERSION=""
++    if [ -f "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION" ]; then
++      BUNDLED_JDK_VERSION=$(cat "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION")
++    fi
+     if [ -n "$LS_JAVA_HOME" ]; then
+       echo "Using LS_JAVA_HOME defined java: ${LS_JAVA_HOME}."
+       if [ -x "$LS_JAVA_HOME/bin/java" ]; then
+         JAVACMD="$LS_JAVA_HOME/bin/java"
+         if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+-          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          if [ -n "$BUNDLED_JDK_VERSION" ]; then
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK (${BUNDLED_JDK_VERSION})."
++          else
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          fi
+         fi
+       else
+         echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..7ee179417 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -861,6 +861,19 @@ tasks.register("copyJdk", Copy) {
+     // CLI project properties: -Pjdk_bundle_os=[windows|linux|darwin] -Pjdk_arch=[arm64|x86_64]
+     doLast {
+         System.out.println "Download location is ${project.ext.jdkDownloadLocation}, Decompressing ${project.ext.jdkDirectory} to \"${project.ext.jdkBundlingDirectory}\""
++        // Create VERSION file from jdk/release
++        def releaseFile = new File("${project.ext.jdkBundlingDirectory}/release")
++        if (!releaseFile.exists()) {
++            // macOS has a different directory structure: jdk.app/Contents/Home/release
++            releaseFile = new File("${project.ext.jdkBundlingDirectory}/Contents/Home/release")
++        }
++        if (releaseFile.exists()) {
++            String versionLine = releaseFile.readLines().find { it.startsWith("IMPLEMENTOR_VERSION") }
++            if (versionLine) {
++                String version = versionLine.split("=")[1].replaceAll('"', '').trim()
++                new File(releaseFile.getParentFile(), "VERSION").text = version
++            }
++        }
+     }
+ }
+ 
