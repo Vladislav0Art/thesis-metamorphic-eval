@@ -1,0 +1,91 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+index 4ec5b4c2..6e90255c 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+@@ -101,7 +101,6 @@ public class JsonPointerExpression
+         if ((pointerText == null) || pointerText.length() == 0) {
+             return EMPTY;
+         }
+-        // And then quick validity check:
+         if (pointerText.charAt(0) != '/') {
+             throw new IllegalArgumentException("Invalid input: JSON Pointer expression must start with '/': "+"\""+ pointerText +"\"");
+         }
+@@ -114,6 +113,7 @@ public class JsonPointerExpression
+      */
+     public static JsonPointerExpression of(String pointerText) { return compilePointer(pointerText); }
+ 
++
+     /* Factory method that composes a pointer instance, given a set
+      * of 'raw' segments: raw meaning that no processing will be done,
+      * no escaping may is present.
+@@ -194,6 +194,21 @@ public class JsonPointerExpression
+         return _headSegment;
+     }
+ 
++    /**
++     * Accessor for getting the leaf segment of this pointer. For root pointer,
++     * will return null.
++     */
++    public JsonPointerExpression getLast() {
++        if (_nextSegment == null) {
++            return null;
++        }
++        JsonPointerExpression current = this;
++        while (current._nextSegment._nextSegment != null) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
+     /*
+     /**********************************************************
+     /* Standard method overrides
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 94220d64..d1ac4b23 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,31 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesExactly());
+         assertNull(ptr.nextSegment());
+     }
++
++    public void testGetLast() throws Exception
++    {
++        JsonPointerExpression ptr = JsonPointerExpression.compilePointer("/Image/15/name");
++
++        JsonPointerExpression leaf = ptr.getLast();
++        assertNotNull(leaf);
++        assertEquals("/name", leaf.toString());
++        assertEquals("name", leaf.getMatchingProperty());
++        assertEquals(-1, leaf.getMatchingIndex());
++
++        JsonPointerExpression single = JsonPointerExpression.compilePointer("/score");
++        JsonPointerExpression singleLeaf = single.getLast();
++        assertNotNull(singleLeaf);
++        assertEquals("/score", singleLeaf.toString());
++        assertEquals("score", singleLeaf.getMatchingProperty());
++        assertEquals(-1, singleLeaf.getMatchingIndex());
++
++        JsonPointerExpression append = JsonPointerExpression.compilePointer("/score/-");
++        JsonPointerExpression appendLeaf = append.getLast();
++        assertNotNull(appendLeaf);
++        assertEquals("/-", appendLeaf.toString());
++        assertEquals("-", appendLeaf.getMatchingProperty());
++        assertEquals(-1, appendLeaf.getMatchingIndex());
++
++        assertNull(JsonPointerExpression.compilePointer("").getLast());
++    }
+ }

@@ -1,0 +1,123 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/DelegateByteBuddyMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/DelegateByteBuddyMockMaker.java
+index 88787ef6b..365e6670e 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/DelegateByteBuddyMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/DelegateByteBuddyMockMaker.java
+@@ -345,6 +345,11 @@ class DelegateByteBuddyMockMaker
+                         true);
+     }
+ 
++    @Override
++    public <T> T createMock(MockCreationSettings<T> settings, MockHandler handler) {
++        return createMockInstance(settings, handler);
++    }
++
+     public <T> T createMockInstance(MockCreationSettings<T> creationSettings, MockHandler mockHandlerInstance) {
+         return createMock(creationSettings, mockHandlerInstance, false);
+     }
+@@ -487,6 +492,12 @@ class DelegateByteBuddyMockMaker
+         }
+     }
+ 
++    @Override
++    public void resetMock(
++            Object mockObject, MockHandler newHandler, MockCreationSettings settings) {
++        resetMockInterceptor(mockObject, newHandler, settings);
++    }
++
+     public void resetMockInterceptor(Object mockObject, MockHandler replacementHandler, MockCreationSettings creationSettings) {
+         MockMethodInterceptor methodInterceptorInstance =
+                 new MockMethodInterceptor(replacementHandler, creationSettings);
+diff --git a/subprojects/junit-jupiter/src/test/java/org/mockitousage/GenericTypeMockTest.java b/subprojects/junit-jupiter/src/test/java/org/mockitousage/GenericTypeMockTest.java
+index cb3b835c7..f408c4cb9 100644
+--- a/subprojects/junit-jupiter/src/test/java/org/mockitousage/GenericTypeMockTest.java
++++ b/subprojects/junit-jupiter/src/test/java/org/mockitousage/GenericTypeMockTest.java
+@@ -372,5 +372,38 @@ public class GenericTypeMockTest {
+         }
+ 
+     }
++
++    /**
++     * Verify regression for generic @Spy fields not breaking other initialized spies.
++     */
++    @Nested
++    public class RegressionGenericSpyDoesNotBreakExistingSpy {
++        final class FinalType {
++            private final String value;
++
++            FinalType(String value) {
++                this.value = value;
++            }
++
++            String value() {
++                return value;
++            }
++        }
++
++        @org.mockito.Spy
++        private final List<String> genericSpy = List.of("item A", "item B");
++
++        @org.mockito.Spy
++        private FinalType finalTypeSpy = new FinalType("some value");
++
++        @Test
++        void testGenericSpyDoesNotBreakExistingSpy() {
++            assertNotNull(genericSpy);
++            assertEquals(2, genericSpy.size());
++
++            assertNotNull(finalTypeSpy);
++            assertEquals("some value", finalTypeSpy.value());
++        }
++    }
+ }
+ 
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyRecordTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyRecordTest.java
+new file mode 100644
+index 000000000..edb572aca
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyRecordTest.java
+@@ -0,0 +1,31 @@
++package org.mockitousage;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertNotNull;
++
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Spy;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++@ExtendWith(MockitoExtension.class)
++class GenericSpyRecordTest {
++
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private ExampleRecord exampleRecord = new ExampleRecord("some value");
++
++    @Test
++    void genericSpyDoesNotBreakExistingRecordSpy() {
++        assertNotNull(genericSpy);
++        assertEquals(2, genericSpy.size());
++
++        assertNotNull(exampleRecord);
++        assertEquals("some value", exampleRecord.someParameter());
++    }
++
++    record ExampleRecord(String someParameter) {}
++}

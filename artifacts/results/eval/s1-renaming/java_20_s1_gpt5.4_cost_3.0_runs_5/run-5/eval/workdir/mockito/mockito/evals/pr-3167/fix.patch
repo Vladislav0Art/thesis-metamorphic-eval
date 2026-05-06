@@ -1,0 +1,83 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/ByteBuddyInlineMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/ByteBuddyInlineMockMaker.java
+index 5cb74f598..098f26dcf 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/ByteBuddyInlineMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/ByteBuddyInlineMockMaker.java
+@@ -347,7 +347,7 @@ class ByteBuddyInlineMockMaker
+                         true);
+     }
+ 
+-    public <T> T createInlineMock(MockCreationSettings<T> creationSettings, MockHandler mockHandlerImpl) {
++    public <T> T createMock(MockCreationSettings<T> creationSettings, MockHandler mockHandlerImpl) {
+         return createMockInstance(creationSettings, mockHandlerImpl, false);
+     }
+ 
+@@ -489,7 +489,8 @@ class ByteBuddyInlineMockMaker
+         }
+     }
+ 
+-    public void resetMockInstance(Object candidate, MockHandler replacementHandler, MockCreationSettings creationSettings) {
++    @Override
++    public void resetMock(Object candidate, MockHandler replacementHandler, MockCreationSettings creationSettings) {
+         MockMethodInterceptor methodInterceptorImpl =
+                 new MockMethodInterceptor(replacementHandler, creationSettings);
+         if (candidate instanceof Class<?>) {
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockMaker.java
+index 55bd5c42a..cc6f7d9df 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockMaker.java
+@@ -53,7 +53,7 @@ public class InlineByteBuddyMockMaker
+ 
+     @Override
+     public <T> T createMock(MockCreationSettings<T> settings, MockHandler handler) {
+-        return inlineDelegateByteBuddyMockMaker.createInlineMock(settings, handler);
++        return inlineDelegateByteBuddyMockMaker.createMock(settings, handler);
+     }
+ 
+     @Override
+@@ -69,7 +69,7 @@ public class InlineByteBuddyMockMaker
+ 
+     @Override
+     public void resetMock(Object mock, MockHandler newHandler, MockCreationSettings settings) {
+-        inlineDelegateByteBuddyMockMaker.resetMockInstance(mock, newHandler, settings);
++        inlineDelegateByteBuddyMockMaker.resetMock(mock, newHandler, settings);
+     }
+ 
+     @Override
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+index a418aab7a..233647c25 100644
+--- a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+@@ -20,6 +20,19 @@ public class EnumMockingTest {
+         assertThat(a.name(), nullValue(String.class));
+     }
+ 
++    @Test
++    public void testDeepStubsWithEnum() {
++        Holder holder = Mockito.mock(Holder.class, Mockito.RETURNS_DEEP_STUBS);
++
++        Mockito.when(holder.getType().sound()).thenReturn("woof");
++
++        assertThat(holder.getType().sound(), is("woof"));
++    }
++
++    interface Holder {
++        Animal getType();
++    }
++
+     enum Animal {
+         CAT {
+             @Override

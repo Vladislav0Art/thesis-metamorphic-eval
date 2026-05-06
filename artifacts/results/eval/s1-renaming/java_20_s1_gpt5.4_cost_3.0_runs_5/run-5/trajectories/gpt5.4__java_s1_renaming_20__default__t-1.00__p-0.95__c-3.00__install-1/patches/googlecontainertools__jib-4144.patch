@@ -1,0 +1,207 @@
+
+diff --git a/.gitignore b/.gitignore
+index 5030f209..f51c646a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -14,3 +14,6 @@ bin/
+ .classpath
+ .project
+ .DS_Store
++out/
++*.class
++*.jar
+diff --git a/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java b/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
+index 21b314dc..7cf8a510 100644
+--- a/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
++++ b/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
+@@ -530,6 +530,9 @@ public class PluginConfigurationProcessor {
+     if (isKnownJava17Image(prefixRemoved) && javaVersion > 17) {
+       throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
+     }
++    if (isKnownJava21Image(prefixRemoved) && javaVersion > 21) {
++      throw new IncompatibleBaseImageJavaVersionException(21, javaVersion);
++    }
+ 
+     ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
+     if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
+@@ -600,180 +603,6 @@ public class PluginConfigurationProcessor {
+               "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
+                   + "when entrypoint is specified"));
+     }
+-
+-    if (projectProperties.isWarProject()) {
+-      if (entrypointDefined) {
+-        return rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))
+-            ? null
+-            : rawEntrypoint.get();
+-      }
+-
+-      if (rawConfiguration.getMainClass().isPresent()
+-          || !rawConfiguration.getJvmFlags().isEmpty()
+-          || !rawExtraClasspath.isEmpty()
+-          || rawConfiguration.getExpandClasspathDependencies()) {
+-        projectProperties.log(
+-            LogEvent.warn(
+-                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
+-                    + "for WAR projects"));
+-      }
+-      return rawConfiguration.getFromImage().isPresent()
+-          ? null // Inherit if a custom base image.
+-          : Arrays.asList("java", "-jar", "/usr/local/jetty/start.jar");
+-    }
+-
+-    List<String> classpath = new ArrayList<>(rawExtraClasspath);
+-    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
+-    ContainerizingMode mode = getContainerizingModeChecked(rawConfiguration, projectProperties);
+-    switch (mode) {
+-      case EXPLODED:
+-        classpath.add(appRoot.resolve("resources").toString());
+-        classpath.add(appRoot.resolve("classes").toString());
+-        break;
+-      case PACKAGED:
+-        classpath.add(appRoot.resolve("classpath/*").toString());
+-        break;
+-      default:
+-        throw new IllegalStateException("unknown containerizing mode: " + mode);
+-    }
+-
+-    if (projectProperties.getMajorJavaVersion() >= 9
+-        || rawConfiguration.getExpandClasspathDependencies()) {
+-      List<Path> jars = projectProperties.getDependencies();
+-
+-      Map<String, Long> occurrences =
+-          jars.stream()
+-              .map(path -> path.getFileName().toString())
+-              .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()));
+-      List<String> duplicates =
+-          occurrences.entrySet().stream()
+-              .filter(entry -> entry.getValue() > 1)
+-              .map(Map.Entry::getKey)
+-              .collect(Collectors.toList());
+-
+-      for (Path jar : jars) {
+-        // Handle duplicates by appending filesize to the end of the file. This renaming logic
+-        // must be in sync with the code that does the same in the other place. See
+-        // https://github.com/GoogleContainerTools/jib/issues/3331
+-        String jarName = jar.getFileName().toString();
+-        if (duplicates.contains(jarName)) {
+-          jarName = jarName.replaceFirst("\\.jar$", "-" + Files.size(jar)) + ".jar";
+-        }
+-        classpath.add(appRoot.resolve("libs").resolve(jarName).toString());
+-      }
+-    } else {
+-      classpath.add(appRoot.resolve("libs/*").toString());
+-    }
+-
+-    String classpathString = String.join(":", classpath);
+-    String mainClass;
+-    try {
+-      mainClass =
+-          MainClassResolver.resolveMainClass(
+-              rawConfiguration.getMainClass().orElse(null), projectProperties);
+-    } catch (MainClassInferenceException ex) {
+-      if (entrypointDefined) {
+-        // We will use the user-given entrypoint, so don't fail.
+-        mainClass = "could-not-infer-a-main-class";
+-      } else {
+-        throw ex;
+-      }
+-    }
+-    addJvmArgFilesLayer(
+-        rawConfiguration, projectProperties, jibContainerBuilder, classpathString, mainClass);
+-
+-    if (projectProperties.getMajorJavaVersion() >= 9) {
+-      classpathString = "@" + appRoot.resolve(JIB_CLASSPATH_FILE);
+-    }
+-
+-    if (entrypointDefined) {
+-      return rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))
+-          ? null
+-          : rawEntrypoint.get();
+-    }
+-
+-    List<String> entrypoint = new ArrayList<>(4 + rawConfiguration.getJvmFlags().size());
+-    entrypoint.add("java");
+-    entrypoint.addAll(rawConfiguration.getJvmFlags());
+-    entrypoint.add("-cp");
+-    entrypoint.add(classpathString);
+-    entrypoint.add(mainClass);
+-    return entrypoint;
+-  }
+-
+-  @VisibleForTesting
+-  static void addJvmArgFilesLayer(
+-      RawConfiguration rawConfiguration,
+-      ProjectProperties projectProperties,
+-      JibContainerBuilder jibContainerBuilder,
+-      String classpath,
+-      String mainClass)
+-      throws IOException, InvalidAppRootException {
+-    Path projectCache = projectProperties.getDefaultCacheDirectory();
+-    Path classpathFile = projectCache.resolve(JIB_CLASSPATH_FILE);
+-    Path mainClassFile = projectCache.resolve(JIB_MAIN_CLASS_FILE);
+-
+-    // It's perfectly fine to always generate a new temp file or rewrite an existing file. However,
+-    // fixing the source file path and preserving the file timestamp prevents polluting the Jib
+-    // layer cache space by not creating new cache selectors every time. (Note, however, creating
+-    // new selectors does not affect correctness at all.)
+-    writeFileConservatively(classpathFile, classpath);
+-    writeFileConservatively(mainClassFile, mainClass);
+-
+-    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
+-    jibContainerBuilder.addFileEntriesLayer(
+-        FileEntriesLayer.builder()
+-            .setName(LayerType.JVM_ARG_FILES.getName())
+-            .addEntry(classpathFile, appRoot.resolve(JIB_CLASSPATH_FILE))
+-            .addEntry(mainClassFile, appRoot.resolve(JIB_MAIN_CLASS_FILE))
+-            .build());
+-  }
+-
+-  /**
+-   * Writes a file only when needed (when the file does not exist or the existing file has a
+-   * different content). It reads the entire bytes into a {@code String} for content comparison, so
+-   * care should be taken when using this method for a huge file.
+-   *
+-   * @param file target file to write
+-   * @param content file content to write
+-   * @throws IOException if file I/O error
+-   */
+-  @VisibleForTesting
+-  static void writeFileConservatively(Path file, String content) throws IOException {
+-    if (Files.exists(file)) {
+-      String oldContent = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
+-      if (oldContent.equals(content)) {
+-        return;
+-      }
+-    }
+-    Files.createDirectories(file.getParent());
+-    Files.write(file, content.getBytes(StandardCharsets.UTF_8));
+-  }
+-
+-  /**
+-   * Gets the suitable value for the base image. If the raw base image parameter is null, returns
+-   * {@code "jetty"} for WAR projects, or {@code "eclipse-temurin:{8|11|17}-jre"} for non-WAR.
+-   *
+-   * @param projectProperties used for providing additional information
+-   * @return the base image
+-   * @throws IncompatibleBaseImageJavaVersionException when the Java version in the base image is
+-   *     incompatible with the Java version of the application to be containerized
+-   */
+-  @VisibleForTesting
+-  static String getDefaultBaseImage(ProjectProperties projectProperties)
+-      throws IncompatibleBaseImageJavaVersionException {
+-    if (projectProperties.isWarProject()) {
+-      return "jetty";
+-    }
+-    int javaVersion = projectProperties.getMajorJavaVersion();
+-    if (javaVersion <= 8) {
+-      return "eclipse-temurin:8-jre";
+-    } else if (javaVersion <= 11) {
+-      return "eclipse-temurin:11-jre";
+-    } else if (javaVersion <= 17) {
+-      return "eclipse-temurin:17-jre";
+-    }
+-    throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
+   }
+ 
+   /**

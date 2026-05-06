@@ -1,0 +1,54 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..f6841641e 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -286,6 +286,18 @@ public enum MapperFeature implements ConfigFeature
+      */
+     USE_STATIC_TYPING(false),
+ 
++    /**
++     * Feature that determines whether the declared base type of a polymorphic value
++     * is used as the {@link JsonTypeInfo#defaultImpl()} when no explicit default
++     * implementation has been specified.
++     *<p>
++     * This is only applicable to deserialization and only when the declared base
++     * type is concrete.
++     *<p>
++     * Feature is disabled by default.
++     */
++    USE_BASE_TYPE_AS_FALLBACK_IMPLEMENTATION(false),
++
+     /*
+     /******************************************************
+     /* View-related features
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
+index ab64eca15..22063ff0e 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
+@@ -123,7 +123,12 @@ public class StandardTypeResolverBuilder
+         JavaType fallbackImplementation;
+ 
+         if (_defaultImpl == null) {
+-            fallbackImplementation = null;
++            if (serializationSettings.isEnabled(MapperFeature.USE_BASE_TYPE_AS_FALLBACK_IMPLEMENTATION)
++                    && rootType.isConcrete()) {
++                fallbackImplementation = rootType;
++            } else {
++                fallbackImplementation = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct

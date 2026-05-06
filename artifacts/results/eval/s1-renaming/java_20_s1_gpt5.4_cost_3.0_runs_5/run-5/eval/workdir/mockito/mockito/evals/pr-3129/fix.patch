@@ -1,0 +1,204 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/MockitoDefaultPlugins.java b/src/main/java/org/mockito/internal/configuration/plugins/MockitoDefaultPlugins.java
+index d5146788e..ba047146a 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/MockitoDefaultPlugins.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/MockitoDefaultPlugins.java
+@@ -4,10 +4,12 @@
+  */
+ package org.mockito.internal.configuration.plugins;
+ 
++import java.util.Collections;
+ import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.Map;
+ import java.util.Set;
++import java.util.concurrent.ConcurrentHashMap;
+ 
+ import org.mockito.MockMakers;
+ import org.mockito.plugins.AnnotationEngine;
+@@ -22,6 +24,10 @@ import org.mockito.plugins.StackTraceCleanerProvider;
+ 
+ public class MockitoDefaultPlugins implements MockitoPluginRegistry {
+ 
++    private static final MockMaker PRIMARY_MOCK_MAKER = Plugins.getMockMaker();
++    private static final Map<Class<? extends MockMaker>, MockMaker> MOCK_MAKER_REGISTRY =
++            new ConcurrentHashMap<>(
++                    Collections.singletonMap(PRIMARY_MOCK_MAKER.getClass(), PRIMARY_MOCK_MAKER));
+     private static final Map<String, String> DEFAULT_PLUGIN_MAP = new HashMap<>();
+     static final String INLINE_IDENTIFIER = MockMakers.INLINE;
+     static final String PROXY_IDENTIFIER = MockMakers.PROXY;
+diff --git a/src/main/java/org/mockito/internal/util/MockUtils.java b/src/main/java/org/mockito/internal/util/MockUtils.java
+index 33bfd6207..8c50f2812 100644
+--- a/src/main/java/org/mockito/internal/util/MockUtils.java
++++ b/src/main/java/org/mockito/internal/util/MockUtils.java
+@@ -78,49 +78,85 @@ public class MockUtils {
+         return getMockMaker(makerKey).isTypeMockable(makerClass);
+     }
+ 
+-    public static <T> T createMockInstance(MockCreationSettings<T> creationSettings) {
+-        MockMaker makerKey = getMockMaker(creationSettings.getMockMaker());
+-        MockHandler handlerInstance = createMockHandler(creationSettings);
+-
+-        Object spyTarget = creationSettings.getSpiedInstance();
+-
+-        T createdInstance;
+-        if (spyTarget != null) {
+-            createdInstance =
+-                    makerKey
+-                            .createSpy(creationSettings, handlerInstance, (T) spyTarget)
+-                            .orElseGet(
+-                                    () -> {
+-                                        T realInstance = makerKey.createMock(creationSettings, handlerInstance);
+-                                        new LenientCopyTool().copyToMock(spyTarget, realInstance);
+-                                        return realInstance;
+-                                    });
++    @Override
++    public <T> T getDefaultPlugin(Class<T> pluginClass) {
++        String resolvedClassName = DEFAULT_PLUGIN_MAP.get(pluginClass.getName());
++        return createDefaultImplementation(pluginClass, resolvedClassName);
++    }
++
++    @Override
++    public MockMaker getMockMaker(String mockMakerId) {
++        if (mockMakerId == null) {
++            return PRIMARY_MOCK_MAKER;
++        }
++
++        String className;
++        if (MOCK_MAKER_ALIASES.contains(mockMakerId)) {
++            className = DEFAULT_PLUGIN_MAP.get(mockMakerId);
+         } else {
+-            createdInstance = makerKey.createMock(creationSettings, handlerInstance);
++            className = mockMakerId;
+         }
+ 
+-        return createdInstance;
+-    }
++        Class<? extends MockMaker> mockMakerClass;
++        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
++        if (classLoader == null) {
++            classLoader = ClassLoader.getSystemClassLoader();
++        }
++        try {
++            mockMakerClass = classLoader.loadClass(className).asSubclass(MockMaker.class);
++        } catch (Exception ex) {
++            throw new IllegalStateException("Failed to load MockMaker: " + mockMakerId, ex);
++        }
+ 
+-    public static void reinitializeMock(Object createdInstance) {
+-        MockHandler previousHandler = getMockHandler(createdInstance);
+-        MockCreationSettings creationSettings = previousHandler.getMockSettings();
+-        MockHandler replacementHandler = createMockHandler(creationSettings);
++        return MOCK_MAKER_REGISTRY.computeIfAbsent(
++                mockMakerClass,
++                type -> {
++                    try {
++                        return type.getDeclaredConstructor().newInstance();
++                    } catch (Exception ex) {
++                        throw new IllegalStateException(
++                                "Failed to construct MockMaker: " + type.getName(), ex);
++                    }
++                });
++    }
+ 
+-        createdInstance = resolveMock(createdInstance);
+-        getMockMaker(creationSettings.getMockMaker()).resetMock(createdInstance, replacementHandler, creationSettings);
++    public static String getDefaultPluginClass(String typeOrAlias) {
++        return DEFAULT_PLUGIN_MAP.get(typeOrAlias);
+     }
+ 
+-    public static MockHandler<?> getMockHandler(Object createdInstance) {
+-        MockHandler resultHandler = getMockHandlerOrNull(createdInstance);
+-        if (resultHandler != null) {
+-            return resultHandler;
+-        } else {
+-            throw new NotAMockException("Argument should be a mock, but is: " + createdInstance.getClass());
++    /**
++     * Creates an instance of given plugin type, using specific implementation class.
++     */
++    private <T> T createDefaultImplementation(Class<T> pluginClass, String resolvedClassName) {
++        if (resolvedClassName == null) {
++            throw new IllegalStateException(
++                    "No default implementation for requested Mockito plugin type: "
++                            + pluginClass.getName()
++                            + "\n"
++                            + "Is this a valid Mockito plugin type? If yes, please report this problem to Mockito team.\n"
++                            + "Otherwise, please check if you are passing valid plugin type.\n"
++                            + "Examples of valid plugin types: MockMaker, StackTraceCleanerProvider.");
++        }
++        try {
++            // Default implementation. Use our own ClassLoader instead of the context
++            // ClassLoader, as the default implementation is assumed to be part of
++            // Mockito and may not be available via the context ClassLoader.
++            return pluginClass.cast(Class.forName(resolvedClassName).getDeclaredConstructor().newInstance());
++        } catch (Exception ex) {
++            throw new IllegalStateException(
++                    "Internal problem occurred, please report it. "
++                            + "Mockito is unable to load the default implementation of class that is a part of Mockito distribution. "
++                            + "Failed to load "
++                            + pluginClass,
++                    ex);
+         }
+     }
+ 
+-    public static InvocationContainerImpl getInvocationContainer(Object createdInstance) {
++    @Override
++    public MockMaker getInlineMockMaker() {
++        return getMockMaker(INLINE_IDENTIFIER);
++    }
++}
+         return (InvocationContainerImpl) getMockHandler(createdInstance).getInvocationContainer();
+     }
+ 
+diff --git a/src/main/java/org/mockito/plugins/MockitoPluginRegistry.java b/src/main/java/org/mockito/plugins/MockitoPluginRegistry.java
+index 651d420b3..59799f191 100644
+--- a/src/main/java/org/mockito/plugins/MockitoPluginRegistry.java
++++ b/src/main/java/org/mockito/plugins/MockitoPluginRegistry.java
+@@ -31,11 +31,33 @@ public interface MockitoPluginRegistry {
+      */
+     <T> T getDefaultPlugin(Class<T> extensionClass);
+ 
++    /**
++     * Returns the {@link MockMaker} identified by the given built-in alias or fully qualified class name.
++     * The returned mock maker is shared and should be preferred over constructing new instances to ensure
++     * consistent behavior across integrations using the same mock maker implementation.
++     *
++     * @param mockMakerId built-in alias (for example {@code mock-maker-inline}) or fully qualified class name;
++     *                    if {@code null}, returns the default mock maker used by Mockito
++     * @return instance of the requested mock maker
++     */
++    default MockMaker getMockMaker(String mockMakerId) {
++        if (mockMakerId == null) {
++            return getDefaultPlugin(MockMaker.class);
++        }
++        if ("mock-maker-inline".equals(mockMakerId)) {
++            return getInlineMockMaker();
++        }
++        throw new UnsupportedOperationException(
++                "This MockitoPluginRegistry implementation does not support named MockMaker lookup: "
++                        + mockMakerId);
++    }
++
+     /**
+      * Returns inline mock maker, an optional mock maker that is bundled with Mockito distribution.
+      * This method is needed because {@link #getDefaultPlugin(Class)} does not provide an instance of inline mock maker.
+-     * Creates new instance each time is called so it is recommended to keep hold of the resulting object for future invocations.
+      * For more information about inline mock maker see the javadoc for main {@link Mockito} class.
++     * <p>
++     * Prefer {@link #getMockMaker(String)} with {@code mock-maker-inline} when integrations need a shared instance.
+      *
+      * @return instance of inline mock maker
+      * @since 2.10.0

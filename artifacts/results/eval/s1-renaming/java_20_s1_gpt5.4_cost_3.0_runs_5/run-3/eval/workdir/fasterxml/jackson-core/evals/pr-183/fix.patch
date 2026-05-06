@@ -1,0 +1,58 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+index e14f6efb..5174d7c1 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+@@ -301,10 +301,10 @@ public final class SegmentedTextBuffer
+         if (inputOffset >= 0) return inputBuf;
+         if (resultCharArray != null)  return resultCharArray;
+         if (cachedResultString != null) {
+-            return (resultCharArray = cachedResultString.toCharArray());
++            return (resultCharArray = cachedResultString.isEmpty() ? EMPTY_CHARS : cachedResultString.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!segmentsPresent)  return activeSegment;
++        if (!segmentsPresent)  return (activeSegment == null) ? EMPTY_CHARS : activeSegment;
+         // Nope, need to have/create a non-segmented array and return it
+         return contentsAsCharArray();
+     }
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 0e26d253..5612b094 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -60,6 +60,23 @@ public class TestTextBuffer
+          assertEquals(EXP, tb.getContentsAsString());
+       }
+ 
++      public void testEmptyGetTextBufferConsistent()
++      {
++          SegmentedTextBuffer tb = new SegmentedTextBuffer(new BufferRecycler());
++          tb.resetToEmpty();
++
++          char[] initial = tb.getTextBuffer();
++          assertNotNull(initial);
++          assertEquals(0, initial.length);
++
++          assertEquals("", tb.getContentsAsString());
++
++          char[] afterContents = tb.getTextBuffer();
++          assertNotNull(afterContents);
++          assertEquals(0, afterContents.length);
++          assertSame(initial, afterContents);
++      }
++
+       // [Core#152]
+       public void testExpand()
+       {

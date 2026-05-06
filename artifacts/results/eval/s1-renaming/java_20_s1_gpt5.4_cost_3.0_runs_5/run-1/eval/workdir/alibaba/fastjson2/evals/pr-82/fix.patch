@@ -1,0 +1,250 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/ReproJsonMapperValidation.java b/ReproJsonMapperValidation.java
+new file mode 100644
+index 000000000..062f9ba8e
+--- /dev/null
++++ b/ReproJsonMapperValidation.java
+@@ -0,0 +1,45 @@
++import com.alibaba.fastjson2.JsonMapper;
++
++import java.nio.charset.StandardCharsets;
++
++public class ReproJsonMapperValidation {
++    public static void main(String[] args) {
++        if (!JsonMapper.isValid("{}")) {
++            throw new RuntimeException("object should be valid json");
++        }
++        if (!JsonMapper.isValid("[]")) {
++            throw new RuntimeException("array should be valid json");
++        }
++        if (!JsonMapper.isValidObject("{}")) {
++            throw new RuntimeException("object should be valid object");
++        }
++        if (JsonMapper.isValidObject("[]")) {
++            throw new RuntimeException("array should not be valid object");
++        }
++        if (!JsonMapper.isValidArray("[]")) {
++            throw new RuntimeException("array should be valid array");
++        }
++        if (JsonMapper.isValidArray("{}")) {
++            throw new RuntimeException("object should not be valid array");
++        }
++
++        byte[] objectBytes = "{}".getBytes(StandardCharsets.UTF_8);
++        byte[] arrayBytes = "[]".getBytes(StandardCharsets.UTF_8);
++        if (!JsonMapper.isValidObject(objectBytes)) {
++            throw new RuntimeException("object bytes should be valid object");
++        }
++        if (JsonMapper.isValidObject(arrayBytes)) {
++            throw new RuntimeException("array bytes should not be valid object");
++        }
++
++        byte[] wrapped = "xx{}yy".getBytes(StandardCharsets.UTF_8);
++        if (!JsonMapper.isValidObject(wrapped, 2, 2, StandardCharsets.UTF_8)) {
++            throw new RuntimeException("offset object bytes should be valid object");
++        }
++        if (JsonMapper.isValidArray(wrapped, 2, 2, StandardCharsets.UTF_8)) {
++            throw new RuntimeException("offset object bytes should not be valid array");
++        }
++
++        System.out.println("Script completed successfully, no errors.");
++    }
++}
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+index 7c4d0a9cb..515c4bbda 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+@@ -590,7 +590,7 @@ public interface JsonMapper {
+     }
+ 
+     /**
+-     * Verify the {@link String} is JSON Object
++     * Verify the {@link String} is JSON
+      *
+      * @param jsonString the {@link String} to validate
+      * @return T/F
+@@ -608,6 +608,28 @@ public interface JsonMapper {
+         return true;
+     }
+ 
++    /**
++     * Verify the {@link String} is JSON Object
++     *
++     * @param jsonString the {@link String} to validate
++     * @return T/F
++     */
++    static boolean isValidObject(String jsonString) {
++        if (jsonString == null || jsonString.length() == 0) {
++            return false;
++        }
++        JSONReader jsonParser = JSONReader.of(jsonString);
++        try {
++            if (!jsonParser.isObject()) {
++                return false;
++            }
++            jsonParser.skipValue();
++        } catch (JSONException parseException) {
++            return false;
++        }
++        return true;
++    }
++
+     /**
+      * Verify the {@link String} is JSON Array
+      *
+@@ -631,7 +653,7 @@ public interface JsonMapper {
+     }
+ 
+     /**
+-     * Verify the byte array is JSON Object
++     * Verify the byte array is JSON
+      *
+      * @param rawData the byte array to validate
+      * @return T/F
+@@ -649,6 +671,28 @@ public interface JsonMapper {
+         return true;
+     }
+ 
++    /**
++     * Verify the byte array is JSON Object
++     *
++     * @param rawData the byte array to validate
++     * @return T/F
++     */
++    static boolean isValidObject(byte[] rawData) {
++        if (rawData == null || rawData.length == 0) {
++            return false;
++        }
++        JSONReader jsonParser = JSONReader.of(rawData);
++        try {
++            if (!jsonParser.isObject()) {
++                return false;
++            }
++            jsonParser.skipValue();
++        } catch (JSONException parseException) {
++            return false;
++        }
++        return true;
++    }
++
+     /**
+      * Verify the byte array is JSON Array
+      *
+@@ -672,7 +716,7 @@ public interface JsonMapper {
+     }
+ 
+     /**
+-     * Verify the byte array is JSON Object
++     * Verify the byte array is JSON
+      *
+      * @param rawData   the byte array to validate
+      * @param startIndex  the index of the first byte to validate
+@@ -693,6 +737,56 @@ public interface JsonMapper {
+         return true;
+     }
+ 
++    /**
++     * Verify the byte array is JSON Object
++     *
++     * @param rawData   the byte array to validate
++     * @param startIndex  the index of the first byte to validate
++     * @param count  the number of bytes to validate
++     * @param encoding specify {@link Charset} to validate
++     * @return T/F
++     */
++    static boolean isValidObject(byte[] rawData, int startIndex, int count, Charset encoding) {
++        if (rawData == null || rawData.length == 0) {
++            return false;
++        }
++        JSONReader jsonParser = JSONReader.of(rawData, startIndex, count, encoding);
++        try {
++            if (!jsonParser.isObject()) {
++                return false;
++            }
++            jsonParser.skipValue();
++        } catch (JSONException parseException) {
++            return false;
++        }
++        return true;
++    }
++
++
++    /**
++     * Verify the byte array is JSON Array
++     *
++     * @param rawData   the byte array to validate
++     * @param startIndex  the index of the first byte to validate
++     * @param count  the number of bytes to validate
++     * @param encoding specify {@link Charset} to validate
++     * @return T/F
++     */
++    static boolean isValidArray(byte[] rawData, int startIndex, int count, Charset encoding) {
++        if (rawData == null || rawData.length == 0) {
++            return false;
++        }
++        JSONReader jsonParser = JSONReader.of(rawData, startIndex, count, encoding);
++        try {
++            if (!jsonParser.isArray()) {
++                return false;
++            }
++            jsonParser.skipValue();
++        } catch (JSONException parseException) {
++            return false;
++        }
++        return true;
++    }
+     /**
+      * Convert Java object order to {@link JSONArray} or {@link JSONObject}
+      *
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 8d0ab0e06..15362e441 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -33,6 +33,44 @@ public class JSONTest {
+         assertFalse(JsonMapper.isValidArray("{}"));
+     }
+ 
++    @Test
++    public void test_isValid_0() {
++        assertTrue(JsonMapper.isValid("{}"));
++        assertTrue(JsonMapper.isValid("[]"));
++        assertTrue(JsonMapper.isValid("1"));
++        assertFalse(JsonMapper.isValid("{"));
++    }
++
++    @Test
++    public void test_isValidObject_0() {
++        assertTrue(JsonMapper.isValidObject("{}"));
++        assertFalse(JsonMapper.isValidObject("[]"));
++        assertFalse(JsonMapper.isValidObject("1"));
++        assertFalse(JsonMapper.isValidObject("{"));
++    }
++
++    @Test
++    public void test_isValidObject_bytes() {
++        assertTrue(JsonMapper.isValidObject("{}".getBytes(StandardCharsets.UTF_8)));
++        assertFalse(JsonMapper.isValidObject("[]".getBytes(StandardCharsets.UTF_8)));
++        assertFalse(JsonMapper.isValidObject("1".getBytes(StandardCharsets.UTF_8)));
++    }
++
++    @Test
++    public void test_isValidObject_bytes_offset() {
++        byte[] bytes = "xx{}yy".getBytes(StandardCharsets.UTF_8);
++        assertTrue(JsonMapper.isValidObject(bytes, 2, 2, StandardCharsets.UTF_8));
++
++        byte[] arrayBytes = "xx[]yy".getBytes(StandardCharsets.UTF_8);
++        assertFalse(JsonMapper.isValidObject(arrayBytes, 2, 2, StandardCharsets.UTF_8));
++    }
++
++    @Test
++    public void test_isValidArray_bytes() {
++        assertTrue(JsonMapper.isValidArray("[]".getBytes(StandardCharsets.UTF_8)));
++        assertFalse(JsonMapper.isValidArray("{}".getBytes(StandardCharsets.UTF_8)));
++        assertFalse(JsonMapper.isValidArray("1".getBytes(StandardCharsets.UTF_8)));
++    }
+     @Test
+     public void test_parseArray_0() {
+         String str = "[1,2,3]";

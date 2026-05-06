@@ -1,0 +1,107 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+index e14f6efb..76db4672 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+@@ -304,7 +304,9 @@ public final class SegmentedTextBuffer
+             return (resultCharArray = cachedResultString.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!segmentsPresent)  return activeSegment;
++        if (!segmentsPresent) {
++            return (currentLength == 0) ? EMPTY_CHARS : activeSegment;
++        }
+         // Nope, need to have/create a non-segmented array and return it
+         return contentsAsCharArray();
+     }
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 0e26d253..f9abbc5a 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -33,32 +33,48 @@ public class TestTextBuffer
+         assertEquals(1, tb.toString().length());
+     }
+ 
+-      public void testLongAppend()
+-      {
+-          final int len = SegmentedTextBuffer.MAX_SEGMENT_LENGTH * 3 / 2;
+-          StringBuilder sb = new StringBuilder(len);
+-          for (int i = 0; i < len; ++i) {
+-              sb.append('x');
+-          }
+-         final String STR = sb.toString();
+-         final String EXP = "a" + STR + "c";
+- 
+-         // ok: first test with String:
+-         SegmentedTextBuffer tb = new SegmentedTextBuffer(new BufferRecycler());
+-         tb.appendChar('a');
+-         tb.appendChar(STR, 0, len);
+-         tb.appendChar('c');
+-         assertEquals(len+2, tb.length());
+-         assertEquals(EXP, tb.getContentsAsString());
+- 
+-         // then char[]
+-         tb = new SegmentedTextBuffer(new BufferRecycler());
+-         tb.appendChar('a');
+-         tb.append(STR.toCharArray(), 0, len);
+-         tb.appendChar('c');
+-         assertEquals(len+2, tb.length());
+-         assertEquals(EXP, tb.getContentsAsString());
+-      }
++    public void testLongAppend()
++    {
++        final int len = SegmentedTextBuffer.MAX_SEGMENT_LENGTH * 3 / 2;
++        StringBuilder sb = new StringBuilder(len);
++        for (int i = 0; i < len; ++i) {
++            sb.append('x');
++        }
++        final String STR = sb.toString();
++        final String EXP = "a" + STR + "c";
++
++        // ok: first test with String:
++        SegmentedTextBuffer tb = new SegmentedTextBuffer(new BufferRecycler());
++        tb.appendChar('a');
++        tb.appendChar(STR, 0, len);
++        tb.appendChar('c');
++        assertEquals(len+2, tb.length());
++        assertEquals(EXP, tb.getContentsAsString());
++
++        // then char[]
++        tb = new SegmentedTextBuffer(new BufferRecycler());
++        tb.appendChar('a');
++        tb.append(STR.toCharArray(), 0, len);
++        tb.appendChar('c');
++        assertEquals(len+2, tb.length());
++        assertEquals(EXP, tb.getContentsAsString());
++    }
++
++    public void testEmptyGetTextBufferConsistency()
++    {
++        SegmentedTextBuffer tb = new SegmentedTextBuffer(new BufferRecycler());
++        tb.resetToEmpty();
++
++        char[] first = tb.getTextBuffer();
++        assertNotNull(first);
++        assertEquals(0, first.length);
++
++        assertEquals("", tb.getContentsAsString());
++
++        char[] second = tb.getTextBuffer();
++        assertNotNull(second);
++        assertEquals(0, second.length);
++    }
+ 
+       // [Core#152]
+       public void testExpand()

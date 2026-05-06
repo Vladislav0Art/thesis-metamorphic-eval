@@ -1,0 +1,77 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..bcc8ac6fb 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -90,6 +90,14 @@ setup_classpath() {
+ CLASSPATH="${JRUBY_HOME}/lib/jruby.jar"
+ CLASSPATH="$(setup_classpath $CLASSPATH $LOGSTASH_JARS)"
+ 
++bundled_jdk_version() {
++  local bundled_jdk_version_file="${LOGSTASH_HOME}/jdk/VERSION"
++
++  if [ -f "${bundled_jdk_version_file}" ]; then
++    cat "${bundled_jdk_version_file}"
++  fi
++}
++
+ setup_java() {
+   # set the path to java into JAVACMD which will be picked up by JRuby to launch itself
+   if [ -z "$JAVACMD" ]; then
+@@ -100,7 +108,12 @@ setup_java() {
+       if [ -x "$LS_JAVA_HOME/bin/java" ]; then
+         JAVACMD="$LS_JAVA_HOME/bin/java"
+         if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+-          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          BUNDLED_JDK_VERSION=$(bundled_jdk_version)
++          if [ -n "${BUNDLED_JDK_VERSION}" ]; then
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK (${BUNDLED_JDK_VERSION})."
++          else
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          fi
+         fi
+       else
+         echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."
+diff --git a/bin/setup.bat b/bin/setup.bat
+index 5e8acb4d1..8774bd6c7 100644
+--- a/bin/setup.bat
++++ b/bin/setup.bat
+@@ -24,7 +24,17 @@ if defined LS_JAVA_HOME (
+   set JAVACMD=%LS_JAVA_HOME%\bin\java.exe
+   echo Using LS_JAVA_HOME defined java: %LS_JAVA_HOME%
+   if exist "%LS_HOME%\jdk" (
+-    echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK.
++    set BUNDLED_JDK_VERSION=
++    if exist "%LS_HOME%\jdk\VERSION" (
++      for /f "usebackq delims=" %%I in ("%LS_HOME%\jdk\VERSION") do (
++        if not defined BUNDLED_JDK_VERSION set BUNDLED_JDK_VERSION=%%I
++      )
++    )
++    if defined BUNDLED_JDK_VERSION (
++      echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK !BUNDLED_JDK_VERSION!.
++    ) else (
++      echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK.
++    )
+   )
+ ) else (
+   if exist "%LS_HOME%\jdk" (
+@@ -62,4 +72,4 @@ if not exist %JRUBY_BIN% (
+   exit /b 1
+ )
+ 
+-set RUBYLIB=%LS_HOME%\lib
+\ No newline at end of file
++set RUBYLIB=%LS_HOME%\lib

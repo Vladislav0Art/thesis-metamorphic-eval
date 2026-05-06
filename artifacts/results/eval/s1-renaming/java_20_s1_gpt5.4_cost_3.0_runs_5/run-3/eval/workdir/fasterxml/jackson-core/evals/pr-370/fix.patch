@@ -1,0 +1,130 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+index 66e81b56..a66eb05b 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+@@ -904,6 +904,14 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+         }
+         if (_parsingContext.expectComma()) {
+             index = _expectCommaAndSkip(index);
++
++            // Was that a trailing comma?
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if ((index == INT_RBRACKET) || (index == INT_RCURLY)) {
++                    _closeCurrentScope(index);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _updateTokenLocation();
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/UTF8JsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/UTF8JsonParser.java
+index b09b3791..09bcf043 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/UTF8JsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/UTF8JsonParser.java
+@@ -785,6 +785,14 @@ public class UTF8JsonParser
+                 _reportUnexpectedChar(index, "was expecting comma to separate "+_parsingContext.typeDesc()+" entries");
+             }
+             index = _skipWhitespace();
++
++            // Was that a trailing comma?
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if ((index == INT_RBRACKET) || (index == INT_RCURLY)) {
++                    _closeScope(index);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _nextTokenOutsideObject(index);
+diff --git a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+index 972436b9..21fac7b8 100644
+--- a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
++++ b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+@@ -5,7 +5,9 @@ import com.fasterxml.jackson.core.JsonFactory;
+ import com.fasterxml.jackson.core.JsonParser;
+ import com.fasterxml.jackson.core.JsonParser.Feature;
+ import com.fasterxml.jackson.core.JsonToken;
++import com.fasterxml.jackson.core.json.ReaderBackedJsonParser;
+ import com.fasterxml.jackson.core.json.UTF8JsonParser;
++import com.fasterxml.jackson.core.json.UTF8StreamJsonParser;
+ 
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+@@ -289,6 +291,30 @@ public class TrailingCommasTest extends BaseTest {
+     p.close();
+   }
+ 
++  @Test
++  public void testObjectTrailingCommaWithNextName() throws Exception {
++    String json = "{\"a\": true, \"b\": false,}";
++
++    JsonParser p = createParser(factory, mode, json);
++
++    assertEquals(JsonToken.START_OBJECT, p.nextToken());
++
++    assertEquals("a", nextObjectName(p));
++    assertToken(JsonToken.VALUE_TRUE, p.nextToken());
++
++    assertEquals("b", nextObjectName(p));
++    assertToken(JsonToken.VALUE_FALSE, p.nextToken());
++
++    if (features.contains(Feature.ALLOW_TRAILING_COMMA)) {
++      assertNull(nextObjectName(p));
++      assertEquals(JsonToken.END_OBJECT, p.currentToken());
++      assertEnd(p);
++    } else {
++      assertUnexpected(p, '}');
++    }
++    p.close();
++  }
++
+   @Test
+   public void testObjectTrailingCommas() throws Exception {
+     String json = "{\"a\": true, \"b\": false,,}";
+@@ -309,18 +335,27 @@ public class TrailingCommasTest extends BaseTest {
+     p.close();
+   }
+ 
+-  private void assertEnd(JsonParser p) throws IOException {
+-    // Issue #325
+-    if (!(p instanceof UTF8JsonParser)) {
+-      JsonToken next = p.nextToken();
+-      assertNull("expected end of stream but found " + next, next);
++  private String nextObjectName(JsonParser p) throws IOException {
++    if (p instanceof ReaderBackedJsonParser) {
++      return ((ReaderBackedJsonParser) p).nextPropertyName();
++    }
++    if (p instanceof UTF8JsonParser) {
++      return ((UTF8JsonParser) p).nextName();
++    }
++    if (p instanceof UTF8StreamJsonParser) {
++      return ((UTF8StreamJsonParser) p).nextFieldName();
+     }
++    return p.nextFieldName();
++  }
++
++  private void assertEnd(JsonParser p) throws IOException {
++    assertNull(p.nextToken());
+   }
+ 
+   private void assertUnexpected(JsonParser p, char c) throws IOException {
+     try {
+       p.nextToken();
+-      fail("No exception thrown");
++      fail("Expected exception");
+     } catch (Exception e) {
+       verifyException(e, String.format("Unexpected character ('%s' (code %d))", c, (int) c));
+     }

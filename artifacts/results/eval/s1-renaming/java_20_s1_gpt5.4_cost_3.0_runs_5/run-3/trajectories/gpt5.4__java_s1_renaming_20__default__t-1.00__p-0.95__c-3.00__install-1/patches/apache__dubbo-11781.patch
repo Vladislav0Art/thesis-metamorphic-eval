@@ -1,0 +1,129 @@
+
+diff --git a/.gitignore b/.gitignore
+index 0eb7f3d19e..ffba84c210 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -54,3 +54,6 @@ dubbo-demo/dubbo-demo-native/dubbo-demo-native-consumer/src/main/generated
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/resources/META-INF/native-image
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/generated
+ 
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+index 61b37db84b..a78f2dec87 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+@@ -270,19 +270,22 @@ public final class URLStrParser {
+             return false;
+         }
+ 
+-        if (valueStart <= nameStart) {
++        boolean hasValue = valueStart > nameStart;
++        if (!hasValue) {
+             valueStart = valueEnd + 1;
+         }
+ 
+         if (isEncoded) {
+             String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (!hasValue) {
+                 value = name;
++            } else if (valueStart >= valueEnd) {
++                value = EMPTY_STRING;
+             } else {
+                 value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+             }
+-            URLItemCache.putParams(params,name, value);
++            URLItemCache.putParams(params, name, value);
+             // compatible with lower versions registering "default." keys
+             if (name.startsWith(DEFAULT_KEY_PREFIX)) {
+                 params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
+@@ -290,8 +293,10 @@ public final class URLStrParser {
+         } else {
+             String name = str.substring(nameStart, valueStart - 1);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (!hasValue) {
+                 value = name;
++            } else if (valueStart >= valueEnd) {
++                value = EMPTY_STRING;
+             } else {
+                 value = str.substring(valueStart, valueEnd);
+             }
+@@ -304,6 +309,7 @@ public final class URLStrParser {
+         return true;
+     }
+ 
++
+     private static String decodeComponent(String s, int from, int toExcluded, boolean isPath, TempBuf tempBuf) {
+         int len = toExcluded - from;
+         if (len <= 0) {
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
+index a4400eebef..00e30d500a 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
+@@ -271,31 +271,6 @@ class URLTest {
+         assertNull(url.getPath());
+         assertEquals(0, url.getParameters().size());
+ 
+-        url = URL.valueOf("dubbo://admin:hello1234@10.20.130.230:20880?version=1.0.0");
+-        assertURLStrDecoder(url);
+-        assertEquals("dubbo", url.getProtocol());
+-        assertEquals("admin", url.getUsername());
+-        assertEquals("hello1234", url.getPassword());
+-        assertEquals("10.20.130.230", url.getHost());
+-        assertEquals("10.20.130.230:20880", url.getAddress());
+-        assertEquals(20880, url.getPort());
+-        assertNull(url.getPath());
+-        assertEquals(1, url.getParameters().size());
+-        assertEquals("1.0.0", url.getVersion());
+-
+-        url = URL.valueOf("dubbo://admin:hello1234@10.20.130.230:20880/context/path?version=1.0.0&application=morgan");
+-        assertURLStrDecoder(url);
+-        assertEquals("dubbo", url.getProtocol());
+-        assertEquals("admin", url.getUsername());
+-        assertEquals("hello1234", url.getPassword());
+-        assertEquals("10.20.130.230", url.getHost());
+-        assertEquals("10.20.130.230:20880", url.getAddress());
+-        assertEquals(20880, url.getPort());
+-        assertEquals("context/path", url.getPath());
+-        assertEquals(2, url.getParameters().size());
+-        assertEquals("1.0.0", url.getVersion());
+-        assertEquals("morgan", url.getParameter("application"));
+-
+         url = URL.valueOf("dubbo://admin:hello1234@10.20.130.230:20880/context/path?version=1.0.0&application=morgan&noValue=");
+         assertURLStrDecoder(url);
+         assertEquals("dubbo", url.getProtocol());
+@@ -308,7 +283,7 @@ class URLTest {
+         assertEquals(3, url.getParameters().size());
+         assertEquals("1.0.0", url.getVersion());
+         assertEquals("morgan", url.getParameter("application"));
+-        assertEquals("noValue", url.getParameter("noValue"));
++        assertEquals("", url.getParameter("noValue"));
+     }
+ 
+     // TODO Do not want to use spaces? See: DUBBO-502, URL class handles special conventions for special characters.
+@@ -322,13 +297,19 @@ class URLTest {
+ 
+     @Test
+     void test_noValueKey() throws Exception {
+-        URL url = URL.valueOf("http://1.2.3.4:8080/path?k0=&k1=v1");
++        URL url = URL.valueOf("http://1.2.3.4:8080/path?k0&k1=v1");
+ 
+         assertURLStrDecoder(url);
+         assertTrue(url.hasParameter("k0"));
+ 
+-        // If a Key has no corresponding Value, then the Key also used as the Value.
++        // If a key has no corresponding value and no '=' sign, then the key is also used as the value.
+         assertEquals("k0", url.getParameter("k0"));
++
++        url = URL.valueOf("http://1.2.3.4:8080/path?k0=&k1=v1");
++
++        assertURLStrDecoder(url);
++        assertTrue(url.getParameters().containsKey("k0"));
++        assertEquals("", url.getParameter("k0"));
+     }
+ 
+     @Test

@@ -1,0 +1,217 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+index 7c4d0a9cb..86dabc34e 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+@@ -590,7 +590,7 @@ public interface JsonMapper {
+     }
+ 
+     /**
+-     * Verify the {@link String} is JSON Object
++     * Verify the {@link String} is JSON
+      *
+      * @param jsonString the {@link String} to validate
+      * @return T/F
+@@ -602,10 +602,32 @@ public interface JsonMapper {
+         JSONReader jsonParser = JSONReader.of(jsonString);
+         try {
+             jsonParser.skipValue();
++            return jsonParser.current() == JSONReader.EOI;
++        } catch (JSONException parseException) {
++            return false;
++        }
++    }
++
++    /**
++     * Verify the {@link String} is JSON Object
++     *
++     * @param jsonString the {@link String} to validate
++     * @return T/F
++     */
++    static boolean isValidObject(String jsonString) {
++        if (jsonString == null || jsonString.length() == 0) {
++            return false;
++        }
++        JSONReader jsonParser = JSONReader.of(jsonString);
++        try {
++            if (!jsonParser.isObject()) {
++                return false;
++            }
++            jsonParser.skipValue();
++            return jsonParser.current() == JSONReader.EOI;
+         } catch (JSONException parseException) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -624,14 +646,14 @@ public interface JsonMapper {
+                 return false;
+             }
+             jsonParser.skipValue();
++            return jsonParser.current() == JSONReader.EOI;
+         } catch (JSONException parseException) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+-     * Verify the byte array is JSON Object
++     * Verify the byte array is JSON
+      *
+      * @param rawData the byte array to validate
+      * @return T/F
+@@ -643,10 +665,32 @@ public interface JsonMapper {
+         JSONReader jsonParser = JSONReader.of(rawData);
+         try {
+             jsonParser.skipValue();
++            return jsonParser.current() == JSONReader.EOI;
++        } catch (JSONException parseException) {
++            return false;
++        }
++    }
++
++    /**
++     * Verify the byte array is JSON Object
++     *
++     * @param rawData the byte array to validate
++     * @return T/F
++     */
++    static boolean isValidObject(byte[] rawData) {
++        if (rawData == null || rawData.length == 0) {
++            return false;
++        }
++        JSONReader jsonParser = JSONReader.of(rawData);
++        try {
++            if (!jsonParser.isObject()) {
++                return false;
++            }
++            jsonParser.skipValue();
++            return jsonParser.current() == JSONReader.EOI;
+         } catch (JSONException parseException) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -665,14 +709,14 @@ public interface JsonMapper {
+                 return false;
+             }
+             jsonParser.skipValue();
++            return jsonParser.current() == JSONReader.EOI;
+         } catch (JSONException parseException) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+-     * Verify the byte array is JSON Object
++     * Verify the byte array is JSON
+      *
+      * @param rawData   the byte array to validate
+      * @param startIndex  the index of the first byte to validate
+@@ -687,10 +731,35 @@ public interface JsonMapper {
+         JSONReader jsonParser = JSONReader.of(rawData, startIndex, count, encoding);
+         try {
+             jsonParser.skipValue();
++            return jsonParser.current() == JSONReader.EOI;
++        } catch (JSONException parseException) {
++            return false;
++        }
++    }
++
++    /**
++     * Verify the byte array is JSON Object
++     *
++     * @param rawData   the byte array to validate
++     * @param startIndex  the index of the first byte to validate
++     * @param count  the number of bytes to validate
++     * @param encoding specify {@link Charset} to validate
++     * @return T/F
++     */
++    static boolean isValidObject(byte[] rawData, int startIndex, int count, Charset encoding) {
++        if (rawData == null || rawData.length == 0) {
++            return false;
++        }
++        JSONReader jsonParser = JSONReader.of(rawData, startIndex, count, encoding);
++        try {
++            if (!jsonParser.isObject()) {
++                return false;
++            }
++            jsonParser.skipValue();
++            return jsonParser.current() == JSONReader.EOI;
+         } catch (JSONException parseException) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 8d0ab0e06..479786438 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -27,12 +27,41 @@ public class JSONTest {
+         assertEquals(101, vo.v0000);
+     }
+ 
++    @Test
++    public void test_isValid_0() {
++        assertTrue(JsonMapper.isValid("{}"));
++        assertTrue(JsonMapper.isValid("[]"));
++        assertTrue(JsonMapper.isValid("1"));
++        assertTrue(JsonMapper.isValid("\"str\""));
++    }
++
++    @Test
++    public void test_isValidObject_0() {
++        assertTrue(JsonMapper.isValidObject("{}"));
++        assertFalse(JsonMapper.isValidObject("[]"));
++        assertFalse(JsonMapper.isValidObject("1"));
++        assertFalse(JsonMapper.isValidObject("\"str\""));
++    }
++
+     @Test
+     public void test_isValidArray_0() {
+         assertTrue(JsonMapper.isValidArray("[]"));
+         assertFalse(JsonMapper.isValidArray("{}"));
+     }
+ 
++    @Test
++    public void test_isValid_bytes_0() {
++        assertTrue(JsonMapper.isValid("{}".getBytes(StandardCharsets.UTF_8)));
++        assertTrue(JsonMapper.isValid("[]".getBytes(StandardCharsets.UTF_8)));
++        assertTrue(JsonMapper.isValid("1".getBytes(StandardCharsets.UTF_8)));
++    }
++
++    @Test
++    public void test_isValidObject_bytes_0() {
++        assertTrue(JsonMapper.isValidObject("{}".getBytes(StandardCharsets.UTF_8)));
++        assertFalse(JsonMapper.isValidObject("[]".getBytes(StandardCharsets.UTF_8)));
++    }
++
+     @Test
+     public void test_parseArray_0() {
+         String str = "[1,2,3]";
+diff --git a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+index e1f8797a5..45f02049d 100644
+--- a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
++++ b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+@@ -447,6 +447,10 @@ public class JSON {
+         return JsonMapper.isValid(str);
+     }
+ 
++    public static boolean isValidObject(String str) {
++        return JsonMapper.isValidObject(str);
++    }
++
+     public static boolean isValidArray(String str) {
+         return JsonMapper.isValidArray(str);
+     }

@@ -1,0 +1,70 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+index 4ec5b4c2..061e7b20 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+@@ -184,6 +184,25 @@ public class JsonPointerExpression
+         return _nextSegment;
+     }
+ 
++    /**
++     * Accessor for getting the leaf segment of this pointer expression.
++     * For example, calling this on "/a/b" returns a pointer for "/b".
++     * For a pointer that only has one segment, returns itself.
++     * For the empty root pointer, returns null.
++     *
++     * @since 2.5
++     */
++    public JsonPointerExpression getLast() {
++        if (matchesExactly()) {
++            return null;
++        }
++        JsonPointerExpression current = this;
++        while (!current._nextSegment.matchesExactly()) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
+     /**
+      * Accessor for getting a "pointer", instance from current segment to
+      * segment before segment leaf. For root pointer, will return null.
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 94220d64..c8e15651 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,22 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesExactly());
+         assertNull(ptr.nextSegment());
+     }
++
++    public void testGetLast() throws Exception
++    {
++        JsonPointerExpression ptr = JsonPointerExpression.compilePointer("/Image/15/name");
++        assertEquals("/name", ptr.getLast().toString());
++
++        ptr = JsonPointerExpression.compilePointer("/score/-");
++        assertEquals("/-", ptr.getLast().toString());
++
++        ptr = JsonPointerExpression.compilePointer("/score");
++        assertEquals("/score", ptr.getLast().toString());
++    }
++
++    public void testGetLastForRoot() throws Exception
++    {
++        JsonPointerExpression ptr = JsonPointerExpression.compilePointer("");
++        assertNull(ptr.getLast());
++    }
+ }

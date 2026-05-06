@@ -1,0 +1,32 @@
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+index 4ec5b4c2..b289efac 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+@@ -148,6 +148,27 @@ public class JsonPointerExpression
+     public boolean hasMatchingProperty() { return _matchingPropertyName != null; }
+     public boolean hasMatchingElement() { return _matchingElementIndex >= 0; }
+ 
++    /**
++     * Returns the leaf of current json pointer expression.
++     * Leaf is the last non-null segment of current json pointer.
++     */
++    public JsonPointerExpression getLast() {
++        JsonPointerExpression activePointerExpr = this;
++        while(!JsonPointerExpression.EMPTY.equals(activePointerExpr._nextSegment)) {
++            activePointerExpr = activePointerExpr._nextSegment;
++        }
++        return activePointerExpr;
++    }
++
++    public JsonPointerExpression appendPointer(JsonPointerExpression pointerExpr) {
++        String activePointerPath = _asString;
++        if(activePointerPath.endsWith("/")) {
++            //removes final slash
++            activePointerPath = activePointerPath.substring(0, activePointerPath.length()-1);
++        }
++        return compilePointer(activePointerPath + pointerExpr._asString);
++    }
++
+     /**
+      * Method that may be called to see if the pointer would match property
+      * (of a JSON Object) with given name.

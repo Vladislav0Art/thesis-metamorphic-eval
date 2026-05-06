@@ -1,0 +1,108 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index cccb9c476..cbc2588af 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -56,5 +56,13 @@ describe  FileWatch::BufferedTokenizer  do
+       expect(subject.extract("")).to eq([])
+       expect(subject.extract("foo||bar")).to eq(["foo"])
+     end
++    it "discards oversized buffered payload up to the next delimiter and resumes after it" do
++      tokenizer = FileWatch::BufferedTokenizer.new("\n", 100)
++      expect(tokenizer.extract("a" * 90)).to eq([])
++
++      expect { tokenizer.extract(("a" * 15) + "\n{\"b\":1}\n") }.to raise_error(IllegalStateException, "input buffer full")
++
++      expect(tokenizer.extract("{\"b\":1}\n")).to eq(["{\"b\":1}"])
++    end
+   end
+ end
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+index 2d7b90bba..ccf65bb2b 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+@@ -80,6 +80,15 @@ public class BufferedTokenizerExt extends RubyObject {
+         if (hasSizeLimit) {
+             final int entitiesSize = ((RubyString) entities.first()).size();
+             if (inputSize + entitiesSize > sizeLimit) {
++                input.clear();
++                inputSize = 0;
++                if (!entities.isEmpty()) {
++                    entities.shift(context);
++                    if (!entities.isEmpty()) {
++                        input.append(entities.pop(context));
++                        inputSize = ((RubyString) input.first()).size();
++                    }
++                }
+                 throw new IllegalStateException("input buffer full");
+             }
+             this.inputSize = inputSize + entitiesSize;
+@@ -106,9 +115,11 @@ public class BufferedTokenizerExt extends RubyObject {
+     public IRubyObject flush(final ThreadContext context) {
+         final IRubyObject buffer = input.join(context);
+         input.clear();
++        inputSize = 0;
+         return buffer;
+     }
+ 
++
+     @JRubyMethod(name = "empty?")
+     public IRubyObject isEmpty(final ThreadContext context) {
+         return input.empty_p();
+diff --git a/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+new file mode 100644
+index 000000000..2acc3767b
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+@@ -0,0 +1,38 @@
++package org.logstash.common;
++
++import org.jruby.RubyArray;
++import org.jruby.RubyFixnum;
++import org.jruby.RubyString;
++import org.jruby.runtime.ThreadContext;
++import org.junit.Test;
++import org.logstash.RubyTestBase;
++import org.logstash.RubyUtil;
++
++import static org.junit.Assert.assertEquals;
++import static org.junit.Assert.assertThrows;
++
++public class BufferedTokenizerExtTest extends RubyTestBase {
++
++    @Test
++    public void discardsOversizedBufferedPayloadUpToNextDelimiterAndResumesAfterIt() {
++        final ThreadContext context = RubyUtil.RUBY.getCurrentContext();
++        final BufferedTokenizerExt tokenizer = new BufferedTokenizerExt(RubyUtil.RUBY, RubyUtil.BUFFERED_TOKENIZER)
++            .initialize(context, RubyString.newString(RubyUtil.RUBY, "\n"), RubyFixnum.newFixnum(RubyUtil.RUBY, 100));
++
++        assertEquals(0, ((RubyArray) tokenizer.extract(context, RubyString.newString(RubyUtil.RUBY, repeat('a', 90)))).size());
++
++        final IllegalStateException error = assertThrows(
++            IllegalStateException.class,
++            () -> tokenizer.extract(context, RubyString.newString(RubyUtil.RUBY, repeat('a', 15) + "\n{\"b\":1}\n"))
++        );
++        assertEquals("input buffer full", error.getMessage());
++
++        final RubyArray tokens = (RubyArray) tokenizer.extract(context, RubyString.newString(RubyUtil.RUBY, "{\"b\":1}\n"));
++        assertEquals(1, tokens.size());
++        assertEquals("{\"b\":1}", tokens.entry(0).asJavaString());
++    }
++
++    private static String repeat(char character, int count) {
++        return String.valueOf(character).repeat(count);
++    }
++}

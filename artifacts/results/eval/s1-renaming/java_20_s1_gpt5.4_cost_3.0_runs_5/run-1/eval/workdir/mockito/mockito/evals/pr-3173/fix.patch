@@ -1,0 +1,147 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+index cd5194258..b926c0c2c 100644
+--- a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
++++ b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+@@ -87,7 +87,6 @@ public class SpyAnnotationEngine implements AnnotationEngine {
+         return Mockito.mock(
+                 instance.getClass(),
+                 withSettings()
+-                        .genericTypeToMock(field.getGenericType())
+                         .spiedInstance(instance)
+                         .defaultAnswer(CALLS_REAL_METHODS)
+                         .name(field.getName()));
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/DelegateByteBuddyMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/DelegateByteBuddyMockMaker.java
+index 88787ef6b..710af453e 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/DelegateByteBuddyMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/DelegateByteBuddyMockMaker.java
+@@ -345,6 +345,12 @@ class DelegateByteBuddyMockMaker
+                         true);
+     }
+ 
++    @Override
++    public <T> T createMock(
++            MockCreationSettings<T> creationSettings, MockHandler mockHandlerInstance) {
++        return createMockInstance(creationSettings, mockHandlerInstance);
++    }
++
+     public <T> T createMockInstance(MockCreationSettings<T> creationSettings, MockHandler mockHandlerInstance) {
+         return createMock(creationSettings, mockHandlerInstance, false);
+     }
+@@ -486,8 +492,16 @@ class DelegateByteBuddyMockMaker
+             return handlerCallback.handler;
+         }
+     }
++    @Override
++    public void resetMock(
++            Object mockObject, MockHandler newHandler, MockCreationSettings creationSettings) {
++        resetMockInterceptor(mockObject, newHandler, creationSettings);
++    }
+ 
+-    public void resetMockInterceptor(Object mockObject, MockHandler replacementHandler, MockCreationSettings creationSettings) {
++    public void resetMockInterceptor(
++            Object mockObject,
++            MockHandler replacementHandler,
++            MockCreationSettings creationSettings) {
+         MockMethodInterceptor methodInterceptorInstance =
+                 new MockMethodInterceptor(replacementHandler, creationSettings);
+         if (mockObject instanceof Class<?>) {
+diff --git a/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java b/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
+index daa71bed3..f4f465afe 100644
+--- a/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
++++ b/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
+@@ -254,6 +254,19 @@ public class SpyAnnotationTest extends TestBase {
+         }
+     }
+ 
++    @Test
++    public void should_preserve_constructor_state_on_final_spy_when_generic_spy_is_present()
++            throws Exception {
++        Assume.assumeThat(Plugins.getMockMaker(), instanceOf(InlineMockMaker.class));
++
++        WithGenericAndFinalSpies withSpies = new WithGenericAndFinalSpies();
++
++        MockitoAnnotations.openMocks(withSpies);
++
++        assertThat(withSpies.finalType.value()).isEqualTo("some value");
++        assertThat(withSpies.finalType.number()).isEqualTo(42);
++    }
++
+     @Test
+     public void should_be_able_to_stub_and_verify_via_varargs_for_list_params() throws Exception {
+         // You can stub with varargs.
+@@ -326,6 +339,30 @@ public class SpyAnnotationTest extends TestBase {
+         NoValidConstructor(String f) {}
+     }
+ 
++    static class WithGenericAndFinalSpies {
++        @Spy final List<String> genericSpy = Arrays.asList("item A", "item B");
++
++        @Spy final FinalType finalType = new FinalType("some value", 42);
++    }
++
++    static final class FinalType {
++        private final String value;
++        private final int number;
++
++        FinalType(String value, int number) {
++            this.value = value;
++            this.number = number;
++        }
++
++        String value() {
++            return value;
++        }
++
++        int number() {
++            return number;
++        }
++    }
++
+     static class ThrowingConstructor {
+         ThrowingConstructor() {
+             throw new RuntimeException("boo!");
+diff --git a/subprojects/java21/src/test/java/org/mockito/java21/RecordSpyWithGenericSpyTest.java b/subprojects/java21/src/test/java/org/mockito/java21/RecordSpyWithGenericSpyTest.java
+new file mode 100644
+index 000000000..7be355ef8
+--- /dev/null
++++ b/subprojects/java21/src/test/java/org/mockito/java21/RecordSpyWithGenericSpyTest.java
+@@ -0,0 +1,25 @@
++package org.mockito.java21;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.List;
++
++import org.junit.Test;
++import org.mockito.MockitoAnnotations;
++import org.mockito.Spy;
++
++public class RecordSpyWithGenericSpyTest {
++
++    @Spy private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy private ExampleRecord exampleRecord = new ExampleRecord("some value");
++
++    @Test
++    public void should_preserve_record_state_when_generic_spy_is_present() throws Exception {
++        MockitoAnnotations.openMocks(this);
++
++        assertThat(exampleRecord.someParameter()).isEqualTo("some value");
++    }
++
++    record ExampleRecord(String someParameter) {}
++}

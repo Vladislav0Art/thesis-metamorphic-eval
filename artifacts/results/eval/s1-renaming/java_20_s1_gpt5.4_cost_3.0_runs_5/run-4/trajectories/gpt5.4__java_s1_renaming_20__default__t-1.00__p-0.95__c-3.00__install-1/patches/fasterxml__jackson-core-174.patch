@@ -1,0 +1,60 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+index 4ec5b4c2..675fbc06 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+@@ -194,6 +194,18 @@ public class JsonPointerExpression
+         return _headSegment;
+     }
+ 
++    /**
++     * Accessor for getting the leaf segment of this pointer.
++     * For the empty/root pointer, returns this instance.
++     */
++    public JsonPointerExpression getLast() {
++        JsonPointerExpression current = this;
++        while (current._nextSegment != null && !current._nextSegment.matchesExactly()) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
+     /*
+     /**********************************************************
+     /* Standard method overrides
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 94220d64..80c9e471 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,19 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesExactly());
+         assertNull(ptr.nextSegment());
+     }
++
++    public void testGetLast() throws Exception
++    {
++        JsonPointerExpression ptr = JsonPointerExpression.compilePointer("/Image/15/name");
++        assertEquals("/name", ptr.getLast().toString());
++        assertEquals("name", ptr.getLast().getMatchingProperty());
++
++        ptr = JsonPointerExpression.compilePointer("/score/-");
++        assertEquals("/-", ptr.getLast().toString());
++        assertEquals("-", ptr.getLast().getMatchingProperty());
++
++        ptr = JsonPointerExpression.compilePointer("");
++        assertTrue(ptr.getLast().matchesExactly());
++        assertEquals("", ptr.getLast().toString());
++    }
+ }

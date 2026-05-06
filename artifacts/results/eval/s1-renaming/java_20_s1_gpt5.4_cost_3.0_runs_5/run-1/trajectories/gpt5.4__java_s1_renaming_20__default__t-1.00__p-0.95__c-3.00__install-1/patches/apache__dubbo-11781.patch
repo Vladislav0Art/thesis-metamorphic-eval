@@ -1,0 +1,180 @@
+
+diff --git a/.gitignore b/.gitignore
+index 0eb7f3d19e..ffba84c210 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -54,3 +54,6 @@ dubbo-demo/dubbo-demo-native/dubbo-demo-native-consumer/src/main/generated
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/resources/META-INF/native-image
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/generated
+ 
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+index 61b37db84b..65b53c72a9 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+@@ -70,6 +70,7 @@ public final class URLStrParser {
+         Map<String, String> params = new HashMap<>();
+         int nameStart = from;
+         int valueStart = -1;
++        boolean hasEquals = false;
+         int i;
+         for (i = from; i < len; i++) {
+             char ch = str.charAt(i);
+@@ -79,18 +80,21 @@ public final class URLStrParser {
+                         nameStart = i + 1;
+                     } else if (valueStart < nameStart) {
+                         valueStart = i + 1;
++                        hasEquals = true;
+                     }
+                     break;
+                 case ';':
+                 case '&':
+-                    addParam(str, false, nameStart, valueStart, i, params, tempBuf);
++                    addParam(str, false, nameStart, valueStart, i, hasEquals, params, tempBuf);
+                     nameStart = i + 1;
++                    valueStart = -1;
++                    hasEquals = false;
+                     break;
+                 default:
+                     // continue
+             }
+         }
+-        addParam(str, false, nameStart, valueStart, i, params, tempBuf);
++        addParam(str, false, nameStart, valueStart, i, hasEquals, params, tempBuf);
+         return params;
+     }
+ 
+@@ -232,66 +236,62 @@ public final class URLStrParser {
+         Map<String, String> params = new HashMap<>();
+         int nameStart = from;
+         int valueStart = -1;
++        boolean hasEquals = false;
+         int i;
+         for (i = from; i < len; i++) {
+             char ch = str.charAt(i);
+-            if (ch == '%') {
+-                if (i + 3 > len) {
+-                    throw new IllegalArgumentException("unterminated escape sequence at index " + i + " of: " + str);
+-                }
+-                ch = (char) decodeHexByte(str, i + 1);
+-                i += 2;
+-            }
+-
+             switch (ch) {
+                 case '=':
+                     if (nameStart == i) {
+                         nameStart = i + 1;
+                     } else if (valueStart < nameStart) {
+                         valueStart = i + 1;
++                        hasEquals = true;
+                     }
+                     break;
+-                case ';':
+-                case '&':
+-                    addParam(str, true, nameStart, valueStart, i - 2, params, tempBuf);
+-                    nameStart = i + 1;
++                case '%':
++                    if (i + 2 < len && str.charAt(i + 1) == '2'
++                        && (str.charAt(i + 2) == '6' || str.charAt(i + 2) == '3')
++                    ) {
++                        addParam(str, true, nameStart, valueStart, i - 2, hasEquals, params, tempBuf);
++                        nameStart = i + 3;
++                        valueStart = -1;
++                        hasEquals = false;
++                        i = i + 2;
++                    }
+                     break;
+                 default:
+                     // continue
+             }
+         }
+-        addParam(str, true, nameStart, valueStart, i, params, tempBuf);
++        addParam(str, true, nameStart, valueStart, i, hasEquals, params, tempBuf);
+         return params;
+     }
+ 
+-    private static boolean addParam(String str, boolean isEncoded, int nameStart, int valueStart, int valueEnd, Map<String, String> params,
+-                                    TempBuf tempBuf) {
++    private static void addParam(String str, boolean encode, int nameStart, int valueStart, int valueEnd,
++                                 boolean hasEquals, Map<String, String> params, TempBuf tempBuf) {
+         if (nameStart >= valueEnd) {
+-            return false;
++            return;
+         }
+ 
+-        if (valueStart <= nameStart) {
+-            valueStart = valueEnd + 1;
+-        }
+-
+-        if (isEncoded) {
+-            String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
++        if (encode) {
++            String name = decodeComponent(str, nameStart, valueStart > nameStart ? valueStart - 1 : valueEnd, false, tempBuf);
+             String value;
+-            if (valueStart >= valueEnd) {
+-                value = name;
++            if (valueStart <= nameStart) {
++                value = hasEquals ? EMPTY_STRING : name;
+             } else {
+                 value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+             }
+-            URLItemCache.putParams(params,name, value);
++            URLItemCache.putParams(params, name, value);
+             // compatible with lower versions registering "default." keys
+             if (name.startsWith(DEFAULT_KEY_PREFIX)) {
+                 params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
+             }
+         } else {
+-            String name = str.substring(nameStart, valueStart - 1);
++            String name = str.substring(nameStart, valueStart > nameStart ? valueStart - 1 : valueEnd);
+             String value;
+-            if (valueStart >= valueEnd) {
+-                value = name;
++            if (valueStart <= nameStart) {
++                value = hasEquals ? EMPTY_STRING : name;
+             } else {
+                 value = str.substring(valueStart, valueEnd);
+             }
+@@ -301,7 +301,6 @@ public final class URLStrParser {
+                 params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
+             }
+         }
+-        return true;
+     }
+ 
+     private static String decodeComponent(String s, int from, int toExcluded, boolean isPath, TempBuf tempBuf) {
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
+index a4400eebef..31f8bc599c 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
+@@ -308,7 +308,7 @@ class URLTest {
+         assertEquals(3, url.getParameters().size());
+         assertEquals("1.0.0", url.getVersion());
+         assertEquals("morgan", url.getParameter("application"));
+-        assertEquals("noValue", url.getParameter("noValue"));
++        assertEquals("", url.getParameter("noValue"));
+     }
+ 
+     // TODO Do not want to use spaces? See: DUBBO-502, URL class handles special conventions for special characters.
+@@ -326,9 +326,17 @@ class URLTest {
+ 
+         assertURLStrDecoder(url);
+         assertTrue(url.hasParameter("k0"));
++        assertEquals("", url.getParameter("k0"));
++    }
++
++    @Test
++    void test_emptyQueryParameterValue() throws Exception {
++        URL url = URL.valueOf("nacos://10.20.0.100:8848?username=&password=&namespace=");
+ 
+-        // If a Key has no corresponding Value, then the Key also used as the Value.
+-        assertEquals("k0", url.getParameter("k0"));
++        assertURLStrDecoder(url);
++        assertEquals("", url.getParameter("username"));
++        assertEquals("", url.getParameter("password"));
++        assertEquals("", url.getParameter("namespace"));
+     }
+ 
+     @Test

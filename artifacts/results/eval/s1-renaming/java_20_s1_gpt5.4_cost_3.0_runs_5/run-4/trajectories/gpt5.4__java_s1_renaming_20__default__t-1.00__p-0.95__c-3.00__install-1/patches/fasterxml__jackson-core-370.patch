@@ -1,0 +1,185 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+index 66e81b56..17462729 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+@@ -154,7 +154,7 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+     @Override public void setCodec(ObjectCodec codecInstance) { _objectCodec = codecInstance; }
+ 
+     @Override
+-    public int releaseBuffer(Writer writer) throws IOException {
++    public int releaseBuffered(Writer writer) throws IOException {
+         int itemCount = _inputEnd - _inputPtr;
+         if (itemCount < 1) { return 0; }
+         // let's just advance ptr to end
+@@ -264,7 +264,7 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+ 
+     /**
+      * Method for accessing textual representation of the current event;
+-     * if no current event (before first call to {@link #nextJsonToken}, or
++     * if no current event (before first call to {@link #nextToken}, or
+      * after encountering end-of-input), returns null.
+      * Method can be called for any event.
+      */
+@@ -628,7 +628,7 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+      *   to indicate end-of-input
+      */
+     @Override
+-    public final JsonToken nextJsonToken() throws IOException
++    public final JsonToken nextToken() throws IOException
+     {
+         /* First: field names are special -- we will always tokenize
+          * (part of) value along with field name to simplify
+@@ -904,6 +904,12 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+         }
+         if (_parsingContext.expectComma()) {
+             index = _expectCommaAndSkip(index);
++            if (Feature.ALLOW_TRAILING_COMMA.enabledIn(_features)) {
++                if (index == INT_RBRACKET || index == INT_RCURLY) {
++                    _closeCurrentScope(index);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _updateTokenLocation();
+@@ -1155,7 +1161,7 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+             return null;
+         }
+         // !!! TODO: optimize this case as well
+-        return (nextJsonToken() == JsonToken.VALUE_STRING) ? getText() : null;
++        return (nextToken() == JsonToken.VALUE_STRING) ? getText() : null;
+     }
+ 
+     // note: identical to one in Utf8StreamParser
+@@ -1178,7 +1184,7 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+             return fallbackValue;
+         }
+         // !!! TODO: optimize this case as well
+-        return (nextJsonToken() == JsonToken.VALUE_NUMBER_INT) ? getIntValue() : fallbackValue;
++        return (nextToken() == JsonToken.VALUE_NUMBER_INT) ? getIntValue() : fallbackValue;
+     }
+ 
+     // note: identical to one in Utf8StreamParser
+@@ -1201,7 +1207,7 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+             return fallbackValue;
+         }
+         // !!! TODO: optimize this case as well
+-        return (nextJsonToken() == JsonToken.VALUE_NUMBER_INT) ? getLongValue() : fallbackValue;
++        return (nextToken() == JsonToken.VALUE_NUMBER_INT) ? getLongValue() : fallbackValue;
+     }
+ 
+     // note: identical to one in UTF8StreamJsonParser
+@@ -1226,7 +1232,7 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+             }
+             return null;
+         }
+-        JsonToken token = nextJsonToken();
++        JsonToken token = nextToken();
+         if (token != null) {
+             int identifier = token.id();
+             if (identifier == ID_TRUE) return Boolean.TRUE;
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/UTF8JsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/UTF8JsonParser.java
+index b09b3791..ef994d5e 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/UTF8JsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/UTF8JsonParser.java
+@@ -133,7 +133,7 @@ public class UTF8JsonParser
+      */
+ 
+     @Override
+-    public int releaseBuffer(OutputStream outputStream) throws IOException {
++    public int releaseBuffered(OutputStream outputStream) throws IOException {
+         return 0;
+     }
+ 
+@@ -554,7 +554,7 @@ public class UTF8JsonParser
+      *   to indicate end-of-input
+      */
+     @Override
+-    public JsonToken nextJsonToken() throws IOException
++    public JsonToken nextToken() throws IOException
+     {
+         /* First: field names are special -- we will always tokenize
+          * (part of) value along with field name to simplify
+@@ -867,7 +867,7 @@ public class UTF8JsonParser
+             }
+             return null;
+         }
+-        return (nextJsonToken() == JsonToken.VALUE_STRING) ? getText() : null;
++        return (nextToken() == JsonToken.VALUE_STRING) ? getText() : null;
+     }
+ 
+     @Override
+@@ -889,7 +889,7 @@ public class UTF8JsonParser
+             }
+             return defaultIntValue;
+         }
+-        return (nextJsonToken() == JsonToken.VALUE_NUMBER_INT) ? getIntValue() : defaultIntValue;
++        return (nextToken() == JsonToken.VALUE_NUMBER_INT) ? getIntValue() : defaultIntValue;
+     }
+ 
+     @Override
+@@ -911,7 +911,7 @@ public class UTF8JsonParser
+             }
+             return defaultIntValue;
+         }
+-        return (nextJsonToken() == JsonToken.VALUE_NUMBER_INT) ? getLongValue() : defaultIntValue;
++        return (nextToken() == JsonToken.VALUE_NUMBER_INT) ? getLongValue() : defaultIntValue;
+     }
+ 
+     @Override
+@@ -937,7 +937,7 @@ public class UTF8JsonParser
+             return null;
+         }
+ 
+-        JsonToken currentToken = nextJsonToken();
++        JsonToken currentToken = nextToken();
+         if (currentToken == JsonToken.VALUE_TRUE) {
+             return Boolean.TRUE;
+         }
+diff --git a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+index 972436b9..b15c497e 100644
+--- a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
++++ b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+@@ -288,6 +288,29 @@ public class TrailingCommasTest extends BaseTest {
+     }
+     p.close();
+   }
++  @Test
++  public void testObjectTrailingCommaWithNextFieldName() throws Exception {
++    String json = "{\"a\": true, \"b\": false,}";
++
++    JsonParser p = createParser(factory, mode, json);
++
++    assertEquals(JsonToken.START_OBJECT, p.nextToken());
++
++    assertEquals("a", p.nextFieldName());
++    assertToken(JsonToken.VALUE_TRUE, p.nextToken());
++
++    assertEquals("b", p.nextFieldName());
++    assertToken(JsonToken.VALUE_FALSE, p.nextToken());
++
++    if (features.contains(Feature.ALLOW_TRAILING_COMMA)) {
++      assertNull(p.nextFieldName());
++      assertToken(JsonToken.END_OBJECT, p.getCurrentToken());
++      assertEnd(p);
++    } else {
++      assertUnexpected(p, '}');
++    }
++    p.close();
++  }
+ 
+   @Test
+   public void testObjectTrailingCommas() throws Exception {

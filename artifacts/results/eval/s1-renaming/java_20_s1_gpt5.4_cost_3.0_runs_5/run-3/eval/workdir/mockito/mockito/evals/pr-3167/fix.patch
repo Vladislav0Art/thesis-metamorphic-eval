@@ -1,0 +1,131 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/ByteBuddyInlineMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/ByteBuddyInlineMockMaker.java
+index 5cb74f598..b61da5018 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/ByteBuddyInlineMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/ByteBuddyInlineMockMaker.java
+@@ -347,6 +347,11 @@ class ByteBuddyInlineMockMaker
+                         true);
+     }
+ 
++    @Override
++    public <T> T createMock(MockCreationSettings<T> creationSettings, MockHandler mockHandlerImpl) {
++        return createInlineMock(creationSettings, mockHandlerImpl);
++    }
++
+     public <T> T createInlineMock(MockCreationSettings<T> creationSettings, MockHandler mockHandlerImpl) {
+         return createMockInstance(creationSettings, mockHandlerImpl, false);
+     }
+@@ -489,6 +494,11 @@ class ByteBuddyInlineMockMaker
+         }
+     }
+ 
++    @Override
++    public void resetMock(Object candidate, MockHandler replacementHandler, MockCreationSettings creationSettings) {
++        resetMockInstance(candidate, replacementHandler, creationSettings);
++    }
++
+     public void resetMockInstance(Object candidate, MockHandler replacementHandler, MockCreationSettings creationSettings) {
+         MockMethodInterceptor methodInterceptorImpl =
+                 new MockMethodInterceptor(replacementHandler, creationSettings);
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+index a418aab7a..26d565b95 100644
+--- a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+@@ -20,6 +20,15 @@ public class EnumMockingTest {
+         assertThat(a.name(), nullValue(String.class));
+     }
+ 
++    @Test
++    public void test_deep_stubs_can_mock_enum_methods() {
++        Piece piece = Mockito.mock(Piece.class, Mockito.RETURNS_DEEP_STUBS);
++
++        Mockito.when(piece.getPiece().getCostPerPieceSpace()).thenReturn(2.5d);
++
++        assertThat(piece.getPiece().getCostPerPieceSpace(), is(2.5d));
++    }
++
+     enum Animal {
+         CAT {
+             @Override
+@@ -30,4 +39,16 @@ public class EnumMockingTest {
+ 
+         public abstract String sound();
+     }
++
++    interface Piece {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE;
++
++        double getCostPerPieceSpace() {
++            return 1d;
++        }
++    }
+ }
+diff --git a/subprojects/programmatic-test/src/test/java/org/mockito/ProgrammaticMockMakerTest.java b/subprojects/programmatic-test/src/test/java/org/mockito/ProgrammaticMockMakerTest.java
+index f03555d0e..3bb040d95 100644
+--- a/subprojects/programmatic-test/src/test/java/org/mockito/ProgrammaticMockMakerTest.java
++++ b/subprojects/programmatic-test/src/test/java/org/mockito/ProgrammaticMockMakerTest.java
+@@ -74,6 +74,21 @@ public final class ProgrammaticMockMakerTest {
+         assertEquals("ORIGINAL", subclassMock.subContainer().classWithFinalMethod().finalMethod());
+     }
+ 
++    @Test
++    public void test_deep_stubs_dont_fail_with_enum_return_type() {
++        Container inlineMock =
++                Mockito.mock(
++                        Container.class,
++                        withSettings()
++                                .mockMaker(MockMakers.INLINE)
++                                .defaultAnswer(Answers.RETURNS_DEEP_STUBS));
++
++        Mockito.when(inlineMock.level().value()).thenReturn("MOCKED");
++
++        assertEquals("MOCKED", inlineMock.level().value());
++        assertEquals("MOCKED", inlineMock.subContainer().level().value());
++    }
++
+     @Test
+     public void test_returned_mocks_inherit_mock_maker() {
+         Container inlineMock =
+@@ -178,6 +193,14 @@ public final class ProgrammaticMockMakerTest {
+         }
+     }
+ 
++    private enum Level {
++        BASIC;
++
++        String value() {
++            return "ORIGINAL";
++        }
++    }
++
+     private static class Container {
+         FinalClass finalClass() {
+             return new FinalClass();
+@@ -187,6 +210,10 @@ public final class ProgrammaticMockMakerTest {
+             return new ClassWithFinalMethod();
+         }
+ 
++        Level level() {
++            return Level.BASIC;
++        }
++
+         Container subContainer() {
+             return new Container();
+         }

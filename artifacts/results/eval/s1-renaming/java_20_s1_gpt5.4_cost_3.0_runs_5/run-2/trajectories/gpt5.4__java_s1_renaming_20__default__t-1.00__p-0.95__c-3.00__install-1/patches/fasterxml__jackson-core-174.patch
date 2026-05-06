@@ -1,0 +1,127 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+index 4ec5b4c2..de3a2476 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerExpression.java
+@@ -184,6 +184,20 @@ public class JsonPointerExpression
+         return _nextSegment;
+     }
+ 
++    /**
++     * Accessor for getting the leaf segment of this pointer expression.
++     * For matching state (empty pointer), returns this instance.
++     *
++     * @since 2.6
++     */
++    public JsonPointerExpression getLast() {
++        JsonPointerExpression current = this;
++        while (current._nextSegment != null && current._nextSegment._nextSegment != null) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
+     /**
+      * Accessor for getting a "pointer", instance from current segment to
+      * segment before segment leaf. For root pointer, will return null.
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 94220d64..aa313e3d 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -12,6 +12,7 @@ public class TestJsonPointer extends BaseTest
+         assertEquals(-1, ptr.getMatchingIndex());
+         assertEquals("Image", ptr.getMatchingProperty());
+         assertEquals("/Image/15", ptr.headSegment().toString());
++        assertEquals("/name", ptr.getLast().toString());
+         assertEquals(INPUT, ptr.toString());
+ 
+         ptr = ptr.nextSegment();
+@@ -20,6 +21,7 @@ public class TestJsonPointer extends BaseTest
+         assertEquals(15, ptr.getMatchingIndex());
+         assertEquals("15", ptr.getMatchingProperty());
+         assertEquals("/15", ptr.headSegment().toString());
++        assertEquals("/name", ptr.getLast().toString());
+         assertEquals("/15/name", ptr.toString());
+ 
+         ptr = ptr.nextSegment();
+@@ -29,6 +31,7 @@ public class TestJsonPointer extends BaseTest
+         assertEquals("name", ptr.getMatchingProperty());
+         assertEquals("/name", ptr.toString());
+         assertEquals("", ptr.headSegment().toString());
++        assertEquals("/name", ptr.getLast().toString());
+ 
+         // done!
+         ptr = ptr.nextSegment();
+@@ -36,6 +39,7 @@ public class TestJsonPointer extends BaseTest
+         assertNull(ptr.nextSegment());
+         assertEquals("", ptr.getMatchingProperty());
+         assertEquals(-1, ptr.getMatchingIndex());
++        assertEquals("", ptr.getLast().toString());
+     }
+ 
+     public void testWonkyNumber173() throws Exception
+@@ -53,6 +57,7 @@ public class TestJsonPointer extends BaseTest
+         assertEquals(-1, ptr.getMatchingIndex());
+         assertEquals("w/out", ptr.getMatchingProperty());
+         assertEquals("/w~1out/til~0de", ptr.headSegment().toString());
++        assertEquals("/a~1b", ptr.getLast().toString());
+         assertEquals(INPUT, ptr.toString());
+ 
+         ptr = ptr.nextSegment();
+@@ -61,6 +66,7 @@ public class TestJsonPointer extends BaseTest
+         assertEquals(-1, ptr.getMatchingIndex());
+         assertEquals("til~de", ptr.getMatchingProperty());
+         assertEquals("/til~0de", ptr.headSegment().toString());
++        assertEquals("/a~1b", ptr.getLast().toString());
+         assertEquals("/til~0de/a~1b", ptr.toString());
+ 
+         ptr = ptr.nextSegment();
+@@ -70,11 +76,20 @@ public class TestJsonPointer extends BaseTest
+         assertEquals("a/b", ptr.getMatchingProperty());
+         assertEquals("/a~1b", ptr.toString());
+         assertEquals("", ptr.headSegment().toString());
++        assertEquals("/a~1b", ptr.getLast().toString());
+ 
+         // done!
+         ptr = ptr.nextSegment();
+         assertTrue(ptr.matchesExactly());
+         assertNull(ptr.nextSegment());
++        assertEquals("", ptr.getLast().toString());
++    }
++
++    public void testLastSegmentForArrayAppend() throws Exception
++    {
++        JsonPointerExpression ptr = JsonPointerExpression.compilePointer("/score/-");
++        assertEquals("/-", ptr.getLast().toString());
++        assertEquals("/score", ptr.headSegment().toString());
+     }
+ 
+     // [Issue#133]
+@@ -86,6 +101,7 @@ public class TestJsonPointer extends BaseTest
+ 
+         JsonPointerExpression ptr = JsonPointerExpression.compilePointer(INPUT);
+         assertEquals("User", ptr.getMatchingProperty());
++        assertEquals(String.valueOf(LONG_ID), ptr.getLast().toString().substring(1));
+         assertEquals(INPUT, ptr.toString());
+ 
+         ptr = ptr.nextSegment();
+@@ -96,6 +112,7 @@ public class TestJsonPointer extends BaseTest
+          */
+         assertEquals(-1, ptr.getMatchingIndex());
+         assertEquals(String.valueOf(LONG_ID), ptr.getMatchingProperty());
++        assertEquals("/"+LONG_ID, ptr.getLast().toString());
+ 
+         // done!
+         ptr = ptr.nextSegment();

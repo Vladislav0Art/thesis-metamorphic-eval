@@ -1,0 +1,66 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+index 7c4d0a9cb..12c3d304e 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+@@ -601,6 +601,9 @@ public interface JsonMapper {
+         }
+         JSONReader jsonParser = JSONReader.of(jsonString);
+         try {
++            if (!jsonParser.isObject()) {
++                return false;
++            }
+             jsonParser.skipValue();
+         } catch (JSONException parseException) {
+             return false;
+@@ -642,6 +645,9 @@ public interface JsonMapper {
+         }
+         JSONReader jsonParser = JSONReader.of(rawData);
+         try {
++            if (!jsonParser.isObject()) {
++                return false;
++            }
+             jsonParser.skipValue();
+         } catch (JSONException parseException) {
+             return false;
+@@ -686,6 +692,9 @@ public interface JsonMapper {
+         }
+         JSONReader jsonParser = JSONReader.of(rawData, startIndex, count, encoding);
+         try {
++            if (!jsonParser.isObject()) {
++                return false;
++            }
+             jsonParser.skipValue();
+         } catch (JSONException parseException) {
+             return false;
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 8d0ab0e06..7ca94353f 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -33,6 +33,23 @@ public class JSONTest {
+         assertFalse(JsonMapper.isValidArray("{}"));
+     }
+ 
++    @Test
++    public void test_isValidObject_0() {
++        assertTrue(JsonMapper.isValid("{}"));
++        assertFalse(JsonMapper.isValid("[]"));
++        assertFalse(JsonMapper.isValid("\"str\""));
++
++        byte[] objectBytes = "{}".getBytes(StandardCharsets.UTF_8);
++        byte[] arrayBytes = "[]".getBytes(StandardCharsets.UTF_8);
++        assertTrue(JsonMapper.isValid(objectBytes));
++        assertFalse(JsonMapper.isValid(arrayBytes));
++
++        byte[] objectSlice = "x{}y".getBytes(StandardCharsets.UTF_8);
++        byte[] arraySlice = "x[]y".getBytes(StandardCharsets.UTF_8);
++        assertTrue(JsonMapper.isValid(objectSlice, 1, 2, StandardCharsets.UTF_8));
++        assertFalse(JsonMapper.isValid(arraySlice, 1, 2, StandardCharsets.UTF_8));
++    }
++
+     @Test
+     public void test_parseArray_0() {
+         String str = "[1,2,3]";

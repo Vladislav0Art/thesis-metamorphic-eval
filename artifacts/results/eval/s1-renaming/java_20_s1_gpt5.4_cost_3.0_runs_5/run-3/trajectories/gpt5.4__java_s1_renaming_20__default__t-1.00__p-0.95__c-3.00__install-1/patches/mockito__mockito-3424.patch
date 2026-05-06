@@ -1,0 +1,26 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java b/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java
+index 406dea39a..01441f53b 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java
+@@ -161,5 +161,7 @@ public class MockMethodInterceptor implements Serializable {
+             return interceptor.doIntercept(
+                     mock, invokedMethod, arguments, RealMethod.IsIllegal.INSTANCE);
+         }
++
++        private DispatcherDefaultingToRealMethod() {}
+     }
+ }

@@ -1,0 +1,92 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+index cd5194258..a9e77a953 100644
+--- a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
++++ b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+@@ -87,12 +87,12 @@ public class SpyAnnotationEngine implements AnnotationEngine {
+         return Mockito.mock(
+                 instance.getClass(),
+                 withSettings()
+-                        .genericTypeToMock(field.getGenericType())
+                         .spiedInstance(instance)
+                         .defaultAnswer(CALLS_REAL_METHODS)
+                         .name(field.getName()));
+     }
+ 
++
+     private static Object spyNewInstance(Object testInstance, Field field)
+             throws InstantiationException, IllegalAccessException, InvocationTargetException {
+         // TODO: Add mockMaker option for @Spy annotation (#2740)
+diff --git a/src/main/java/org/mockito/internal/creation/settings/CreationSettings.java b/src/main/java/org/mockito/internal/creation/settings/CreationSettings.java
+index 51544fb9e..6fcef3c7b 100644
+--- a/src/main/java/org/mockito/internal/creation/settings/CreationSettings.java
++++ b/src/main/java/org/mockito/internal/creation/settings/CreationSettings.java
+@@ -85,11 +85,6 @@ public class CreationSettings<T> implements MockCreationSettings<T>, Serializabl
+         return this;
+     }
+ 
+-    public CreationSettings<T> setGenericTypeToMock(Type genericTypeToMock) {
+-        this.genericTypeToMock = genericTypeToMock;
+-        return this;
+-    }
+-
+     @Override
+     public Set<Class<?>> getExtraInterfaces() {
+         return extraInterfaces;
+diff --git a/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java b/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
+index daa71bed3..0fbf85218 100644
+--- a/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
++++ b/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
+@@ -203,6 +203,21 @@ public class SpyAnnotationTest extends TestBase {
+         when(inner.spy_field.lenght()).thenReturn(10);
+         assertEquals(10, inner.spy_field.lenght());
+     }
++    @Test
++    public void should_not_corrupt_final_spy_when_spying_on_generic_field() throws Exception {
++        Assume.assumeThat(Plugins.getMockMaker(), instanceOf(InlineMockMaker.class));
++
++        class WithGenericSpy {
++            @Spy private final List<String> genericSpy = List.of("item A", "item B");
++            @Spy private FinalClass finalClass = new FinalClass("some value");
++        }
++
++        WithGenericSpy withSpy = new WithGenericSpy();
++
++        MockitoAnnotations.openMocks(withSpy);
++
++        assertThat(withSpy.finalClass.someParameter()).isEqualTo("some value");
++    }
+ 
+     @Test
+     public void should_report_private_inner_not_supported() throws Exception {
+@@ -315,6 +330,17 @@ public class SpyAnnotationTest extends TestBase {
+     }
+ 
+     static class InnerStaticClassWithoutDefinedConstructor {}
++    static final class FinalClass {
++        private final String someParameter;
++
++        FinalClass(String someParameter) {
++            this.someParameter = someParameter;
++        }
++
++        String someParameter() {
++            return someParameter;
++        }
++    }
+ 
+     static class InnerStaticClassWithNoArgConstructor {
+         InnerStaticClassWithNoArgConstructor() {}

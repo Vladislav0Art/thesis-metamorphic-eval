@@ -1,0 +1,93 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1271c273b..1077e3bcb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubtypeValidator.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubtypeValidator.java
+index e4bf3525f..5b8afbb81 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubtypeValidator.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubtypeValidator.java
+@@ -80,7 +80,7 @@ public class SubtypeValidator
+             // 18-Dec-2017, tatu: As per [databind#1855], need bit more sophisticated handling
+             //    for some Spring framework types
+             if (fullyQualifiedName.startsWith(PREFIX_STRING)) {
+-                for (Class<?> targetClass = baseClass; targetClass != Object.class; targetClass = targetClass.getSuperclass()) {
++                for (Class<?> targetClass = baseClass; targetClass != null && targetClass != Object.class; targetClass = targetClass.getSuperclass()) {
+                     String simpleIdentifier = targetClass.getSimpleName();
+                     // looking for "AbstractBeanFactoryPointcutAdvisor" but no point to allow any is there?
+                     if ("AbstractPointcutAdvisor".equals(simpleIdentifier)
+diff --git a/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java b/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
+index 87ee570da..ac9035e3c 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
++++ b/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
+@@ -2,6 +2,7 @@ package com.fasterxml.jackson.databind.interop;
+ 
+ import org.springframework.jacksontest.BogusApplicationContext;
+ import org.springframework.jacksontest.BogusPointcutAdvisor;
++import org.springframework.jacksontest.SecurityInterfaceBean;
+ 
+ import com.fasterxml.jackson.annotation.JsonTypeInfo;
+ import com.fasterxml.jackson.databind.*;
+@@ -76,10 +77,27 @@ public class IllegalTypesCheckTest extends BaseMapTest
+         _testIllegalType(BogusApplicationContext.class);
+     }
+ 
++    public void testSpringInterfaceTypeDoesNotNPE() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
++
++        String json = aposToQuotes(
++                "{'@class':'org.springframework.jacksontest.SecurityInterfaceBean',"
++                +"'authorities':['java.util.ArrayList',[]]}"
++        );
++
++        SecurityInterfaceBean result = mapper.readValue(json, SecurityInterfaceBean.class);
++        assertNotNull(result);
++        assertNotNull(result.getAuthorities());
++        assertEquals(0, result.getAuthorities().size());
++    }
++
+     // 17-Aug-2017, tatu: Ideally would test handling of 3rd party types, too,
+     //    but would require adding dependencies. This may be practical when
+     //    checking done by module, but for now let's not do that for databind.
+ 
++
+     /*
+     public void testSpringTypes1737() throws Exception
+     {
+diff --git a/src/test/java/org/springframework/jacksontest/SecurityInterfaceBean.java b/src/test/java/org/springframework/jacksontest/SecurityInterfaceBean.java
+new file mode 100644
+index 000000000..b02833b48
+--- /dev/null
++++ b/src/test/java/org/springframework/jacksontest/SecurityInterfaceBean.java
+@@ -0,0 +1,21 @@
++package org.springframework.jacksontest;
++
++import java.util.ArrayList;
++import java.util.List;
++
++public class SecurityInterfaceBean
++{
++    private List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
++
++    public List<GrantedAuthority> getAuthorities() {
++        return authorities;
++    }
++
++    public void setAuthorities(List<GrantedAuthority> authorities) {
++        this.authorities = authorities;
++    }
++
++    public interface GrantedAuthority {
++        String getAuthority();
++    }
++}

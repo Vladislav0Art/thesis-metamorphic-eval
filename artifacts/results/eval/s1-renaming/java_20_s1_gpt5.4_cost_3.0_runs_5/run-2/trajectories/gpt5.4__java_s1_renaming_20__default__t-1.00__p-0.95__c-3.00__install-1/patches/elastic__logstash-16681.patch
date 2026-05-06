@@ -1,0 +1,62 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+index 6626641a1..6c76dd270 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+@@ -48,11 +48,13 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+                                final Iterable<String> addresses) {
+         Objects.requireNonNull(sender, "sender must not be null");
+         Objects.requireNonNull(addresses, "addresses must not be null");
+-        addressStatesBySender.compute(sender, (po, existing) -> {
+-            return StreamSupport.stream(addresses.spliterator(), false)
+-                                .map((addr) -> addressStates.mutate(addr, (as) -> as.addOutput(po)))
+-                                .collect(Collectors.toUnmodifiableSet());
+-        });
++
++        final Set<AddressState.ReadOnly> registeredAddressStates =
++            StreamSupport.stream(addresses.spliterator(), false)
++                         .map((addr) -> addressStates.mutate(addr, (as) -> as.addOutput(sender)))
++                         .collect(Collectors.toUnmodifiableSet());
++
++        addressStatesBySender.put(sender, registeredAddressStates);
+     }
+ 
+     @Override
+@@ -60,10 +62,9 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+                                  final Iterable<String> addresses) {
+         Objects.requireNonNull(sender, "sender must not be null");
+         Objects.requireNonNull(addresses, "addresses must not be null");
+-        addressStatesBySender.compute(sender, (po, existing) -> {
+-            addresses.forEach((addr) -> addressStates.mutate(addr, (as) -> as.removeOutput(po)));
+-            return null;
+-        });
++
++        addresses.forEach((addr) -> addressStates.mutate(addr, (as) -> as.removeOutput(sender)));
++        addressStatesBySender.remove(sender);
+     }
+ 
+     @Override
+diff --git a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+index 78f7c22ac..4a01d3403 100644
+--- a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
++++ b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+@@ -403,4 +403,4 @@ public class PipelineBusTest {
+             return lastBatchSize;
+         }
+     }
+-}
+\ No newline at end of file
++}
