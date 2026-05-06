@@ -1,0 +1,24 @@
+diff --git a/core/src/main/java/com/alibaba/fastjson2/writer/BaseObjectWriterModule.java b/core/src/main/java/com/alibaba/fastjson2/writer/BaseObjectWriterModule.java
+index 302f294e4..0c7ad13dd 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/writer/BaseObjectWriterModule.java
++++ b/core/src/main/java/com/alibaba/fastjson2/writer/BaseObjectWriterModule.java
+@@ -37,8 +37,8 @@ public class BaseObjectWriterModule
+     final ObjectWriterProvider writerProviderInstance;
+     final JsonWriterAnnotationProcessor jsonAnnotationHandler;
+ 
+-    public BaseObjectWriterModule(ObjectWriterProvider writerProviderInstance) {
+-        this.writerProviderInstance = writerProviderInstance;
++    public BaseObjectWriterModule(ObjectWriterProvider objectWriterSupplier) {
++        this.writerProviderInstance = objectWriterSupplier;
+         this.jsonAnnotationHandler = new JsonWriterAnnotationProcessor();
+     }
+ 
+@@ -217,6 +217,7 @@ public class BaseObjectWriterModule
+                 Class<?> customSerializer = jsonTypeAnnotation.serializer();
+                 if (ObjectWriter.class.isAssignableFrom(customSerializer)) {
+                     beanMetadata.serializer = customSerializer;
++                    beanMetadata.writeEnumAsJavaBean = true;
+                 }
+ 
+                 Class<? extends Filter>[] serializerFilters = jsonTypeAnnotation.serializeFilters();
+ 

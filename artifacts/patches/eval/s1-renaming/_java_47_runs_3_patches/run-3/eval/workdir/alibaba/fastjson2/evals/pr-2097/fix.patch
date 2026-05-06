@@ -1,0 +1,45 @@
+diff --git a/core/src/main/java/com/alibaba/fastjson2/reader/ListObjectReaderImpl.java b/core/src/main/java/com/alibaba/fastjson2/reader/ListObjectReaderImpl.java
+index c99445ee8..b59b57e6b 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/reader/ListObjectReaderImpl.java
++++ b/core/src/main/java/com/alibaba/fastjson2/reader/ListObjectReaderImpl.java
+@@ -105,7 +105,7 @@ public final class ListObjectReaderImpl
+             concreteInstanceClass = ArrayList.class;
+             instanceBuilder = (Object inputObj) -> Collections.singletonList(((List) inputObj).get(0));
+         } else if (listImplClass == ARRAYS_AS_LIST_CLASS) {
+-            concreteInstanceClass = ArrayList.class;
++            concreteInstanceClass = ARRAYS_AS_LIST_CLASS;
+             instanceBuilder = (Object inputObj) -> Arrays.asList(((List) inputObj).toArray());
+         } else if (listImplClass == UNMODIFIABLE_COLLECTION_CLASS) {
+             concreteInstanceClass = ArrayList.class;
+@@ -204,20 +204,20 @@ public final class ListObjectReaderImpl
+         return new ListObjectReaderImpl(requestedType, listImplClass, concreteInstanceClass, elementType, instanceBuilder);
+     }
+ 
+-    ListObjectReaderImpl(Class listImplClass, Object singletonListInstance) {
+-        this(listImplClass, listImplClass, listImplClass, Object.class, null);
+-        this.singletonListInstance = singletonListInstance;
++    ListObjectReaderImpl(Class elementClass, Object singletonInstance) {
++        this(elementClass, elementClass, elementClass, Object.class, null);
++        this.singletonListInstance = singletonInstance;
+     }
+ 
+-    public ListObjectReaderImpl(Type listElementType, Class listImplClass, Class instanceRawType, Type elementType, Function instanceBuilder) {
+-        this.listElementType = listElementType;
+-        this.listImplClass = listImplClass;
+-        this.instanceRawType = instanceRawType;
+-        this.instanceTypeHashCode = Fnv.hashCode64(TypeUtils.getTypeName(instanceRawType));
++    public ListObjectReaderImpl(Type itemGenericType, Class elementClass, Class runtimeClass, Type elementType, Function factoryFunction) {
++        this.listElementType = itemGenericType;
++        this.listImplClass = elementClass;
++        this.instanceRawType = runtimeClass;
++        this.instanceTypeHashCode = Fnv.hashCode64(TypeUtils.getTypeName(runtimeClass));
+         this.elementType = elementType;
+         this.elementClass = TypeUtils.getClass(elementType);
+-        this.instanceBuilder = instanceBuilder;
+-        this.itemClassFullName = elementClass != null ? TypeUtils.getTypeName(elementClass) : null;
++        this.instanceBuilder = factoryFunction;
++        this.itemClassFullName = this.elementClass != null ? TypeUtils.getTypeName(this.elementClass) : null;
+         this.itemClassNameHashCode = itemClassFullName != null ? Fnv.hashCode64(itemClassFullName) : 0;
+     }
+ 
+ 

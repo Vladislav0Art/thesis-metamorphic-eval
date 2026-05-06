@@ -1,0 +1,124 @@
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueFileWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueFileWriter.java
+index 74548c106..044e685c8 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueFileWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueFileWriter.java
+@@ -114,15 +114,21 @@ public final class DeadLetterQueueFileWriter implements Closeable {
+         private final long segmentMaxBytes;
+         private final long queueMaxBytes;
+         private final Duration flushPeriod;
++        private boolean scheduledFlusherEnabled;
+         private QueueStorageType storageMode = QueueStorageType.DROP_NEWER;
+         private Duration retentionPeriod = null;
+         private Clock systemClock = Clock.systemDefaultZone();
+ 
+-        private QueueBuilder(Path pathToQueue, long segmentMaxBytes, long queueMaxBytes, Duration flushPeriod) {
+-            this.pathToQueue = pathToQueue;
+-            this.segmentMaxBytes = segmentMaxBytes;
+-            this.queueMaxBytes = queueMaxBytes;
++        private QueueBuilder(Path queueDirectory, long segmentSizeLimit, long queueCapacity, Duration flushPeriod) {
++            this(queueDirectory, segmentSizeLimit, queueCapacity, flushPeriod, true);
++        }
++
++        private QueueBuilder(Path queueDirectory, long segmentSizeLimit, long queueCapacity, Duration flushPeriod, boolean scheduledFlusherEnabled) {
++            this.pathToQueue = queueDirectory;
++            this.segmentMaxBytes = segmentSizeLimit;
++            this.queueMaxBytes = queueCapacity;
+             this.flushPeriod = flushPeriod;
++            this.scheduledFlusherEnabled = scheduledFlusherEnabled;
+         }
+ 
+         public QueueBuilder setStorageType(QueueStorageType storageMode) {
+@@ -142,7 +148,7 @@ public final class DeadLetterQueueFileWriter implements Closeable {
+         }
+ 
+         public DeadLetterQueueFileWriter buildWriter() throws IOException {
+-            return new DeadLetterQueueFileWriter(pathToQueue, segmentMaxBytes, queueMaxBytes, flushPeriod, storageMode, retentionPeriod, systemClock);
++            return new DeadLetterQueueFileWriter(pathToQueue, segmentMaxBytes, queueMaxBytes, flushPeriod, storageMode, retentionPeriod, systemClock, scheduledFlusherEnabled);
+         }
+     }
+ 
+@@ -151,29 +157,36 @@ public final class DeadLetterQueueFileWriter implements Closeable {
+         return new QueueBuilder(pathToQueue, segmentMaxBytes, queueMaxBytes, flushPeriod);
+     }
+ 
+-    private DeadLetterQueueFileWriter(final Path pathToQueue, final long segmentMaxBytes, final long queueMaxBytes,
+-                                      final Duration flushPeriod, final QueueStorageType storageMode, final Duration retentionPeriod,
+-                                      final Clock systemClock) throws IOException {
+-        this.systemClock = systemClock;
++    @VisibleForTesting
++    static QueueBuilder newQueueBuilderWithoutFlusher(final Path queueDirectory, final long segmentSizeLimit, final long queueCapacity) {
++        return new QueueBuilder(queueDirectory, segmentSizeLimit, queueCapacity, Duration.ZERO, false);
++    }
++
++    private DeadLetterQueueFileWriter(final Path queueDirectory, final long segmentSizeLimit, final long queueCapacity,
++                                      final Duration flushPeriod, final QueueStorageType queueStorageMode, final Duration retentionPeriod,
++                                      final Clock timeSource, boolean scheduledFlusherEnabled) throws IOException {
++        this.systemClock = timeSource;
+ 
+-        this.fileChannelLock = FileLockFactory.obtainLock(pathToQueue, LOCKFILE_PATH);
+-        this.pathToQueue = pathToQueue;
+-        this.segmentMaxBytes = segmentMaxBytes;
+-        this.queueMaxBytes = queueMaxBytes;
+-        this.storageMode = storageMode;
++        this.fileChannelLock = FileLockFactory.obtainLock(queueDirectory, LOCKFILE_PATH);
++        this.pathToQueue = queueDirectory;
++        this.segmentMaxBytes = segmentSizeLimit;
++        this.queueMaxBytes = queueCapacity;
++        this.storageMode = queueStorageMode;
+         this.flushPeriod = flushPeriod;
+         this.currentQueueBytes = new AtomicLong(calculateQueueSize());
+         this.retentionPeriod = retentionPeriod;
+ 
+         deleteTempFiles();
+         refreshOldestSegmentReference();
+-        activeSegmentIndex = listSegmentPaths(pathToQueue)
+-                .map(pathArg -> pathArg.getFileName().toString().split("\\.")[0])
++        activeSegmentIndex = listSegmentPaths(queueDirectory)
++                .map(sourcePath -> sourcePath.getFileName().toString().split("\\.")[0])
+                 .mapToInt(Integer::parseInt)
+                 .max().orElse(0);
+         openNextWriter();
+         this.lastEventTimestamp = Timestamp.now();
+-        initializeFlushScheduler();
++        if (scheduledFlusherEnabled) {
++            initializeFlushScheduler();
++        }
+     }
+ 
+     public boolean isOpen() {
+@@ -464,14 +477,14 @@ public final class DeadLetterQueueFileWriter implements Closeable {
+             if (!isCurrentWriterStale() && finalizationPolicy == FinalizationPolicy.ONLY_IF_STALE)
+                 return;
+ 
+-            if (activeWriter != null && activeWriter.hasWritten()) {
+-                activeWriter.close();
+-                Files.move(pathToQueue.resolve(String.format(TEMP_FILENAME_PATTERN, activeSegmentIndex)),
+-                        pathToQueue.resolve(String.format(SEGMENT_FILE_GLOB, activeSegmentIndex)),
+-                        StandardCopyOption.ATOMIC_MOVE);
++            if (activeWriter != null) {
++                if (activeWriter.hasWritten()) {
++                    activeWriter.close();
++                    commitSegment(activeSegmentIndex);
++                }
+                 refreshOldestSegmentReference();
+                 enforceAgeRetentionPolicy();
+-                if (isOpen()) {
++                if (isOpen() && activeWriter.hasWritten()) {
+                     openNextWriter();
+                 }
+             }
+@@ -480,6 +493,13 @@ public final class DeadLetterQueueFileWriter implements Closeable {
+         }
+     }
+ 
++    private void commitSegment(int segmentNumber) throws IOException {
++        Files.move(pathToQueue.resolve(String.format(TEMP_FILENAME_PATTERN, segmentNumber)),
++                pathToQueue.resolve(String.format(SEGMENT_FILE_GLOB, segmentNumber)),
++                StandardCopyOption.ATOMIC_MOVE);
++        LOG.debug("Sealed segment with index {}", segmentNumber);
++    }
++
+     private void initializeFlushScheduler() {
+         flushExecutor = Executors.newScheduledThreadPool(1, task -> {
+             Thread timestampParam = new Thread(task);
+ 

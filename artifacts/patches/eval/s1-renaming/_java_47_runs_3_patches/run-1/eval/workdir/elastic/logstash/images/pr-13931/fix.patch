@@ -1,0 +1,173 @@
+diff --git a/docs/static/settings-file.asciidoc b/docs/static/settings-file.asciidoc
+index 9ee0ea894..2e9cb077e 100644
+--- a/docs/static/settings-file.asciidoc
++++ b/docs/static/settings-file.asciidoc
+@@ -219,8 +219,8 @@ Values other than `disabled` are currently considered BETA, and may produce unin
+ | 1024
+ 
+ | `queue.checkpoint.retry`
+-| When enabled, Logstash will retry once per attempted checkpoint write for any checkpoint writes that fail. Any subsequent errors are not retried. This is a workaround for failed checkpoint writes that have been seen only on filesystems with non-standard behavior such as SANs and is not recommended except in those specific circumstances.
+-| `false`
++| When enabled, Logstash will retry four times per attempted checkpoint write for any checkpoint writes that fail. Any subsequent errors are not retried. This is a workaround for failed checkpoint writes that have been seen only on Windows platform, filesystems with non-standard behavior such as SANs and is not recommended except in those specific circumstances.
++| `true`
+ 
+ | `queue.drain`
+ | When enabled, Logstash waits until the persistent queue is drained before shutting down.
+diff --git a/logstash-core/lib/logstash/environment.rb b/logstash-core/lib/logstash/environment.rb
+index 8fe861a7f..747f31343 100644
+--- a/logstash-core/lib/logstash/environment.rb
++++ b/logstash-core/lib/logstash/environment.rb
+@@ -89,7 +89,7 @@ module LogStash
+             Setting::Numeric.new("queue.checkpoint.acks", 1024), # 0 is unlimited
+             Setting::Numeric.new("queue.checkpoint.writes", 1024), # 0 is unlimited
+             Setting::Numeric.new("queue.checkpoint.interval", 1000), # 0 is no time-based checkpointing
+-            Setting::Boolean.new("queue.checkpoint.retry", false),
++            Setting::Boolean.new("queue.checkpoint.retry", true),
+             Setting::Boolean.new("dead_letter_queue.enable", false),
+             Setting::Bytes.new("dead_letter_queue.max_bytes", "1024mb"),
+             Setting::Numeric.new("dead_letter_queue.flush_interval", 5000),
+diff --git a/logstash-core/src/main/java/org/logstash/ackedqueue/io/CheckpointFileIO.java b/logstash-core/src/main/java/org/logstash/ackedqueue/io/CheckpointFileIO.java
+index 0bb2de666..403149dba 100644
+--- a/logstash-core/src/main/java/org/logstash/ackedqueue/io/CheckpointFileIO.java
++++ b/logstash-core/src/main/java/org/logstash/ackedqueue/io/CheckpointFileIO.java
+@@ -32,6 +32,7 @@ import java.util.zip.CRC32;
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ import org.logstash.ackedqueue.Checkpoint;
++import org.logstash.util.ExponentialBackoffStrategy;
+ 
+ 
+ /**
+@@ -70,14 +71,16 @@ public class CheckpointFileIO implements CheckpointIO {
+     private static final String HEAD_MARKER = "checkpoint.head";
+     private static final String TAIL_MARKER = "checkpoint.";
+     private final Path directoryLocation;
++    private final ExponentialBackoffStrategy exponentialDelay;
+ 
+-    public CheckpointFileIO(Path directoryLocation) {
+-        this(directoryLocation, false);
++    public CheckpointFileIO(Path directoryPath) {
++        this(directoryPath, false);
+     }
+ 
+-    public CheckpointFileIO(Path directoryLocation, boolean shouldAttemptAgain) {
+-        this.directoryLocation = directoryLocation;
+-        this.shouldAttemptAgain = shouldAttemptAgain;
++    public CheckpointFileIO(Path directoryPath, boolean shouldAttempt) {
++        this.directoryLocation = directoryPath;
++        this.shouldAttemptAgain = shouldAttempt;
++        this.exponentialDelay = new ExponentialBackoffStrategy(3L);
+     }
+ 
+     @Override
+@@ -104,20 +107,19 @@ public class CheckpointFileIO implements CheckpointIO {
+             outputStream.getFD().sync();
+         }
+ 
++        // Windows can have problem doing file move See: https://github.com/elastic/logstash/issues/12345
++        // retry a couple of times to make it works. The first two runs has no break. The rest of reties are exponential backoff.
+         try {
+             Files.move(tempLocation, directoryLocation.resolve(targetName), StandardCopyOption.ATOMIC_MOVE);
+         } catch (IOException ioException) {
+             if (shouldAttemptAgain) {
+                 try {
+-                    LOG.error("Retrying after exception writing checkpoint: " + ioException);
+-                    Thread.sleep(500);
+-                    Files.move(tempLocation, directoryLocation.resolve(targetName), StandardCopyOption.ATOMIC_MOVE);
+-                } catch (IOException | InterruptedException combinedException) {
+-                    LOG.error("Aborting after second exception writing checkpoint: " + combinedException);
+-                    throw ioException;
++                    exponentialDelay.executeWithRetry(() -> Files.move(tempLocation, directoryLocation.resolve(targetName), StandardCopyOption.ATOMIC_MOVE));
++                } catch (ExponentialBackoffStrategy.RetryableException retryException) {
++                    throw new IOException("Error writing checkpoint", retryException);
+                 }
+             } else {
+-                LOG.error("Error writing checkpoint: " + ioException);
++                LOG.error("Error writing checkpoint without retry: " + ioException);
+                 throw ioException;
+             }
+         }
+diff --git a/logstash-core/src/main/java/org/logstash/util/ExponentialBackoffStrategy.java b/logstash-core/src/main/java/org/logstash/util/ExponentialBackoffStrategy.java
+new file mode 100644
+index 000000000..cfdb32046
+--- /dev/null
++++ b/logstash-core/src/main/java/org/logstash/util/ExponentialBackoffStrategy.java
+@@ -0,0 +1,65 @@
++package org.logstash.util;
++
++import org.apache.logging.log4j.LogManager;
++import org.apache.logging.log4j.Logger;
++
++import java.util.Random;
++
++public class ExponentialBackoffStrategy {
++    private final long retryLimit;
++    private static final int[] RETRY_SCHEDULE_MS = {100, 200, 400, 800, 1_600, 3_200, 6_400, 12_800, 25_600, 51_200};
++    private static final int MAX_DELAY_MS = 60_000;
++
++    private static final Logger LOG = LogManager.getLogger(ExponentialBackoffStrategy.class);
++
++    public ExponentialBackoffStrategy(long retryLimit) {
++        this.retryLimit = retryLimit;
++    }
++
++    public <T> T executeWithRetry(ThrowingSupplier<T> operation) throws RetryableException {
++        long tryCount = 0L;
++
++        do {
++            try {
++                tryCount++;
++                return operation.get();
++            } catch (Exception thrownException) {
++                LOG.error("Backoff retry exception", thrownException);
++            }
++
++            if (shouldRetry(tryCount)) {
++                try {
++                    int millis = getBackoffDelay(tryCount);
++                    LOG.info("Retry({}) will execute in {} second", tryCount, millis /1000.0);
++                    Thread.sleep(millis);
++                } catch (InterruptedException interruptedException) {
++                    throw new RetryableException("Backoff retry aborted", interruptedException);
++                }
++            }
++        } while (shouldRetry(tryCount));
++
++        throw new RetryableException("Reach max retry");
++    }
++
++    private int getBackoffDelay(Long tryCount) {
++        return (tryCount - 1 < RETRY_SCHEDULE_MS.length)?
++                RETRY_SCHEDULE_MS[tryCount.intValue() - 1] + new Random().nextInt(1000) :
++                MAX_DELAY_MS;
++    }
++
++    private boolean shouldRetry(long tryCount) {
++        return tryCount <= retryLimit;
++    }
++
++    public static class RetryableException extends Exception {
++        private static final long CLASS_SERIAL_UID = 1L;
++
++        public RetryableException(String msg) {
++            super(msg);
++        }
++
++        public RetryableException(String msg, Throwable rootThrowable) {
++            super(msg, rootThrowable);
++        }
++    }
++}
+diff --git a/logstash-core/src/main/java/org/logstash/util/ThrowingSupplier.java b/logstash-core/src/main/java/org/logstash/util/ThrowingSupplier.java
+new file mode 100644
+index 000000000..76f2da33e
+--- /dev/null
++++ b/logstash-core/src/main/java/org/logstash/util/ThrowingSupplier.java
+@@ -0,0 +1,6 @@
++package org.logstash.util;
++
++@FunctionalInterface
++public interface ThrowingSupplier<T> {
++    T get() throws Exception;
++}
+ 

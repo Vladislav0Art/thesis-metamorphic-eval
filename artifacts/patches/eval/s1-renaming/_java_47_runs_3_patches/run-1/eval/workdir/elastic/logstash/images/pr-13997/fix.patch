@@ -1,0 +1,665 @@
+diff --git a/logstash-core/src/main/java/org/logstash/Rubyifier.java b/logstash-core/src/main/java/org/logstash/Rubyifier.java
+index 203682246..25fc83b67 100644
+--- a/logstash-core/src/main/java/org/logstash/Rubyifier.java
++++ b/logstash-core/src/main/java/org/logstash/Rubyifier.java
+@@ -25,6 +25,7 @@ import java.math.BigInteger;
+ import java.util.Collection;
+ import java.util.Map;
+ import java.util.concurrent.ConcurrentHashMap;
++
+ import org.jruby.Ruby;
+ import org.jruby.RubyArray;
+ import org.jruby.RubyBignum;
+@@ -36,20 +37,25 @@ import org.jruby.RubyNil;
+ import org.jruby.RubyString;
+ import org.jruby.RubySymbol;
+ import org.jruby.ext.bigdecimal.RubyBigDecimal;
++import org.jruby.javasupport.JavaUtil;
+ import org.jruby.runtime.builtin.IRubyObject;
+ import org.logstash.ext.JrubyTimestampExtLibrary;
++import org.logstash.secret.SecretEntry;
+ 
+ public final class Rubyifier {
+ 
+-    private static final TypeConverter IDENTITY = (runtime, input) -> (IRubyObject) input;
++    private static final TypeConverter NO_OP_CONVERTER = (runtime, input) -> (IRubyObject) input;
+ 
+-    private static final TypeConverter FLOAT_CONVERTER =
++    private static final TypeConverter SINGLE_PRECISION_CONVERTER =
+         (runtime, input) -> runtime.newFloat(((Number) input).doubleValue());
+ 
+-    private static final TypeConverter LONG_CONVERTER =
++    private static final TypeConverter INT64_CONVERTER =
+         (runtime, input) -> runtime.newFixnum(((Number) input).longValue());
+ 
+-    private static final Map<Class<?>, TypeConverter> CONVERTER_MAP = initializeConverters();
++    private static final TypeConverter JDK_UTIL_CONVERTER =
++            JavaUtil::convertJavaToRuby;
++
++    private static final Map<Class<?>, TypeConverter> TYPE_CONVERTER_REGISTRY = initializeConverters();
+ 
+     /**
+      * Rubyfier.deep() is called by JrubyEventExtLibrary RubyEvent ruby_get_field,
+@@ -63,89 +69,90 @@ public final class Rubyifier {
+     private Rubyifier() {
+     }
+ 
+-    public static IRubyObject deepConvert(final Ruby runtime, final Object input) {
+-        if (input == null) {
+-            return runtime.getNil();
++    public static IRubyObject deepConvert(final Ruby rubyEngine, final Object sourceValue) {
++        if (sourceValue == null) {
++            return rubyEngine.getNil();
+         }
+-        final Class<?> cls = input.getClass();
+-        final TypeConverter converter = CONVERTER_MAP.get(cls);
+-        if (converter != null) {
+-            return converter.convertToType(runtime, input);
++        final Class<?> typeToken = sourceValue.getClass();
++        final TypeConverter typeHandler = TYPE_CONVERTER_REGISTRY.get(typeToken);
++        if (typeHandler != null) {
++            return typeHandler.convertToType(rubyEngine, sourceValue);
+         }
+-        return convertWithFallback(runtime, input, cls);
++        return convertWithFallback(rubyEngine, sourceValue, typeToken);
+     }
+ 
+     @SuppressWarnings("rawtypes")
+-    private static RubyArray deepListToRubyArray(final Ruby runtime, final Collection<?> list) {
+-        final int length = list.size();
+-        final RubyArray array = runtime.newArray(length);
+-        for (final Object item : list) {
+-            array.add(deepConvert(runtime, item));
++    private static RubyArray deepListToRubyArray(final Ruby rubyEngine, final Collection<?> elements) {
++        final int size = elements.size();
++        final RubyArray rubyList = rubyEngine.newArray(size);
++        for (final Object element : elements) {
++            rubyList.add(deepConvert(rubyEngine, element));
+         }
+-        return array;
++        return rubyList;
+     }
+ 
+-    private static RubyHash deepMapToRubyHash(final Ruby runtime, final Map<?, ?> map) {
+-        final RubyHash hash = RubyHash.newHash(runtime);
++    private static RubyHash deepMapToRubyHash(final Ruby rubyEngine, final Map<?, ?> mapping) {
++        final RubyHash rubyMapping = RubyHash.newHash(rubyEngine);
+         // Note: RubyHash.put calls JavaUtil.convertJavaToUsableRubyObject on keys and values
+-        map.forEach((key, value) -> hash.put(key, deepConvert(runtime, value)));
+-        return hash;
++        mapping.forEach((entryIdentifier, entryPayload) -> rubyMapping.put(entryIdentifier, deepConvert(rubyEngine, entryPayload)));
++        return rubyMapping;
+     }
+ 
+     private static Map<Class<?>, TypeConverter> initializeConverters() {
+-        final Map<Class<?>, TypeConverter> converters =
++        final Map<Class<?>, TypeConverter> converterRegistry =
+             new ConcurrentHashMap<>(50, 0.2F, 1);
+-        converters.put(RubyString.class, IDENTITY);
+-        converters.put(RubyNil.class, IDENTITY);
+-        converters.put(RubySymbol.class, IDENTITY);
+-        converters.put(RubyBignum.class, IDENTITY);
+-        converters.put(RubyBigDecimal.class, IDENTITY);
+-        converters.put(RubyFloat.class, IDENTITY);
+-        converters.put(RubyFixnum.class, IDENTITY);
+-        converters.put(RubyBoolean.class, IDENTITY);
+-        converters.put(JrubyTimestampExtLibrary.RubyTimestamp.class, IDENTITY);
+-        converters.put(String.class, (runtime, input) -> runtime.newString((String) input));
+-        converters.put(Double.class, FLOAT_CONVERTER);
+-        converters.put(Float.class, FLOAT_CONVERTER);
+-        converters.put(Integer.class, LONG_CONVERTER);
+-        converters.put(
+-            BigInteger.class, (runtime, value) -> RubyBignum.newBignum(runtime, (BigInteger) value)
++        converterRegistry.put(RubyString.class, NO_OP_CONVERTER);
++        converterRegistry.put(RubyNil.class, NO_OP_CONVERTER);
++        converterRegistry.put(RubySymbol.class, NO_OP_CONVERTER);
++        converterRegistry.put(RubyBignum.class, NO_OP_CONVERTER);
++        converterRegistry.put(RubyBigDecimal.class, NO_OP_CONVERTER);
++        converterRegistry.put(RubyFloat.class, NO_OP_CONVERTER);
++        converterRegistry.put(RubyFixnum.class, NO_OP_CONVERTER);
++        converterRegistry.put(RubyBoolean.class, NO_OP_CONVERTER);
++        converterRegistry.put(JrubyTimestampExtLibrary.RubyTimestamp.class, NO_OP_CONVERTER);
++        converterRegistry.put(String.class, (rubyEngine, sourceValue) -> rubyEngine.newString((String) sourceValue));
++        converterRegistry.put(Double.class, SINGLE_PRECISION_CONVERTER);
++        converterRegistry.put(Float.class, SINGLE_PRECISION_CONVERTER);
++        converterRegistry.put(Integer.class, INT64_CONVERTER);
++        converterRegistry.put(
++            BigInteger.class, (rubyEngine, entryPayload) -> RubyBignum.newBignum(rubyEngine, (BigInteger) entryPayload)
+         );
+-        converters.put(
+-            BigDecimal.class, (runtime, value) -> new RubyBigDecimal(runtime, (BigDecimal) value)
++        converterRegistry.put(
++            BigDecimal.class, (rubyEngine, entryPayload) -> new RubyBigDecimal(rubyEngine, (BigDecimal) entryPayload)
+         );
+-        converters.put(Long.class, LONG_CONVERTER);
+-        converters.put(Boolean.class, (runtime, input) -> runtime.newBoolean((Boolean) input));
+-        converters.put(Map.class, (runtime, input) -> deepMapToRubyHash(runtime, (Map<?, ?>) input));
+-        converters.put(
+-            Collection.class, (runtime, input) -> deepListToRubyArray(runtime, (Collection<?>) input)
++        converterRegistry.put(Long.class, INT64_CONVERTER);
++        converterRegistry.put(Boolean.class, (rubyEngine, sourceValue) -> rubyEngine.newBoolean((Boolean) sourceValue));
++        converterRegistry.put(Map.class, (rubyEngine, sourceValue) -> deepMapToRubyHash(rubyEngine, (Map<?, ?>) sourceValue));
++        converterRegistry.put(
++            Collection.class, (rubyEngine, sourceValue) -> deepListToRubyArray(rubyEngine, (Collection<?>) sourceValue)
+         );
+-        converters.put(
++        converterRegistry.put(
+             Timestamp.class,
+-            (runtime, input) -> JrubyTimestampExtLibrary.RubyTimestamp.newRubyTimestamp(
+-                runtime, (Timestamp) input
++            (rubyEngine, sourceValue) -> JrubyTimestampExtLibrary.RubyTimestamp.newRubyTimestamp(
++                    rubyEngine, (Timestamp) sourceValue
+             )
+         );
+-        return converters;
++        converterRegistry.put(SecretEntry.class, JDK_UTIL_CONVERTER);
++        return converterRegistry;
+     }
+ 
+     /**
+      * Same principle as {@link Valuefier#fallbackConvert(Object, Class)}.
+      */
+-    private static IRubyObject convertWithFallback(final Ruby runtime, final Object o,
+-                                                   final Class<?> cls) {
+-        for (final Map.Entry<Class<?>, TypeConverter> entry : CONVERTER_MAP.entrySet()) {
+-            if (entry.getKey().isAssignableFrom(cls)) {
+-                final TypeConverter found = entry.getValue();
+-                CONVERTER_MAP.put(cls, found);
+-                return found.convertToType(runtime, o);
++    private static IRubyObject convertWithFallback(final Ruby rubyEngine, final Object obj,
++                                                   final Class<?> typeToken) {
++        for (final Map.Entry<Class<?>, TypeConverter> mapPair : TYPE_CONVERTER_REGISTRY.entrySet()) {
++            if (mapPair.getKey().isAssignableFrom(typeToken)) {
++                final TypeConverter matchedConverter = mapPair.getValue();
++                TYPE_CONVERTER_REGISTRY.put(typeToken, matchedConverter);
++                return matchedConverter.convertToType(rubyEngine, obj);
+             }
+         }
+-        throw new MissingConverterException(cls);
++        throw new MissingConverterException(typeToken);
+     }
+ 
+     private interface TypeConverter {
+ 
+-        IRubyObject convertToType(Ruby runtime, Object input);
++        IRubyObject convertToType(Ruby rubyEngine, Object sourceValue);
+     }
+ }
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/PipelineExecutionPlan.java b/logstash-core/src/main/java/org/logstash/config/ir/PipelineExecutionPlan.java
+index 145246303..9af83a624 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/PipelineExecutionPlan.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/PipelineExecutionPlan.java
+@@ -94,19 +94,19 @@ public final class PipelineExecutionPlan {
+     private final RubyIntegration.PluginFactory pluginCreator;
+ 
+     public PipelineExecutionPlan(
+-            final PipelineIR pipelineIntermediateRepresentation,
+-            final RubyIntegration.PluginFactory pluginCreator)
++            final PipelineIR pipelineModel,
++            final RubyIntegration.PluginFactory pluginProvider)
+     {
+-        this(pipelineIntermediateRepresentation, pluginCreator, null);
++        this(pipelineModel, pluginProvider, null);
+     }
+ 
+     public PipelineExecutionPlan(
+-            final PipelineIR pipelineIntermediateRepresentation,
+-            final RubyIntegration.PluginFactory pluginCreator,
++            final PipelineIR pipelineModel,
++            final RubyIntegration.PluginFactory pluginProvider,
+             final SecretStore secretRepository)
+     {
+-        this.pipelineIntermediateRepresentation = pipelineIntermediateRepresentation;
+-        this.pluginCreator = pluginCreator;
++        this.pipelineIntermediateRepresentation = pipelineModel;
++        this.pluginCreator = pluginProvider;
+         try (ConfigVariableResolver configExpander = new ConfigVariableResolver(
+                 secretRepository,
+                 EnvironmentVariableProvider.defaultProvider())) {
+@@ -240,25 +240,40 @@ public final class PipelineExecutionPlan {
+     }
+ 
+     @SuppressWarnings({"rawtypes", "unchecked"})
++    public static Map<String, Object> expandConfigValues(ConfigVariableResolver configExpander, Map<String, Object> configParameters, boolean preserveSecrets) {
++        Map<String, Object> resolvedConfig = new HashMap<>();
++        for (Map.Entry<String, Object> entry : configParameters.entrySet()) {
++            resolvedConfig.put(entry.getKey(), expandConfigValue(configExpander, entry.getValue(), preserveSecrets));
++        }
++        return resolvedConfig;
++    }
++
+     public static Map<String, Object> expandConfigValues(ConfigVariableResolver configExpander, Map<String, Object> configArguments) {
+-        Map<String, Object> expandedConfigMap = new HashMap<>();
+-        for (Map.Entry<String, Object> exception : configArguments.entrySet()) {
+-            if (exception.getValue() instanceof List) {
+-                List itemsList = (List) exception.getValue();
+-                List<Object> expandedList = new ArrayList<>();
+-                for (Object obj : itemsList) {
+-                    expandedList.add(configExpander.resolveVariable(obj));
+-                }
+-                expandedConfigMap.put(exception.getKey(), expandedList);
+-            } else if (exception.getValue() instanceof Map) {
+-                expandedConfigMap.put(exception.getKey(), expandConfigValues(configExpander, (Map<String, Object>) exception.getValue()));
+-            } else if (exception.getValue() instanceof String) {
+-                expandedConfigMap.put(exception.getKey(), configExpander.resolveVariable(exception.getValue()));
+-            } else {
+-                expandedConfigMap.put(exception.getKey(), exception.getValue());
++        return expandConfigValues(configExpander, configArguments, false);
++    }
++
++    @SuppressWarnings({"rawtypes", "unchecked"})
++    public static Object expandConfigValue(ConfigVariableResolver configExpander, Object value, boolean preserveSecrets) {
++        if (value instanceof List) {
++            List items = (List) value;
++            List<Object> expandedList = new ArrayList<>();
++            for (Object obj : items) {
++                expandedList.add(configExpander.resolveVariable(obj, preserveSecrets));
+             }
++            return expandedList;
++        }
++        if (value instanceof Map) {
++            // hidden recursion here expandConfigVariables -> expandConfigVariable
++            return expandConfigValues(configExpander, (Map<String, Object>) value, preserveSecrets);
+         }
+-        return expandedConfigMap;
++        if (value instanceof String) {
++            return configExpander.resolveVariable(value, preserveSecrets);
++        }
++        return value;
++    }
++
++    public static Object expandConfigVariablePreservingSecrets(ConfigVariableResolver configExpander, Object value) {
++        return expandConfigValue(configExpander, value, true);
+     }
+ 
+     /**
+@@ -521,7 +536,7 @@ public final class PipelineExecutionPlan {
+                     } else if (isOutput(dependentVertex)) {
+                         return getOutputDataset(dependentVertex, datasetCollection);
+                     } else {
+-                        // We know that it's an if vertex since the the input children are either
++                        // We know that it's an if vertex since the input children are either
+                         // output, filter or if in type.
+                         final IfVertex ifVertex = (IfVertex) dependentVertex;
+                         final SplitDataset conditionalDataset = getOrCreateSplitDataset(
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/compiler/EventPredicate.java b/logstash-core/src/main/java/org/logstash/config/ir/compiler/EventPredicate.java
+index b1304d8b0..cdd1b9589 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/compiler/EventPredicate.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/compiler/EventPredicate.java
+@@ -29,6 +29,7 @@ import java.util.function.Predicate;
+ import org.jruby.Ruby;
+ import org.jruby.RubyRegexp;
+ import org.jruby.RubyString;
++import org.jruby.java.proxies.ConcreteJavaProxy;
+ import org.jruby.runtime.builtin.IRubyObject;
+ import org.jruby.util.ByteList;
+ import org.logstash.ConvertedList;
+@@ -57,6 +58,7 @@ import org.logstash.config.ir.expression.binary.RegexEq;
+ import org.logstash.config.ir.expression.unary.Not;
+ import org.logstash.config.ir.expression.unary.Truthy;
+ import org.logstash.ext.JrubyEventExtLibrary;
++import org.logstash.secret.SecretEntry;
+ 
+ /**
+  * A pipeline execution "if" condition, compiled from the {@link BooleanExpression} of an
+@@ -475,8 +477,21 @@ public interface EventPredicate {
+         private static EventPredicate rubyFieldEqualsTo(final Comparable<IRubyObject> lhsExpr,
+                                                         final String fieldName) {
+             final FieldReference fieldRef = FieldReference.from(fieldName);
++
++            final Comparable<IRubyObject> unwrappedComparable = conditionallyExtractSecretValue(lhsExpr);
+             return rubyOccurrence ->
+-                    lhsExpr.equals(Rubyifier.deepConvert(RubyUtil.RUBY, rubyOccurrence.getEvent().getUnconvertedField(fieldRef)));
++                    unwrappedComparable.equals(Rubyifier.deepConvert(RubyUtil.RUBY, rubyOccurrence.getEvent().getUnconvertedField(fieldRef)));
++        }
++
++        private static Comparable<IRubyObject> conditionallyExtractSecretValue(Comparable<IRubyObject> comparableCandidate) {
++            if (!(comparableCandidate instanceof ConcreteJavaProxy)) {
++                return comparableCandidate;
++            }
++            if (!((ConcreteJavaProxy) comparableCandidate).getJavaClass().isAssignableFrom(SecretEntry.class)) {
++                return comparableCandidate;
++            }
++            SecretEntry sensitiveVariable = ((ConcreteJavaProxy) comparableCandidate).toJava(SecretEntry.class);
++            return RubyUtil.RUBY.newString(sensitiveVariable.getSecretValue());
+         }
+ 
+         private static EventPredicate constantCondition(final boolean scalarValue) {
+@@ -507,8 +522,8 @@ public interface EventPredicate {
+ 
+             private final RubyRegexp rubyRegexpObj;
+ 
+-            private FieldMatchesPredicate(final String fieldName, final String regexPattern) {
+-                this.fieldName = FieldReference.from(fieldName);
++            private FieldMatchesPredicate(final String propertyName, final String regexPattern) {
++                this.fieldName = FieldReference.from(propertyName);
+                 this.rubyRegexpObj = createRegexp(regexPattern);
+             }
+ 
+@@ -543,8 +558,8 @@ public interface EventPredicate {
+ 
+             private final RubyString rubyStringObj;
+ 
+-            private FieldContainsConstantString(final FieldReference fieldName, final String scalarValue) {
+-                this.fieldName = fieldName;
++            private FieldContainsConstantString(final FieldReference propertyName, final String scalarValue) {
++                this.fieldName = propertyName;
+                 this.rubyStringObj = RubyUtil.RUBY.newString(scalarValue);
+                 byteBuffer = rubyStringObj.getByteList();
+             }
+@@ -564,9 +579,9 @@ public interface EventPredicate {
+ 
+             private final Object scalarValue;
+ 
+-            private ConstantValueInField(final FieldReference fieldName, final Object scalarValue) {
+-                this.fieldName = fieldName;
+-                this.scalarValue = Valuefier.convert(scalarValue);
++            private ConstantValueInField(final FieldReference propertyName, final Object comparableCandidate) {
++                this.fieldName = propertyName;
++                this.scalarValue = Valuefier.convert(comparableCandidate);
+             }
+ 
+             @Override
+@@ -583,9 +598,9 @@ public interface EventPredicate {
+ 
+             private final ByteList scalarValue;
+ 
+-            private ConstantScalarField(final FieldReference fieldName, final String scalarValue) {
+-                this.fieldName = fieldName;
+-                this.scalarValue = RubyUtil.RUBY.newString(scalarValue).getByteList();
++            private ConstantScalarField(final FieldReference propertyName, final String comparableCandidate) {
++                this.fieldName = propertyName;
++                this.scalarValue = RubyUtil.RUBY.newString(comparableCandidate).getByteList();
+             }
+ 
+             @Override
+@@ -602,9 +617,9 @@ public interface EventPredicate {
+ 
+             private final FieldReference rhsExpr;
+ 
+-            private NestedField(final FieldReference lhsExpr, final FieldReference rhsExpr) {
+-                this.lhsExpr = lhsExpr;
+-                this.rhsExpr = rhsExpr;
++            private NestedField(final FieldReference lhsRef, final FieldReference rhsRef) {
++                this.lhsExpr = lhsRef;
++                this.rhsExpr = rhsRef;
+             }
+ 
+             @Override
+@@ -630,9 +645,9 @@ public interface EventPredicate {
+ 
+             private final List<?> scalarValue;
+ 
+-            private FieldInConstantValues(final FieldReference fieldName, final List<?> scalarValue) {
+-                this.fieldName = fieldName;
+-                this.scalarValue = scalarValue;
++            private FieldInConstantValues(final FieldReference propertyName, final List<?> comparableCandidate) {
++                this.fieldName = propertyName;
++                this.scalarValue = comparableCandidate;
+             }
+ 
+             @Override
+@@ -647,8 +662,8 @@ public interface EventPredicate {
+ 
+             private final FieldReference fieldName;
+ 
+-            private FieldIsTruthy(final FieldReference fieldName) {
+-                this.fieldName = fieldName;
++            private FieldIsTruthy(final FieldReference propertyName) {
++                this.fieldName = propertyName;
+             }
+ 
+             @Override
+@@ -665,7 +680,7 @@ public interface EventPredicate {
+          */
+         private static final class TypeMismatchException extends IllegalArgumentException {
+ 
+-            private static final long serialVersionUID = 1L;
++            private static final long TYPE_MISMATCH_SERIAL_UID = 1L;
+ 
+             TypeMismatchException(final Expression lhsExpr, final Expression rhsExpr) {
+                 super(
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/expression/BooleanExpressionSubstitutor.java b/logstash-core/src/main/java/org/logstash/config/ir/expression/BooleanExpressionSubstitutor.java
+index 9d1b3cd94..73196adc4 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/expression/BooleanExpressionSubstitutor.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/expression/BooleanExpressionSubstitutor.java
+@@ -1,6 +1,5 @@
+ package org.logstash.config.ir.expression;
+ 
+-import com.google.common.collect.ImmutableMap;
+ import org.logstash.common.SourceWithMetadata;
+ import org.logstash.config.ir.PipelineExecutionPlan;
+ import org.logstash.config.ir.InvalidIRException;
+@@ -8,7 +7,6 @@ import org.logstash.plugins.ConfigVariableResolver;
+ 
+ import java.lang.reflect.Constructor;
+ import java.lang.reflect.InvocationTargetException;
+-import java.util.Map;
+ 
+ public class BooleanExpressionSubstitutor {
+     /**
+@@ -36,10 +34,8 @@ public class BooleanExpressionSubstitutor {
+                     return binaryFactory.newInstance(unaryExpr.getSourceWithMetadata(), resolvedExpr);
+                 }
+             } else if (exprNode instanceof LiteralExpression && !(exprNode instanceof RegexValueExpression) && (((LiteralExpression) exprNode).get() != null)) {
+-                final String identifier = "placeholder";
+-                Map<String, Object> argumentsMap = ImmutableMap.of(identifier, ((LiteralExpression) exprNode).get());
+-                Map<String, Object> resolvedArguments = PipelineExecutionPlan.expandConfigValues(configExpander, argumentsMap);
+-                return new LiteralExpression(exprNode.getSourceWithMetadata(), resolvedArguments.get(identifier));
++                Object resolvedExpression = PipelineExecutionPlan.expandConfigVariablePreservingSecrets(configExpander, ((LiteralExpression) exprNode).get());
++                return new LiteralExpression(exprNode.getSourceWithMetadata(), resolvedExpression);
+             }
+ 
+             return exprNode;
+diff --git a/logstash-core/src/main/java/org/logstash/config/ir/expression/LiteralExpression.java b/logstash-core/src/main/java/org/logstash/config/ir/expression/LiteralExpression.java
+index 34b33a004..469a42a4c 100644
+--- a/logstash-core/src/main/java/org/logstash/config/ir/expression/LiteralExpression.java
++++ b/logstash-core/src/main/java/org/logstash/config/ir/expression/LiteralExpression.java
+@@ -23,10 +23,12 @@ package org.logstash.config.ir.expression;
+ import java.math.BigDecimal;
+ import java.time.Instant;
+ import java.util.List;
++
+ import org.jruby.RubyHash;
+ import org.logstash.common.SourceWithMetadata;
+ import org.logstash.config.ir.InvalidIRException;
+ import org.logstash.config.ir.SourceComponent;
++import org.logstash.secret.SecretEntry;
+ 
+ public class LiteralExpression extends Expression {
+     protected final Object value;
+@@ -44,7 +46,8 @@ public class LiteralExpression extends Expression {
+                 payload instanceof String ||
+                 payload instanceof List ||
+                 payload instanceof RubyHash ||
+-                payload instanceof Instant
++                payload instanceof Instant ||
++                payload instanceof SecretEntry
+         )) {
+             // This *should* be caught by the treetop grammar, but we need this case just in case there's a bug
+             // somewhere
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/ConfigVariableResolver.java b/logstash-core/src/main/java/org/logstash/plugins/ConfigVariableResolver.java
+index 2334842aa..1c427df18 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/ConfigVariableResolver.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/ConfigVariableResolver.java
+@@ -21,6 +21,7 @@
+ package org.logstash.plugins;
+ 
+ import org.logstash.common.EnvironmentVariableProvider;
++import org.logstash.secret.SecretEntry;
+ import org.logstash.secret.SecretIdentifier;
+ import org.logstash.secret.store.SecretStore;
+ 
+@@ -50,9 +51,9 @@ public class ConfigVariableResolver implements AutoCloseable {
+         return new ConfigVariableResolver(null, environmentAccessor);
+     }
+ 
+-    public ConfigVariableResolver(SecretStore secretsVault, EnvironmentVariableProvider environmentAccessor) {
+-        this.secretsVault = secretsVault;
+-        this.environmentAccessor = environmentAccessor;
++    public ConfigVariableResolver(SecretStore credentialStore, EnvironmentVariableProvider environmentProvider) {
++        this.secretsVault = credentialStore;
++        this.environmentAccessor = environmentProvider;
+     }
+ 
+     /**
+@@ -69,47 +70,53 @@ public class ConfigVariableResolver implements AutoCloseable {
+      *
+      * If a substitution variable is not found, the value is return unchanged
+      *
+-     * @param inputObject Config value in which substitution variables, if any, should be replaced.
++     * @param input Config value in which substitution variables, if any, should be replaced.
++     * @param preserveSensitive True if secret stores resolved variables must be kept secret in a Password instance
+      * @return Config value with any substitution variables replaced
+      */
+-    public Object resolveVariable(Object inputObject) {
+-        String tokenString;
+-        if (inputObject instanceof String) {
+-            tokenString = (String) inputObject;
+-        } else {
+-            return inputObject;
++    public Object resolveVariable(Object input, boolean preserveSensitive) {
++        if (!(input instanceof String)) {
++            return input;
+         }
+ 
+-        Matcher matcher = replacementPattern.matcher(tokenString);
+-        if (matcher.matches()) {
+-            String varKey = matcher.group("name");
++        String token = (String) input;
+ 
+-            if (secretsVault != null) {
+-                byte[] secretBytes = secretsVault.retrieveSecret(new SecretIdentifier(varKey));
+-                if (secretBytes != null) {
+-                    return new String(secretBytes, StandardCharsets.UTF_8);
+-                }
+-            }
+-
+-            if (environmentAccessor != null) {
+-                String environmentValue = environmentAccessor.get(varKey);
+-                if (environmentValue != null) {
+-                    return environmentValue;
++        Matcher matcher = replacementPattern.matcher(token);
++        if (!matcher.matches()) {
++            return token;
++        }
++        String nameKey = matcher.group("name");
++
++        if (secretsVault != null) {
++            byte[] storeBytes = secretsVault.retrieveSecret(new SecretIdentifier(nameKey));
++            if (storeBytes != null) {
++                if (preserveSensitive) {
++                    return new SecretEntry(nameKey, new String(storeBytes, StandardCharsets.UTF_8));
++                } else {
++                    return new String(storeBytes, StandardCharsets.UTF_8);
+                 }
+             }
++        }
+ 
+-            String fallbackValue = matcher.group("default");
+-            if (fallbackValue != null) {
+-                return fallbackValue;
++        if (environmentAccessor != null) {
++            String environmentString = environmentAccessor.get(nameKey);
++            if (environmentString != null) {
++                return environmentString;
+             }
++        }
+ 
++        String fallback = matcher.group("default");
++        if (fallback == null) {
+             throw new IllegalStateException(String.format(
+                     "Cannot evaluate `%s`. Replacement variable `%s` is not defined in a Logstash " +
+                             "secret store or an environment entry and there is no default value given.",
+-                    tokenString, varKey));
+-        } else {
+-            return tokenString;
++                    token, nameKey));
+         }
++        return fallback;
++    }
++
++    public Object resolveVariable(Object inputObject) {
++        return resolveVariable(inputObject, false);
+     }
+ 
+     @Override
+diff --git a/logstash-core/src/main/java/org/logstash/secret/SecretEntry.java b/logstash-core/src/main/java/org/logstash/secret/SecretEntry.java
+new file mode 100644
+index 000000000..610579f53
+--- /dev/null
++++ b/logstash-core/src/main/java/org/logstash/secret/SecretEntry.java
+@@ -0,0 +1,36 @@
++package org.logstash.secret;
++
++/**
++ * Value clas to carry the secret key id and secret value.
++ *
++ * Used to avoid inadvertently leak of secrets.
++ * */
++public final class SecretEntry {
++
++    private final String identifier;
++    private final String credential;
++
++    public SecretEntry(String identifier, String credential) {
++        this.identifier = identifier;
++        this.credential = credential;
++    }
++
++    public String getSecretValue() {
++        return credential;
++    }
++
++    @Override
++    public String toString() {
++        return "${" + identifier + "}";
++    }
++
++    // Ruby code compatibility, value attribute
++    public String getValue() {
++        return getSecretValue();
++    }
++
++    // Ruby code compatibility, inspect method
++    public String inspectEntry() {
++        return toString();
++    }
++}
+diff --git a/qa/integration/specs/env_variables_condition_spec.rb b/qa/integration/specs/env_variables_condition_spec.rb
+index 0a9ec2dd5..a0d0ae320 100644
+--- a/qa/integration/specs/env_variables_condition_spec.rb
++++ b/qa/integration/specs/env_variables_condition_spec.rb
+@@ -60,11 +60,11 @@ describe "Support environment variable in condition" do
+   }
+   let(:settings_dir) { Stud::Temporary.directory }
+   let(:settings) {{"pipeline.id" => "${pipeline.id}"}}
+-  let(:logstash_keystore_passowrd) { "keystore_pa9454w3rd" }
++  let(:logstash_keystore_password) { "keystore_pa9454w3rd" }
+ 
+   it "expands variables and evaluate expression successfully" do
+     test_env["TEST_ENV_PATH"] = test_path
+-    test_env["LOGSTASH_KEYSTORE_PASS"] = logstash_keystore_passowrd
++    test_env["LOGSTASH_KEYSTORE_PASS"] = logstash_keystore_password
+ 
+     @logstash.env_variables = test_env
+     @logstash.start_background_with_config_settings(config_to_temp_file(@fixture.config), settings_dir)
+@@ -76,7 +76,7 @@ describe "Support environment variable in condition" do
+   end
+ 
+   it "expands variables in secret store" do
+-    test_env["LOGSTASH_KEYSTORE_PASS"] = logstash_keystore_passowrd
++    test_env["LOGSTASH_KEYSTORE_PASS"] = logstash_keystore_password
+     test_env['TAG1'] = "wrong_env" # secret store should take precedence
+     logstash = @logstash.run_cmd(["bin/logstash", "-e",
+                                   "input { generator { count => 1 } }
+@@ -90,7 +90,7 @@ describe "Support environment variable in condition" do
+   end
+ 
+   it "exits with error when env variable is undefined" do
+-    test_env["LOGSTASH_KEYSTORE_PASS"] = logstash_keystore_passowrd
++    test_env["LOGSTASH_KEYSTORE_PASS"] = logstash_keystore_password
+     logstash = @logstash.run_cmd(["bin/logstash","-e", "filter { if \"${NOT_EXIST}\" { mutate {add_tag => \"oh no\"} } }", "--path.settings", settings_dir], true, test_env)
+     expect(logstash.stderr_and_stdout).to match(/Cannot evaluate `\$\{NOT_EXIST\}`/)
+     expect(logstash.exit_code).to be(1)
+ 

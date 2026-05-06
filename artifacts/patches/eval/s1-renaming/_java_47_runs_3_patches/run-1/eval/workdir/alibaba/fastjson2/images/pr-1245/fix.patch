@@ -1,0 +1,46 @@
+diff --git a/core/src/main/java/com/alibaba/fastjson2/filter/ContextAutoTypePreHandler.java b/core/src/main/java/com/alibaba/fastjson2/filter/ContextAutoTypePreHandler.java
+index 7f1573469..8c62301c7 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/filter/ContextAutoTypePreHandler.java
++++ b/core/src/main/java/com/alibaba/fastjson2/filter/ContextAutoTypePreHandler.java
+@@ -59,6 +59,8 @@ public class ContextAutoTypePreHandler
+             Currency.class,
+             BitSet.class,
+             EnumSet.class,
++            // this is java.util.RegularEnumSet, java.util.JumboEnumSet need add manually ?
++            EnumSet.noneOf(TimeUnit.class).getClass(),
+ 
+             Date.class,
+             Calendar.class,
+diff --git a/core/src/main/java/com/alibaba/fastjson2/reader/ListObjectReaderImpl.java b/core/src/main/java/com/alibaba/fastjson2/reader/ListObjectReaderImpl.java
+index 4aa82d281..a269eb065 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/reader/ListObjectReaderImpl.java
++++ b/core/src/main/java/com/alibaba/fastjson2/reader/ListObjectReaderImpl.java
+@@ -160,11 +160,11 @@ public final class ListObjectReaderImpl
+         return new ListObjectReaderImpl(desiredType, listImplementationClass, concreteClass, elementType, factory);
+     }
+ 
+-    public ListObjectReaderImpl(Type listGenericType, Class listImplementationClass, Class instanceClassType, Type elementType, Function factory) {
+-        this.listGenericType = listGenericType;
+-        this.listImplementationClass = listImplementationClass;
+-        this.instanceClassType = instanceClassType;
+-        this.instanceHash = Fnv.hashCode64(TypeUtils.getTypeName(instanceClassType));
++    public ListObjectReaderImpl(Type collectionType, Class collectionClass, Class concreteClass, Type elementType, Function factory) {
++        this.listGenericType = collectionType;
++        this.listImplementationClass = collectionClass;
++        this.instanceClassType = concreteClass;
++        this.instanceHash = Fnv.hashCode64(TypeUtils.getTypeName(concreteClass));
+         this.elementType = elementType;
+         this.elementClass = TypeUtils.getClass(elementType);
+         this.factory = factory;
+@@ -384,6 +384,10 @@ public final class ListObjectReaderImpl
+         } else if (listGenericType == UNMODIFIABLE_LIST_CLASS) {
+             resultList = new ArrayList();
+             factory = (Function<List, List>) ((List inputItems) -> Collections.unmodifiableList(inputItems));
++        } else if (listGenericType != null && EnumSet.class.isAssignableFrom(listGenericType)) {
++            // maybe listType is java.util.RegularEnumSet or java.util.JumboEnumSet
++            resultList = new HashSet();
++            factory = (element) -> EnumSet.copyOf((Collection) element);
+         } else if (listGenericType != null && listGenericType != this.listGenericType) {
+             try {
+                 resultList = (Collection) listGenericType.newInstance();
+ 

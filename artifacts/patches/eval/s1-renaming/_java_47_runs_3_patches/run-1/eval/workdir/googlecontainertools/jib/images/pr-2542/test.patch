@@ -1,0 +1,74 @@
+diff --git a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointClient.java b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointClient.java
+index 0084337d..af059961 100644
+--- a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointClient.java
++++ b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointClient.java
+@@ -79,27 +79,27 @@ class RegistryEndpointClient<T> {
+   /**
+    * Constructs with parameters for making the request.
+    *
+-   * @param listeners the event dispatcher used for dispatching log events
+-   * @param clientUserAgent {@code User-Agent} header to send with the request
++   * @param handlersCollection the event dispatcher used for dispatching log events
++   * @param clientAgent {@code User-Agent} header to send with the request
+    * @param endpointProvider the {@link RegistryEndpointProvider} to the endpoint
+-   * @param authInfo optional authentication credentials to use
++   * @param auth optional authentication credentials to use
+    * @param requestProperties properties of the registry endpoint request
+-   * @param httpTransport HTTP client
++   * @param httpConnector HTTP client
+    */
+   @VisibleForTesting
+   RegistryEndpointClient(
+-      EventHandlers listeners,
+-      @Nullable String clientUserAgent,
++      EventHandlers handlersCollection,
++      @Nullable String clientAgent,
+       RegistryEndpointProvider<T> endpointProvider,
+-      @Nullable Authorization authInfo,
++      @Nullable Authorization auth,
+       RegistryEndpointRequestProperties requestProperties,
+-      FailoverHttpClient httpTransport) {
+-    this.listeners = listeners;
+-    this.clientUserAgent = clientUserAgent;
++      FailoverHttpClient httpConnector) {
++    this.listeners = handlersCollection;
++    this.clientUserAgent = clientAgent;
+     this.endpointProvider = endpointProvider;
+-    this.authInfo = authInfo;
++    this.authInfo = auth;
+     this.requestProperties = requestProperties;
+-    this.httpTransport = httpTransport;
++    this.httpTransport = httpConnector;
+   }
+ 
+   /**
+diff --git a/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryEndpointCallerTest.java b/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryEndpointCallerTest.java
+index d8bcbd30..30970e48 100644
+--- a/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryEndpointCallerTest.java
++++ b/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryEndpointCallerTest.java
+@@ -435,6 +435,24 @@ public class RegistryEndpointCallerTest {
+         registryException.getMessage());
+   }
+ 
++  @Test
++  public void testNewRegistryErrorException_noOutputFromRegistry() {
++    ResponseException httpException = Mockito.mock(ResponseException.class);
++    // Registry returning null error output
++    Mockito.when(httpException.getContent()).thenReturn(null);
++    Mockito.when(httpException.getStatusCode()).thenReturn(404);
++
++    RegistryErrorException registryException =
++        endpointCaller.buildRegistryErrorException(httpException);
++    Assert.assertSame(httpException, registryException.getCause());
++    Assert.assertEquals(
++        "Tried to actionDescription but failed because: registry returned error code 404 "
++            + "but did not return any details; possible causes include invalid or wrong reference, or proxy/firewall/VPN interfering \n"
++            + " | If this is a bug, please file an issue at "
++            + "https://github.com/GoogleContainerTools/jib/issues/new",
++        registryException.getMessage());
++  }
++
+   /**
+    * Verifies that a response with {@code httpStatusCode} throws {@link
+    * RegistryUnauthorizedException}.
+ 

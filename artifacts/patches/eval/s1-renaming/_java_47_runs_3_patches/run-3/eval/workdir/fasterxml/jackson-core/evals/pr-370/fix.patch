@@ -1,0 +1,234 @@
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+index b7180337..82f5da3a 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+@@ -884,26 +884,18 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+             return null;
+         }
+         _binaryValue = null;
+-        if (index == INT_RBRACKET) {
+-            _updateInputLocation();
+-            if (!_parsingContext.inArray()) {
+-                _reportMismatchedEndMarker(index, '}');
+-            }
+-            _parsingContext = _parsingContext.clearAndGetParent();
+-            _currToken = JsonToken.END_ARRAY;
+-            return null;
+-        }
+-        if (index == INT_RCURLY) {
+-            _updateInputLocation();
+-            if (!_parsingContext.inObject()) {
+-                _reportMismatchedEndMarker(index, ']');
+-            }
+-            _parsingContext = _parsingContext.clearAndGetParent();
+-            _currToken = JsonToken.END_OBJECT;
++        if (index == INT_RBRACKET || index == INT_RCURLY) {
++            _closeCurrentScope(index);
+             return null;
+         }
+         if (_parsingContext.expectComma()) {
+             index = _skipCommaAndGetNext(index);
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if ((index == INT_RBRACKET) || (index == INT_RCURLY)) {
++                    _closeCurrentScope(index);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _updateInputLocation();
+@@ -2531,7 +2523,7 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+         }
+ 
+         // Ok, a hex escape. Need 4 characters
+-        int value = 0;
++        int codePoint = 0;
+         for (int index = 0; index < 4; ++index) {
+             if (_inputPtr >= _inputEnd) {
+                 if (!_refillBuffer()) {
+@@ -2539,13 +2531,13 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+                 }
+             }
+             int charArray = (int) _inputBuffer[_inputPtr++];
+-            int digit = CharTypes.charToHex(charArray);
+-            if (digit < 0) {
++            int nibble = CharTypes.charToHex(charArray);
++            if (nibble < 0) {
+                 _reportUnexpectedChar(charArray, "expected a hex-digit for character escape sequence");
+             }
+-            value = (value << 4) | digit;
++            codePoint = (codePoint << 4) | nibble;
+         }
+-        return (char) value;
++        return (char) codePoint;
+     }
+ 
+     private final void _matchTrueToken() throws IOException {
+@@ -2599,18 +2591,18 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+     /**
+      * Helper method for checking whether input matches expected token
+      */
+-    protected final void matchToken(String matchStr, int index) throws IOException
++    protected final void matchToken(String expectedToken, int index) throws IOException
+     {
+-        final int length = matchStr.length();
++        final int length = expectedToken.length();
+ 
+         do {
+             if (_inputPtr >= _inputEnd) {
+                 if (!_refillBuffer()) {
+-                    _reportUnexpectedToken(matchStr.substring(0, index));
++                    _reportUnexpectedToken(expectedToken.substring(0, index));
+                 }
+             }
+-            if (_inputBuffer[_inputPtr] != matchStr.charAt(index)) {
+-                _reportUnexpectedToken(matchStr.substring(0, index));
++            if (_inputBuffer[_inputPtr] != expectedToken.charAt(index)) {
++                _reportUnexpectedToken(expectedToken.substring(0, index));
+             }
+             ++_inputPtr;
+         } while (++index < length);
+@@ -2627,7 +2619,7 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+         }
+         // if Java letter, it's a problem tho
+         if (Character.isJavaIdentifierPart(codecSetter)) {
+-            _reportUnexpectedToken(matchStr.substring(0, index));
++            _reportUnexpectedToken(expectedToken.substring(0, index));
+         }
+         return;
+     }
+@@ -2761,9 +2753,9 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+     public JsonLocation getTokenLocation()
+     {
+         if (_currToken == JsonToken.FIELD_NAME) {
+-            long total = _currInputProcessed + (_nameStartOffset-1);
++            long accumulatedChars = _currInputProcessed + (_nameStartOffset-1);
+             return new JsonLocation(_getSourceReference(),
+-                    -1L, total, _nameStartRow, _nameStartCol);
++                    -1L, accumulatedChars, _nameStartRow, _nameStartCol);
+         }
+         return new JsonLocation(_getSourceReference(),
+                 -1L, _tokenInputTotal-1, _tokenInputRow, _tokenInputCol);
+@@ -2771,10 +2763,10 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+ 
+     @Override
+     public JsonLocation getCurrentLocation() {
+-        int col = _inputPtr - _currInputRowStart + 1; // 1-based
++        int horizontalPosition = _inputPtr - _currInputRowStart + 1; // 1-based
+         return new JsonLocation(_getSourceReference(),
+                 -1L, _currInputProcessed + _inputPtr,
+-                _currInputRow, col);
++                _currInputRow, horizontalPosition);
+     }
+ 
+     // @since 2.7
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/Utf8DataInputJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/Utf8DataInputJsonParser.java
+index cacbb417..41a6b30f 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/Utf8DataInputJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/Utf8DataInputJsonParser.java
+@@ -762,20 +762,8 @@ public class Utf8DataInputJsonParser
+         _binaryValue = null;
+         _tokenInputRow = _currInputRow;
+ 
+-        if (idx == INT_RBRACKET) {
+-            if (!_parsingContext.inArray()) {
+-                _reportMismatchedEndMarker(idx, '}');
+-            }
+-            _parsingContext = _parsingContext.clearAndGetParent();
+-            _currToken = JsonToken.END_ARRAY;
+-            return null;
+-        }
+-        if (idx == INT_RCURLY) {
+-            if (!_parsingContext.inObject()) {
+-                _reportMismatchedEndMarker(idx, ']');
+-            }
+-            _parsingContext = _parsingContext.clearAndGetParent();
+-            _currToken = JsonToken.END_OBJECT;
++        if (idx == INT_RBRACKET || idx == INT_RCURLY) {
++            _closeCurrentScope(idx);
+             return null;
+         }
+ 
+@@ -785,6 +773,15 @@ public class Utf8DataInputJsonParser
+                 _reportUnexpectedChar(idx, "was expecting comma to separate "+_parsingContext.typeDesc()+" entries");
+             }
+             idx = _skipWhitespace();
++
++            // Was that a trailing comma?
++            if (Feature.ALLOW_TRAILING_COMMA.enabledIn(_features)) {
++                if (idx == INT_RBRACKET || idx == INT_RCURLY) {
++                    _closeCurrentScope(idx);
++                    return null;
++                }
++            }
++
+         }
+         if (!_parsingContext.inObject()) {
+             _nextTokenOutsideObject(idx);
+@@ -2649,15 +2646,15 @@ public class Utf8DataInputJsonParser
+     /**********************************************************
+      */
+ 
+-    protected void _reportUnexpectedToken(int charBuf, String matchedPart) throws IOException
++    protected void _reportUnexpectedToken(int charBuf, String foundFragment) throws IOException
+      {
+-         _reportUnexpectedToken(charBuf, matchedPart, "'null', 'true', 'false' or NaN");
++         _reportUnexpectedToken(charBuf, foundFragment, "'null', 'true', 'false' or NaN");
+      }
+ 
+-    protected void _reportUnexpectedToken(int charBuf, String matchedPart, String msg)
++    protected void _reportUnexpectedToken(int charBuf, String foundFragment, String messageText)
+         throws IOException
+      {
+-         StringBuilder sb = new StringBuilder(matchedPart);
++         StringBuilder stringBuilder = new StringBuilder(foundFragment);
+ 
+          /* Let's just try to find what appears to be the token, using
+           * regular Java identifier character rules. It's just a heuristic,
+@@ -2668,10 +2665,10 @@ public class Utf8DataInputJsonParser
+              if (!Character.isJavaIdentifierPart(codecArg)) {
+                  break;
+              }
+-             sb.append(codecArg);
++             stringBuilder.append(codecArg);
+              charBuf = _inputData.readUnsignedByte();
+          }
+-         _reportError("Unrecognized token '"+sb.toString()+"': was expecting "+msg);
++         _reportError("Unrecognized token '"+ stringBuilder.toString()+"': was expecting "+ messageText);
+      }
+         
+     protected void _reportInvalidCharacter(int codecArg)
+@@ -2684,24 +2681,24 @@ public class Utf8DataInputJsonParser
+         _reportInvalidStartByte(codecArg);
+     }
+ 
+-    protected void _reportInvalidStartByte(int mask)
++    protected void _reportInvalidStartByte(int bitPattern)
+         throws JsonParseException
+     {
+-        _reportError("Invalid UTF-8 start byte 0x"+Integer.toHexString(mask));
++        _reportError("Invalid UTF-8 start byte 0x"+Integer.toHexString(bitPattern));
+     }
+ 
+-    private void _reportInvalidUtf8MiddleByte(int mask)
++    private void _reportInvalidUtf8MiddleByte(int bitPattern)
+         throws JsonParseException
+     {
+-        _reportError("Invalid UTF-8 middle byte 0x"+Integer.toHexString(mask));
++        _reportError("Invalid UTF-8 middle byte 0x"+Integer.toHexString(bitPattern));
+     }
+ 
+-    private static int[] growArrayBy(int[] arr, int more)
++    private static int[] growArrayBy(int[] currentArray, int additionalSize)
+     {
+-        if (arr == null) {
+-            return new int[more];
++        if (currentArray == null) {
++            return new int[additionalSize];
+         }
+-        return Arrays.copyOf(arr, arr.length + more);
++        return Arrays.copyOf(currentArray, currentArray.length + additionalSize);
+     }
+ 
+     /*
+ 

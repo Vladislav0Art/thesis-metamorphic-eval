@@ -1,0 +1,1090 @@
+diff --git a/core/src/main/java/com/alibaba/fastjson2/Json.java b/core/src/main/java/com/alibaba/fastjson2/Json.java
+index 51b74fa61..b83a0f8bd 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/Json.java
++++ b/core/src/main/java/com/alibaba/fastjson2/Json.java
+@@ -23,586 +23,586 @@ public interface Json {
+     /**
+      * Parse JSON {@link String} into {@link JSONArray} or {@link JSONObject}
+      *
+-     * @param text the JSON {@link String} to be parsed
++     * @param inputString the JSON {@link String} to be parsed
+      * @return Object
+      */
+-    static Object parseJson(String text) {
+-        if (text == null) {
++    static Object parseJson(String inputString) {
++        if (inputString == null) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(text);
+-        ObjectReader<?> objectReader = reader.getObjectReader(Object.class);
+-        return objectReader.readObject(reader, 0);
++        JSONReader jsonParser = JSONReader.of(inputString);
++        ObjectReader<?> entityDeserializer = jsonParser.getObjectReader(Object.class);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse JSON {@link String} into {@link JSONArray} or {@link JSONObject} with specified {@link JSONReader.Feature}s enabled
+      *
+-     * @param text     the JSON {@link String} to be parsed
+-     * @param features features to be enabled in parsing
++     * @param inputString     the JSON {@link String} to be parsed
++     * @param flags features to be enabled in parsing
+      * @return Object
+      */
+-    static Object parseJson(String text, JSONReader.Feature... features) {
+-        if (text == null) {
++    static Object parseJson(String inputString, JSONReader.Feature... flags) {
++        if (inputString == null) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(text);
+-        reader.context.config(features);
+-        ObjectReader<?> objectReader = reader.getObjectReader(Object.class);
+-        return objectReader.readObject(reader, 0);
++        JSONReader jsonParser = JSONReader.of(inputString);
++        jsonParser.context.config(flags);
++        ObjectReader<?> entityDeserializer = jsonParser.getObjectReader(Object.class);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse JSON {@link String} into {@link JSONObject}
+      *
+-     * @param text the JSON {@link String} to be parsed
++     * @param inputString the JSON {@link String} to be parsed
+      * @return JSONObject
+      */
+     @SuppressWarnings("unchecked")
+-    static JSONObject parseJsonObject(String text) {
+-        if (text == null) {
++    static JSONObject parseJsonObject(String inputString) {
++        if (inputString == null) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(text);
+-        ObjectReader<JSONObject> objectReader = reader.getObjectReader(JSONObject.class);
+-        return objectReader.readObject(reader, 0);
++        JSONReader jsonParser = JSONReader.of(inputString);
++        ObjectReader<JSONObject> entityDeserializer = jsonParser.getObjectReader(JSONObject.class);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse UTF8 encoded JSON byte array into {@link JSONObject}
+      *
+-     * @param bytes UTF8 encoded JSON byte array to parse
++     * @param inputData UTF8 encoded JSON byte array to parse
+      * @return JSONObject
+      */
+     @SuppressWarnings("unchecked")
+-    static JSONObject parseJsonObject(byte[] bytes) {
+-        if (bytes == null || bytes.length == 0) {
++    static JSONObject parseJsonObject(byte[] inputData) {
++        if (inputData == null || inputData.length == 0) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(bytes);
+-        ObjectReader<JSONObject> objectReader = reader.getObjectReader(JSONObject.class);
+-        return objectReader.readObject(reader, 0);
++        JSONReader jsonParser = JSONReader.of(inputData);
++        ObjectReader<JSONObject> entityDeserializer = jsonParser.getObjectReader(JSONObject.class);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse JSON {@link String} into Java Object
+      *
+-     * @param text  the JSON {@link String} to be parsed
+-     * @param clazz specify the Class to be converted
++     * @param inputString  the JSON {@link String} to be parsed
++     * @param typeClass specify the Class to be converted
+      * @return Class
+      */
+     @SuppressWarnings("unchecked")
+-    static <T> T parseJsonObject(String text, Class<T> clazz) {
+-        if (text == null) {
++    static <T> T parseJsonObject(String inputString, Class<T> typeClass) {
++        if (inputString == null) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(text);
+-        JSONReader.Context context = reader.context;
++        JSONReader jsonParser = JSONReader.of(inputString);
++        JSONReader.Context envState = jsonParser.context;
+ 
+-        boolean fieldBased = (context.features & JSONReader.Feature.FieldBased.mask) != 0;
+-        ObjectReader<T> objectReader = context.provider.getObjectReader(clazz, fieldBased);
+-        return objectReader.readObject(reader, 0);
++        boolean useFieldAccess = (envState.features & JSONReader.Feature.FieldBased.mask) != 0;
++        ObjectReader<T> entityDeserializer = envState.provider.getObjectReader(typeClass, useFieldAccess);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse JSON {@link String} into Java Object
+      *
+-     * @param text the JSON {@link String} to be parsed
+-     * @param type specify the {@link Type} to be converted
++     * @param inputString the JSON {@link String} to be parsed
++     * @param targetType specify the {@link Type} to be converted
+      */
+     @SuppressWarnings("unchecked")
+-    static <T> T parseJsonObject(String text, Type type) {
+-        if (text == null || text.length() == 0) {
++    static <T> T parseJsonObject(String inputString, Type targetType) {
++        if (inputString == null || inputString.length() == 0) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(text);
+-        ObjectReader<T> objectReader = reader.context.provider.getObjectReader(type);
+-        return objectReader.readObject(reader, 0);
++        JSONReader jsonParser = JSONReader.of(inputString);
++        ObjectReader<T> entityDeserializer = jsonParser.context.provider.getObjectReader(targetType);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse JSON {@link String} into Java Object
+      *
+-     * @param text          the JSON {@link String} to be parsed
+-     * @param typeReference specify the {@link TypeReference} to be converted
++     * @param inputString          the JSON {@link String} to be parsed
++     * @param typeToken specify the {@link TypeReference} to be converted
+      */
+     @SuppressWarnings({"unchecked", "rawtypes"})
+-    static <T> T parseJsonObject(String text, TypeReference typeReference) {
+-        if (text == null || text.length() == 0) {
++    static <T> T parseJsonObject(String inputString, TypeReference typeToken) {
++        if (inputString == null || inputString.length() == 0) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(text);
+-        ObjectReader<T> objectReader = reader.context.provider.getObjectReader(typeReference.getType());
+-        return objectReader.readObject(reader, 0);
++        JSONReader jsonParser = JSONReader.of(inputString);
++        ObjectReader<T> entityDeserializer = jsonParser.context.provider.getObjectReader(typeToken.getType());
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse JSON {@link String} into a Java object with specified {@link JSONReader.Feature}s enabled
+      *
+-     * @param text     the JSON {@link String} to be parsed
+-     * @param clazz    specify the Class to be converted
+-     * @param features features to be enabled in parsing
++     * @param inputString     the JSON {@link String} to be parsed
++     * @param typeClass    specify the Class to be converted
++     * @param flags features to be enabled in parsing
+      */
+     @SuppressWarnings("unchecked")
+-    static <T> T parseJsonObject(String text, Class<T> clazz, JSONReader.Feature... features) {
+-        if (text == null || text.length() == 0) {
++    static <T> T parseJsonObject(String inputString, Class<T> typeClass, JSONReader.Feature... flags) {
++        if (inputString == null || inputString.length() == 0) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(text);
++        JSONReader jsonParser = JSONReader.of(inputString);
+ 
+-        JSONReader.Context context = reader.context;
+-        context.config(features);
+-        boolean fieldBased = (context.features & JSONReader.Feature.FieldBased.mask) != 0;
++        JSONReader.Context envState = jsonParser.context;
++        envState.config(flags);
++        boolean useFieldAccess = (envState.features & JSONReader.Feature.FieldBased.mask) != 0;
+ 
+-        ObjectReader<T> objectReader = context.provider.getObjectReader(clazz, fieldBased);
+-        return objectReader.readObject(reader, 0);
++        ObjectReader<T> entityDeserializer = envState.provider.getObjectReader(typeClass, useFieldAccess);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse JSON {@link String} into a Java object with specified {@link JSONReader.Feature}s enabled
+      *
+-     * @param text     the JSON {@link String} to be parsed
+-     * @param clazz    specify the Class to be converted
+-     * @param format   the specified date format
+-     * @param features features to be enabled in parsing
++     * @param inputString     the JSON {@link String} to be parsed
++     * @param typeClass    specify the Class to be converted
++     * @param formatName   the specified date format
++     * @param flags features to be enabled in parsing
+      */
+     @SuppressWarnings("unchecked")
+-    static <T> T parseJsonObject(String text, Class<T> clazz, String format, JSONReader.Feature... features) {
+-        if (text == null || text.length() == 0) {
++    static <T> T parseJsonObject(String inputString, Class<T> typeClass, String formatName, JSONReader.Feature... flags) {
++        if (inputString == null || inputString.length() == 0) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(text);
++        JSONReader jsonParser = JSONReader.of(inputString);
+ 
+-        JSONReader.Context context = reader.context;
+-        if (format != null) {
+-            context.setUtilDateFormat(format);
++        JSONReader.Context envState = jsonParser.context;
++        if (formatName != null) {
++            envState.setUtilDateFormat(formatName);
+         }
+-        context.config(features);
++        envState.config(flags);
+ 
+-        ObjectReader<T> objectReader = context.provider.getObjectReader(clazz);
+-        return objectReader.readObject(reader, 0);
++        ObjectReader<T> entityDeserializer = envState.provider.getObjectReader(typeClass);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse JSON {@link String} into a Java object with specified {@link JSONReader.Feature}s enabled
+      *
+-     * @param text     the JSON {@link String} to be parsed
+-     * @param type     specify the {@link Type} to be converted
+-     * @param features features to be enabled in parsing
++     * @param inputString     the JSON {@link String} to be parsed
++     * @param targetType     specify the {@link Type} to be converted
++     * @param flags features to be enabled in parsing
+      */
+     @SuppressWarnings("unchecked")
+-    static <T> T parseJsonObject(String text, Type type, JSONReader.Feature... features) {
+-        if (text == null || text.length() == 0) {
++    static <T> T parseJsonObject(String inputString, Type targetType, JSONReader.Feature... flags) {
++        if (inputString == null || inputString.length() == 0) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(text);
+-        reader.context.config(features);
+-        ObjectReader<T> objectReader = reader.getObjectReader(type);
+-        return objectReader.readObject(reader, 0);
++        JSONReader jsonParser = JSONReader.of(inputString);
++        jsonParser.context.config(flags);
++        ObjectReader<T> entityDeserializer = jsonParser.getObjectReader(targetType);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse UTF8 encoded JSON byte array into a Java object
+      *
+-     * @param bytes UTF8 encoded JSON byte array to parse
+-     * @param type  specify the {@link Type} to be converted
++     * @param inputData UTF8 encoded JSON byte array to parse
++     * @param targetType  specify the {@link Type} to be converted
+      */
+     @SuppressWarnings("unchecked")
+-    static <T> T parseJsonObject(byte[] bytes, Type type) {
+-        if (bytes == null || bytes.length == 0) {
++    static <T> T parseJsonObject(byte[] inputData, Type targetType) {
++        if (inputData == null || inputData.length == 0) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(bytes);
+-        ObjectReader<T> objectReader = reader.getObjectReader(type);
+-        return objectReader.readObject(reader, 0);
++        JSONReader jsonParser = JSONReader.of(inputData);
++        ObjectReader<T> entityDeserializer = jsonParser.getObjectReader(targetType);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse UTF8 encoded JSON byte array into a Java object
+      *
+-     * @param bytes UTF8 encoded JSON byte array to parse
+-     * @param clazz specify the Class to be converted
++     * @param inputData UTF8 encoded JSON byte array to parse
++     * @param typeClass specify the Class to be converted
+      */
+     @SuppressWarnings("unchecked")
+-    static <T> T parseJsonObject(byte[] bytes, Class<T> clazz) {
+-        if (bytes == null || bytes.length == 0) {
++    static <T> T parseJsonObject(byte[] inputData, Class<T> typeClass) {
++        if (inputData == null || inputData.length == 0) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(bytes);
+-        ObjectReader<T> objectReader = reader.getObjectReader(clazz);
+-        return objectReader.readObject(reader, 0);
++        JSONReader jsonParser = JSONReader.of(inputData);
++        ObjectReader<T> entityDeserializer = jsonParser.getObjectReader(typeClass);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse UTF8 encoded JSON byte array into a Java object with specified {@link JSONReader.Feature}s enabled
+      *
+-     * @param bytes    UTF8 encoded JSON byte array to parse
+-     * @param type     specify the {@link Type} to be converted
+-     * @param features features to be enabled in parsing
++     * @param inputData    UTF8 encoded JSON byte array to parse
++     * @param targetType     specify the {@link Type} to be converted
++     * @param flags features to be enabled in parsing
+      */
+     @SuppressWarnings("unchecked")
+-    static <T> T parseJsonObject(byte[] bytes, Type type, JSONReader.Feature... features) {
+-        if (bytes == null || bytes.length == 0) {
++    static <T> T parseJsonObject(byte[] inputData, Type targetType, JSONReader.Feature... flags) {
++        if (inputData == null || inputData.length == 0) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(bytes);
+-        reader.getContext().config(features);
+-        ObjectReader<T> objectReader = reader.getObjectReader(type);
+-        return objectReader.readObject(reader, 0);
++        JSONReader jsonParser = JSONReader.of(inputData);
++        jsonParser.getContext().config(flags);
++        ObjectReader<T> entityDeserializer = jsonParser.getObjectReader(targetType);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parses the JSON byte array of the specified {@link Charset} into a Java Object
+      *
+-     * @param bytes   JSON byte array to parse
+-     * @param offset  the index of the first byte to parse
+-     * @param length  the number of bytes to parse
+-     * @param charset specify {@link Charset} to parse
+-     * @param type    specify the {@link Type} to be converted
++     * @param inputData   JSON byte array to parse
++     * @param startIndex  the index of the first byte to parse
++     * @param count  the number of bytes to parse
++     * @param encoding specify {@link Charset} to parse
++     * @param targetType    specify the {@link Type} to be converted
+      * @throws IndexOutOfBoundsException If the offset and the length arguments index characters outside the bounds of the bytes array
+      */
+     @SuppressWarnings("unchecked")
+-    static <T> T parseJsonObject(byte[] bytes, int offset, int length, Charset charset, Type type) {
+-        if (bytes == null || bytes.length == 0) {
++    static <T> T parseJsonObject(byte[] inputData, int startIndex, int count, Charset encoding, Type targetType) {
++        if (inputData == null || inputData.length == 0) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(bytes, offset, length, charset);
+-        ObjectReader<T> objectReader = reader.getObjectReader(type);
+-        return objectReader.readObject(reader, 0);
++        JSONReader jsonParser = JSONReader.of(inputData, startIndex, count, encoding);
++        ObjectReader<T> entityDeserializer = jsonParser.getObjectReader(targetType);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse JSON {@link String} into {@link JSONArray}
+      *
+-     * @param text the JSON {@link String} to be parsed
++     * @param inputString the JSON {@link String} to be parsed
+      */
+     @SuppressWarnings("unchecked")
+-    static JSONArray parseJsonArray(String text) {
+-        if (text == null || text.length() == 0) {
++    static JSONArray parseJsonArray(String inputString) {
++        if (inputString == null || inputString.length() == 0) {
+             return null;
+         }
+-        JSONReader reader = JSONReader.of(text);
+-        ObjectReader<JSONArray> objectReader = reader.getObjectReader(JSONArray.class);
+-        return objectReader.readObject(reader, 0);
++        JSONReader jsonParser = JSONReader.of(inputString);
++        ObjectReader<JSONArray> entityDeserializer = jsonParser.getObjectReader(JSONArray.class);
++        return entityDeserializer.readObject(jsonParser, 0);
+     }
+ 
+     /**
+      * Parse JSON {@link String} into {@link List}
+      *
+-     * @param text the JSON {@link String} to be parsed
+-     * @param type specify the {@link Type} to be converted
++     * @param inputString the JSON {@link String} to be parsed
++     * @param targetType specify the {@link Type} to be converted
+      */
+-    static <T> List<T> parseJsonArray(String text, Type type) {
+-        if (text == null || text.length() == 0) {
++    static <T> List<T> parseJsonArray(String inputString, Type targetType) {
++        if (inputString == null || inputString.length() == 0) {
+             return null;
+         }
+-        ParameterizedTypeImpl paramType = new ParameterizedTypeImpl(new Type[]{type}, null, List.class);
+-        JSONReader reader = JSONReader.of(text);
+-        return reader.read(paramType);
++        ParameterizedTypeImpl parameterizedType = new ParameterizedTypeImpl(new Type[]{targetType}, null, List.class);
++        JSONReader jsonParser = JSONReader.of(inputString);
++        return jsonParser.read(parameterizedType);
+     }
+ 
+     /**
+      * Parse JSON {@link String} into {@link List}
+      *
+-     * @param text  the JSON {@link String} to be parsed
+-     * @param types specify some {@link Type}s to be converted
++     * @param inputString  the JSON {@link String} to be parsed
++     * @param typeArray specify some {@link Type}s to be converted
+      */
+-    static <T> List<T> parseJsonArray(String text, Type[] types) {
+-        if (text == null || text.length() == 0) {
++    static <T> List<T> parseJsonArray(String inputString, Type[] typeArray) {
++        if (inputString == null || inputString.length() == 0) {
+             return null;
+         }
+-        List<T> array = new ArrayList<>(types.length);
+-        JSONReader reader = JSONReader.of(text);
++        List<T> resultList = new ArrayList<>(typeArray.length);
++        JSONReader jsonParser = JSONReader.of(inputString);
+ 
+-        reader.startArray();
+-        for (Type itemType : types) {
+-            array.add(
+-                    reader.read(itemType)
++        jsonParser.startArray();
++        for (Type elementType : typeArray) {
++            resultList.add(
++                    jsonParser.read(elementType)
+             );
+         }
+-        reader.endArray();
++        jsonParser.endArray();
+ 
+-        return array;
++        return resultList;
+     }
+ 
+     /**
+      * Serialize Java Object to JSON {@link String}
+      *
+-     * @param object Java Object to be serialized into JSON {@link String}
++     * @param value Java Object to be serialized into JSON {@link String}
+      */
+-    static String toJsonString(Object object) {
+-        try (JSONWriter writer = JSONWriter.of()) {
+-            if (object == null) {
+-                writer.writeNull();
++    static String toJsonString(Object value) {
++        try (JSONWriter jsonOutput = JSONWriter.of()) {
++            if (value == null) {
++                jsonOutput.writeNull();
+             } else {
+-                Class<?> valueClass = object.getClass();
+-                ObjectWriter<?> objectWriter = writer.getObjectWriter(valueClass, valueClass);
+-                objectWriter.write(writer, object, null, null, 0);
++                Class<?> valueType = value.getClass();
++                ObjectWriter<?> entitySerializer = jsonOutput.getObjectWriter(valueType, valueType);
++                entitySerializer.write(jsonOutput, value, null, null, 0);
+             }
+-            return writer.toString();
+-        } catch (NullPointerException | NumberFormatException ex) {
+-            throw new JSONException("toJSONString error", ex);
++            return jsonOutput.toString();
++        } catch (NullPointerException | NumberFormatException cause) {
++            throw new JSONException("toJSONString error", cause);
+         }
+     }
+ 
+     /**
+      * Serialize Java Object to JSON {@link String} with specified {@link JSONReader.Feature}s enabled
+      *
+-     * @param object   Java Object to be serialized into JSON {@link String}
+-     * @param features features to be enabled in serialization
++     * @param value   Java Object to be serialized into JSON {@link String}
++     * @param flags features to be enabled in serialization
+      */
+-    static String toJsonString(Object object, JSONWriter.Feature... features) {
+-        JSONWriter.Context writeContext = new JSONWriter.Context(JSONFactory.defaultObjectWriterProvider, features);
++    static String toJsonString(Object value, JSONWriter.Feature... flags) {
++        JSONWriter.Context outputState = new JSONWriter.Context(JSONFactory.defaultObjectWriterProvider, flags);
+ 
+-        boolean pretty = (writeContext.features & JSONWriter.Feature.PrettyFormat.mask) != 0;
+-        JSONWriterUTF16 jsonWriter = JDKUtils.JVM_VERSION == 8 ? new JSONWriterUTF16JDK8(writeContext) : new JSONWriterUTF16(writeContext);
++        boolean prettyPrint = (outputState.features & JSONWriter.Feature.PrettyFormat.mask) != 0;
++        JSONWriterUTF16 utf16Output = JDKUtils.JVM_VERSION == 8 ? new JSONWriterUTF16JDK8(outputState) : new JSONWriterUTF16(outputState);
+ 
+-        try (JSONWriter writer = pretty ?
+-                new JSONWriterPretty(jsonWriter) : jsonWriter) {
+-            if (object == null) {
+-                writer.writeNull();
++        try (JSONWriter jsonOutput = prettyPrint ?
++                new JSONWriterPretty(utf16Output) : utf16Output) {
++            if (value == null) {
++                jsonOutput.writeNull();
+             } else {
+-                writer.setRootObject(object);
+-                Class<?> valueClass = object.getClass();
++                jsonOutput.setRootObject(value);
++                Class<?> valueType = value.getClass();
+ 
+-                boolean fieldBased = (writeContext.features & JSONWriter.Feature.FieldBased.mask) != 0;
+-                ObjectWriter<?> objectWriter = writeContext.provider.getObjectWriter(valueClass, valueClass, fieldBased);
+-                objectWriter.write(writer, object, null, null, 0);
++                boolean useFieldAccess = (outputState.features & JSONWriter.Feature.FieldBased.mask) != 0;
++                ObjectWriter<?> entitySerializer = outputState.provider.getObjectWriter(valueType, valueType, useFieldAccess);
++                entitySerializer.write(jsonOutput, value, null, null, 0);
+             }
+-            return writer.toString();
++            return jsonOutput.toString();
+         }
+     }
+ 
+     /**
+      * Serialize Java Object to JSON {@link String} with specified {@link JSONReader.Feature}s enabled
+      *
+-     * @param object   Java Object to be serialized into JSON {@link String}
+-     * @param filters  specifies the filter to use in serialization
+-     * @param features features to be enabled in serialization
++     * @param value   Java Object to be serialized into JSON {@link String}
++     * @param predicates  specifies the filter to use in serialization
++     * @param flags features to be enabled in serialization
+      */
+-    static String toJsonString(Object object, Filter[] filters, JSONWriter.Feature... features) {
+-        try (JSONWriter writer = JSONWriter.of(features)) {
+-            if (object == null) {
+-                writer.writeNull();
++    static String toJsonString(Object value, Filter[] predicates, JSONWriter.Feature... flags) {
++        try (JSONWriter jsonOutput = JSONWriter.of(flags)) {
++            if (value == null) {
++                jsonOutput.writeNull();
+             } else {
+-                writer.setRootObject(object);
+-                if (filters != null && filters.length != 0) {
+-                    writer.context.configFilter(filters);
++                jsonOutput.setRootObject(value);
++                if (predicates != null && predicates.length != 0) {
++                    jsonOutput.context.configFilter(predicates);
+                 }
+ 
+-                Class<?> valueClass = object.getClass();
+-                ObjectWriter<?> objectWriter = writer.getObjectWriter(valueClass, valueClass);
+-                objectWriter.write(writer, object, null, null, 0);
++                Class<?> valueType = value.getClass();
++                ObjectWriter<?> entitySerializer = jsonOutput.getObjectWriter(valueType, valueType);
++                entitySerializer.write(jsonOutput, value, null, null, 0);
+             }
+-            return writer.toString();
++            return jsonOutput.toString();
+         }
+     }
+ 
+     /**
+      * Serialize Java Object to JSON {@link String} with specified {@link JSONReader.Feature}s enabled
+      *
+-     * @param object   Java Object to be serialized into JSON {@link String}
+-     * @param filter   specify a filter to use in serialization
+-     * @param features features to be enabled in serialization
++     * @param value   Java Object to be serialized into JSON {@link String}
++     * @param predicate   specify a filter to use in serialization
++     * @param flags features to be enabled in serialization
+      */
+-    static String toJsonString(Object object, Filter filter, JSONWriter.Feature... features) {
+-        try (JSONWriter writer = JSONWriter.of(features)) {
+-            if (object == null) {
+-                writer.writeNull();
++    static String toJsonString(Object value, Filter predicate, JSONWriter.Feature... flags) {
++        try (JSONWriter jsonOutput = JSONWriter.of(flags)) {
++            if (value == null) {
++                jsonOutput.writeNull();
+             } else {
+-                writer.setRootObject(object);
+-                if (filter != null) {
+-                    writer.context.configFilter(filter);
++                jsonOutput.setRootObject(value);
++                if (predicate != null) {
++                    jsonOutput.context.configFilter(predicate);
+                 }
+ 
+-                Class<?> valueClass = object.getClass();
+-                ObjectWriter<?> objectWriter = writer.getObjectWriter(valueClass, valueClass);
+-                objectWriter.write(writer, object, null, null, 0);
++                Class<?> valueType = value.getClass();
++                ObjectWriter<?> entitySerializer = jsonOutput.getObjectWriter(valueType, valueType);
++                entitySerializer.write(jsonOutput, value, null, null, 0);
+             }
+-            return writer.toString();
++            return jsonOutput.toString();
+         }
+     }
+ 
+     /**
+      * Serialize Java Object to JSON {@link String} with specified {@link JSONReader.Feature}s enabled
+      *
+-     * @param object   Java Object to be serialized into JSON {@link String}
+-     * @param format   the specified date format
+-     * @param features features to be enabled in serialization
++     * @param value   Java Object to be serialized into JSON {@link String}
++     * @param formatName   the specified date format
++     * @param flags features to be enabled in serialization
+      */
+-    static String toJsonString(Object object, String format, JSONWriter.Feature... features) {
+-        try (JSONWriter writer = JSONWriter.of(features)) {
+-            if (object == null) {
+-                writer.writeNull();
++    static String toJsonString(Object value, String formatName, JSONWriter.Feature... flags) {
++        try (JSONWriter jsonOutput = JSONWriter.of(flags)) {
++            if (value == null) {
++                jsonOutput.writeNull();
+             } else {
+-                writer.setRootObject(object);
+-                writer.context.setDateFormat(format);
++                jsonOutput.setRootObject(value);
++                jsonOutput.context.setDateFormat(formatName);
+ 
+-                Class<?> valueClass = object.getClass();
+-                ObjectWriter<?> objectWriter = writer.getObjectWriter(valueClass, valueClass);
+-                objectWriter.write(writer, object, null, null, 0);
++                Class<?> valueType = value.getClass();
++                ObjectWriter<?> entitySerializer = jsonOutput.getObjectWriter(valueType, valueType);
++                entitySerializer.write(jsonOutput, value, null, null, 0);
+             }
+-            return writer.toString();
++            return jsonOutput.toString();
+         }
+     }
+ 
+     /**
+      * Serialize Java Object to JSON byte array
+      *
+-     * @param object Java Object to be serialized into JSON byte array
++     * @param value Java Object to be serialized into JSON byte array
+      */
+-    static byte[] toJsonBytes(Object object) {
+-        try (JSONWriter writer = JSONWriter.ofUTF8()) {
+-            if (object == null) {
+-                writer.writeNull();
++    static byte[] toJsonBytes(Object value) {
++        try (JSONWriter jsonOutput = JSONWriter.ofUTF8()) {
++            if (value == null) {
++                jsonOutput.writeNull();
+             } else {
+-                Class<?> valueClass = object.getClass();
+-                ObjectWriter<?> objectWriter = writer.getObjectWriter(valueClass, valueClass);
+-                objectWriter.write(writer, object, null, null, 0);
++                Class<?> valueType = value.getClass();
++                ObjectWriter<?> entitySerializer = jsonOutput.getObjectWriter(valueType, valueType);
++                entitySerializer.write(jsonOutput, value, null, null, 0);
+             }
+-            return writer.getBytes();
++            return jsonOutput.getBytes();
+         }
+     }
+ 
+     /**
+      * Serialize Java Object to JSON byte array
+      *
+-     * @param object  Java Object to be serialized into JSON byte array
+-     * @param filters specifies the filter to use in serialization
++     * @param value  Java Object to be serialized into JSON byte array
++     * @param predicates specifies the filter to use in serialization
+      */
+-    static byte[] toJsonBytes(Object object, Filter... filters) {
+-        try (JSONWriter writer = JSONWriter.ofUTF8()) {
+-            if (filters != null && filters.length != 0) {
+-                writer.context.configFilter(filters);
++    static byte[] toJsonBytes(Object value, Filter... predicates) {
++        try (JSONWriter jsonOutput = JSONWriter.ofUTF8()) {
++            if (predicates != null && predicates.length != 0) {
++                jsonOutput.context.configFilter(predicates);
+             }
+ 
+-            if (object == null) {
+-                writer.writeNull();
++            if (value == null) {
++                jsonOutput.writeNull();
+             } else {
+-                Class<?> valueClass = object.getClass();
+-                ObjectWriter<?> objectWriter = writer.getObjectWriter(valueClass, valueClass);
+-                objectWriter.write(writer, object, null, null, 0);
++                Class<?> valueType = value.getClass();
++                ObjectWriter<?> entitySerializer = jsonOutput.getObjectWriter(valueType, valueType);
++                entitySerializer.write(jsonOutput, value, null, null, 0);
+             }
+-            return writer.getBytes();
++            return jsonOutput.getBytes();
+         }
+     }
+ 
+     /**
+      * Serialize Java Object to JSON byte array with specified {@link JSONReader.Feature}s enabled
+      *
+-     * @param object   Java Object to be serialized into JSON byte array
+-     * @param features features to be enabled in serialization
++     * @param value   Java Object to be serialized into JSON byte array
++     * @param flags features to be enabled in serialization
+      */
+-    static byte[] toJsonBytes(Object object, JSONWriter.Feature... features) {
+-        try (JSONWriter writer = JSONWriter.ofUTF8(features)) {
+-            if (object == null) {
+-                writer.writeNull();
++    static byte[] toJsonBytes(Object value, JSONWriter.Feature... flags) {
++        try (JSONWriter jsonOutput = JSONWriter.ofUTF8(flags)) {
++            if (value == null) {
++                jsonOutput.writeNull();
+             } else {
+-                writer.setRootObject(object);
++                jsonOutput.setRootObject(value);
+ 
+-                Class<?> valueClass = object.getClass();
+-                ObjectWriter<?> objectWriter = writer.getObjectWriter(valueClass, valueClass);
+-                objectWriter.write(writer, object, null, null, 0);
++                Class<?> valueType = value.getClass();
++                ObjectWriter<?> entitySerializer = jsonOutput.getObjectWriter(valueType, valueType);
++                entitySerializer.write(jsonOutput, value, null, null, 0);
+             }
+-            return writer.getBytes();
++            return jsonOutput.getBytes();
+         }
+     }
+ 
+     /**
+      * Serialize Java Object to JSON byte array with specified {@link JSONReader.Feature}s enabled
+      *
+-     * @param object   Java Object to be serialized into JSON byte array
+-     * @param filters  specifies the filter to use in serialization
+-     * @param features features to be enabled in serialization
++     * @param value   Java Object to be serialized into JSON byte array
++     * @param predicates  specifies the filter to use in serialization
++     * @param flags features to be enabled in serialization
+      */
+-    static byte[] toJsonBytes(Object object, Filter[] filters, JSONWriter.Feature... features) {
+-        try (JSONWriter writer = JSONWriter.ofUTF8(features)) {
+-            if (object == null) {
+-                writer.writeNull();
++    static byte[] toJsonBytes(Object value, Filter[] predicates, JSONWriter.Feature... flags) {
++        try (JSONWriter jsonOutput = JSONWriter.ofUTF8(flags)) {
++            if (value == null) {
++                jsonOutput.writeNull();
+             } else {
+-                writer.setRootObject(object);
+-                if (filters != null && filters.length != 0) {
+-                    writer.context.configFilter(filters);
++                jsonOutput.setRootObject(value);
++                if (predicates != null && predicates.length != 0) {
++                    jsonOutput.context.configFilter(predicates);
+                 }
+ 
+-                Class<?> valueClass = object.getClass();
+-                ObjectWriter<?> objectWriter = writer.getObjectWriter(valueClass, valueClass);
+-                objectWriter.write(writer, object, null, null, 0);
++                Class<?> valueType = value.getClass();
++                ObjectWriter<?> entitySerializer = jsonOutput.getObjectWriter(valueType, valueType);
++                entitySerializer.write(jsonOutput, value, null, null, 0);
+             }
+-            return writer.getBytes();
++            return jsonOutput.getBytes();
+         }
+     }
+ 
+     /**
+      * Serialize Java Object to JSON and write to {@link OutputStream} with specified {@link JSONReader.Feature}s enabled
+      *
+-     * @param out      {@link OutputStream} to be written
+-     * @param object   Java Object to be serialized into JSON
+-     * @param features features to be enabled in serialization
++     * @param output      {@link OutputStream} to be written
++     * @param value   Java Object to be serialized into JSON
++     * @param flags features to be enabled in serialization
+      * @throws JSONException if an I/O error occurs. In particular, a {@link JSONException} may be thrown if the output stream has been closed
+      */
+-    static int writeToOutputStream(OutputStream out, Object object, JSONWriter.Feature... features) {
+-        try (JSONWriter writer = JSONWriter.ofUTF8(features)) {
+-            if (object == null) {
+-                writer.writeNull();
++    static int writeToOutputStream(OutputStream output, Object value, JSONWriter.Feature... flags) {
++        try (JSONWriter jsonOutput = JSONWriter.ofUTF8(flags)) {
++            if (value == null) {
++                jsonOutput.writeNull();
+             } else {
+-                writer.setRootObject(object);
++                jsonOutput.setRootObject(value);
+ 
+-                Class<?> valueClass = object.getClass();
+-                ObjectWriter<?> objectWriter = writer.getObjectWriter(valueClass, valueClass);
+-                objectWriter.write(writer, object, null, null, 0);
++                Class<?> valueType = value.getClass();
++                ObjectWriter<?> entitySerializer = jsonOutput.getObjectWriter(valueType, valueType);
++                entitySerializer.write(jsonOutput, value, null, null, 0);
+             }
+ 
+-            return writer.flushTo(out);
+-        } catch (IOException e) {
+-            throw new JSONException(e.getMessage(), e);
++            return jsonOutput.flushTo(output);
++        } catch (IOException ioError) {
++            throw new JSONException(ioError.getMessage(), ioError);
+         }
+     }
+ 
+     /**
+      * Serialize Java Object to JSON and write to {@link OutputStream} with specified {@link JSONReader.Feature}s enabled
+      *
+-     * @param out      {@link OutputStream} to be written
+-     * @param object   Java Object to be serialized into JSON
+-     * @param filters  specifies the filter to use in serialization
+-     * @param features features to be enabled in serialization
++     * @param output      {@link OutputStream} to be written
++     * @param value   Java Object to be serialized into JSON
++     * @param predicates  specifies the filter to use in serialization
++     * @param flags features to be enabled in serialization
+      * @throws JSONException if an I/O error occurs. In particular, a {@link JSONException} may be thrown if the output stream has been closed
+      */
+-    static int writeToOutputStream(OutputStream out, Object object, Filter[] filters, JSONWriter.Feature... features) {
+-        try (JSONWriter writer = JSONWriter.ofUTF8(features)) {
+-            if (object == null) {
+-                writer.writeNull();
++    static int writeToOutputStream(OutputStream output, Object value, Filter[] predicates, JSONWriter.Feature... flags) {
++        try (JSONWriter jsonOutput = JSONWriter.ofUTF8(flags)) {
++            if (value == null) {
++                jsonOutput.writeNull();
+             } else {
+-                writer.setRootObject(object);
+-                if (filters != null && filters.length != 0) {
+-                    writer.context.configFilter(filters);
++                jsonOutput.setRootObject(value);
++                if (predicates != null && predicates.length != 0) {
++                    jsonOutput.context.configFilter(predicates);
+                 }
+ 
+-                Class<?> valueClass = object.getClass();
+-                ObjectWriter<?> objectWriter = writer.getObjectWriter(valueClass, valueClass);
+-                objectWriter.write(writer, object, null, null, 0);
++                Class<?> valueType = value.getClass();
++                ObjectWriter<?> entitySerializer = jsonOutput.getObjectWriter(valueType, valueType);
++                entitySerializer.write(jsonOutput, value, null, null, 0);
+             }
+ 
+-            return writer.flushTo(out);
+-        } catch (IOException e) {
+-            throw new JSONException(e.getMessage(), e);
++            return jsonOutput.flushTo(output);
++        } catch (IOException ioError) {
++            throw new JSONException(ioError.getMessage(), ioError);
+         }
+     }
+ 
+     /**
+      * Verify the {@link String} is JSON Object
+      *
+-     * @param text the {@link String} to validate
++     * @param inputString the {@link String} to validate
+      * @return T/F
+      */
+-    static boolean isValid(String text) {
+-        if (text == null || text.length() == 0) {
++    static boolean isValid(String inputString) {
++        if (inputString == null || inputString.length() == 0) {
+             return false;
+         }
+-        JSONReader jsonReader = JSONReader.of(text);
++        JSONReader parser = JSONReader.of(inputString);
+         try {
+-            jsonReader.skipValue();
+-        } catch (JSONException error) {
++            parser.skipValue();
++        } catch (JSONException jsonError) {
+             return false;
+         }
+         return true;
+@@ -611,20 +611,20 @@ public interface Json {
+     /**
+      * Verify the {@link String} is JSON Array
+      *
+-     * @param text the {@link String} to validate
++     * @param inputString the {@link String} to validate
+      * @return T/F
+      */
+-    static boolean isValidArray(String text) {
+-        if (text == null || text.length() == 0) {
++    static boolean isValidArray(String inputString) {
++        if (inputString == null || inputString.length() == 0) {
+             return false;
+         }
+-        JSONReader jsonReader = JSONReader.of(text);
++        JSONReader parser = JSONReader.of(inputString);
+         try {
+-            if (!jsonReader.isArray()) {
++            if (!parser.isArray()) {
+                 return false;
+             }
+-            jsonReader.skipValue();
+-        } catch (JSONException error) {
++            parser.skipValue();
++        } catch (JSONException jsonError) {
+             return false;
+         }
+         return true;
+@@ -633,17 +633,17 @@ public interface Json {
+     /**
+      * Verify the byte array is JSON Object
+      *
+-     * @param bytes the byte array to validate
++     * @param inputData the byte array to validate
+      * @return T/F
+      */
+-    static boolean isValid(byte[] bytes) {
+-        if (bytes == null || bytes.length == 0) {
++    static boolean isValid(byte[] inputData) {
++        if (inputData == null || inputData.length == 0) {
+             return false;
+         }
+-        JSONReader jsonReader = JSONReader.of(bytes);
++        JSONReader parser = JSONReader.of(inputData);
+         try {
+-            jsonReader.skipValue();
+-        } catch (JSONException error) {
++            parser.skipValue();
++        } catch (JSONException jsonError) {
+             return false;
+         }
+         return true;
+@@ -652,20 +652,20 @@ public interface Json {
+     /**
+      * Verify the byte array is JSON Array
+      *
+-     * @param bytes the byte array to validate
++     * @param inputData the byte array to validate
+      * @return T/F
+      */
+-    static boolean isValidArray(byte[] bytes) {
+-        if (bytes == null || bytes.length == 0) {
++    static boolean isValidArray(byte[] inputData) {
++        if (inputData == null || inputData.length == 0) {
+             return false;
+         }
+-        JSONReader jsonReader = JSONReader.of(bytes);
++        JSONReader parser = JSONReader.of(inputData);
+         try {
+-            if (!jsonReader.isArray()) {
++            if (!parser.isArray()) {
+                 return false;
+             }
+-            jsonReader.skipValue();
+-        } catch (JSONException error) {
++            parser.skipValue();
++        } catch (JSONException jsonError) {
+             return false;
+         }
+         return true;
+@@ -674,20 +674,20 @@ public interface Json {
+     /**
+      * Verify the byte array is JSON Object
+      *
+-     * @param bytes   the byte array to validate
+-     * @param offset  the index of the first byte to validate
+-     * @param length  the number of bytes to validate
+-     * @param charset specify {@link Charset} to validate
++     * @param inputData   the byte array to validate
++     * @param startIndex  the index of the first byte to validate
++     * @param count  the number of bytes to validate
++     * @param encoding specify {@link Charset} to validate
+      * @return T/F
+      */
+-    static boolean isValid(byte[] bytes, int offset, int length, Charset charset) {
+-        if (bytes == null || bytes.length == 0) {
++    static boolean isValid(byte[] inputData, int startIndex, int count, Charset encoding) {
++        if (inputData == null || inputData.length == 0) {
+             return false;
+         }
+-        JSONReader jsonReader = JSONReader.of(bytes, offset, length, charset);
++        JSONReader parser = JSONReader.of(inputData, startIndex, count, encoding);
+         try {
+-            jsonReader.skipValue();
+-        } catch (JSONException error) {
++            parser.skipValue();
++        } catch (JSONException jsonError) {
+             return false;
+         }
+         return true;
+@@ -696,48 +696,48 @@ public interface Json {
+     /**
+      * Convert Java object order to {@link JSONArray} or {@link JSONObject}
+      *
+-     * @param object Java Object to be converted
++     * @param value Java Object to be converted
+      * @return Java Object
+      */
+-    static Object toJson(Object object) {
+-        if (object == null) {
++    static Object toJson(Object value) {
++        if (value == null) {
+             return null;
+         }
+-        if (object instanceof JSONObject || object instanceof JSONArray) {
+-            return object;
++        if (value instanceof JSONObject || value instanceof JSONArray) {
++            return value;
+         }
+ 
+-        String str = Json.toJsonString(object);
+-        return Json.parseJson(str);
++        String jsonString = Json.toJsonString(value);
++        return Json.parseJson(jsonString);
+     }
+ 
+     /**
+      * Convert the Object to the target type
+      *
+-     * @param object Java Object to be converted
+-     * @param clazz  converted goal class
++     * @param value Java Object to be converted
++     * @param typeClass  converted goal class
+      */
+-    static <T> T convertToJavaObject(Object object, Class<T> clazz) {
+-        if (object == null) {
++    static <T> T convertToJavaObject(Object value, Class<T> typeClass) {
++        if (value == null) {
+             return null;
+         }
+-        if (object instanceof JSONObject) {
+-            return ((JSONObject) object).toJavaObject(clazz);
++        if (value instanceof JSONObject) {
++            return ((JSONObject) value).toJavaObject(typeClass);
+         }
+ 
+-        return TypeUtils.cast(object, clazz);
++        return TypeUtils.cast(value, typeClass);
+     }
+ 
+-    static void addMixIn(Class target, Class mixinSource) {
+-        JSONFactory.defaultObjectWriterProvider.mixIn(target, mixinSource);
+-        JSONFactory.getDefaultObjectReaderProvider().mixIn(target, mixinSource);
++    static void addMixIn(Class destinationClass, Class sourceClass) {
++        JSONFactory.defaultObjectWriterProvider.mixIn(destinationClass, sourceClass);
++        JSONFactory.getDefaultObjectReaderProvider().mixIn(destinationClass, sourceClass);
+     }
+ 
+-    static boolean registerObjectReader(Type type, ObjectReader objectReader) {
+-        return JSONFactory.getDefaultObjectReaderProvider().register(type, objectReader);
++    static boolean registerObjectReader(Type targetType, ObjectReader entityDeserializer) {
++        return JSONFactory.getDefaultObjectReaderProvider().register(targetType, entityDeserializer);
+     }
+ 
+-    static boolean registerObjectReader(Type type, ObjectWriter objectReader) {
+-        return JSONFactory.defaultObjectWriterProvider.register(type, objectReader);
++    static boolean registerObjectReader(Type targetType, ObjectWriter entityDeserializer) {
++        return JSONFactory.defaultObjectWriterProvider.register(targetType, entityDeserializer);
+     }
+ }
+diff --git a/core/src/test/java/com/alibaba/fastjson2/issues/Issue81.java b/core/src/test/java/com/alibaba/fastjson2/issues/Issue81.java
+new file mode 100644
+index 000000000..b216cec88
+--- /dev/null
++++ b/core/src/test/java/com/alibaba/fastjson2/issues/Issue81.java
+@@ -0,0 +1,22 @@
++package com.alibaba.fastjson2.issues;
++
++import com.alibaba.fastjson2.Json;
++import org.junit.jupiter.api.Test;
++
++import static org.junit.Assert.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++public class Issue81 {
++    @Test
++    public void test_issue() {
++        String jsonObjectStr = "{\"a\":1}";
++        String jsonArrayStr = "[{\"a\":1}]";
++        String value = "1111";
++        assertTrue(Json.isValid(jsonArrayStr));
++        assertTrue(Json.isValid(jsonObjectStr));
++        assertFalse(Json.isValidArray(jsonObjectStr));
++        assertTrue(Json.isValidArray(jsonArrayStr));
++        assertFalse(Json.isValid(value));
++        assertFalse(Json.isValidArray(value));
++    }
++}

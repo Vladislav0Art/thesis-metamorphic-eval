@@ -1,0 +1,42 @@
+diff --git a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticationManager.java b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticationManager.java
+index 86d6c78a..6bc7361a 100644
+--- a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticationManager.java
++++ b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticationManager.java
+@@ -72,9 +72,9 @@ public class RegistryAuthenticationManager {
+       @Nullable String agentString,
+       FailoverHttpClient httpTransport)
+       throws RegistryAuthenticationFailedException {
+-    // If the authentication method starts with 'basic ' (case insensitive), no registry
++    // If the authentication method starts with 'basic' (case insensitive), no registry
+     // authentication is needed.
+-    if (authScheme.matches("^(?i)(basic) .*")) {
++    if (authScheme.matches("^(?i)(basic).*")) {
+       return Optional.empty();
+     }
+ 
+@@ -150,16 +150,16 @@ public class RegistryAuthenticationManager {
+   private final FailoverHttpClient httpTransport;
+ 
+   private RegistryAuthenticationManager(
+-      String realmValue,
+-      String serviceName,
++      String authDomain,
++      String apiIdentifier,
+       RegistryEndpointRequestProperties endpointRequestConfig,
+-      @Nullable String agentString,
+-      FailoverHttpClient httpTransport) {
+-    this.realmValue = realmValue;
+-    this.serviceName = serviceName;
++      @Nullable String agentHeader,
++      FailoverHttpClient requestExecutor) {
++    this.realmValue = authDomain;
++    this.serviceName = apiIdentifier;
+     this.endpointRequestConfig = endpointRequestConfig;
+-    this.agentString = agentString;
+-    this.httpTransport = httpTransport;
++    this.agentString = agentHeader;
++    this.httpTransport = requestExecutor;
+   }
+ 
+   /**
+ 

@@ -1,0 +1,14 @@
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/SegmentedStringBuilder.java b/src/main/java/com/fasterxml/jackson/core/util/SegmentedStringBuilder.java
+index 66795055..4ad0f65e 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/SegmentedStringBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/SegmentedStringBuilder.java
+@@ -304,7 +304,7 @@ public final class SegmentedStringBuilder
+             return (cachedCharArray = computedString.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!segmentsPresent)  return currentBuffer;
++        if (!segmentsPresent && currentBuffer != null)  return currentBuffer;
+         // Nope, need to have/create a non-segmented array and return it
+         return contentsAsCharArray();
+     }
+ 

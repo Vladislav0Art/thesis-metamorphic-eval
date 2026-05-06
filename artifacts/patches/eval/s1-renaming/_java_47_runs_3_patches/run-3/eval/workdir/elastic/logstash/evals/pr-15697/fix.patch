@@ -1,0 +1,162 @@
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueAppender.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueAppender.java
+index b08e1102c..949fc37b1 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueAppender.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueAppender.java
+@@ -87,8 +87,8 @@ public final class DeadLetterQueueAppender implements Closeable {
+ 
+         final String sealCause;
+ 
+-        SealingReason(String sealCause) {
+-            this.sealCause = sealCause;
++        SealingReason(String reason) {
++            this.sealCause = reason;
+         }
+ 
+         @Override
+@@ -126,6 +126,44 @@ public final class DeadLetterQueueAppender implements Closeable {
+     private volatile Optional<Path> oldestPartitionPath = Optional.empty();
+     private final TemporalAmount dataRetentionPeriod;
+ 
++    private final RecurringTaskScheduler flushScheduler;
++
++    interface RecurringTaskScheduler {
++
++        /**
++         * Register the callback action to invoke on every clock tick.
++         * */
++        void recurringAction(Runnable task);
++    }
++
++    private static class FixedRateTaskScheduler implements RecurringTaskScheduler {
++
++        private final ScheduledExecutorService executorService;
++
++        FixedRateTaskScheduler() {
++            executorService = Executors.newScheduledThreadPool(1, task -> {
++                Thread workerThread = new Thread(task);
++                //Allow this thread to die when the JVM dies
++                workerThread.setDaemon(true);
++                //Set the name
++                workerThread.setName("dlq-flush-check");
++                return workerThread;
++            });
++        }
++
++        @Override
++        public void recurringAction(Runnable task) {
++            executorService.scheduleAtFixedRate(task, 1L, 1L, TimeUnit.SECONDS);
++        }
++    }
++
++    private static class NoOpScheduler implements RecurringTaskScheduler {
++        @Override
++        public void recurringAction(Runnable task) {
++            // Noop
++        }
++    }
++
+     public static final class QueueBuilder {
+ 
+         private final Path storagePath;
+@@ -136,17 +174,18 @@ public final class DeadLetterQueueAppender implements Closeable {
+         private QueueStorageType persistenceMode = QueueStorageType.DROP_NEWER;
+         private Duration dataRetentionPeriod = null;
+         private Clock timeSource = Clock.systemDefaultZone();
++        private RecurringTaskScheduler externalScheduler = null;
+ 
+-        private QueueBuilder(Path storagePath, long maxPartitionBytes, long maxCapacity, Duration flushPeriod) {
+-            this(storagePath, maxPartitionBytes, maxCapacity, flushPeriod, true);
++        private QueueBuilder(Path queueDirectory, long segmentCapacity, long queueCapacity, Duration flushPeriod) {
++            this(queueDirectory, segmentCapacity, queueCapacity, flushPeriod, true);
+         }
+ 
+-        private QueueBuilder(Path storagePath, long maxPartitionBytes, long maxCapacity, Duration flushPeriod, boolean enableScheduledFlusher) {
+-            this.storagePath = storagePath;
+-            this.maxPartitionBytes = maxPartitionBytes;
+-            this.maxCapacity = maxCapacity;
++        private QueueBuilder(Path queueDirectory, long segmentCapacity, long queueCapacity, Duration flushPeriod, boolean enableAutoFlush) {
++            this.storagePath = queueDirectory;
++            this.maxPartitionBytes = segmentCapacity;
++            this.maxCapacity = queueCapacity;
+             this.flushPeriod = flushPeriod;
+-            this.enableScheduledFlusher = enableScheduledFlusher;
++            this.enableScheduledFlusher = enableAutoFlush;
+         }
+ 
+         public QueueBuilder setStorageType(QueueStorageType persistenceMode) {
+@@ -165,8 +204,28 @@ public final class DeadLetterQueueAppender implements Closeable {
+             return this;
+         }
+ 
++        @VisibleForTesting
++        QueueBuilder setFlusherService(RecurringTaskScheduler scheduler) {
++            this.externalScheduler = scheduler;
++            return this;
++        }
++
+         public DeadLetterQueueAppender buildAppender() throws IOException {
+-            return new DeadLetterQueueAppender(storagePath, maxPartitionBytes, maxCapacity, flushPeriod, persistenceMode, dataRetentionPeriod, timeSource, enableScheduledFlusher);
++            if (externalScheduler != null && enableScheduledFlusher) {
++                throw new IllegalArgumentException("Both default scheduler and custom scheduler were defined, ");
++            }
++            RecurringTaskScheduler appenderScheduler;
++            if (externalScheduler != null) {
++                appenderScheduler = externalScheduler;
++            } else {
++                if (enableScheduledFlusher) {
++                    appenderScheduler = new FixedRateTaskScheduler();
++                } else {
++                    appenderScheduler = new NoOpScheduler();
++                }
++            }
++
++            return new DeadLetterQueueAppender(storagePath, maxPartitionBytes, maxCapacity, flushPeriod, persistenceMode, dataRetentionPeriod, timeSource, appenderScheduler);
+         }
+     }
+ 
+@@ -180,31 +239,30 @@ public final class DeadLetterQueueAppender implements Closeable {
+         return new QueueBuilder(storagePath, maxPartitionBytes, maxCapacity, Duration.ZERO, false);
+     }
+ 
+-    private DeadLetterQueueAppender(final Path storagePath, final long maxPartitionBytes, final long maxCapacity,
+-                                    final Duration flushPeriod, final QueueStorageType persistenceMode, final Duration dataRetentionPeriod,
+-                                    final Clock timeSource, boolean enableScheduledFlusher) throws IOException {
++    private DeadLetterQueueAppender(final Path queueDirectory, final long segmentCapacity, final long queueCapacity,
++                                    final Duration flushPeriod, final QueueStorageType storageMode, final Duration retentionPeriod,
++                                    final Clock timeSource, RecurringTaskScheduler flushScheduler) throws IOException {
+         this.timeSource = timeSource;
+ 
+-        this.fileLatch = FileLockFactory.obtainLock(storagePath, MUTEX_FILENAME);
+-        this.storagePath = storagePath;
+-        this.maxPartitionBytes = maxPartitionBytes;
+-        this.maxCapacity = maxCapacity;
+-        this.persistenceMode = persistenceMode;
++        this.fileLatch = FileLockFactory.obtainLock(queueDirectory, MUTEX_FILENAME);
++        this.storagePath = queueDirectory;
++        this.maxPartitionBytes = segmentCapacity;
++        this.maxCapacity = queueCapacity;
++        this.persistenceMode = storageMode;
+         this.flushPeriod = flushPeriod;
+         this.currentCount = new AtomicLong(getQueueSize());
+-        this.dataRetentionPeriod = dataRetentionPeriod;
++        this.dataRetentionPeriod = retentionPeriod;
+ 
+         cleanUpTempFiles();
+         refreshOldestSegmentReference();
+-        currentPartitionIndex = listSegmentPaths(storagePath)
+-                .map(path -> path.getFileName().toString().split("\\.")[0])
++        currentPartitionIndex = listSegmentPaths(queueDirectory)
++                .map(queuePath -> queuePath.getFileName().toString().split("\\.")[0])
+                 .mapToInt(Integer::parseInt)
+                 .max().orElse(0);
+         switchToNextWriter();
+         this.lastRecordTimestamp = Timestamp.now();
+-        if (enableScheduledFlusher) {
+-            initFlushScheduler();
+-        }
++        this.flushScheduler = flushScheduler;
++        this.flushScheduler.recurringAction(this::checkScheduledFlush);
+     }
+ 
+     public boolean isOpen() {
+ 

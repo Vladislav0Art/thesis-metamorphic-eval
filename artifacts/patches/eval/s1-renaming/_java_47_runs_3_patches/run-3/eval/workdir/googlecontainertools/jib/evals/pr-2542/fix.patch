@@ -1,0 +1,95 @@
+diff --git a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointClient.java b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointClient.java
+index 0084337d..3e4e9df8 100644
+--- a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointClient.java
++++ b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryEndpointClient.java
+@@ -46,8 +46,8 @@ import javax.net.ssl.SSLException;
+ class RegistryEndpointClient<T> {
+ 
+   /**
+-   * <a
+-   * href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>.
++   * <a href =
++   * "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>.
+    */
+   @VisibleForTesting static final int HTTP_STATUS_PERMANENT_REDIRECT = 308;
+ 
+@@ -80,26 +80,26 @@ class RegistryEndpointClient<T> {
+    * Constructs with parameters for making the request.
+    *
+    * @param listeners the event dispatcher used for dispatching log events
+-   * @param clientUserAgent {@code User-Agent} header to send with the request
+-   * @param endpointProvider the {@link RegistryEndpointProvider} to the endpoint
+-   * @param authInfo optional authentication credentials to use
++   * @param clientAgent {@code User-Agent} header to send with the request
++   * @param endpointResolver the {@link RegistryEndpointProvider} to the endpoint
++   * @param authToken optional authentication credentials to use
+    * @param requestProperties properties of the registry endpoint request
+-   * @param httpTransport HTTP client
++   * @param httpConnector HTTP client
+    */
+   @VisibleForTesting
+   RegistryEndpointClient(
+       EventHandlers listeners,
+-      @Nullable String clientUserAgent,
+-      RegistryEndpointProvider<T> endpointProvider,
+-      @Nullable Authorization authInfo,
++      @Nullable String clientAgent,
++      RegistryEndpointProvider<T> endpointResolver,
++      @Nullable Authorization authToken,
+       RegistryEndpointRequestProperties requestProperties,
+-      FailoverHttpClient httpTransport) {
++      FailoverHttpClient httpConnector) {
+     this.listeners = listeners;
+-    this.clientUserAgent = clientUserAgent;
+-    this.endpointProvider = endpointProvider;
+-    this.authInfo = authInfo;
++    this.clientUserAgent = clientAgent;
++    this.endpointProvider = endpointResolver;
++    this.authInfo = authToken;
+     this.requestProperties = requestProperties;
+-    this.httpTransport = httpTransport;
++    this.httpTransport = httpConnector;
+   }
+ 
+   /**
+@@ -188,22 +188,28 @@ class RegistryEndpointClient<T> {
+     RegistryErrorExceptionBuilder errorBuilder =
+         new RegistryErrorExceptionBuilder(
+             endpointProvider.getActionDescription(), respException);
+-
+-    try {
+-      ErrorResponseTemplate errorResp =
+-          JsonTemplateMapper.readJson(respException.getContent(), ErrorResponseTemplate.class);
+-      for (ErrorEntryTemplate errorItem : errorResp.getErrors()) {
+-        errorBuilder.addReason(errorItem);
++    if (respException.getContent() != null) {
++      try {
++        ErrorResponseTemplate errorResp =
++            JsonTemplateMapper.readJson(
++                respException.getContent(), ErrorResponseTemplate.class);
++        for (ErrorEntryTemplate errorItem : errorResp.getErrors()) {
++          errorBuilder.addReason(errorItem);
++        }
++      } catch (IOException responseFailure) {
++        errorBuilder.addReason(
++            "registry returned error code "
++                + respException.getStatusCode()
++                + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
++                + respException.getContent()
++                + "\n");
+       }
+-    } catch (IOException responseFailure) {
++    } else {
+       errorBuilder.addReason(
+           "registry returned error code "
+               + respException.getStatusCode()
+-              + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
+-              + respException.getContent()
+-              + "\n");
++              + " but did not return any details; possible causes include invalid or wrong reference, or proxy/firewall/VPN interfering \n");
+     }
+-
+     return errorBuilder.build();
+   }
+ 
+ 

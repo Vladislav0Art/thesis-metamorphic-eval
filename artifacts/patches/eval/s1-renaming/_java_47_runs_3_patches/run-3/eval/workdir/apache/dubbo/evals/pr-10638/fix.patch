@@ -1,0 +1,74 @@
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoHelper.java b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoHelper.java
+index d2004f9a61..ebf44fb896 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoHelper.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoHelper.java
+@@ -33,6 +33,9 @@ import java.lang.reflect.Proxy;
+ import java.lang.reflect.Type;
+ import java.lang.reflect.TypeVariable;
+ import java.lang.reflect.WildcardType;
++import java.time.LocalDate;
++import java.time.LocalDateTime;
++import java.time.LocalTime;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.Collection;
+@@ -141,6 +144,10 @@ public class PojoHelper {
+         if (ReflectUtils.isPrimitives(pojoObject.getClass())) {
+             return pojoObject;
+         }
++        
++        if (pojoObject instanceof LocalDate || pojoObject instanceof LocalDateTime || pojoObject instanceof LocalTime) {
++            return pojoObject.toString();
++        }
+ 
+         if (pojoObject instanceof Class) {
+             return ((Class) pojoObject).getName();
+@@ -231,8 +238,8 @@ public class PojoHelper {
+ 
+         private Map<Object, Object> hashMap;
+ 
+-        public PojoMethodInvocationHandler(Map<Object, Object> hashMap) {
+-            this.hashMap = hashMap;
++        public PojoMethodInvocationHandler(Map<Object, Object> entries) {
++            this.hashMap = entries;
+         }
+ 
+         @Override
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/TypeCompatibilityUtils.java b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/TypeCompatibilityUtils.java
+index 1a8bb250c5..d0b3edba97 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/TypeCompatibilityUtils.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/TypeCompatibilityUtils.java
+@@ -23,6 +23,7 @@ import java.text.ParseException;
+ import java.text.SimpleDateFormat;
+ import java.time.LocalDate;
+ import java.time.LocalDateTime;
++import java.time.LocalTime;
+ import java.util.ArrayList;
+ import java.util.Collection;
+ import java.util.Date;
+@@ -34,6 +35,11 @@ public class TypeCompatibilityUtils {
+ 
+     private static final String DEFAULT_DATE_PATTERN = "yyyy-MM-dd HH:mm:ss";
+ 
++    /**
++     * the text to parse such as "2007-12-03T10:15:30"
++     */
++    private static final int LOCAL_DATETIME_MIN_LENGTH = 19;
++
+     private TypeCompatibilityUtils() {
+     }
+ 
+@@ -128,7 +134,12 @@ public class TypeCompatibilityUtils {
+                 if (StringUtils.isEmpty(text)) {
+                     return null;
+                 }
+-                return LocalDateTime.parse(text).toLocalTime();
++                
++                if (text.length() >= LOCAL_DATETIME_MIN_LENGTH) {
++                    return LocalDateTime.parse(text).toLocalTime();
++                } else {
++                    return LocalTime.parse(text);
++                }
+             }
+             if (targetClass == Class.class) {
+                 try {

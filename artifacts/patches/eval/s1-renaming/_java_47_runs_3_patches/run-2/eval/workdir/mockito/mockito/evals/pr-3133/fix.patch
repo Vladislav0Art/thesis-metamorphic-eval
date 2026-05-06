@@ -1,0 +1,295 @@
+diff --git a/src/main/java/org/mockito/Capturer.java b/src/main/java/org/mockito/Capturer.java
+index 4ee3089b0..b27e3b09c 100644
+--- a/src/main/java/org/mockito/Capturer.java
++++ b/src/main/java/org/mockito/Capturer.java
+@@ -46,6 +46,6 @@ import java.lang.annotation.Target;
+  * @since 1.8.3
+  */
+ @Retention(RetentionPolicy.RUNTIME)
+-@Target(ElementType.FIELD)
++@Target({ElementType.FIELD, ElementType.PARAMETER})
+ @Documented
+ public @interface Capturer {}
+diff --git a/src/main/java/org/mockito/internal/configuration/CaptorProcessor.java b/src/main/java/org/mockito/internal/configuration/CaptorProcessor.java
+index 67e085316..35575bc56 100644
+--- a/src/main/java/org/mockito/internal/configuration/CaptorProcessor.java
++++ b/src/main/java/org/mockito/internal/configuration/CaptorProcessor.java
+@@ -5,6 +5,7 @@
+ package org.mockito.internal.configuration;
+ 
+ import java.lang.reflect.Field;
++import java.lang.reflect.Parameter;
+ 
+ import org.mockito.ArgumentCaptor;
+ import org.mockito.Capturer;
+@@ -29,4 +30,18 @@ public class CaptorProcessor implements FieldAnnotationProcessor<Capturer> {
+         Class<?> runtimeClass = new GenericTypeManager().getGenericType(member);
+         return ArgumentCaptor.forClass(runtimeClass);
+     }
++
++    public static Object createArgumentCaptorForParameter(Parameter argument) {
++        Class<?> targetClass = argument.getType();
++        if (!ArgumentCaptor.class.isAssignableFrom(targetClass)) {
++            throw new MockitoException(
++                    "@Captor field must be of the type ArgumentCaptor.\n"
++                            + "Field: '"
++                            + argument.getName()
++                            + "' has wrong type\n"
++                            + "For info how to use @Captor annotations see examples in javadoc for MockitoAnnotations class.");
++        }
++        Class<?> resolvedClass = new GenericTypeManager().getGenericType(argument);
++        return ArgumentCaptor.forClass(resolvedClass);
++    }
+ }
+diff --git a/src/main/java/org/mockito/internal/util/reflection/GenericTypeManager.java b/src/main/java/org/mockito/internal/util/reflection/GenericTypeManager.java
+index dbf10af86..aae977302 100644
+--- a/src/main/java/org/mockito/internal/util/reflection/GenericTypeManager.java
++++ b/src/main/java/org/mockito/internal/util/reflection/GenericTypeManager.java
+@@ -5,6 +5,7 @@
+ package org.mockito.internal.util.reflection;
+ 
+ import java.lang.reflect.Field;
++import java.lang.reflect.Parameter;
+ import java.lang.reflect.ParameterizedType;
+ import java.lang.reflect.Type;
+ 
+@@ -17,8 +18,21 @@ public class GenericTypeManager {
+      */
+     public Class<?> getGenericType(Field targetMember) {
+         Type typeParam = targetMember.getGenericType();
+-        if (typeParam instanceof ParameterizedType) {
+-            Type resolvedType = ((ParameterizedType) typeParam).getActualTypeArguments()[0];
++        return getaClass(typeParam);
++    }
++
++    /**
++     * Resolves the type (parametrized type) of the parameter. If the field is not generic it returns Object.class.
++     *
++     * @param methodArgument the parameter to inspect
++     */
++    public Class<?> getGenericType(Parameter methodArgument) {
++        return getaClass(methodArgument.getType());
++    }
++
++    private Class<?> getaClass(Type typeToken) {
++        if (typeToken instanceof ParameterizedType) {
++            Type resolvedType = ((ParameterizedType) typeToken).getActualTypeArguments()[0];
+             if (resolvedType instanceof Class) {
+                 return (Class<?>) resolvedType;
+             } else if (resolvedType instanceof ParameterizedType) {
+diff --git a/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/MockitoExtension.java b/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/MockitoExtension.java
+index dbcc1cc1f..617ec073b 100644
+--- a/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/MockitoExtension.java
++++ b/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/MockitoExtension.java
+@@ -7,7 +7,6 @@ package org.mockito.junit.jupiter;
+ import static org.junit.jupiter.api.extension.ExtensionContext.Namespace.create;
+ import static org.junit.platform.commons.support.AnnotationSupport.findAnnotation;
+ 
+-import java.lang.reflect.Parameter;
+ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Optional;
+@@ -20,14 +19,15 @@ import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
+ import org.junit.jupiter.api.extension.ParameterContext;
+ import org.junit.jupiter.api.extension.ParameterResolutionException;
+ import org.junit.jupiter.api.extension.ParameterResolver;
+-import org.mockito.Mock;
+ import org.mockito.Mockito;
+ import org.mockito.MockitoSession;
+ import org.mockito.ScopedMock;
+-import org.mockito.internal.configuration.MockAnnotationProcessor;
+ import org.mockito.internal.configuration.plugins.Plugins;
+ import org.mockito.internal.session.MockitoSessionLoggerAdapter;
+ import org.mockito.junit.MockitoJUnitRunner;
++import org.mockito.junit.jupiter.resolver.ParameterCaptorResolver;
++import org.mockito.junit.jupiter.resolver.DelegatingParameterResolver;
++import org.mockito.junit.jupiter.resolver.MockArgumentResolver;
+ import org.mockito.quality.Strictness;
+ 
+ /**
+@@ -123,14 +123,20 @@ public class MockitoExtension implements BeforeEachCallback, AfterEachCallback,
+ 
+     private final Strictness verificationMode;
+ 
++    private final ParameterResolver parameterProvider;
++
+     // This constructor is invoked by JUnit Jupiter via reflection or ServiceLoader
+     @SuppressWarnings("unused")
+     public MockitoExtension() {
+         this(Strictness.STRICT_STUBS);
+     }
+ 
+-    private MockitoExtension(Strictness verificationMode) {
+-        this.verificationMode = verificationMode;
++    private MockitoExtension(Strictness strictMode) {
++        this.verificationMode = strictMode;
++        this.parameterProvider = new DelegatingParameterResolver(
++            new MockArgumentResolver(),
++            new ParameterCaptorResolver()
++        );
+     }
+ 
+     /**
+@@ -163,12 +169,12 @@ public class MockitoExtension implements BeforeEachCallback, AfterEachCallback,
+         do {
+             maybeSettings = findAnnotation(activeExtension.getElement(), MockitoSettings.class);
+ 
+-            if (!activeExtension.getParent().isPresent()) {
++            if (activeExtension.getParent().isEmpty()) {
+                 break;
+             }
+ 
+             activeExtension = activeExtension.getParent().get();
+-        } while (!maybeSettings.isPresent() && activeExtension != extensionScope.getRoot());
++        } while (maybeSettings.isEmpty() && activeExtension != extensionScope.getRoot());
+ 
+         return maybeSettings;
+     }
+@@ -188,21 +194,16 @@ public class MockitoExtension implements BeforeEachCallback, AfterEachCallback,
+ 
+     @Override
+     public boolean supportsParameter(ParameterContext paramDescriptor, ExtensionContext extensionScope) throws ParameterResolutionException {
+-        return paramDescriptor.isAnnotated(Mock.class);
++        return parameterProvider.supportsParameter(paramDescriptor, extensionScope);
+     }
+ 
+     @Override
+     @SuppressWarnings("unchecked")
+     public Object resolveParameter(ParameterContext paramDescriptor, ExtensionContext extensionScope) throws ParameterResolutionException {
+-        final Parameter paramInfo = paramDescriptor.getParameter();
+-        Object testDouble = MockAnnotationProcessor.processAnnotationForMock(
+-            paramDescriptor.findAnnotation(Mock.class).get(),
+-            paramInfo.getType(),
+-            paramInfo::getParameterizedType,
+-            paramInfo.getName());
+-        if (testDouble instanceof ScopedMock) {
+-            extensionScope.getStore(MOCK_FRAMEWORK).get(STUBS, Set.class).add(testDouble);
++        Object resolvedValue = parameterProvider.resolveParameter(paramDescriptor, extensionScope);
++        if (resolvedValue instanceof ScopedMock) {
++            extensionScope.getStore(MOCK_FRAMEWORK).get(STUBS, Set.class).add(resolvedValue);
+         }
+-        return testDouble;
++        return resolvedValue;
+     }
+ }
+diff --git a/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/resolver/DelegatingParameterResolver.java b/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/resolver/DelegatingParameterResolver.java
+new file mode 100644
+index 000000000..b1bd2cd18
+--- /dev/null
++++ b/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/resolver/DelegatingParameterResolver.java
+@@ -0,0 +1,43 @@
++/*
++ * Copyright (c) 2018 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockito.junit.jupiter.resolver;
++
++import org.junit.jupiter.api.extension.ExtensionContext;
++import org.junit.jupiter.api.extension.ParameterContext;
++import org.junit.jupiter.api.extension.ParameterResolutionException;
++import org.junit.jupiter.api.extension.ParameterResolver;
++
++import java.util.List;
++import java.util.Optional;
++
++public class DelegatingParameterResolver implements ParameterResolver {
++
++    private final List<ParameterResolver> parameterResolvers;
++
++    public DelegatingParameterResolver(final ParameterResolver... parameterResolvers) {
++        this.parameterResolvers = List.of(parameterResolvers);
++    }
++
++    @Override
++    public boolean supportsParameter(ParameterContext paramContext, ExtensionContext runtimeContext) throws ParameterResolutionException {
++        return findSupportingDelegate(paramContext, runtimeContext).isPresent();
++    }
++
++    @Override
++    @SuppressWarnings("OptionalGetWithoutIsPresent")
++    public Object resolveParameter(ParameterContext paramContext, ExtensionContext runtimeContext) throws ParameterResolutionException {
++        final ParameterResolver resolver = findSupportingDelegate(paramContext, runtimeContext).get();
++        return resolver.resolveParameter(paramContext, runtimeContext);
++    }
++
++    private Optional<ParameterResolver> findSupportingDelegate(
++        final ParameterContext paramContext,
++        final ExtensionContext runtimeContext
++    ) {
++        return parameterResolvers.stream()
++            .filter(resolver -> resolver.supportsParameter(paramContext, runtimeContext))
++            .findFirst();
++    }
++}
+diff --git a/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/resolver/MockArgumentResolver.java b/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/resolver/MockArgumentResolver.java
+new file mode 100644
+index 000000000..64077c29e
+--- /dev/null
++++ b/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/resolver/MockArgumentResolver.java
+@@ -0,0 +1,34 @@
++/*
++ * Copyright (c) 2018 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockito.junit.jupiter.resolver;
++
++import org.junit.jupiter.api.extension.ExtensionContext;
++import org.junit.jupiter.api.extension.ParameterContext;
++import org.junit.jupiter.api.extension.ParameterResolutionException;
++import org.junit.jupiter.api.extension.ParameterResolver;
++import org.mockito.Mock;
++import org.mockito.internal.configuration.MockAnnotationProcessor;
++
++import java.lang.reflect.Parameter;
++
++public class MockArgumentResolver implements ParameterResolver {
++
++    @Override
++    public boolean supportsParameter(ParameterContext paramCtx, ExtensionContext extensionRef) throws ParameterResolutionException {
++        return paramCtx.isAnnotated(Mock.class);
++    }
++
++    @Override
++    @SuppressWarnings("OptionalGetWithoutIsPresent")
++    public Object resolveParameter(ParameterContext paramCtx, ExtensionContext extensionRef) throws ParameterResolutionException {
++        final Parameter paramValue = paramCtx.getParameter();
++
++        return MockAnnotationProcessor.processAnnotationForMock(
++            paramCtx.findAnnotation(Mock.class).get(),
++            paramValue.getType(),
++            paramValue::getParameterizedType,
++            paramValue.getName());
++    }
++}
+diff --git a/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/resolver/ParameterCaptorResolver.java b/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/resolver/ParameterCaptorResolver.java
+new file mode 100644
+index 000000000..155088942
+--- /dev/null
++++ b/subprojects/junit-jupiter/src/main/java/org/mockito/junit/jupiter/resolver/ParameterCaptorResolver.java
+@@ -0,0 +1,25 @@
++/*
++ * Copyright (c) 2018 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockito.junit.jupiter.resolver;
++
++import org.junit.jupiter.api.extension.ExtensionContext;
++import org.junit.jupiter.api.extension.ParameterContext;
++import org.junit.jupiter.api.extension.ParameterResolutionException;
++import org.junit.jupiter.api.extension.ParameterResolver;
++import org.mockito.Capturer;
++import org.mockito.internal.configuration.CaptorProcessor;
++
++public class ParameterCaptorResolver implements ParameterResolver {
++
++    @Override
++    public boolean supportsParameter(ParameterContext paramDescriptor, ExtensionContext extensionCtx) throws ParameterResolutionException {
++        return paramDescriptor.isAnnotated(Capturer.class);
++    }
++
++    @Override
++    public Object resolveParameter(ParameterContext paramDescriptor, ExtensionContext extensionCtx) throws ParameterResolutionException {
++        return CaptorProcessor.createArgumentCaptorForParameter(paramDescriptor.getParameter());
++    }
++}
+ 

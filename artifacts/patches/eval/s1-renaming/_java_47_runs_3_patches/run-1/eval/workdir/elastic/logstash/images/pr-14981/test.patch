@@ -1,0 +1,78 @@
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueFileWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueFileWriter.java
+index 79c34d97f..7ac374639 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueFileWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueFileWriter.java
+@@ -119,16 +119,16 @@ public final class DeadLetterQueueFileWriter implements Closeable {
+         private Duration retentionDuration = null;
+         private Clock timeSource = Clock.systemDefaultZone();
+ 
+-        private QueueConfigBuilder(Path pathToQueue, long segmentSizeLimit, long queueSizeLimit, Duration flushPeriod) {
+-            this(pathToQueue, segmentSizeLimit, queueSizeLimit, flushPeriod, true);
++        private QueueConfigBuilder(Path queueDirectory, long segmentSizeLimit, long queueCapacityLimit, Duration flushPeriod) {
++            this(queueDirectory, segmentSizeLimit, queueCapacityLimit, flushPeriod, true);
+         }
+ 
+-        private QueueConfigBuilder(Path pathToQueue, long segmentSizeLimit, long queueSizeLimit, Duration flushPeriod, boolean enableScheduledFlusher) {
+-            this.pathToQueue = pathToQueue;
++        private QueueConfigBuilder(Path queueDirectory, long segmentSizeLimit, long queueCapacityLimit, Duration flushPeriod, boolean enableScheduledFlush) {
++            this.pathToQueue = queueDirectory;
+             this.segmentSizeLimit = segmentSizeLimit;
+-            this.queueSizeLimit = queueSizeLimit;
++            this.queueSizeLimit = queueCapacityLimit;
+             this.flushPeriod = flushPeriod;
+-            this.enableScheduledFlusher = enableScheduledFlusher;
++            this.enableScheduledFlusher = enableScheduledFlush;
+         }
+ 
+         public QueueConfigBuilder setStorageType(QueueStorageType queueStorageMode) {
+@@ -162,23 +162,23 @@ public final class DeadLetterQueueFileWriter implements Closeable {
+         return new QueueConfigBuilder(pathToQueue, segmentSizeLimit, queueSizeLimit, Duration.ZERO, false);
+     }
+ 
+-    private DeadLetterQueueFileWriter(final Path pathToQueue, final long segmentSizeLimit, final long queueSizeLimit,
+-                                      final Duration flushPeriod, final QueueStorageType queueStorageMode, final Duration retentionDuration,
++    private DeadLetterQueueFileWriter(final Path queueDirectory, final long segmentSizeLimit, final long queueCapacityLimit,
++                                      final Duration flushPeriod, final QueueStorageType storageMode, final Duration retentionDuration,
+                                       final Clock timeSource, boolean enableScheduledFlusher) throws IOException {
+         this.timeSource = timeSource;
+ 
+-        this.currentFileLock = FileLockFactory.obtainLock(pathToQueue, LOCKFILE_PATH);
+-        this.pathToQueue = pathToQueue;
++        this.currentFileLock = FileLockFactory.obtainLock(queueDirectory, LOCKFILE_PATH);
++        this.pathToQueue = queueDirectory;
+         this.segmentSizeLimit = segmentSizeLimit;
+-        this.queueSizeLimit = queueSizeLimit;
+-        this.queueStorageMode = queueStorageMode;
++        this.queueSizeLimit = queueCapacityLimit;
++        this.queueStorageMode = storageMode;
+         this.flushPeriod = flushPeriod;
+         this.queueSizeCurrent = new AtomicLong(calculateQueueSize());
+         this.retentionDuration = retentionDuration;
+ 
+         cleanupTemporaryFiles();
+         refreshOldestSegmentReference();
+-        activeSegmentIndex = listSegmentPaths(pathToQueue)
++        activeSegmentIndex = listSegmentPaths(queueDirectory)
+                 .map(segmentPath -> segmentPath.getFileName().toString().split("\\.")[0])
+                 .mapToInt(Integer::parseInt)
+                 .max().orElse(0);
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index e0df785ce..c023368da 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -398,4 +398,14 @@ public class DeadLetterQueueWriterTest {
+             assertEquals(2, writeManager.getDroppedEvents());
+         }
+     }
++
++    @Test(expected = Test.None.class)
++    public void testInitializeWriterWith1ByteEntry() throws Exception {
++        Files.write(dir.resolve("1.log"), "1".getBytes());
++
++        DeadLetterQueueFileWriter writer = DeadLetterQueueFileWriter
++                .newQueueConfigBuilder(dir, 1_000, 100_000, Duration.ofSeconds(1))
++                .buildWriter();
++        writer.close();
++    }
+ }
+ 

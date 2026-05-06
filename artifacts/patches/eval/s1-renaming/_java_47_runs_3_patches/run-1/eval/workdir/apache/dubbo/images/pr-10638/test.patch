@@ -1,0 +1,52 @@
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoHelper.java b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoHelper.java
+index d2004f9a61..8f62c23cc2 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoHelper.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/PojoHelper.java
+@@ -231,8 +231,8 @@ public class PojoHelper {
+ 
+         private Map<Object, Object> hashMap;
+ 
+-        public PojoMethodInvocationHandler(Map<Object, Object> hashMap) {
+-            this.hashMap = hashMap;
++        public PojoMethodInvocationHandler(Map<Object, Object> attributes) {
++            this.hashMap = attributes;
+         }
+ 
+         @Override
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
+index 7ed87f3f2e..54d662d5b2 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/utils/PojoUtilsTest.java
+@@ -32,6 +32,9 @@ import org.junit.jupiter.api.Test;
+ import java.lang.reflect.Method;
+ import java.lang.reflect.Type;
+ import java.text.SimpleDateFormat;
++import java.time.LocalDate;
++import java.time.LocalDateTime;
++import java.time.LocalTime;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.Date;
+@@ -760,6 +763,22 @@ public class PojoUtilsTest {
+         assertEquals(setResult, setStr);
+     }
+ 
++    @Test
++    public void testJava8Time() {
++        
++        Object localDateTimeGen = PojoHelper.generalizeAll(LocalDateTime.now());
++        Object localDateTime = PojoHelper.materializeAll(localDateTimeGen, LocalDateTime.class);
++        assertEquals(localDateTimeGen, localDateTime.toString());
++
++        Object localDateGen = PojoHelper.generalizeAll(LocalDate.now());
++        Object localDate = PojoHelper.materializeAll(localDateGen, LocalDate.class);
++        assertEquals(localDateGen, localDate.toString());
++
++        Object localTimeGen = PojoHelper.generalizeAll(LocalTime.now());
++        Object localTime = PojoHelper.materializeAll(localTimeGen, LocalTime.class);
++        assertEquals(localTimeGen, localTime.toString());
++    }
++
+     public enum Day {
+         SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY
+     }

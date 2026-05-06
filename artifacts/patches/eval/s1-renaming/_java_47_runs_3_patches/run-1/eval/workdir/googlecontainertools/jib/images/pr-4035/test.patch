@@ -1,0 +1,123 @@
+diff --git a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticationManager.java b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticationManager.java
+index 86d6c78a..94ff0b7f 100644
+--- a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticationManager.java
++++ b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticationManager.java
+@@ -150,16 +150,16 @@ public class RegistryAuthenticationManager {
+   private final FailoverHttpClient httpTransport;
+ 
+   private RegistryAuthenticationManager(
+-      String realmValue,
+-      String serviceName,
++      String authDomain,
++      String providerId,
+       RegistryEndpointRequestProperties endpointRequestConfig,
+-      @Nullable String agentString,
+-      FailoverHttpClient httpTransport) {
+-    this.realmValue = realmValue;
+-    this.serviceName = serviceName;
++      @Nullable String clientIdentifier,
++      FailoverHttpClient failoverClient) {
++    this.realmValue = authDomain;
++    this.serviceName = providerId;
+     this.endpointRequestConfig = endpointRequestConfig;
+-    this.agentString = agentString;
+-    this.httpTransport = httpTransport;
++    this.agentString = clientIdentifier;
++    this.httpTransport = failoverClient;
+   }
+ 
+   /**
+diff --git a/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryAuthenticatorTest.java b/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryAuthenticatorTest.java
+index 0091883c..3cfa6228 100644
+--- a/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryAuthenticatorTest.java
++++ b/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryAuthenticatorTest.java
+@@ -16,6 +16,9 @@
+ 
+ package com.google.cloud.tools.jib.registry;
+ 
++import static com.google.common.truth.Truth.assertThat;
++import static com.google.common.truth.Truth8.assertThat;
++
+ import com.google.cloud.tools.jib.api.Credential;
+ import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
+ import com.google.cloud.tools.jib.http.FailoverHttpClient;
+@@ -83,10 +86,11 @@ public class RegistryAuthenticatorTest {
+                 "user-agent",
+                 httpClient)
+             .get();
+-    Assert.assertEquals(
+-        new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
+-        registryAuthenticator.getAuthenticationUrl(
+-            null, Collections.singletonMap("someimage", "scope")));
++    assertThat(
++            registryAuthenticator.getAuthenticationUrl(
++                null, Collections.singletonMap("someimage", "scope")))
++        .isEqualTo(
++            new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"));
+ 
+     registryAuthenticator =
+         RegistryAuthenticationManager.fromAuthenticationHeader(
+@@ -95,10 +99,11 @@ public class RegistryAuthenticatorTest {
+                 "user-agent",
+                 httpClient)
+             .get();
+-    Assert.assertEquals(
+-        new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
+-        registryAuthenticator.getAuthenticationUrl(
+-            null, Collections.singletonMap("someimage", "scope")));
++    assertThat(
++            registryAuthenticator.getAuthenticationUrl(
++                null, Collections.singletonMap("someimage", "scope")))
++        .isEqualTo(
++            new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"));
+   }
+ 
+   @Test
+@@ -155,29 +160,34 @@ public class RegistryAuthenticatorTest {
+ 
+   @Test
+   public void testFromAuthenticationMethod_basic() throws RegistryAuthenticationFailedException {
+-    Assert.assertFalse(
+-        RegistryAuthenticationManager.fromAuthenticationHeader(
++    assertThat(
++            RegistryAuthenticationManager.fromAuthenticationHeader(
++                "Basic", registryEndpointRequestProperties, "user-agent", httpClient))
++        .isEmpty();
++
++    assertThat(
++            RegistryAuthenticationManager.fromAuthenticationHeader(
+                 "Basic realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
+                 registryEndpointRequestProperties,
+                 "user-agent",
+-                httpClient)
+-            .isPresent());
++                httpClient))
++        .isEmpty();
+ 
+-    Assert.assertFalse(
+-        RegistryAuthenticationManager.fromAuthenticationHeader(
++    assertThat(
++            RegistryAuthenticationManager.fromAuthenticationHeader(
+                 "BASIC realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
+                 registryEndpointRequestProperties,
+                 "user-agent",
+-                httpClient)
+-            .isPresent());
++                httpClient))
++        .isEmpty();
+ 
+-    Assert.assertFalse(
+-        RegistryAuthenticationManager.fromAuthenticationHeader(
++    assertThat(
++            RegistryAuthenticationManager.fromAuthenticationHeader(
+                 "bASIC realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
+                 registryEndpointRequestProperties,
+                 "user-agent",
+-                httpClient)
+-            .isPresent());
++                httpClient))
++        .isEmpty();
+   }
+ 
+   @Test
+ 

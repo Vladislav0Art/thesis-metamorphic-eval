@@ -1,0 +1,1085 @@
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java
+index f689cf25b9..f938c86e4e 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java
+@@ -249,9 +249,9 @@ class URL implements Serializable {
+      */
+     public static URL valueOf(String url, boolean encoded) {
+         if (encoded) {
+-            return URLStrParser.parseEncodedStr(url);
++            return URLStringParser.parseEncodedString(url);
+         }
+-        return URLStrParser.parseDecodedStr(url);
++        return URLStringParser.parseDecodedString(url);
+     }
+ 
+     public static URL valueOf(String url, String... reserveParams) {
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+deleted file mode 100644
+index 4e3ccb6eca..0000000000
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ /dev/null
+@@ -1,417 +0,0 @@
+-/*
+- * Licensed to the Apache Software Foundation (ASF) under one or more
+- * contributor license agreements.  See the NOTICE file distributed with
+- * this work for additional information regarding copyright ownership.
+- * The ASF licenses this file to You under the Apache License, Version 2.0
+- * (the "License"); you may not use this file except in compliance with
+- * the License.  You may obtain a copy of the License at
+- *
+- *     http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package org.apache.dubbo.common;
+-
+-import org.apache.dubbo.common.url.component.ServiceConfigURL;
+-import org.apache.dubbo.common.url.component.URLItemCache;
+-
+-import java.util.Collections;
+-import java.util.HashMap;
+-import java.util.Map;
+-
+-import static org.apache.dubbo.common.constants.CommonConstants.DEFAULT_KEY_PREFIX;
+-import static org.apache.dubbo.common.utils.StringUtils.EMPTY_STRING;
+-import static org.apache.dubbo.common.utils.StringUtils.decodeHexByte;
+-import static org.apache.dubbo.common.utils.Utf8Utils.decodeUtf8;
+-
+-public final class URLStrParser {
+-    public static final String ENCODED_QUESTION_MARK = "%3F";
+-    public static final String ENCODED_TIMESTAMP_KEY = "timestamp%3D";
+-    public static final String ENCODED_PID_KEY = "pid%3D";
+-    public static final String ENCODED_AND_MARK = "%26";
+-    private static final char WHITESPACE_CHAR = 0x20;
+-
+-    private static final ThreadLocal<TempBuf> THREADLOCAL_PARSER_BUFFER = ThreadLocal.withInitial(() -> new TempBuf(1024));
+-
+-    private URLStrParser() {
+-        //empty
+-    }
+-
+-
+-    /**
+-     * @param decodedURLStr : after {@link URL#decode} string
+-     *                      decodedURLStr format: protocol://username:password@host:port/path?k1=v1&k2=v2
+-     *                      [protocol://][username:password@][host:port]/[path][?k1=v1&k2=v2]
+-     */
+-    public static URL parseDecodedStr(String decodedURLStr) {
+-        Map<String, String> parameters = null;
+-        int pathEndIdx = decodedURLStr.indexOf('?');
+-        if (pathEndIdx >= 0) {
+-            parameters = parseDecodedParams(decodedURLStr, pathEndIdx + 1);
+-        } else {
+-            pathEndIdx = decodedURLStr.length();
+-        }
+-
+-        String decodedBody = decodedURLStr.substring(0, pathEndIdx);
+-        return parseURLBody(decodedURLStr, decodedBody, parameters);
+-    }
+-
+-    private static Map<String, String> parseDecodedParams(String str, int from) {
+-        int len = str.length();
+-        if (from >= len) {
+-            return Collections.emptyMap();
+-        }
+-
+-        TempBuf tempBuf = THREADLOCAL_PARSER_BUFFER.get();
+-        Map<String, String> params = new HashMap<>();
+-        int nameStart = from;
+-        int valueStart = -1;
+-        int i;
+-        for (i = from; i < len; i++) {
+-            char ch = str.charAt(i);
+-            switch (ch) {
+-                case '=':
+-                    if (nameStart == i) {
+-                        nameStart = i + 1;
+-                    } else if (valueStart < nameStart) {
+-                        valueStart = i + 1;
+-                    }
+-                    break;
+-                case ';':
+-                case '&':
+-                    addParam(str, false, nameStart, valueStart, i, params, tempBuf);
+-                    nameStart = i + 1;
+-                    break;
+-                default:
+-                    // continue
+-            }
+-        }
+-        addParam(str, false, nameStart, valueStart, i, params, tempBuf);
+-        return params;
+-    }
+-
+-    /**
+-     * @param fullURLStr  : fullURLString
+-     * @param decodedBody : format: [protocol://][username:password@][host:port]/[path]
+-     * @param parameters  :
+-     * @return URL
+-     */
+-    private static URL parseURLBody(String fullURLStr, String decodedBody, Map<String, String> parameters) {
+-        int starIdx = 0, endIdx = decodedBody.length();
+-        // ignore the url content following '#'
+-        int poundIndex = decodedBody.indexOf('#');
+-        if (poundIndex != -1) {
+-            endIdx = poundIndex;
+-        }
+-
+-        String protocol = null;
+-        int protoEndIdx = decodedBody.indexOf("://");
+-        if (protoEndIdx >= 0) {
+-            if (protoEndIdx == 0) {
+-                throw new IllegalStateException("url missing protocol: \"" + fullURLStr + "\"");
+-            }
+-            protocol = decodedBody.substring(0, protoEndIdx);
+-            starIdx = protoEndIdx + 3;
+-        } else {
+-            // case: file:/path/to/file.txt
+-            protoEndIdx = decodedBody.indexOf(":/");
+-            if (protoEndIdx >= 0) {
+-                if (protoEndIdx == 0) {
+-                    throw new IllegalStateException("url missing protocol: \"" + fullURLStr + "\"");
+-                }
+-                protocol = decodedBody.substring(0, protoEndIdx);
+-                starIdx = protoEndIdx + 1;
+-            }
+-        }
+-
+-        String path = null;
+-        int pathStartIdx = indexOf(decodedBody, '/', starIdx, endIdx);
+-        if (pathStartIdx >= 0) {
+-            path = decodedBody.substring(pathStartIdx + 1, endIdx);
+-            endIdx = pathStartIdx;
+-        }
+-
+-        String username = null;
+-        String password = null;
+-        int pwdEndIdx = lastIndexOf(decodedBody, '@', starIdx, endIdx);
+-        if (pwdEndIdx > 0) {
+-            int passwordStartIdx = indexOf(decodedBody, ':', starIdx, pwdEndIdx);
+-            if (passwordStartIdx != -1) {//tolerate incomplete user pwd input, like '1234@'
+-                username = decodedBody.substring(starIdx, passwordStartIdx);
+-                password = decodedBody.substring(passwordStartIdx + 1, pwdEndIdx);
+-            } else {
+-                username = decodedBody.substring(starIdx, pwdEndIdx);
+-            }
+-            starIdx = pwdEndIdx + 1;
+-        }
+-
+-        String host = null;
+-        int port = 0;
+-        int hostEndIdx = lastIndexOf(decodedBody, ':', starIdx, endIdx);
+-        if (hostEndIdx > 0 && hostEndIdx < decodedBody.length() - 1) {
+-            if (lastIndexOf(decodedBody, '%', starIdx, endIdx) > hostEndIdx) {
+-                // ipv6 address with scope id
+-                // e.g. fe80:0:0:0:894:aeec:f37d:23e1%en0
+-                // see https://howdoesinternetwork.com/2013/ipv6-zone-id
+-                // ignore
+-            } else {
+-                port = Integer.parseInt(decodedBody.substring(hostEndIdx + 1, endIdx));
+-                endIdx = hostEndIdx;
+-            }
+-        }
+-
+-        if (endIdx > starIdx) {
+-            host = decodedBody.substring(starIdx, endIdx);
+-        }
+-
+-        // check cache
+-        protocol = URLItemCache.intern(protocol);
+-        path = URLItemCache.checkPath(path);
+-
+-        return new ServiceConfigURL(protocol, username, password, host, port, path, parameters);
+-    }
+-
+-    public static String[] parseRawURLToArrays(String rawURLStr, int pathEndIdx) {
+-        String[] parts = new String[2];
+-        int paramStartIdx = pathEndIdx + 3;//skip ENCODED_QUESTION_MARK
+-        if (pathEndIdx == -1) {
+-            pathEndIdx = rawURLStr.indexOf('?');
+-            if (pathEndIdx == -1) {
+-                // url with no params, decode anyway
+-                rawURLStr = URL.decode(rawURLStr);
+-            } else {
+-                paramStartIdx = pathEndIdx + 1;
+-            }
+-        }
+-        if (pathEndIdx >= 0) {
+-            parts[0] = rawURLStr.substring(0, pathEndIdx);
+-            parts[1] = rawURLStr.substring(paramStartIdx);
+-        } else {
+-            parts = new String[]{rawURLStr};
+-        }
+-        return parts;
+-    }
+-
+-    public static Map<String, String> parseParams(String rawParams, boolean encoded) {
+-        if (encoded) {
+-            return parseEncodedParams(rawParams, 0);
+-        }
+-        return parseDecodedParams(rawParams, 0);
+-    }
+-
+-    /**
+-     * @param encodedURLStr : after {@link URL#encode(String)} string
+-     *                      encodedURLStr after decode format: protocol://username:password@host:port/path?k1=v1&k2=v2
+-     *                      [protocol://][username:password@][host:port]/[path][?k1=v1&k2=v2]
+-     */
+-    public static URL parseEncodedStr(String encodedURLStr) {
+-        Map<String, String> parameters = null;
+-        int pathEndIdx = encodedURLStr.toUpperCase().indexOf("%3F");// '?'
+-        if (pathEndIdx >= 0) {
+-            parameters = parseEncodedParams(encodedURLStr, pathEndIdx + 3);
+-        } else {
+-            pathEndIdx = encodedURLStr.length();
+-        }
+-
+-        //decodedBody format: [protocol://][username:password@][host:port]/[path]
+-        String decodedBody = decodeComponent(encodedURLStr, 0, pathEndIdx, false, THREADLOCAL_PARSER_BUFFER.get());
+-        return parseURLBody(encodedURLStr, decodedBody, parameters);
+-    }
+-
+-    private static Map<String, String> parseEncodedParams(String str, int from) {
+-        int len = str.length();
+-        if (from >= len) {
+-            return Collections.emptyMap();
+-        }
+-
+-        TempBuf tempBuf = THREADLOCAL_PARSER_BUFFER.get();
+-        Map<String, String> params = new HashMap<>();
+-        int nameStart = from;
+-        int valueStart = -1;
+-        int i;
+-        for (i = from; i < len; i++) {
+-            char ch = str.charAt(i);
+-            if (ch == '%') {
+-                if (i + 3 > len) {
+-                    throw new IllegalArgumentException("unterminated escape sequence at index " + i + " of: " + str);
+-                }
+-                ch = (char) decodeHexByte(str, i + 1);
+-                i += 2;
+-            }
+-
+-            switch (ch) {
+-                case '=':
+-                    if (nameStart == i) {
+-                        nameStart = i + 1;
+-                    } else if (valueStart < nameStart) {
+-                        valueStart = i + 1;
+-                    }
+-                    break;
+-                case ';':
+-                case '&':
+-                    addParam(str, true, nameStart, valueStart, i - 2, params, tempBuf);
+-                    nameStart = i + 1;
+-                    break;
+-                default:
+-                    // continue
+-            }
+-        }
+-        addParam(str, true, nameStart, valueStart, i, params, tempBuf);
+-        return params;
+-    }
+-
+-    private static boolean addParam(String str, boolean isEncoded, int nameStart, int valueStart, int valueEnd, Map<String, String> params,
+-                                    TempBuf tempBuf) {
+-        if (nameStart >= valueEnd) {
+-            return false;
+-        }
+-
+-        if (valueStart <= nameStart) {
+-            valueStart = valueEnd + 1;
+-        }
+-
+-        if (isEncoded) {
+-            String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
+-            String value;
+-            if (valueStart >= valueEnd) {
+-                value = name;
+-            } else {
+-                value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+-            }
+-            URLItemCache.putParams(params,name, value);
+-            // compatible with lower versions registering "default." keys
+-            if (name.startsWith(DEFAULT_KEY_PREFIX)) {
+-                params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
+-            }
+-        } else {
+-            String name = str.substring(nameStart, valueStart - 1);
+-            String value;
+-            if (valueStart >= valueEnd) {
+-                value = name;
+-            } else {
+-                value = str.substring(valueStart, valueEnd);
+-            }
+-            URLItemCache.putParams(params, name, value);
+-            // compatible with lower versions registering "default." keys
+-            if (name.startsWith(DEFAULT_KEY_PREFIX)) {
+-                params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
+-            }
+-        }
+-        return true;
+-    }
+-
+-    private static String decodeComponent(String s, int from, int toExcluded, boolean isPath, TempBuf tempBuf) {
+-        int len = toExcluded - from;
+-        if (len <= 0) {
+-            return EMPTY_STRING;
+-        }
+-
+-        int firstEscaped = -1;
+-        for (int i = from; i < toExcluded; i++) {
+-            char c = s.charAt(i);
+-            if (c == '%' || c == '+' && !isPath) {
+-                firstEscaped = i;
+-                break;
+-            }
+-        }
+-        if (firstEscaped == -1) {
+-            return s.substring(from, toExcluded);
+-        }
+-
+-        // Each encoded byte takes 3 characters (e.g. "%20")
+-        int decodedCapacity = (toExcluded - firstEscaped) / 3;
+-        byte[] buf = tempBuf.byteBuf(decodedCapacity);
+-        char[] charBuf = tempBuf.charBuf(len);
+-        s.getChars(from, firstEscaped, charBuf, 0);
+-
+-        int charBufIdx = firstEscaped - from;
+-        return decodeUtf8Component(s, firstEscaped, toExcluded, isPath, buf, charBuf, charBufIdx);
+-    }
+-
+-    private static String decodeUtf8Component(String str, int firstEscaped, int toExcluded, boolean isPath, byte[] buf,
+-                                              char[] charBuf, int charBufIdx) {
+-        int bufIdx;
+-        for (int i = firstEscaped; i < toExcluded; i++) {
+-            char c = str.charAt(i);
+-            if (c != '%') {
+-                charBuf[charBufIdx++] = c != '+' || isPath ? c : WHITESPACE_CHAR;
+-                continue;
+-            }
+-
+-            bufIdx = 0;
+-            do {
+-                if (i + 3 > toExcluded) {
+-                    throw new IllegalArgumentException("unterminated escape sequence at index " + i + " of: " + str);
+-                }
+-                buf[bufIdx++] = decodeHexByte(str, i + 1);
+-                i += 3;
+-            } while (i < toExcluded && str.charAt(i) == '%');
+-            i--;
+-
+-            charBufIdx += decodeUtf8(buf, 0, bufIdx, charBuf, charBufIdx);
+-        }
+-        return new String(charBuf, 0, charBufIdx);
+-    }
+-
+-    private static int indexOf(String str, char ch, int from, int toExclude) {
+-        from = Math.max(from, 0);
+-        toExclude = Math.min(toExclude, str.length());
+-        if (from > toExclude) {
+-            return -1;
+-        }
+-
+-        for (int i = from; i < toExclude; i++) {
+-            if (str.charAt(i) == ch) {
+-                return i;
+-            }
+-        }
+-        return -1;
+-    }
+-
+-    private static int lastIndexOf(String str, char ch, int from, int toExclude) {
+-        from = Math.max(from, 0);
+-        toExclude = Math.min(toExclude, str.length() - 1);
+-        if (from > toExclude) {
+-            return -1;
+-        }
+-
+-        for (int i = toExclude; i >= from; i--) {
+-            if (str.charAt(i) == ch) {
+-                return i;
+-            }
+-        }
+-        return -1;
+-    }
+-
+-    private static final class TempBuf {
+-
+-        private final char[] charBuffer;
+-
+-        private final byte[] byteBuffer;
+-
+-        TempBuf(int bufferSize) {
+-            this.charBuffer = new char[bufferSize];
+-            this.byteBuffer = new byte[bufferSize];
+-        }
+-
+-        public char[] charBuf(int length) {
+-            char[] charBuffer = this.charBuffer;
+-            if (length <= charBuffer.length) {
+-                return charBuffer;
+-            }
+-            return new char[length];
+-        }
+-
+-        public byte[] byteBuf(int length) {
+-            byte[] byteBuffer = this.byteBuffer;
+-            if (length <= byteBuffer.length) {
+-                return byteBuffer;
+-            }
+-            return new byte[length];
+-        }
+-    }
+-}
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStringParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStringParser.java
+new file mode 100644
+index 0000000000..86e728185e
+--- /dev/null
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStringParser.java
+@@ -0,0 +1,417 @@
++/*
++ * Licensed to the Apache Software Foundation (ASF) under one or more
++ * contributor license agreements.  See the NOTICE file distributed with
++ * this work for additional information regarding copyright ownership.
++ * The ASF licenses this file to You under the Apache License, Version 2.0
++ * (the "License"); you may not use this file except in compliance with
++ * the License.  You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package org.apache.dubbo.common;
++
++import org.apache.dubbo.common.url.component.ServiceConfigURL;
++import org.apache.dubbo.common.url.component.URLItemCache;
++
++import java.util.Collections;
++import java.util.HashMap;
++import java.util.Map;
++
++import static org.apache.dubbo.common.constants.CommonConstants.DEFAULT_KEY_PREFIX;
++import static org.apache.dubbo.common.utils.StringUtils.EMPTY_STRING;
++import static org.apache.dubbo.common.utils.StringUtils.decodeHexByte;
++import static org.apache.dubbo.common.utils.Utf8Utils.decodeUtf8;
++
++public final class URLStringParser {
++    public static final String ENCODED_QUESTION_MARK = "%3F";
++    public static final String ENCODED_TIMESTAMP_KEY = "timestamp%3D";
++    public static final String ENCODED_PID_KEY = "pid%3D";
++    public static final String ENCODED_AND_MARK = "%26";
++    private static final char BLANK_CHAR = 0x20;
++
++    private static final ThreadLocal<TempBuffer> THREAD_LOCAL_TEMP_BUFFER = ThreadLocal.withInitial(() -> new TempBuffer(1024));
++
++    private URLStringParser() {
++        //empty
++    }
++
++
++    /**
++     * @param decodedUrlString : after {@link URL#decode} string
++     *                      decodedURLStr format: protocol://username:password@host:port/path?k1=v1&k2=v2
++     *                      [protocol://][username:password@][host:port]/[path][?k1=v1&k2=v2]
++     */
++    public static URL parseDecodedString(String decodedUrlString) {
++        Map<String, String> paramMap = null;
++        int pathEndIndex = decodedUrlString.indexOf('?');
++        if (pathEndIndex >= 0) {
++            paramMap = parseDecodedParameters(decodedUrlString, pathEndIndex + 1);
++        } else {
++            pathEndIndex = decodedUrlString.length();
++        }
++
++        String decodedContent = decodedUrlString.substring(0, pathEndIndex);
++        return parseUrlBody(decodedUrlString, decodedContent, paramMap);
++    }
++
++    private static Map<String, String> parseDecodedParameters(String input, int startIndex) {
++        int length = input.length();
++        if (startIndex >= length) {
++            return Collections.emptyMap();
++        }
++
++        TempBuffer buffer = THREAD_LOCAL_TEMP_BUFFER.get();
++        Map<String, String> paramMap = new HashMap<>();
++        int nameStartIndex = startIndex;
++        int valueStartIndex = -1;
++        int idx;
++        for (idx = startIndex; idx < length; idx++) {
++            char currentChar = input.charAt(idx);
++            switch (currentChar) {
++                case '=':
++                    if (nameStartIndex == idx) {
++                        nameStartIndex = idx + 1;
++                    } else if (valueStartIndex < nameStartIndex) {
++                        valueStartIndex = idx + 1;
++                    }
++                    break;
++                case ';':
++                case '&':
++                    addParameter(input, false, nameStartIndex, valueStartIndex, idx, paramMap, buffer);
++                    nameStartIndex = idx + 1;
++                    break;
++                default:
++                    // continue
++            }
++        }
++        addParameter(input, false, nameStartIndex, valueStartIndex, idx, paramMap, buffer);
++        return paramMap;
++    }
++
++    /**
++     * @param fullUrlString  : fullURLString
++     * @param decodedContent : format: [protocol://][username:password@][host:port]/[path]
++     * @param paramMap  :
++     * @return URL
++     */
++    private static URL parseUrlBody(String fullUrlString, String decodedContent, Map<String, String> paramMap) {
++        int starIndex = 0, endIndex = decodedContent.length();
++        // ignore the url content following '#'
++        int hashIndex = decodedContent.indexOf('#');
++        if (hashIndex != -1) {
++            endIndex = hashIndex;
++        }
++
++        String scheme = null;
++        int protoEndIndex = decodedContent.indexOf("://");
++        if (protoEndIndex >= 0) {
++            if (protoEndIndex == 0) {
++                throw new IllegalStateException("url missing protocol: \"" + fullUrlString + "\"");
++            }
++            scheme = decodedContent.substring(0, protoEndIndex);
++            starIndex = protoEndIndex + 3;
++        } else {
++            // case: file:/path/to/file.txt
++            protoEndIndex = decodedContent.indexOf(":/");
++            if (protoEndIndex >= 0) {
++                if (protoEndIndex == 0) {
++                    throw new IllegalStateException("url missing protocol: \"" + fullUrlString + "\"");
++                }
++                scheme = decodedContent.substring(0, protoEndIndex);
++                starIndex = protoEndIndex + 1;
++            }
++        }
++
++        String urlPath = null;
++        int pathStartIndex = indexOfChar(decodedContent, '/', starIndex, endIndex);
++        if (pathStartIndex >= 0) {
++            urlPath = decodedContent.substring(pathStartIndex + 1, endIndex);
++            endIndex = pathStartIndex;
++        }
++
++        String userName = null;
++        String userPassword = null;
++        int passwordEndIndex = lastIndexOfCharInRange(decodedContent, '@', starIndex, endIndex);
++        if (passwordEndIndex > 0) {
++            int passwordStartIndex = indexOfChar(decodedContent, ':', starIndex, passwordEndIndex);
++            if (passwordStartIndex != -1) {//tolerate incomplete user pwd input, like '1234@'
++                userName = decodedContent.substring(starIndex, passwordStartIndex);
++                userPassword = decodedContent.substring(passwordStartIndex + 1, passwordEndIndex);
++            } else {
++                userName = decodedContent.substring(starIndex, passwordEndIndex);
++            }
++            starIndex = passwordEndIndex + 1;
++        }
++
++        String hostname = null;
++        int portNumber = 0;
++        int hostEndIndex = lastIndexOfCharInRange(decodedContent, ':', starIndex, endIndex);
++        if (hostEndIndex > 0 && hostEndIndex < decodedContent.length() - 1) {
++            if (lastIndexOfCharInRange(decodedContent, '%', starIndex, endIndex) > hostEndIndex) {
++                // ipv6 address with scope id
++                // e.g. fe80:0:0:0:894:aeec:f37d:23e1%en0
++                // see https://howdoesinternetwork.com/2013/ipv6-zone-id
++                // ignore
++            } else {
++                portNumber = Integer.parseInt(decodedContent.substring(hostEndIndex + 1, endIndex));
++                endIndex = hostEndIndex;
++            }
++        }
++
++        if (endIndex > starIndex) {
++            hostname = decodedContent.substring(starIndex, endIndex);
++        }
++
++        // check cache
++        scheme = URLItemCache.intern(scheme);
++        urlPath = URLItemCache.checkPath(urlPath);
++
++        return new ServiceConfigURL(scheme, userName, userPassword, hostname, portNumber, urlPath, paramMap);
++    }
++
++    public static String[] splitRawURLIntoParts(String rawUrlString, int pathEndIndex) {
++        String[] urlParts = new String[2];
++        int paramStartIndex = pathEndIndex + 3;//skip ENCODED_QUESTION_MARK
++        if (pathEndIndex == -1) {
++            pathEndIndex = rawUrlString.indexOf('?');
++            if (pathEndIndex == -1) {
++                // url with no params, decode anyway
++                rawUrlString = URL.decode(rawUrlString);
++            } else {
++                paramStartIndex = pathEndIndex + 1;
++            }
++        }
++        if (pathEndIndex >= 0) {
++            urlParts[0] = rawUrlString.substring(0, pathEndIndex);
++            urlParts[1] = rawUrlString.substring(paramStartIndex);
++        } else {
++            urlParts = new String[]{rawUrlString};
++        }
++        return urlParts;
++    }
++
++    public static Map<String, String> parseParameters(String rawParameters, boolean isEncodedFlag) {
++        if (isEncodedFlag) {
++            return parseUrlEncodedParams(rawParameters, 0);
++        }
++        return parseDecodedParameters(rawParameters, 0);
++    }
++
++    /**
++     * @param encodedUrlString : after {@link URL#encode(String)} string
++     *                      encodedURLStr after decode format: protocol://username:password@host:port/path?k1=v1&k2=v2
++     *                      [protocol://][username:password@][host:port]/[path][?k1=v1&k2=v2]
++     */
++    public static URL parseEncodedString(String encodedUrlString) {
++        Map<String, String> paramMap = null;
++        int pathEndIndex = encodedUrlString.toUpperCase().indexOf("%3F");// '?'
++        if (pathEndIndex >= 0) {
++            paramMap = parseUrlEncodedParams(encodedUrlString, pathEndIndex + 3);
++        } else {
++            pathEndIndex = encodedUrlString.length();
++        }
++
++        //decodedBody format: [protocol://][username:password@][host:port]/[path]
++        String decodedContent = decodeUrlComponent(encodedUrlString, 0, pathEndIndex, false, THREAD_LOCAL_TEMP_BUFFER.get());
++        return parseUrlBody(encodedUrlString, decodedContent, paramMap);
++    }
++
++    private static Map<String, String> parseUrlEncodedParams(String input, int startIndex) {
++        int length = input.length();
++        if (startIndex >= length) {
++            return Collections.emptyMap();
++        }
++
++        TempBuffer buffer = THREAD_LOCAL_TEMP_BUFFER.get();
++        Map<String, String> paramMap = new HashMap<>();
++        int nameStartIndex = startIndex;
++        int valueStartIndex = -1;
++        int idx;
++        for (idx = startIndex; idx < length; idx++) {
++            char currentChar = input.charAt(idx);
++            if (currentChar == '%') {
++                if (idx + 3 > length) {
++                    throw new IllegalArgumentException("unterminated escape sequence at index " + idx + " of: " + input);
++                }
++                currentChar = (char) decodeHexByte(input, idx + 1);
++                idx += 2;
++            }
++
++            switch (currentChar) {
++                case '=':
++                    if (nameStartIndex == idx) {
++                        nameStartIndex = idx + 1;
++                    } else if (valueStartIndex < nameStartIndex) {
++                        valueStartIndex = idx + 1;
++                    }
++                    break;
++                case ';':
++                case '&':
++                    addParameter(input, true, nameStartIndex, valueStartIndex, idx - 2, paramMap, buffer);
++                    nameStartIndex = idx + 1;
++                    break;
++                default:
++                    // continue
++            }
++        }
++        addParameter(input, true, nameStartIndex, valueStartIndex, idx, paramMap, buffer);
++        return paramMap;
++    }
++
++    private static boolean addParameter(String input, boolean encodedFlag, int nameStartIndex, int valueStartIndex, int valueEndIndex, Map<String, String> paramMap,
++                                        TempBuffer buffer) {
++        if (nameStartIndex >= valueEndIndex) {
++            return false;
++        }
++
++        if (valueStartIndex <= nameStartIndex) {
++            valueStartIndex = valueEndIndex + 1;
++        }
++
++        if (encodedFlag) {
++            String paramName = decodeUrlComponent(input, nameStartIndex, valueStartIndex - 3, false, buffer);
++            String paramValue;
++            if (valueStartIndex >= valueEndIndex) {
++                paramValue = "";
++            } else {
++                paramValue = decodeUrlComponent(input, valueStartIndex, valueEndIndex, false, buffer);
++            }
++            URLItemCache.putParams(paramMap, paramName, paramValue);
++            // compatible with lower versions registering "default." keys
++            if (paramName.startsWith(DEFAULT_KEY_PREFIX)) {
++                paramMap.putIfAbsent(paramName.substring(DEFAULT_KEY_PREFIX.length()), paramValue);
++            }
++        } else {
++            String paramName = input.substring(nameStartIndex, valueStartIndex - 1);
++            String paramValue;
++            if (valueStartIndex >= valueEndIndex) {
++                paramValue = "";
++            } else {
++                paramValue = input.substring(valueStartIndex, valueEndIndex);
++            }
++            URLItemCache.putParams(paramMap, paramName, paramValue);
++            // compatible with lower versions registering "default." keys
++            if (paramName.startsWith(DEFAULT_KEY_PREFIX)) {
++                paramMap.putIfAbsent(paramName.substring(DEFAULT_KEY_PREFIX.length()), paramValue);
++            }
++        }
++        return true;
++    }
++
++    private static String decodeUrlComponent(String source, int startIndex, int endExclusive, boolean pathFlag, TempBuffer buffer) {
++        int length = endExclusive - startIndex;
++        if (length <= 0) {
++            return EMPTY_STRING;
++        }
++
++        int firstEscapeIndex = -1;
++        for (int idx = startIndex; idx < endExclusive; idx++) {
++            char curChar = source.charAt(idx);
++            if (curChar == '%' || curChar == '+' && !pathFlag) {
++                firstEscapeIndex = idx;
++                break;
++            }
++        }
++        if (firstEscapeIndex == -1) {
++            return source.substring(startIndex, endExclusive);
++        }
++
++        // Each encoded byte takes 3 characters (e.g. "%20")
++        int decodedCap = (endExclusive - firstEscapeIndex) / 3;
++        byte[] byteBuf = buffer.byteBuffer(decodedCap);
++        char[] charBuffer = buffer.charBuffer(length);
++        source.getChars(startIndex, firstEscapeIndex, charBuffer, 0);
++
++        int charBufIndex = firstEscapeIndex - startIndex;
++        return decodePercentEncodedUtf8Component(source, firstEscapeIndex, endExclusive, pathFlag, byteBuf, charBuffer, charBufIndex);
++    }
++
++    private static String decodePercentEncodedUtf8Component(String input, int firstEscapeIndex, int endExclusive, boolean pathFlag, byte[] byteBuf,
++                                                            char[] charBuffer, int charBufIndex) {
++        int bufferIndex;
++        for (int idx = firstEscapeIndex; idx < endExclusive; idx++) {
++            char curChar = input.charAt(idx);
++            if (curChar != '%') {
++                charBuffer[charBufIndex++] = curChar != '+' || pathFlag ? curChar : BLANK_CHAR;
++                continue;
++            }
++
++            bufferIndex = 0;
++            do {
++                if (idx + 3 > endExclusive) {
++                    throw new IllegalArgumentException("unterminated escape sequence at index " + idx + " of: " + input);
++                }
++                byteBuf[bufferIndex++] = decodeHexByte(input, idx + 1);
++                idx += 3;
++            } while (idx < endExclusive && input.charAt(idx) == '%');
++            idx--;
++
++            charBufIndex += decodeUtf8(byteBuf, 0, bufferIndex, charBuffer, charBufIndex);
++        }
++        return new String(charBuffer, 0, charBufIndex);
++    }
++
++    private static int indexOfChar(String input, char currentChar, int startIndex, int toExcludeIndex) {
++        startIndex = Math.max(startIndex, 0);
++        toExcludeIndex = Math.min(toExcludeIndex, input.length());
++        if (startIndex > toExcludeIndex) {
++            return -1;
++        }
++
++        for (int idx = startIndex; idx < toExcludeIndex; idx++) {
++            if (input.charAt(idx) == currentChar) {
++                return idx;
++            }
++        }
++        return -1;
++    }
++
++    private static int lastIndexOfCharInRange(String input, char currentChar, int startIndex, int toExcludeIndex) {
++        startIndex = Math.max(startIndex, 0);
++        toExcludeIndex = Math.min(toExcludeIndex, input.length() - 1);
++        if (startIndex > toExcludeIndex) {
++            return -1;
++        }
++
++        for (int idx = toExcludeIndex; idx >= startIndex; idx--) {
++            if (input.charAt(idx) == currentChar) {
++                return idx;
++            }
++        }
++        return -1;
++    }
++
++    private static final class TempBuffer {
++
++        private final char[] bufferChars;
++
++        private final byte[] bufferBytes;
++
++        TempBuffer(int bufferSize) {
++            this.bufferChars = new char[bufferSize];
++            this.bufferBytes = new byte[bufferSize];
++        }
++
++        public char[] charBuffer(int bufferSize) {
++            char[] bufferChars = this.bufferChars;
++            if (bufferSize <= bufferChars.length) {
++                return bufferChars;
++            }
++            return new char[bufferSize];
++        }
++
++        public byte[] byteBuffer(int bufferSize) {
++            byte[] bufferBytes = this.bufferBytes;
++            if (bufferSize <= bufferBytes.length) {
++                return bufferBytes;
++            }
++            return new byte[bufferSize];
++        }
++    }
++}
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLParam.java b/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLParam.java
+index 243e1d42ca..ab01112bf0 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLParam.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLParam.java
+@@ -17,7 +17,7 @@
+ package org.apache.dubbo.common.url.component;
+ 
+ import org.apache.dubbo.common.URL;
+-import org.apache.dubbo.common.URLStrParser;
++import org.apache.dubbo.common.URLStringParser;
+ import org.apache.dubbo.common.url.component.param.DynamicParamTable;
+ import org.apache.dubbo.common.utils.CollectionUtils;
+ import org.apache.dubbo.common.utils.StringUtils;
+@@ -929,7 +929,7 @@ public class URLParam {
+      * @return a new URLParam
+      */
+     public static URLParam parse(String rawParam, boolean encoded, Map<String, String> extraParameters) {
+-        Map<String, String> parameters = URLStrParser.parseParams(rawParam, encoded);
++        Map<String, String> parameters = URLStringParser.parseParameters(rawParam, encoded);
+         if (CollectionUtils.isNotEmptyMap(extraParameters)) {
+             parameters.putAll(extraParameters);
+         }
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/UrlUtils.java b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/UrlUtils.java
+index 0167438a1e..265f2bb400 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/utils/UrlUtils.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/utils/UrlUtils.java
+@@ -17,7 +17,7 @@
+ package org.apache.dubbo.common.utils;
+ 
+ import org.apache.dubbo.common.URL;
+-import org.apache.dubbo.common.URLStrParser;
++import org.apache.dubbo.common.URLStringParser;
+ import org.apache.dubbo.common.constants.RemotingConstants;
+ import org.apache.dubbo.common.url.component.ServiceConfigURL;
+ 
+@@ -585,7 +585,7 @@ public class UrlUtils {
+     }
+ 
+     /**
+-     * NOTICE: This method allocate too much objects, we can use {@link URLStrParser#parseDecodedStr(String)} instead.
++     * NOTICE: This method allocate too much objects, we can use {@link URLStringParser#parseDecodedString(String)} instead.
+      * <p>
+      * Parse url string
+      *
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+index aea2001306..f717cd48a6 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+@@ -59,25 +59,25 @@ class URLStrParserTest {
+     @Test
+     void testEncoded() {
+         testCases.forEach(testCase -> {
+-            assertThat(URLStrParser.parseEncodedStr(URL.encode(testCase)), equalTo(URL.valueOf(testCase)));
++            assertThat(URLStringParser.parseEncodedString(URL.encode(testCase)), equalTo(URL.valueOf(testCase)));
+         });
+ 
+         errorEncodedCases.forEach(errorCase -> {
+             Assertions.assertThrows(RuntimeException.class,
+-                    () -> URLStrParser.parseEncodedStr(errorCase));
++                    () -> URLStringParser.parseEncodedString(errorCase));
+         });
+     }
+ 
+     @Test
+     void testDecoded() {
+         testCases.forEach(testCase -> {
+-            assertThat(URLStrParser.parseDecodedStr(testCase), equalTo(URL.valueOf(testCase)));
++            assertThat(URLStringParser.parseDecodedString(testCase), equalTo(URL.valueOf(testCase)));
+         });
+ 
+         errorDecodedCases.forEach(errorCase -> {
+             Assertions.assertThrows(RuntimeException.class,
+-                    () -> URLStrParser.parseDecodedStr(errorCase));
++                    () -> URLStringParser.parseDecodedString(errorCase));
+         });
+     }
+ 
+-}
+\ No newline at end of file
++}
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
+index a4400eebef..6cd0e9634c 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
+@@ -90,10 +90,10 @@ class URLTest {
+ 
+     private void assertURLStrDecoder(URL url) {
+         String fullURLStr = url.toFullString();
+-        URL newUrl = URLStrParser.parseEncodedStr(URL.encode(fullURLStr));
++        URL newUrl = URLStringParser.parseEncodedString(URL.encode(fullURLStr));
+         assertEquals(URL.valueOf(fullURLStr), newUrl);
+ 
+-        URL newUrl2 = URLStrParser.parseDecodedStr(fullURLStr);
++        URL newUrl2 = URLStringParser.parseDecodedString(fullURLStr);
+         assertEquals(URL.valueOf(fullURLStr), newUrl2);
+     }
+ 
+@@ -342,14 +342,14 @@ class URLTest {
+ 
+         try {
+             String encodedURLStr = URL.encode("://1.2.3.4:8080/path");
+-            URLStrParser.parseEncodedStr(encodedURLStr);
++            URLStringParser.parseEncodedString(encodedURLStr);
+             fail();
+         } catch (IllegalStateException expected) {
+             assertEquals("url missing protocol: \"://1.2.3.4:8080/path\"", URL.decode(expected.getMessage()));
+         }
+ 
+         try {
+-            URLStrParser.parseDecodedStr("://1.2.3.4:8080/path");
++            URLStringParser.parseDecodedString("://1.2.3.4:8080/path");
+             fail();
+         } catch (IllegalStateException expected) {
+             assertEquals("url missing protocol: \"://1.2.3.4:8080/path\"", expected.getMessage());
+diff --git a/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/support/CacheableFailbackRegistry.java b/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/support/CacheableFailbackRegistry.java
+index b423691b73..be6fa27713 100644
+--- a/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/support/CacheableFailbackRegistry.java
++++ b/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/support/CacheableFailbackRegistry.java
+@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
+ 
+ import org.apache.dubbo.common.URL;
+ import org.apache.dubbo.common.URLBuilder;
+-import org.apache.dubbo.common.URLStrParser;
++import org.apache.dubbo.common.URLStringParser;
+ import org.apache.dubbo.common.config.ConfigurationUtils;
+ import org.apache.dubbo.common.logger.ErrorTypeAwareLogger;
+ import org.apache.dubbo.common.logger.LoggerFactory;
+@@ -46,10 +46,10 @@ import org.apache.dubbo.registry.NotifyListener;
+ import org.apache.dubbo.registry.ProviderFirstParams;
+ import org.apache.dubbo.rpc.model.ScopeModel;
+ 
+-import static org.apache.dubbo.common.URLStrParser.ENCODED_AND_MARK;
+-import static org.apache.dubbo.common.URLStrParser.ENCODED_PID_KEY;
+-import static org.apache.dubbo.common.URLStrParser.ENCODED_QUESTION_MARK;
+-import static org.apache.dubbo.common.URLStrParser.ENCODED_TIMESTAMP_KEY;
++import static org.apache.dubbo.common.URLStringParser.ENCODED_AND_MARK;
++import static org.apache.dubbo.common.URLStringParser.ENCODED_PID_KEY;
++import static org.apache.dubbo.common.URLStringParser.ENCODED_QUESTION_MARK;
++import static org.apache.dubbo.common.URLStringParser.ENCODED_TIMESTAMP_KEY;
+ import static org.apache.dubbo.common.constants.CommonConstants.CACHE_CLEAR_TASK_INTERVAL;
+ import static org.apache.dubbo.common.constants.CommonConstants.CACHE_CLEAR_WAITING_THRESHOLD;
+ import static org.apache.dubbo.common.constants.CommonConstants.CHECK_KEY;
+@@ -260,7 +260,7 @@ public abstract class CacheableFailbackRegistry extends FailbackRegistry {
+         // split by (encoded) question mark.
+         // part[0] => protocol + ip address + interface.
+         // part[1] => parameters (metadata).
+-        String[] parts = URLStrParser.parseRawURLToArrays(rawProvider, paramStartIdx);
++        String[] parts = URLStringParser.splitRawURLIntoParts(rawProvider, paramStartIdx);
+ 
+         if (parts.length <= 1) {
+             // 1-5 Received URL without any parameters.
+@@ -346,7 +346,7 @@ public abstract class CacheableFailbackRegistry extends FailbackRegistry {
+         if (CollectionUtils.isNotEmpty(configurators)) {
+             for (String provider : configurators) {
+                 if (provider.contains(PROTOCOL_SEPARATOR_ENCODED)) {
+-                    URL url = URLStrParser.parseEncodedStr(provider);
++                    URL url = URLStringParser.parseEncodedString(provider);
+                     if (UrlUtils.isMatch(consumer, url)) {
+                         urls.add(url);
+                     }
+diff --git a/dubbo-registry/dubbo-registry-api/src/test/java/org/apache/dubbo/registry/CacheableFailbackRegistryTest.java b/dubbo-registry/dubbo-registry-api/src/test/java/org/apache/dubbo/registry/CacheableFailbackRegistryTest.java
+index 946e0eead1..8b266aade6 100644
+--- a/dubbo-registry/dubbo-registry-api/src/test/java/org/apache/dubbo/registry/CacheableFailbackRegistryTest.java
++++ b/dubbo-registry/dubbo-registry-api/src/test/java/org/apache/dubbo/registry/CacheableFailbackRegistryTest.java
+@@ -17,7 +17,7 @@
+ package org.apache.dubbo.registry;
+ 
+ import org.apache.dubbo.common.URL;
+-import org.apache.dubbo.common.URLStrParser;
++import org.apache.dubbo.common.URLStringParser;
+ import org.apache.dubbo.common.utils.CollectionUtils;
+ import org.apache.dubbo.rpc.model.FrameworkModel;
+ 
+@@ -73,7 +73,7 @@ class CacheableFailbackRegistryTest {
+     void testFullURLCache() {
+         final AtomicReference<Integer> resCount = new AtomicReference<>(0);
+         registry = new MockCacheableRegistryImpl(registryUrl);
+-        URL url = URLStrParser.parseEncodedStr(urlStr);
++        URL url = URLStringParser.parseEncodedString(urlStr);
+ 
+         NotifyListener listener = urls -> resCount.set(urls.size());
+ 
+@@ -104,7 +104,7 @@ class CacheableFailbackRegistryTest {
+     void testURLAddressCache() {
+         final AtomicReference<Integer> resCount = new AtomicReference<>(0);
+         registry = new MockCacheableRegistryImpl(registryUrl);
+-        URL url = URLStrParser.parseEncodedStr(urlStr);
++        URL url = URLStringParser.parseEncodedString(urlStr);
+ 
+         NotifyListener listener = urls -> resCount.set(urls.size());
+ 
+@@ -130,7 +130,7 @@ class CacheableFailbackRegistryTest {
+     void testURLParamCache() {
+         final AtomicReference<Integer> resCount = new AtomicReference<>(0);
+         registry = new MockCacheableRegistryImpl(registryUrl);
+-        URL url = URLStrParser.parseEncodedStr(urlStr);
++        URL url = URLStringParser.parseEncodedString(urlStr);
+ 
+         NotifyListener listener = urls -> resCount.set(urls.size());
+ 
+@@ -156,7 +156,7 @@ class CacheableFailbackRegistryTest {
+     void testRemove() {
+         final AtomicReference<Integer> resCount = new AtomicReference<>(0);
+         registry = new MockCacheableRegistryImpl(registryUrl);
+-        URL url = URLStrParser.parseEncodedStr(urlStr);
++        URL url = URLStringParser.parseEncodedString(urlStr);
+ 
+         NotifyListener listener = urls -> resCount.set(urls.size());
+ 
+@@ -199,9 +199,9 @@ class CacheableFailbackRegistryTest {
+         final List<URL> EMPTY_LIST = new ArrayList<>();
+ 
+         registry = new MockCacheableRegistryImpl(registryUrl);
+-        URL url = URLStrParser.parseEncodedStr(urlStr);
+-        URL url2 = URLStrParser.parseEncodedStr(urlStr2);
+-        URL url3 = URLStrParser.parseEncodedStr(urlStr3);
++        URL url = URLStringParser.parseEncodedString(urlStr);
++        URL url2 = URLStringParser.parseEncodedString(urlStr2);
++        URL url3 = URLStringParser.parseEncodedString(urlStr3);
+ 
+         NotifyListener listener = urls -> {
+             if (CollectionUtils.isEmpty(urls)) {
+ 

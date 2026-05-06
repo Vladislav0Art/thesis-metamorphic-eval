@@ -1,0 +1,159 @@
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExtended.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExtended.java
+index f8b093d63..b799cff57 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExtended.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExtended.java
+@@ -23,14 +23,18 @@ package org.logstash.common;
+ import org.jruby.Ruby;
+ import org.jruby.RubyArray;
+ import org.jruby.RubyClass;
++import org.jruby.RubyEncoding;
+ import org.jruby.RubyObject;
+ import org.jruby.RubyString;
+ import org.jruby.anno.JRubyClass;
+ import org.jruby.anno.JRubyMethod;
+ import org.jruby.runtime.ThreadContext;
+ import org.jruby.runtime.builtin.IRubyObject;
++import org.jruby.util.ByteList;
+ import org.logstash.RubyUtil;
+ 
++import java.nio.charset.Charset;
++
+ @JRubyClass(name = "BufferedTokenizer")
+ public class BufferedTokenizerExtended extends RubyObject {
+ 
+@@ -40,10 +44,13 @@ public class BufferedTokenizerExtended extends RubyObject {
+                                                                 freeze(RubyUtil.RUBY.getCurrentContext());
+ 
+     private @SuppressWarnings("rawtypes") RubyArray sourceArray = RubyUtil.RUBY.newArray();
++    private StringBuilder tokenBuilder = new StringBuilder();
+     private RubyString separator = LINE_SEPARATOR;
+     private int maxSize;
+     private boolean isLimited;
+     private int sourceLength;
++    private boolean bufferFullNotified = false;
++    private String charsetLabel;
+ 
+     public BufferedTokenizerExtended(final Ruby interpreter, final RubyClass typeMeta) {
+         super(interpreter, typeMeta);
+@@ -80,23 +87,76 @@ public class BufferedTokenizerExtended extends RubyObject {
+     @JRubyMethod
+     @SuppressWarnings("rawtypes")
+     public RubyArray extractTokens(final ThreadContext threadState, IRubyObject element) {
++        RubyEncoding rubyCharset = (RubyEncoding) element.convertToString().encoding(threadState);
++        charsetLabel = rubyCharset.getEncoding().getCharsetName();
+         final RubyArray elements = element.convertToString().split(separator, -1);
++        if (!bufferFullNotified) {
++            sourceArray.clear();
++            sourceArray.concat(elements);
++        } else {
++            // after a full buffer signal
++            if (sourceArray.isEmpty()) {
++                // after a buffer full error, the remaining part of the line, till next delimiter,
++                // has to be consumed, unless the input buffer doesn't still contain fragments of
++                // subsequent tokens.
++                elements.shift(threadState);
++                sourceArray.concat(elements);
++            } else {
++                // merge last of the input with first of incoming data segment
++                if (!elements.isEmpty()) {
++                    RubyString previousString = ((RubyString) sourceArray.pop(threadState));
++                    RubyString nextPrefix = ((RubyString) elements.shift(threadState));
++                    elements.unshift(previousString.concat(nextPrefix));
++                    sourceArray.concat(elements);
++                }
++            }
++        }
++
+         if (isLimited) {
+-            final int elementsCount = ((RubyString) elements.first()).size();
++            if (bufferFullNotified) {
++                bufferFullNotified = false;
++                if (sourceArray.isEmpty()) {
++                    return RubyUtil.RUBY.newArray();
++                }
++            }
++            final int elementsCount = ((RubyString) sourceArray.first()).size();
+             if (sourceLength + elementsCount > maxSize) {
+-                throw new IllegalStateException("input buffer full");
++                bufferFullNotified = true;
++                tokenBuilder = new StringBuilder();
++                String errorMsg = String.format("input buffer full, consumed token which exceeded the sizeLimit %d; inputSize: %d, entitiesSize %d", maxSize, sourceLength, elementsCount);
++                sourceLength = 0;
++                sourceArray.shift(threadState); // consume the token fragment that generates the buffer full
++                throw new IllegalStateException(errorMsg);
+             }
+             this.sourceLength = sourceLength + elementsCount;
+         }
+-        sourceArray.append(elements.shift(threadState));
+-        if (elements.isEmpty()) {
++
++        if (sourceArray.getLength() < 2) {
++            // this is a specialization case which avoid adding and removing from input accumulator
++            // when it contains just one element
++            tokenBuilder.append(sourceArray.shift(threadState)); // remove head
+             return RubyUtil.RUBY.newArray();
+         }
+-        elements.unshift(sourceArray.join(threadState));
+-        sourceArray.clear();
+-        sourceArray.append(elements.pop(threadState));
+-        sourceLength = ((RubyString) sourceArray.first()).size();
+-        return elements;
++
++        if (tokenBuilder.length() > 0) {
++            // if there is a pending token part, merge it with the first token segment present
++            // in the accumulator, and clean the pending token part.
++            tokenBuilder.append(sourceArray.shift(threadState)); // append buffer to first element and
++            // create new RubyString with the data specified encoding
++            RubyString headEncodedString = toRubyStringWithEncoding(threadState, tokenBuilder.toString());
++            sourceArray.unshift(headEncodedString); // reinsert it into the array
++            tokenBuilder = new StringBuilder();
++        }
++        tokenBuilder.append(sourceArray.pop(threadState)); // put the leftovers in headToken for later
++        sourceLength = tokenBuilder.length();
++        return sourceArray;
++    }
++
++    private RubyString toRubyStringWithEncoding(ThreadContext threadState, String sourceString) {
++        // Depends on the encodingName being set by the extract method, could potentially raise if not set.
++        RubyString outputString = RubyUtil.RUBY.newString(new ByteList(sourceString.getBytes(Charset.forName(charsetLabel))));
++        outputString.force_encoding(threadState, RubyUtil.RUBY.newString(charsetLabel));
++        return outputString;
+     }
+ 
+     /**
+@@ -108,15 +168,30 @@ public class BufferedTokenizerExtended extends RubyObject {
+      */
+     @JRubyMethod
+     public IRubyObject flushBuffer(final ThreadContext threadState) {
+-        final IRubyObject chunk = sourceArray.join(threadState);
+-        sourceArray.clear();
++        final IRubyObject chunk = RubyUtil.toRubyObject(tokenBuilder.toString());
++        tokenBuilder = new StringBuilder();
+         sourceLength = 0;
+-        return chunk;
++
++        // create new RubyString with the last data specified encoding, if exists
++        RubyString headEncodedString;
++        if (charsetLabel != null) {
++            headEncodedString = toRubyStringWithEncoding(threadState, chunk.toString());
++        } else {
++            // When used with TCP input it could be that on socket connection the flush method
++            // is invoked while no invocation of extract, leaving the encoding name unassigned.
++            // In such case also the headToken must be empty
++            if (!chunk.toString().isEmpty()) {
++                throw new IllegalStateException("invoked flush with unassigned encoding but not empty head token, this shouldn't happen");
++            }
++            headEncodedString = (RubyString) chunk;
++        }
++
++        return headEncodedString;
+     }
+ 
+     @JRubyMethod(name = "empty?")
+     public IRubyObject isEmpty(final ThreadContext threadState) {
+-        return RubyUtil.RUBY.newBoolean(sourceArray.isEmpty() && (sourceLength == 0));
++        return RubyUtil.RUBY.newBoolean(tokenBuilder.toString().isEmpty() && (sourceLength == 0));
+     }
+ 
+ }
+ 
