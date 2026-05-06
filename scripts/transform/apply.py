@@ -108,6 +108,22 @@ def _run_rewrite_problem_statement(
 
 
 
+def _save_codecocoon_logs(artifacts_dir: str, label: str, result, logger) -> None:
+    """Persist stdout/stderr/return_code from a CodeCocoon transformation session."""
+    if result is None:
+        return
+    logs_dir = os.path.join(artifacts_dir, "logs", label)
+    os.makedirs(logs_dir, exist_ok=True)
+    for filename, content in [
+        ("stdout.log",       result.stdout or ""),
+        ("stderr.log",       result.stderr or ""),
+        ("return_code.txt",  str(result.return_code)),
+    ]:
+        with open(os.path.join(logs_dir, filename), 'w') as f:
+            f.write(content)
+    logger.info(f"CodeCocoon logs saved to {logs_dir}")
+
+
 def _fix_import_hunks_with_agent(
     repo_dir: str,
     artifacts_dir: str,
@@ -516,6 +532,8 @@ def _apply_code_morphing(
         logger=logger,
     )
 
+    _save_codecocoon_logs(artifacts_dir, "base", base_morph_result.codecocoon_result, logger)
+
     if base_morph_result.succeeded is False:
         logger.error("Failed to apply base metamorphic transformations")
         return _MorphingOutcome(result=None, errors=["CodeCocoon base morph failed"])
@@ -595,6 +613,8 @@ def _apply_code_morphing(
         config_path=config_path,
         logger=logger,
     )
+
+    _save_codecocoon_logs(artifacts_dir, "test", test_morph_result.codecocoon_result, logger)
 
     if test_morph_result.succeeded is False:
         logger.error("Failed to apply test metamorphic transformations")
@@ -727,6 +747,8 @@ def _apply_code_morphing(
         config_path=config_path,
         logger=logger,
     )
+
+    _save_codecocoon_logs(artifacts_dir, "fix", fix_morph_result.codecocoon_result, logger)
 
     if fix_morph_result.succeeded is False:
         logger.error("Failed to apply fix metamorphic transformations")
