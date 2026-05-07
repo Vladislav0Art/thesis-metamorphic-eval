@@ -1,0 +1,34 @@
+
+diff --git a/.gitignore b/.gitignore
+index 0eb7f3d19e..ffba84c210 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -54,3 +54,6 @@ dubbo-demo/dubbo-demo-native/dubbo-demo-native-consumer/src/main/generated
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/resources/META-INF/native-image
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/generated
+ 
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+index 61b37db84b..b8cbfe7247 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+@@ -277,7 +277,7 @@ public final class URLStrParser {
+         if (isEncoded) {
+             String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (valueStart > valueEnd) {
+                 value = name;
+             } else {
+                 value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+@@ -290,7 +290,7 @@ public final class URLStrParser {
+         } else {
+             String name = str.substring(nameStart, valueStart - 1);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (valueStart > valueEnd) {
+                 value = name;
+             } else {
+                 value = str.substring(valueStart, valueEnd);

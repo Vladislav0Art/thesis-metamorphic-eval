@@ -1,0 +1,164 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index 005ba3558..dfc4a0f7f 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -647,16 +647,17 @@ public interface JSON {
+         if (text == null || text.length() == 0) {
+             return false;
+         }
+-        JSONReader jsonReader = JSONReader.of(text);
+-        try {
+-            if (!jsonReader.isArray()) {
++        try (JSONReader jsonReader = JSONReader.of(text)) {
++            try {
++                if (!jsonReader.isArray()) {
++                    return false;
++                }
++                jsonReader.skipValue();
++                return jsonReader.current() == JSONReader.EOI;
++            } catch (JSONException error) {
+                 return false;
+             }
+-            jsonReader.skipValue();
+-        } catch (JSONException error) {
+-            return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -669,16 +670,17 @@ public interface JSON {
+         if (bytes == null || bytes.length == 0) {
+             return false;
+         }
+-        JSONReader jsonReader = JSONReader.of(bytes);
+-        try {
+-            if (!jsonReader.isArray()) {
++        try (JSONReader jsonReader = JSONReader.of(bytes)) {
++            try {
++                if (!jsonReader.isArray()) {
++                    return false;
++                }
++                jsonReader.skipValue();
++                return jsonReader.current() == JSONReader.EOI;
++            } catch (JSONException error) {
+                 return false;
+             }
+-            jsonReader.skipValue();
+-        } catch (JSONException error) {
+-            return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -691,13 +693,14 @@ public interface JSON {
+         if (text == null || text.length() == 0) {
+             return false;
+         }
+-        JSONReader jsonReader = JSONReader.of(text);
+-        try {
+-            jsonReader.skipValue();
+-        } catch (JSONException error) {
+-            return false;
++        try (JSONReader jsonReader = JSONReader.of(text)) {
++            try {
++                jsonReader.skipValue();
++                return jsonReader.current() == JSONReader.EOI;
++            } catch (JSONException error) {
++                return false;
++            }
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -710,13 +713,14 @@ public interface JSON {
+         if (bytes == null || bytes.length == 0) {
+             return false;
+         }
+-        JSONReader jsonReader = JSONReader.of(bytes);
+-        try {
+-            jsonReader.skipValue();
+-        } catch (JSONException error) {
+-            return false;
++        try (JSONReader jsonReader = JSONReader.of(bytes)) {
++            try {
++                jsonReader.skipValue();
++                return jsonReader.current() == JSONReader.EOI;
++            } catch (JSONException error) {
++                return false;
++            }
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -732,12 +736,13 @@ public interface JSON {
+         if (bytes == null || bytes.length == 0) {
+             return false;
+         }
+-        JSONReader jsonReader = JSONReader.of(bytes, offset, length, charset);
+-        try {
+-            jsonReader.skipValue();
+-        } catch (JSONException error) {
+-            return false;
++        try (JSONReader jsonReader = JSONReader.of(bytes, offset, length, charset)) {
++            try {
++                jsonReader.skipValue();
++                return jsonReader.current() == JSONReader.EOI;
++            } catch (JSONException error) {
++                return false;
++            }
+         }
+-        return true;
+     }
+ }
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+index af3a042cd..6565993c9 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+@@ -644,31 +644,18 @@ public abstract class JSONReader implements Closeable {
+             case 11:
+                 return readLocalDate11()
+                         .toLocalDate();
+-            default:
+-                break;
+-        }
+-        throw new JSONException("TODO : " + len + ", " + readString());
+-    }
+-
+-    public LocalDateTime readLocalDateTime() {
+-        int len = getStringLength();
+-        switch (len) {
+-            case 8:
+-                return readLocalDate8();
+-            case 9:
+-                return readLocalDate9();
+-            case 10:
+-                return readLocalDate10();
+-            case 11:
+-                return readLocalDate11();
+             case 16:
+-                return readLocalDateTime16();
++                return readLocalDateTime16()
++                        .toLocalDate();
+             case 17:
+-                return readLocalDateTime17();
++                return readLocalDateTime17()
++                        .toLocalDate();
+             case 18:
+-                return readLocalDateTime18();
++                return readLocalDateTime18()
++                        .toLocalDate();
+             case 19:
+-                return readLocalDateTime19();
++                return readLocalDateTime19()
++                        .toLocalDate();
+             case 21:
+             case 22:
+             case 23:

@@ -1,0 +1,49 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+index 2cef7a7a..5573b558 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+@@ -142,7 +142,30 @@ public class JsonPointer
+      */
+     public JsonPointer head() {
+         return _headSegment;
+-    }@Override public int hashCode() { return _asString.hashCode(); }public String getMatchingProperty() { return _matchingPropertyName; }public int getMatchingIndex() { return _matchingElementIndex; }@Override public boolean equals(Object o) {
++    }
++
++    /**
++     * Accessor for getting the last segment of this pointer, i.e., the leaf segment.
++     * For a pointer like {@code /a/b/c} it would return the pointer for {@code /c}.
++     * For empty pointer returns {@code null}.
++     *
++     * @return Last segment (leaf) of this pointer, if any; {@code null} if pointer is empty
++     *
++     * @since 2.5
++     */
++    public JsonPointer last() {
++        JsonPointer current = this;
++        if (current == EMPTY) {
++            return null;
++        }
++        JsonPointer next;
++        while ((next = current._nextSegment) != EMPTY) {
++            current = next;
++        }
++        return current;
++    }
++
++    @Override public int hashCode() { return _asString.hashCode(); }public String getMatchingProperty() { return _matchingPropertyName; }public int getMatchingIndex() { return _matchingElementIndex; }@Override public boolean equals(Object o) {
+         if (o == this) return true;
+         if (o == null) return false;
+         if (!(o instanceof JsonPointer)) return false;

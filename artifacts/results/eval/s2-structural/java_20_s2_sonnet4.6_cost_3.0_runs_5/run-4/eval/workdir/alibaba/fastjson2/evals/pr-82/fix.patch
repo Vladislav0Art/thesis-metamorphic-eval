@@ -1,0 +1,66 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index 005ba3558..3012d5c6f 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -637,6 +637,12 @@ public interface JSON {
+         JSONFactory.getDefaultObjectReaderProvider().mixIn(target, mixinSource);
+     }
+ 
++    /**
++     * Verify the {@link String} is JSON Array
++     *
++     * @param text the {@link String} to validate
++     * @return T/F
++     */
+     /**
+      * Verify the {@link String} is JSON Array
+      *
+@@ -656,7 +662,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.ch == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -678,7 +684,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.ch == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -697,7 +703,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.ch == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -716,7 +722,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.ch == JSONReader.EOI;
+     }
+ 
+     /**
+@@ -738,6 +744,7 @@ public interface JSON {
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
++        return jsonReader.ch == JSONReader.EOI;
+     }
+ }
++}

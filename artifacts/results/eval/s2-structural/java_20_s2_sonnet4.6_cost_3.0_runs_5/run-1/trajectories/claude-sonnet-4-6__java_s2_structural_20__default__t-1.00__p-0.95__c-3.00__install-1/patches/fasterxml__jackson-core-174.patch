@@ -1,0 +1,45 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+index 2cef7a7a..9f7b2d89 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+@@ -279,4 +279,26 @@ public class JsonPointer
+         // Ok; may always be a property
+         _matchingPropertyName = segment;
+         _matchingElementIndex = _parseIndex(segment);
+-    }}
++    }
++
++    /**
++     * Accessor for getting a "last" pointer, instance that represents
++     * the last segment (leaf) of this pointer. For instance, for pointer
++     * "/a/b/c", this method would return a pointer for "/c".
++     * If this pointer is already the empty pointer (i.e., matches
++     * current node), returns null.
++     *
++     * @since 2.5
++     */
++    public JsonPointer last() {
++        JsonPointer current = this;
++        if (current.matches()) {
++            return null;
++        }
++        JsonPointer next;
++        while (!(next = current.tail()).matches()) {
++            current = next;
++        }
++        return current;
++    }
++}

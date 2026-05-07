@@ -1,0 +1,84 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+index 2cef7a7a..2e91bee6 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+@@ -142,7 +142,29 @@ public class JsonPointer
+      */
+     public JsonPointer head() {
+         return _headSegment;
+-    }@Override public int hashCode() { return _asString.hashCode(); }public String getMatchingProperty() { return _matchingPropertyName; }public int getMatchingIndex() { return _matchingElementIndex; }@Override public boolean equals(Object o) {
++    }
++
++    /**
++     * Accessor for getting the last segment of the pointer expression.
++     * For example, for JSON Pointer "/a/b/c", this method would return
++     * pointer "/c". For a pointer that has only one segment, returns the pointer
++     * itself. Will return null for empty pointer (that matches current node).
++     *
++     * @since 2.5
++     */
++    public JsonPointer last() {
++        JsonPointer current = this;
++        if (current == EMPTY) {
++            return null;
++        }
++        JsonPointer next;
++        while ((next = current._nextSegment) != EMPTY) {
++            current = next;
++        }
++        return current;
++    }
++
++    @Override public int hashCode() { return _asString.hashCode(); }public String getMatchingProperty() { return _matchingPropertyName; }public int getMatchingIndex() { return _matchingElementIndex; }@Override public boolean equals(Object o) {
+         if (o == this) return true;
+         if (o == null) return false;
+         if (!(o instanceof JsonPointer)) return false;
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 9ef13aa7..d0d59e23 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,31 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matches());
+         assertNull(ptr.tail());
+     }
++
++    public void testLastMethod() throws Exception
++    {
++        // Test with multi-segment pointer
++        JsonPointer ptr = JsonPointer.compile("/a/b/c");
++        JsonPointer last = ptr.last();
++        assertNotNull(last);
++        assertEquals("/c", last.toString());
++        assertEquals("c", last.getMatchingProperty());
++
++        // Test with single segment
++        JsonPointer single = JsonPointer.compile("/x");
++        JsonPointer lastSingle = single.last();
++        assertNotNull(lastSingle);
++        assertEquals("/x", lastSingle.toString());
++
++        // Test with empty pointer
++        JsonPointer empty = JsonPointer.compile("");
++        assertNull(empty.last());
++
++        // Test with array append notation
++        JsonPointer arrayPtr = JsonPointer.compile("/score/-");
++        JsonPointer lastArray = arrayPtr.last();
++        assertNotNull(lastArray);
++        assertEquals("/-", lastArray.toString());
++        assertEquals("-", lastArray.getMatchingProperty());
++    }
+ }

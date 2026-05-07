@@ -1,0 +1,181 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..c4cbccb20 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -474,7 +474,25 @@ public enum MapperFeature implements ConfigFeature
+      *
+      * @since 2.9
+      */
+-    IGNORE_MERGE_FOR_UNMERGEABLE(true)
++    IGNORE_MERGE_FOR_UNMERGEABLE(true),
++
++    /**
++     * Feature that determines whether the declared base type is used as the
++     * default implementation for polymorphic type handling, when no explicit
++     * default implementation ({@code @JsonTypeInfo#defaultImpl}) is defined.
++     *<p>
++     * This is useful when deserializing JSON without a type identifier into a
++     * concrete class that has {@link com.fasterxml.jackson.annotation.JsonTypeInfo}
++     * annotation (typically from an interface or base class).
++     * With this feature enabled, Jackson will use the requested deserialization
++     * type (the concrete class) as the default implementation if no type id is
++     * present in the input.
++     *<p>
++     * Feature is disabled by default (to preserve backwards-compatible behavior).
++     *
++     * @since 2.10
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false)
+ 
+     ;
+ 
+diff --git a/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java b/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java
+index 73c99d40e..0bc776ced 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java
++++ b/src/main/java/com/fasterxml/jackson/databind/deser/BasicDeserializerFactory.java
+@@ -1570,10 +1570,18 @@ nonAnnotatedParamIndex, ctor);
+         }
+         // May need to figure out default implementation, if none found yet
+         // (note: check for abstract type is not 100% mandatory, more of an optimization)
+-        if ((b.getDefaultImpl() == null) && baseType.isAbstract()) {
+-            JavaType defaultType = mapAbstractType(config, baseType);
+-            if ((defaultType != null) && !defaultType.hasRawClass(baseType.getRawClass())) {
+-                b = b.defaultImpl(defaultType.getRawClass());
++        if (b.getDefaultImpl() == null) {
++            if (baseType.isAbstract()) {
++                JavaType defaultType = mapAbstractType(config, baseType);
++                if ((defaultType != null) && !defaultType.hasRawClass(baseType.getRawClass())) {
++                    b = b.defaultImpl(defaultType.getRawClass());
++                }
++            }
++            // [databind#2197]: If feature enabled, use base type as default impl
++            // This is useful when deserializing without type id into concrete type
++            if (config.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && !baseType.isAbstract()) {
++                b = b.defaultImpl(baseType.getRawClass());
+             }
+         }
+         // 05-Apt-2018, tatu: Since we get non-mapping exception due to various limitations,
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
+index d208c307b..68c58ac42 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
+@@ -22,7 +22,7 @@ public class MinimalClassNameIdResolver
+      */
+     protected final String _basePackagePrefix;
+ 
+-    protected MinimalClassNameIdResolver(JavaType baseType, TypeFactory typeFactory)
++    public MinimalClassNameIdResolver(JavaType baseType, TypeFactory typeFactory)
+     {
+         super(baseType, typeFactory);
+         String base = baseType.getRawClass().getName();
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java
+new file mode 100644
+index 000000000..1e4fe58a4
+--- /dev/null
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java
+@@ -0,0 +1,91 @@
++package com.fasterxml.jackson.databind.jsontype;
++
++import com.fasterxml.jackson.annotation.JsonTypeInfo;
++import com.fasterxml.jackson.databind.BaseMapTest;
++import com.fasterxml.jackson.databind.MapperFeature;
++import com.fasterxml.jackson.databind.ObjectMapper;
++
++/**
++ * Tests for [databind#2197]: MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL
++ */
++public class UseBaseTypeAsDefaultImplTest extends BaseMapTest
++{
++    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
++    interface MyInterface {
++        String getName();
++    }
++
++    static class MyImpl implements MyInterface {
++        private String name;
++
++        public MyImpl() { }
++        public MyImpl(String name) { this.name = name; }
++
++        @Override
++        public String getName() { return name; }
++        public void setName(String name) { this.name = name; }
++    }
++
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
++    interface MyInterface2 {
++        String getName();
++    }
++
++    static class MyImpl2 implements MyInterface2 {
++        private String name;
++
++        public MyImpl2() { }
++        public MyImpl2(String name) { this.name = name; }
++
++        @Override
++        public String getName() { return name; }
++        public void setName(String name) { this.name = name; }
++    }
++
++    // Test that deserialization of a concrete class (no type id in JSON)
++    // works when USE_BASE_TYPE_AS_DEFAULT_IMPL is enabled
++    public void testDeserializeConcreteClassWithoutTypeId() throws Exception {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        String json = "{\"name\":\"test\"}";
++        MyImpl result = mapper.readValue(json, MyImpl.class);
++        assertNotNull(result);
++        assertEquals("test", result.getName());
++    }
++
++    // Test that deserialization still fails (as expected) when feature is disabled
++    public void testDeserializeConcreteClassWithoutTypeIdFeatureDisabled() throws Exception {
++        ObjectMapper mapper = new ObjectMapper();
++        // default is disabled, so no need to explicitly disable
++        String json = "{\"name\":\"test\"}";
++        try {
++            mapper.readValue(json, MyImpl.class);
++            fail("Should have thrown an exception");
++        } catch (Exception e) {
++            // expected
++        }
++    }
++
++    // Test that normal type id deserialization still works when feature is enabled
++    public void testDeserializeWithTypeIdFeatureEnabled() throws Exception {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        // Register subtype so NAME-based id resolution works
++        mapper.registerSubtypes(MyImpl.class);
++        // With explicit type info
++        String json = "{\"type\":\"MyImpl\",\"name\":\"test\"}";
++        MyInterface result = mapper.readValue(json, MyInterface.class);
++        assertNotNull(result);
++        assertEquals("test", result.getName());
++    }
++
++    // Test with MINIMAL_CLASS type info (as in the issue example)
++    public void testDeserializeConcreteClassMinimalClass() throws Exception {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        String json = "{\"name\":\"hello\"}";
++        MyImpl2 result = mapper.readValue(json, MyImpl2.class);
++        assertNotNull(result);
++        assertEquals("hello", result.getName());
++    }
++}

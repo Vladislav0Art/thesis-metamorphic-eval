@@ -1,0 +1,120 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..7ad0a9896 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -474,7 +474,19 @@ public enum MapperFeature implements ConfigFeature
+      *
+      * @since 2.9
+      */
+-    IGNORE_MERGE_FOR_UNMERGEABLE(true)
++    IGNORE_MERGE_FOR_UNMERGEABLE(true),
++
++    /**
++     * Feature that determines whether the base type of a polymorphic value is used
++     * as the "default implementation" if no {@code defaultImpl} was specified for
++     * {@link com.fasterxml.jackson.annotation.JsonTypeInfo}. This allows deserialization
++     * of JSON without type information when the declared type is concrete (non-abstract).
++     *<p>
++     * Feature is disabled by default.
++     *
++     * @since 2.10
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false)
+ 
+     ;
+ 
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/StdTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/StdTypeResolverBuilder.java
+index cbdafbd2b..f6ed6f902 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/StdTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/StdTypeResolverBuilder.java
+@@ -206,7 +206,12 @@ public class StdTypeResolverBuilder
+         JavaType defaultImpl;
+ 
+         if (_defaultImpl == null) {
+-            defaultImpl = null;
++            if (config.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && !baseType.isAbstract()) {
++                defaultImpl = baseType;
++            } else {
++                defaultImpl = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java
+new file mode 100644
+index 000000000..0e602862d
+--- /dev/null
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java
+@@ -0,0 +1,58 @@
++package com.fasterxml.jackson.databind.jsontype;
++
++import com.fasterxml.jackson.annotation.JsonTypeInfo;
++import com.fasterxml.jackson.databind.BaseMapTest;
++import com.fasterxml.jackson.databind.MapperFeature;
++import com.fasterxml.jackson.databind.ObjectMapper;
++
++public class UseBaseTypeAsDefaultImplTest extends BaseMapTest
++{
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS,
++            include = JsonTypeInfo.As.PROPERTY,
++            property = "type")
++    interface MyInterface {
++        String getName();
++        void setName(String name);
++    }
++
++    static class MyClass implements MyInterface {
++        private String name;
++
++        @Override
++        public String getName() { return name; }
++
++        @Override
++        public void setName(String name) { this.name = name; }
++    }
++
++    // Feature is disabled by default; reading without type info should fail
++    public void testFeatureDisabled() throws Exception {
++        ObjectMapper mapper = new ObjectMapper();
++        try {
++            mapper.readValue("{\"name\":\"test\"}", MyClass.class);
++            fail("Should have thrown exception");
++        } catch (Exception e) {
++            // expected
++        }
++    }
++
++    // Feature enabled: reading without type info should use base type as default impl
++    public void testFeatureEnabled() throws Exception {
++        ObjectMapper mapper = new ObjectMapper()
++                .enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        MyClass result = mapper.readValue("{\"name\":\"test\"}", MyClass.class);
++        assertNotNull(result);
++        assertEquals("test", result.getName());
++    }
++
++    // Make sure the normal case (with type info) still works
++    public void testWithTypeInfo() throws Exception {
++        ObjectMapper mapper = new ObjectMapper()
++                .enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        MyInterface result = mapper.readValue(
++                "{\"type\":\".UseBaseTypeAsDefaultImplTest$MyClass\",\"name\":\"name\"}",
++                MyInterface.class);
++        assertNotNull(result);
++        assertEquals("name", result.getName());
++    }
++}

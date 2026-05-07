@@ -1,0 +1,135 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..6b2a1b08d 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -474,7 +474,24 @@ public enum MapperFeature implements ConfigFeature
+      *
+      * @since 2.9
+      */
+-    IGNORE_MERGE_FOR_UNMERGEABLE(true)
++    IGNORE_MERGE_FOR_UNMERGEABLE(true),
++
++    /**
++     * Feature that may be enabled to allow using the base type (declared type)
++     * of a polymorphic value as the default implementation, when no explicit
++     * {@code defaultImpl} has been specified in the {@link com.fasterxml.jackson.annotation.JsonTypeInfo}
++     * annotation and no type id is available in the JSON content (either missing or not present).
++     *<p>
++     * This can be useful in cases where a concrete class is used as the target type
++     * for deserialization (via {@link ObjectMapper#readValue}), but the declared type
++     * has {@code @JsonTypeInfo} annotation: normally this would fail, but with this
++     * feature enabled, the concrete class is used as the default implementation.
++     *<p>
++     * Feature is disabled by default.
++     *
++     * @since 2.10
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false)
+ 
+     ;
+ 
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
+index d208c307b..68c58ac42 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
+@@ -22,7 +22,7 @@ public class MinimalClassNameIdResolver
+      */
+     protected final String _basePackagePrefix;
+ 
+-    protected MinimalClassNameIdResolver(JavaType baseType, TypeFactory typeFactory)
++    public MinimalClassNameIdResolver(JavaType baseType, TypeFactory typeFactory)
+     {
+         super(baseType, typeFactory);
+         String base = baseType.getRawClass().getName();
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java
+index f3533fc2e..3725d34ee 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java
+@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
+ import com.fasterxml.jackson.core.*;
+ import com.fasterxml.jackson.databind.BeanProperty;
+ import com.fasterxml.jackson.databind.DeserializationContext;
++import com.fasterxml.jackson.databind.MapperFeature;
+ import com.fasterxml.jackson.databind.cfg.DeserializationFeature;
+ import com.fasterxml.jackson.databind.JavaType;
+ import com.fasterxml.jackson.databind.JsonDeserializer;
+@@ -205,6 +206,10 @@ public abstract class TypeDeserializerBase
+          *   to do swift mapping to null
+          */
+         if (_defaultImpl == null) {
++            if (ctxt.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && !_baseType.isAbstract()) {
++                return ctxt.findContextualValueDeserializer(_baseType, _property);
++            }
+             if (!ctxt.isEnabled(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE)) {
+                 return NullifyingDeserializer.instance;
+             }
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java
+new file mode 100644
+index 000000000..86af60d4c
+--- /dev/null
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/UseBaseTypeAsDefaultImplTest.java
+@@ -0,0 +1,50 @@
++package com.fasterxml.jackson.databind.jsontype;
++
++import com.fasterxml.jackson.annotation.JsonTypeInfo;
++import com.fasterxml.jackson.databind.BaseMapTest;
++import com.fasterxml.jackson.databind.MapperFeature;
++import com.fasterxml.jackson.databind.ObjectMapper;
++
++public class UseBaseTypeAsDefaultImplTest extends BaseMapTest
++{
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
++    interface MyInterface {
++        String getName();
++        void setName(String name);
++    }
++
++    static class MyClass implements MyInterface {
++        private String name;
++        public String getName() { return name; }
++        public void setName(String name) { this.name = name; }
++    }
++
++    // Test: when USE_BASE_TYPE_AS_DEFAULT_IMPL is enabled, deserializing a concrete
++    // class without the type property should succeed using the base type as default impl
++    public void testUseBaseTypeAsDefaultImpl() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++
++        String json = "{\"name\":\"test\"}";
++        MyClass result = mapper.readValue(json, MyClass.class);
++        assertNotNull(result);
++        assertEquals("test", result.getName());
++    }
++
++    // Test: when USE_BASE_TYPE_AS_DEFAULT_IMPL is disabled (default), deserializing
++    // a concrete class without the type property should fail
++    public void testUseBaseTypeAsDefaultImplDisabled() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        // feature is disabled by default
++
++        String json = "{\"name\":\"test\"}";
++        try {
++            mapper.readValue(json, MyClass.class);
++            fail("Should have thrown an exception when type property is missing and feature is disabled");
++        } catch (Exception e) {
++            // expected
++        }
++    }
++}

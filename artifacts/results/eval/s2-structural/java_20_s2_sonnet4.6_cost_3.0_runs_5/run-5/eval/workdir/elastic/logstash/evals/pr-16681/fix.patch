@@ -1,0 +1,47 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+index 6626641a1..fcd1fa18c 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+@@ -141,15 +141,23 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+ 
+                 consumer.accept(addressState);
+ 
+-                // If this addressState has a listener, ensure that any waiting
+-                // threads get notified so that they can resume immediately
+-                final PipelineInput currentInput = addressState.getInput();
++                return addressState.isEmpty() ? null : addressState;
++            });
++
++            // Notify any waiting threads OUTSIDE of the compute lock to avoid deadlock.
++            // If we hold the compute lock while acquiring `synchronized(currentInput)`,
++            // and another thread holds `synchronized(currentInput)` while trying to
++            // acquire the compute lock (via tryUnlistenOrphan), we get a deadlock.
++            // Moving the notification here ensures we never hold both locks simultaneously.
++            // The unlistenBlocking method uses a timed wait so it will eventually wake up
++            // even in the rare case we miss a notification due to a race.
++            if (result != null) {
++                final PipelineInput currentInput = result.getInput();
+                 if (currentInput != null) {
+                     synchronized (currentInput) { currentInput.notifyAll(); }
+                 }
++            }
+ 
+-                return addressState.isEmpty() ? null : addressState;
+-            });
+             return result == null ? null : result.getReadOnlyView();
+         }
+ 

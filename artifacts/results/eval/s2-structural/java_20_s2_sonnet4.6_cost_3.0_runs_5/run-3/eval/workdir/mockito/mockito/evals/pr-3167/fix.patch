@@ -1,0 +1,51 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java b/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
+index 27faed9d9..2f4f0866c 100644
+--- a/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
++++ b/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
+@@ -58,7 +58,8 @@ public class ReturnsDeepStubs implements Answer<Object>, Serializable {
+         if (emptyValue != null) {
+             return emptyValue;
+         }
+-        if (!typeMockabilityOf(rawType, mockSettings.getMockMaker()).mockable()) {
++        if (!typeMockabilityOf(rawType, mockSettings.getMockMaker()).mockable()
++                || rawType.isEnum()) {
+             if (invocation.getMethod().getReturnType().equals(rawType)) {
+                 return delegate().answer(invocation);
+             } else {
+diff --git a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+index 5e39714cf..8d851f859 100644
+--- a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
++++ b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+@@ -376,4 +376,18 @@ public class DeepStubbingTest extends TestBase {
+ 
+         assertThat(mock.reverse().finalMethod()).isEqualTo(5L);
+     }
++
++    enum SomeEnum { VALUE1, VALUE2 }
++
++    interface ClassWithEnumMethod {
++        SomeEnum getEnum();
++    }
++
++    @Test
++    public void deep_stub_should_not_fail_when_method_returns_enum() {
++        ClassWithEnumMethod mock = mock(ClassWithEnumMethod.class, RETURNS_DEEP_STUBS);
++        // Should not throw an exception - when return type is an enum, deep stub should not
++        // try to mock the enum (which is incompatible with deep stub settings)
++        assertNull(mock.getEnum());
++    }
+ }

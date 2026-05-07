@@ -1,0 +1,61 @@
+
+diff --git a/.gitignore b/.gitignore
+index 0eb7f3d19e..ffba84c210 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -54,3 +54,6 @@ dubbo-demo/dubbo-demo-native/dubbo-demo-native-consumer/src/main/generated
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/resources/META-INF/native-image
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/generated
+ 
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+index 61b37db84b..05c8c5eb67 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+@@ -278,7 +278,7 @@ public final class URLStrParser {
+             String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
+             String value;
+             if (valueStart >= valueEnd) {
+-                value = name;
++                value = EMPTY_STRING;
+             } else {
+                 value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+             }
+@@ -291,7 +291,7 @@ public final class URLStrParser {
+             String name = str.substring(nameStart, valueStart - 1);
+             String value;
+             if (valueStart >= valueEnd) {
+-                value = name;
++                value = EMPTY_STRING;
+             } else {
+                 value = str.substring(valueStart, valueEnd);
+             }
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+index aea2001306..107125e6c0 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+@@ -80,4 +80,20 @@ class URLStrParserTest {
+         });
+     }
+ 
+-}
+\ No newline at end of file
++    @Test
++    void testParseEmptyParamValues() {
++        // Test that URL with empty parameter values (e.g., username=&password=) parses correctly
++        // i.e., value should be empty string, not the key name
++        String urlStr = "nacos://10.20.0.100:8848?username=&password=&namespace=";
++        URL url = URLStrParser.parseDecodedStr(urlStr);
++        Assertions.assertEquals("", url.getParameter("username"), "username should be empty string, not 'username'");
++        Assertions.assertEquals("", url.getParameter("password"), "password should be empty string, not 'password'");
++        Assertions.assertEquals("", url.getParameter("namespace"), "namespace should be empty string, not 'namespace'");
++
++        // Also test the encoded version
++        URL encodedUrl = URLStrParser.parseEncodedStr(URL.encode(urlStr));
++        Assertions.assertEquals("", encodedUrl.getParameter("username"), "username should be empty string, not 'username'");
++        Assertions.assertEquals("", encodedUrl.getParameter("password"), "password should be empty string, not 'password'");
++        Assertions.assertEquals("", encodedUrl.getParameter("namespace"), "namespace should be empty string, not 'namespace'");
++    }
++}

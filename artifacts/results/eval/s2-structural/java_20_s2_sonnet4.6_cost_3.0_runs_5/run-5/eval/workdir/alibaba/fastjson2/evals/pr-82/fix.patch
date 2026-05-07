@@ -1,0 +1,68 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index 005ba3558..e83e4f2c0 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -653,10 +653,10 @@ public interface JSON {
+                 return false;
+             }
+             jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -675,10 +675,10 @@ public interface JSON {
+                 return false;
+             }
+             jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -694,10 +694,10 @@ public interface JSON {
+         JSONReader jsonReader = JSONReader.of(text);
+         try {
+             jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -713,10 +713,10 @@ public interface JSON {
+         JSONReader jsonReader = JSONReader.of(bytes);
+         try {
+             jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -735,9 +735,10 @@ public interface JSON {
+         JSONReader jsonReader = JSONReader.of(bytes, offset, length, charset);
+         try {
+             jsonReader.skipValue();
++            return jsonReader.current() == JSONReader.EOI;
+         } catch (JSONException error) {
+             return false;
+         }
+-        return true;
+     }
+ }
++
