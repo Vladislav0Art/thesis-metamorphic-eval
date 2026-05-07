@@ -1,0 +1,82 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..f1bc2503c 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -202,23 +202,12 @@ public enum MapperFeature implements ConfigFeature
+      * parameter name information is used, but constructor is NOT considered an explicit
+      * Creator (although may be discovered as one using other annotations or heuristics).
+      *<p>
+-     * Feature is mostly used to help interoperability with frameworks like Lombok
+-     * that may automatically generate <code>ConstructorProperties</code> annotation
+-     * but without necessarily meaning that constructor should be used as Creator
+-     * for deserialization.
+-     *<p>
+      * Feature is enabled by default.
+      *
+      * @since 2.9
+      */
+     INFER_CREATOR_FROM_CONSTRUCTOR_PROPERTIES(true),
+ 
+-    /*
+-    /******************************************************
+-    /* Access modifier handling
+-    /******************************************************
+-     */
+-
+     /**
+      * Feature that determines whether method and field access
+      * modifier settings can be overridden when accessing
+@@ -229,16 +218,10 @@ public enum MapperFeature implements ConfigFeature
+      * Note that this setting may have significant performance implications,
+      * since access override helps remove costly access checks on each
+      * and every Reflection access. If you are considering disabling
+-     * this feature, be sure to verify performance consequences if usage
+-     * is performance sensitive.
+-     * Also note that performance effects vary between Java platforms
+-     * (JavaSE vs Android, for example), as well as JDK versions: older
+-     * versions seemed to have more significant performance difference.
+-     *<p>
+-     * Conversely, on some platforms, it may be necessary to disable this feature
+-     * as platform does not allow such calls. For example, when developing
+-     * Applets (or other Java code that runs on tightly restricted sandbox),
+-     * it may be necessary to disable the feature regardless of performance effects.
++     * this feature, be sure to verify performance consequences if usage is performance sensitive.
++     * Also note that ability to force access may be platform dependent,
++     * and even if this feature is enabled, call may fail if Java security
++     * manager denies such calls. If disabled, no such calls are made.
+      *<p>
+      * Feature is enabled by default.
+      */
+@@ -462,6 +445,19 @@ public enum MapperFeature implements ConfigFeature
+      */
+     IGNORE_DUPLICATE_MODULE_REGISTRATIONS(true),
+ 
++    /**
++     * Feature that enables use of the declared base type as the "default implementation"
++     * for polymorphic deserialization, if no explicit default implementation is specified.
++     *<p>
++     * This is useful when the declared type is itself concrete and should be used if
++     * no type information is present.
++     *<p>
++     * Feature is disabled by default.
++     *
++     * @since 2.10
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /**
+      * Setting that determines what happens if an attempt is made to explicitly
+      * "merge" value of a property, where value does not support merging; either

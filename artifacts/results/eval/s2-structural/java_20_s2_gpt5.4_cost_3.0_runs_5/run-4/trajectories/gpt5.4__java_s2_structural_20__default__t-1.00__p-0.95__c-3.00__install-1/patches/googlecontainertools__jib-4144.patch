@@ -1,0 +1,191 @@
+
+diff --git a/.gitignore b/.gitignore
+index 5030f209..f51c646a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -14,3 +14,6 @@ bin/
+ .classpath
+ .project
+ .DS_Store
++out/
++*.class
++*.jar
+diff --git a/jib-cli/src/main/java/com/google/cloud/tools/jib/cli/ArtifactProcessors.java b/jib-cli/src/main/java/com/google/cloud/tools/jib/cli/ArtifactProcessors.java
+index 58f9737b..abe7d2df 100644
+--- a/jib-cli/src/main/java/com/google/cloud/tools/jib/cli/ArtifactProcessors.java
++++ b/jib-cli/src/main/java/com/google/cloud/tools/jib/cli/ArtifactProcessors.java
+@@ -64,21 +64,21 @@ public class ArtifactProcessors {
+       CommonContainerConfigCliOptions commonContainerConfigCliOptions)
+       throws IOException {
+     Integer jarJavaVersion = determineJavaMajorVersion(jarPath);
+-    if (jarJavaVersion > 17 && !commonContainerConfigCliOptions.getFrom().isPresent()) {
++    if (jarJavaVersion > 21 && !commonContainerConfigCliOptions.getFrom().isPresent()) {
+       throw new IllegalStateException(
+           String.format(
+               "The input JAR (%s) is compiled with Java %d, but the default base image only "
+-                  + "supports versions up to Java 17. Specify a custom base image with --from.",
++                  + "supports versions up to Java 21. Specify a custom base image with --from.",
+               jarPath, jarJavaVersion));
+     }
+     String jarType = determineJarType(jarPath);
+     ProcessingMode mode = jarOptions.getMode();
+-    if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.packaged)) {
++    if (jarType.equals(SPRING_BOOT) && ProcessingMode.packaged.equals(mode)) {
+       return new SpringBootPackagedProcessor(jarPath, jarJavaVersion);
+-    } else if (jarType.equals(SPRING_BOOT) && mode.equals(ProcessingMode.exploded)) {
++    } else if (jarType.equals(SPRING_BOOT) && ProcessingMode.exploded.equals(mode)) {
+       return new SpringBootExplodedProcessor(
+           jarPath, cacheDirectories.getExplodedArtifactDirectory(), jarJavaVersion);
+-    } else if (jarType.equals(STANDARD) && mode.equals(ProcessingMode.packaged)) {
++    } else if (jarType.equals(STANDARD) && ProcessingMode.packaged.equals(mode)) {
+       return new StandardPackagedProcessor(jarPath, jarJavaVersion);
+     } else {
+       return new StandardExplodedProcessor(
+@@ -112,6 +112,7 @@ public class ArtifactProcessors {
+         warPath, cacheDirectories.getExplodedArtifactDirectory(), chosenAppRoot);
+   }
+ 
++
+   /**
+    * Determines whether the jar is a spring boot or standard jar.
+    *
+diff --git a/jib-cli/src/main/java/com/google/cloud/tools/jib/cli/jar/JarFiles.java b/jib-cli/src/main/java/com/google/cloud/tools/jib/cli/jar/JarFiles.java
+index 7c59cf86..ca06fdc2 100644
+--- a/jib-cli/src/main/java/com/google/cloud/tools/jib/cli/jar/JarFiles.java
++++ b/jib-cli/src/main/java/com/google/cloud/tools/jib/cli/jar/JarFiles.java
+@@ -89,6 +89,9 @@ public class JarFiles {
+     if (processor.getJavaVersion() <= 11) {
+       return "eclipse-temurin:11-jre";
+     }
+-    return "eclipse-temurin:17-jre";
++    if (processor.getJavaVersion() <= 17) {
++      return "eclipse-temurin:17-jre";
++    }
++    return "eclipse-temurin:21-jre";
+   }
+ }
+diff --git a/jib-cli/src/test/java/com/google/cloud/tools/jib/cli/jar/JarFilesTest.java b/jib-cli/src/test/java/com/google/cloud/tools/jib/cli/jar/JarFilesTest.java
+index 3775aeb1..6e260581 100644
+--- a/jib-cli/src/test/java/com/google/cloud/tools/jib/cli/jar/JarFilesTest.java
++++ b/jib-cli/src/test/java/com/google/cloud/tools/jib/cli/jar/JarFilesTest.java
+@@ -72,6 +72,8 @@ public class JarFilesTest {
+         "11, eclipse-temurin:11-jre",
+         "13, eclipse-temurin:17-jre",
+         "17, eclipse-temurin:17-jre",
++        "18, eclipse-temurin:21-jre",
++        "21, eclipse-temurin:21-jre",
+       })
+   public void testToJibContainer_defaultBaseImage(int javaVersion, String expectedBaseImage)
+       throws IOException, InvalidImageReferenceException {
+diff --git a/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java b/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
+index 21b314dc..4da7b548 100644
+--- a/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
++++ b/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
+@@ -82,18 +82,13 @@ public class PluginConfigurationProcessor {
+       ImmutableList.of(
+           LayerType.PROJECT_DEPENDENCIES.getName(),
+           LayerType.RESOURCES.getName(),
+-          LayerType.CLASSES.getName());
+-
+-  // Known "constant" layers -- changes to these layers require a change to the build definition,
+-  // which we consider non-syncable. These should not be included in the sync-map.
+-  private static final ImmutableList<String> CONST_LAYERS =
+-      ImmutableList.of(LayerType.DEPENDENCIES.getName(), LayerType.JVM_ARG_FILES.getName());
+-
+-  private static final String DEFAULT_JETTY_APP_ROOT = "/var/lib/jetty/webapps/ROOT";
+-
++          LayerType.CLASSES.getName(),
++          LayerType.EXTRA_FILES.getName());
++  private static final Set<String> CONST_LAYERS = new HashSet<>(GENERATED_LAYERS);
+   private static final String JIB_CLASSPATH_FILE = "jib-classpath-file";
+   private static final String JIB_MAIN_CLASS_FILE = "jib-main-class-file";
+   private static final Path DEFAULT_JIB_DIR = Paths.get("src").resolve("main").resolve("jib");
++  private static final String DEFAULT_JETTY_APP_ROOT = "/var/lib/jetty/webapps/ROOT";
+ 
+   private PluginConfigurationProcessor() {}
+ 
+@@ -752,7 +747,7 @@ public class PluginConfigurationProcessor {
+ 
+   /**
+    * Gets the suitable value for the base image. If the raw base image parameter is null, returns
+-   * {@code "jetty"} for WAR projects, or {@code "eclipse-temurin:{8|11|17}-jre"} for non-WAR.
++   * {@code "jetty"} for WAR projects, or {@code "eclipse-temurin:{8|11|17|21}-jre"} for non-WAR.
+    *
+    * @param projectProperties used for providing additional information
+    * @return the base image
+@@ -772,10 +767,13 @@ public class PluginConfigurationProcessor {
+       return "eclipse-temurin:11-jre";
+     } else if (javaVersion <= 17) {
+       return "eclipse-temurin:17-jre";
++    } else if (javaVersion <= 21) {
++      return "eclipse-temurin:21-jre";
+     }
+-    throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
++    throw new IncompatibleBaseImageJavaVersionException(21, javaVersion);
+   }
+ 
++
+   /**
+    * Parses the list of platforms to a set of {@link Platform}.
+    *
+diff --git a/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java b/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java
+index 7fd60866..50f8155a 100644
+--- a/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java
++++ b/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java
+@@ -903,7 +903,9 @@ public class PluginConfigurationProcessorTest {
+         "9, eclipse-temurin:11-jre",
+         "11, eclipse-temurin:11-jre",
+         "13, eclipse-temurin:17-jre",
+-        "17, eclipse-temurin:17-jre"
++        "17, eclipse-temurin:17-jre",
++        "18, eclipse-temurin:21-jre",
++        "21, eclipse-temurin:21-jre"
+       })
+   public void testGetDefaultBaseImage_defaultJavaBaseImage(
+       int javaVersion, String expectedBaseImage) throws IncompatibleBaseImageJavaVersionException {
+@@ -913,18 +915,19 @@ public class PluginConfigurationProcessorTest {
+   }
+ 
+   @Test
+-  public void testGetDefaultBaseImage_projectHigherThanJava17() {
+-    when(projectProperties.getMajorJavaVersion()).thenReturn(20);
++  public void testGetDefaultBaseImage_projectHigherThanJava21() {
++    when(projectProperties.getMajorJavaVersion()).thenReturn(22);
+ 
+     IncompatibleBaseImageJavaVersionException exception =
+         assertThrows(
+             IncompatibleBaseImageJavaVersionException.class,
+             () -> PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+ 
+-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(17);
+-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(20);
++    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(21);
++    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(22);
+   }
+ 
++
+   @Test
+   public void testGetJavaContainerBuilderWithBaseImage_dockerBase()
+       throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
+@@ -1010,8 +1013,8 @@ public class PluginConfigurationProcessorTest {
+   }
+ 
+   @Test
+-  public void testGetJavaContainerBuilderWithBaseImage_java19NoBaseImage() {
+-    when(projectProperties.getMajorJavaVersion()).thenReturn(19);
++  public void testGetJavaContainerBuilderWithBaseImage_java22NoBaseImage() {
++    when(projectProperties.getMajorJavaVersion()).thenReturn(22);
+     when(rawConfiguration.getFromImage()).thenReturn(Optional.empty());
+     IncompatibleBaseImageJavaVersionException exception =
+         assertThrows(
+@@ -1019,8 +1022,8 @@ public class PluginConfigurationProcessorTest {
+             () ->
+                 PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                     rawConfiguration, projectProperties, inferredAuthProvider));
+-    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(17);
+-    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(19);
++    assertThat(exception.getBaseImageMajorJavaVersion()).isEqualTo(21);
++    assertThat(exception.getProjectMajorJavaVersion()).isEqualTo(22);
+   }
+ 
+   @Test

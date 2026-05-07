@@ -1,0 +1,140 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..6be80d92d 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -286,6 +286,16 @@ public enum MapperFeature implements ConfigFeature
+      */
+     USE_STATIC_TYPING(false),
+ 
++    /**
++     * Feature that determines whether the declared base type of a polymorphic
++     * value is used as the default implementation when no explicit
++     * {@link com.fasterxml.jackson.annotation.JsonTypeInfo#defaultImpl}
++     * is specified and the declared type itself is concrete.
++     *<p>
++     * This feature is disabled by default.
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /*
+     /******************************************************
+     /* View-related features
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/StdTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/StdTypeResolverBuilder.java
+index cbdafbd2b..6bb2a9193 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/StdTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/StdTypeResolverBuilder.java
+@@ -143,7 +143,7 @@ public class StdTypeResolverBuilder
+         case CLASS:
+             return new ClassNameIdResolver(baseType, config.getTypeFactory());
+         case MINIMAL_CLASS:
+-            return new MinimalClassNameIdResolver(baseType, config.getTypeFactory());
++            return MinimalClassNameIdResolver.construct(baseType, config.getTypeFactory());
+         case NAME:
+             return TypeNameIdResolver.construct(config, baseType, subtypes, forSer, forDeser);
+         case NONE: // hmmh. should never get this far with 'none'
+@@ -206,7 +206,12 @@ public class StdTypeResolverBuilder
+         JavaType defaultImpl;
+ 
+         if (_defaultImpl == null) {
+-            defaultImpl = null;
++            if (config.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && baseType.isConcrete()) {
++                defaultImpl = baseType;
++            } else {
++                defaultImpl = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/ClassNameIdResolver.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/ClassNameIdResolver.java
+index 934cdd39a..65f77f4d5 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/ClassNameIdResolver.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/ClassNameIdResolver.java
+@@ -39,6 +39,7 @@ public class ClassNameIdResolver
+         return _idFrom(value, type, _typeFactory);
+     }
+ 
++
+     @Override
+     public JavaType typeFromId(DatabindContext context, String id) throws IOException {
+         return _typeFromId(id, context);
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
+index d208c307b..9d1c84986 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
+@@ -36,6 +36,10 @@ public class MinimalClassNameIdResolver
+         }
+     }
+ 
++    public static MinimalClassNameIdResolver construct(JavaType baseType, TypeFactory typeFactory) {
++        return new MinimalClassNameIdResolver(baseType, typeFactory);
++    }
++
+     @Override
+     public JsonTypeInfo.Id getMechanism() { return JsonTypeInfo.Id.MINIMAL_CLASS; }
+     
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+index 008dc373a..45a272a09 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+@@ -141,6 +141,23 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         public AsProperty value;
+     }
+ 
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY,
++            property = "type")
++    public interface BaseAsDefault {
++        public String getName();
++        public void setName(String name);
++    }
++
++    public static class BaseAsDefaultImpl implements BaseAsDefault {
++        public String name;
++
++        @Override
++        public String getName() { return name; }
++
++        @Override
++        public void setName(String value) { name = value; }
++    }
++
+     /*
+     /**********************************************************
+     /* Unit tests, deserialization
+@@ -229,6 +246,23 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         assertEquals(ImplFor656.class, value.getClass());
+         assertEquals(3, ((ImplFor656) value).a);
+     }
++    public void testUseBaseTypeAsDefaultImpl() throws Exception
++    {
++        final String json = aposToQuotes("{'name':'name'}");
++
++        try {
++            MAPPER.readValue(json, BaseAsDefaultImpl.class);
++            fail("Expected " + JsonMappingException.class);
++        } catch (InvalidTypeIdException e) {
++            verifyException(e, "missing type id property 'type'");
++        }
++
++        ObjectMapper mapper = new ObjectMapper()
++                .enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        BaseAsDefaultImpl value = mapper.readValue(json, BaseAsDefaultImpl.class);
++        assertNotNull(value);
++        assertEquals("name", value.name);
++    }
+ 
+     public void testUnknownTypeIDRecovery() throws Exception
+     {

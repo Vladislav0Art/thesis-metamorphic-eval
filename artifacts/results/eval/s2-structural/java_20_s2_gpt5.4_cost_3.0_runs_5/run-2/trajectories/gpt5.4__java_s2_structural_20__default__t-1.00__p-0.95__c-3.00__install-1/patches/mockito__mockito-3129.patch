@@ -1,0 +1,78 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/util/MockUtil.java b/src/main/java/org/mockito/util/MockUtil.java
+index 023566b0b..8b75f6f61 100644
+--- a/src/main/java/org/mockito/util/MockUtil.java
++++ b/src/main/java/org/mockito/util/MockUtil.java
+@@ -4,6 +4,10 @@
+  */
+ package org.mockito.util;
+ 
++import java.util.Collections;
++import java.util.Map;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.function.Function;
+ import org.mockito.MockedConstruction;
+ import org.mockito.Mockito;
+ import org.mockito.exceptions.misusing.NotAMockException;
+@@ -20,11 +24,6 @@ import org.mockito.plugins.MockMaker;
+ import org.mockito.plugins.MockMaker.TypeMockability;
+ import org.mockito.plugins.MockResolver;
+ 
+-import java.util.Collections;
+-import java.util.Map;
+-import java.util.concurrent.ConcurrentHashMap;
+-import java.util.function.Function;
+-
+ import static org.mockito.internal.handler.MockHandlerFactory.createMockHandler;
+ 
+ @SuppressWarnings("unchecked")
+@@ -98,7 +97,7 @@ public class MockUtil {
+         return getMockHandler(mock).getMockSettings().getMockName();
+     }
+ 
+-    private static MockMaker getMockMaker(String mockMaker) {
++    public static MockMaker getMockMaker(String mockMaker) {
+         if (mockMaker == null) {
+             return defaultMockMaker;
+         }
+diff --git a/src/test/java/org/mockito/internal/util/MockUtilTest.java b/src/test/java/org/mockito/internal/util/MockUtilTest.java
+index 0fadef12a..2dba78c31 100644
+--- a/src/test/java/org/mockito/internal/util/MockUtilTest.java
++++ b/src/test/java/org/mockito/internal/util/MockUtilTest.java
+@@ -15,6 +15,7 @@ import java.util.List;
+ 
+ import org.assertj.core.api.Assertions;
+ import org.junit.Test;
++import org.mockito.MockMakers;
+ import org.mockito.Mockito;
+ import org.mockito.exceptions.misusing.NotAMockException;
+ import org.mockito.internal.configuration.plugins.Plugins;
+@@ -109,4 +110,15 @@ public class MockUtilTest extends TestBase {
+         assertTrue(MockUtil.typeMockabilityOf(SomeClass.class, null).mockable());
+         assertTrue(MockUtil.typeMockabilityOf(SomeInterface.class, null).mockable());
+     }
++
++    @Test
++    public void should_return_default_mock_maker_for_null_lookup() {
++        Assertions.assertThat(MockUtil.getMockMaker(null)).isSameAs(Plugins.getMockMaker());
++    }
++
++    @Test
++    public void should_cache_mock_maker_by_alias() {
++        Assertions.assertThat(MockUtil.getMockMaker(MockMakers.INLINE))
++                .isSameAs(MockUtil.getMockMaker(MockMakers.INLINE));
++    }
+ }

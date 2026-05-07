@@ -1,0 +1,319 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/pipeline/AddressState.java b/logstash-core/src/main/java/org/logstash/plugins/pipeline/AddressState.java
+index 499768fba..9b5627265 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/pipeline/AddressState.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/pipeline/AddressState.java
+@@ -16,116 +16,228 @@
+  * specific language governing permissions and limitations
+  * under the License.
+  */
+-
+-
+ package org.logstash.plugins.pipeline;
+ 
+-import java.util.Collections;
++import com.google.common.annotations.VisibleForTesting;
++import org.logstash.common.io.DeadLetterQueueWriter;
++import org.logstash.ext.JrubyEventExtLibrary;
++import org.logstash.instrument.metrics.counter.LongCounter;
++import org.logstash.plugins.Contextualizer;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++
++import javax.annotation.Nullable;
++import java.util.Collection;
++import java.util.Map;
++import java.util.Objects;
++import java.util.Optional;
+ import java.util.Set;
+ import java.util.concurrent.ConcurrentHashMap;
++import java.util.function.Consumer;
++import java.util.function.Function;
++import java.util.stream.Collectors;
+ 
+ /**
+- * Represents the state of an internal address.
++ * Extensible implementation of pipeline-to-pipeline Bus.
+  */
+-public class AddressState {
+-    private final String address;
++public class PipelineBusV2 extends AbstractPipelineBus {
++    private static final Logger LOGGER = LoggerFactory.getLogger(PipelineBusV2.class);
+ 
+-    private final Set<PipelineOutput> outputs = ConcurrentHashMap.newKeySet();
+-    private volatile PipelineInput input = null;
++    /**
++     * Mapping from an address to the address' state.
++     */
++    private final AddressStateMapping addressStates = new AddressStateMapping();
+ 
+-    private transient ReadOnly readOnlyView;
++    /**
++     * Mapping from an output to the addresses to which it sends.
++     */
++    private final Map<PipelineOutput, Set<AddressState.ReadOnly>> addressStatesBySender = new ConcurrentHashMap<>();
+ 
+-    public AddressState(final String address) {
+-        this.address = address;
++    /**
++     * When enabled, calls to {@link #unlisten(PipelineInput, String)} will block until all outputs
++     * are removed from the address before unassigning the input.
++     */
++    private volatile boolean blockOnUnlisten = false;
++
++    @Override
++    public void registerSender(final PipelineOutput sender, final Collection<String> addresses) {
++        addressStatesBySender.computeIfAbsent(sender, (ignored) -> ConcurrentHashMap.newKeySet())
++                .addAll(addresses.stream()
++                        .map((address) -> addressStates.mutate(address, (addressState) -> addressState.addOutput(sender)))
++                        .collect(Collectors.toSet()));
+     }
+ 
+-    public String getAddress() {
+-        return this.address;
++    @Override
++    public void unregisterSender(final PipelineOutput sender, final Collection<String> addresses) {
++        final Set<AddressState.ReadOnly> unregisteredAddressStates = ConcurrentHashMap.newKeySet();
++        final Set<AddressState.ReadOnly> remainingAddressStates = addressStatesBySender.computeIfPresent(sender, (ignored, currentAddressStates) -> {
++            final Set<AddressState.ReadOnly> remaining = ConcurrentHashMap.newKeySet();
++            currentAddressStates.forEach((addressState) -> {
++                if (addresses.contains(addressState.getAddress())) {
++                    unregisteredAddressStates.add(addressState);
++                } else {
++                    remaining.add(addressState);
++                }
++            });
++
++            return remaining.isEmpty() ? null : remaining;
++        });
++
++        final Set<AddressState.ReadOnly> addressStatesToUpdate = remainingAddressStates == null && unregisteredAddressStates.isEmpty()
++                ? Set.of()
++                : unregisteredAddressStates;
++
++        addressStatesToUpdate.forEach((addressState) ->
++                this.addressStates.mutate(addressState.getAddress(), (currentAddressState) -> currentAddressState.removeOutput(sender))
++        );
+     }
+ 
+-    /**
+-     * Add the given output and ensure associated input's receivers are updated
+-     * @param output output to be added
+-     * @return true if the output was not already added
+-     */
+-    public boolean addOutput(PipelineOutput output) {
+-        return outputs.add(output);
++    @Override
++    public void listen(final PipelineInput listener,
++                       final String address) {
++        final AddressState.ReadOnly result = addressStates.mutate(address, (addressState) -> {
++            if (!addressState.assignInputIfMissing(listener)) {
++                throw new IllegalStateException(String.format("Cannot listen to address `%s` already bound by `%s`", address, addressState.getInput().getId()));
++            }
++        });
++
++        if (result == null) {
++            throw new IllegalStateException(String.format("Internal error: listening to `%s` pruned associated address state unexpectedly", address));
++        }
+     }
+ 
+-    public boolean removeOutput(PipelineOutput output) {
+-        return outputs.remove(output);
+-    }
++    @Override
++    protected AddressState.ReadOnly resolveAddress(final PipelineOutput sender,
++                                                   final String address) {
++        final Optional<Set<AddressState.ReadOnly>> senderAddresses = Optional.ofNullable(addressStatesBySender.get(sender));
++        if (senderAddresses.isEmpty()) {
++            throw new IllegalStateException(String.format("Cannot send event to address `%s` from unregistered sender `%s`", address, sender.getId()));
++        }
+ 
+-    public PipelineInput getInput() {
+-        return input;
++        return senderAddresses.get().stream()
++                .filter((addressState) -> addressState.getAddress().equals(address))
++                .findFirst()
++                .orElseThrow(() -> new IllegalStateException(String.format("Cannot send event to unregistered address `%s` from sender `%s`", address, sender.getId())));
+     }
+ 
+-    /**
+-     * Assigns an input to listen on this address. Will return false if another input is already listening.
+-     * @param newInput input to assign as listener
+-     * @return true if successful, false if another input is listening
+-     */
+-    public synchronized boolean assignInputIfMissing(PipelineInput newInput) {
+-        // We aren't changing anything
+-        if (input == null) {
+-            input = newInput;
+-            return true;
++    @Override
++    public void unlisten(final PipelineInput listener,
++                         final String address) throws InterruptedException {
++        if (this.blockOnUnlisten) {
++            unlistenBlocking(listener, address);
+         } else {
+-            return input == newInput;
++            unlistenNonblock(listener, address);
+         }
+     }
+ 
+-    /**
+-     * Unsubscribes the given input from this address
+-     * @param unsubscribingInput input to unsubscribe from this address
+-     * @return true if this input was listening, false otherwise
+-     */
+-    public synchronized boolean unassignInput(PipelineInput unsubscribingInput) {
+-        if (input != unsubscribingInput) return false;
+-
+-        input = null;
+-        return true;
++    private void unlistenNonblock(final PipelineInput listener,
++                                   final String address) {
++        addressStates.mutate(address, (addressState) -> addressState.unassignInput(listener));
+     }
+ 
+-    public boolean isRunning() {
+-        return input != null && input.isRunning();
++    private void unlistenBlocking(final PipelineInput listener,
++                          final String address) throws InterruptedException {
++        synchronized (Objects.requireNonNull(listener, "listener must not be null")) {
++            while(!tryUnlistenOrphan(listener, address)) {
++                listener.wait(10000);
++            }
++        }
+     }
+ 
+-    public boolean isEmpty() {
+-        return (input == null) && outputs.isEmpty();
++    /**
++     * Makes a singular attempt to unlisten to the address that succeeds if and only if
++     * there are no senders registered to the address
++     * @param listener the {@link PipelineInput} that to unlisten
++     * @param address the address from which to unlisten
++     * @return true iff this listener is not listening after the attempt
++     */
++    private boolean tryUnlistenOrphan(final PipelineInput listener,
++                                      final String address) {
++        final AddressState.ReadOnly result = addressStates.mutate(address, (addressState) -> {
++            final Set<PipelineOutput> outputs = addressState.getOutputs();
++            if (outputs.isEmpty()) {
++                addressState.unassignInput(listener);
++            } else {
++                LOGGER.trace(() -> String.format("input `%s` is not ready to unlisten from `%s` because the address still has attached senders (%s)", listener.getId(), address, outputs.stream().map(PipelineOutput::getId).collect(Collectors.toSet())));
++            }
++        });
++        return result == null || result.getInput() != listener;
+     }
+ 
+-    // Just for tests
+-    boolean hasOutput(PipelineOutput output) {
+-        return outputs.contains(output);
++    @Override
++    public void setBlockOnUnlisten(final boolean blockOnUnlisten) {
++        this.blockOnUnlisten = blockOnUnlisten;
+     }
+ 
+-    public Set<PipelineOutput> getOutputs() {
+-        return outputs;
+-    }
++    protected static class AddressStateMapping {
+ 
+-    public ReadOnly getReadOnlyView() {
+-        if (readOnlyView == null) {
+-            this.readOnlyView = new ReadOnly();
++        private final Map<String, AddressState> mapping = new ConcurrentHashMap<>();
++
++        public AddressState.ReadOnly mutate(final String address,
++                                            final Consumer<AddressState> consumer) {
++            return mutate(address, (addressState) -> {
++                consumer.accept(addressState);
++                return null;
++            });
+         }
+-        return readOnlyView;
+-    }
+ 
+-    public class ReadOnly {
+-        public String getAddress() {
+-            return AddressState.this.getAddress();
++        public <T> AddressState.ReadOnly mutate(final String address,
++                                                final Function<AddressState, @Nullable T> mutator) {
++            final PipelineInput[] listenerToNotify = new PipelineInput[1];
++            final AddressState result = mapping.compute(address, (a, addressState) -> {
++                if (addressState == null) {
++                    addressState = new AddressState(address);
++                }
++
++                final PipelineInput previousInput = addressState.getInput();
++                mutator.apply(addressState);
++
++                final PipelineInput currentInput = addressState.getInput();
++                if (currentInput != null && currentInput != previousInput) {
++                    listenerToNotify[0] = currentInput;
++                } else if (previousInput != null && currentInput == previousInput && addressState.getOutputs().isEmpty()) {
++                    listenerToNotify[0] = currentInput;
++                }
++
++                return addressState.isEmpty() ? null : addressState;
++            });
++
++            final PipelineInput currentInput = listenerToNotify[0];
++            if (currentInput != null) {
++                synchronized (currentInput) {
++                    currentInput.notifyAll();
++                }
++            }
++
++            return result == null ? null : result.getReadOnlyView();
+         }
+-        public Set<PipelineOutput> getOutputs() {
+-            return Collections.unmodifiableSet(AddressState.this.getOutputs());
++
++        private AddressState.ReadOnly get(final String address) {
++            final AddressState result = mapping.get(address);
++            return result == null ? null : result.getReadOnlyView();
+         }
+-        public PipelineInput getInput() {
+-            return AddressState.this.getInput();
++    }
++
++    @VisibleForTesting
++    static class Testable extends PipelineBusV2 implements PipelineBus.Testable {
++
++        @Override
++        @VisibleForTesting
++        public boolean isBlockOnUnlisten() {
++            return this.blockOnUnlisten;
+         }
+-        public boolean isRunning() {
+-            return AddressState.this.isRunning();
++
++        @Override
++        @VisibleForTesting
++        public Optional<AddressState.ReadOnly> getAddressState(final String address) {
++            return Optional.ofNullable(addressStates.get(address));
+         }
+-        public boolean isEmpty() {
+-            return AddressState.this.isEmpty();
++
++        @Override
++        @VisibleForTesting
++        public Optional<Set<AddressState.ReadOnly>> getAddressStates(final PipelineOutput sender) {
++            return Optional.ofNullable(addressStatesBySender.get(sender));
+         }
++
+     }
+ }

@@ -1,0 +1,24 @@
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index 005ba3558..fbeb89413 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -647,6 +647,9 @@ public interface JSON {
+         if (text == null || text.length() == 0) {
+             return false;
+         }
++        if(!text.startsWith("[")){
++            return false;
++        }
+         JSONReader jsonReader = JSONReader.of(text);
+         try {
+             if (!jsonReader.isArray()) {
+@@ -691,6 +694,9 @@ public interface JSON {
+         if (text == null || text.length() == 0) {
+             return false;
+         }
++        if(!text.startsWith("{") & !text.startsWith("[")){
++            return false;
++        }
+         JSONReader jsonReader = JSONReader.of(text);
+         try {
+             jsonReader.skipValue();

@@ -1,0 +1,338 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/parser/ReaderBasedJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/parser/ReaderBasedJsonParser.java
+index 3f8218d0..32fb4fae 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/parser/ReaderBasedJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/parser/ReaderBasedJsonParser.java
+@@ -475,7 +475,9 @@ public class ReaderBasedJsonParser // final in 2.3, earlier
+             }
+         }
+         return _isNextTokenNameMaybe(i, sstr.getValue());
+-    }@Override
++    }
++
++    @Override
+     public String nextFieldName() throws IOException
+     {
+         // // // Note: this is almost a verbatim copy of nextToken() (minus comments)
+@@ -514,7 +516,17 @@ public class ReaderBasedJsonParser // final in 2.3, earlier
+             return null;
+         }
+         if (_parsingContext.expectComma()) {
+-            i = _skipComma(i);
++            if (i != INT_COMMA) {
++                _reportUnexpectedChar(i, "was expecting comma to separate "
++                        +_parsingContext.typeDesc()+" entries");
++            }
++            i = _skipWSOrEnd();
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if ((i == INT_RBRACKET) || (i == INT_RCURLY)) {
++                    _closeScope(i);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _updateLocation();
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/parser/UTF8DataInputJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/parser/UTF8DataInputJsonParser.java
+index 6cc77c1b..f90a7aae 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/parser/UTF8DataInputJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/parser/UTF8DataInputJsonParser.java
+@@ -201,10 +201,14 @@ public class UTF8DataInputJsonParser
+     @Override
+     public void setCodec(ObjectCodec c) {
+         _objectCodec = c;
+-    }@Override
++    }
++
++    
+     public int releaseBuffered(OutputStream out) throws IOException {
+         return 0;
+-    }@Override
++    }
++
++    
+     public int readBinaryValue(Base64Variant b64variant, OutputStream out) throws IOException
+     {
+         // if we have already read the token, just use whatever we may have
+@@ -446,7 +450,9 @@ public class UTF8DataInputJsonParser
+         }
+         _nextToken = t;
+         return _currToken;
+-    }@Override
++    }
++
++    
+     public String nextTextValue() throws IOException
+     {
+         // two distinct cases; either got name and we know next type, or 'other'
+@@ -470,7 +476,9 @@ public class UTF8DataInputJsonParser
+             return null;
+         }
+         return (nextToken() == JsonToken.VALUE_STRING) ? getText() : null;
+-    }@Override
++    }
++
++    
+     public long nextLongValue(long defaultValue) throws IOException
+     {
+         // two distinct cases; either got name and we know next type, or 'other'
+@@ -490,7 +498,9 @@ public class UTF8DataInputJsonParser
+             return defaultValue;
+         }
+         return (nextToken() == JsonToken.VALUE_NUMBER_INT) ? getLongValue() : defaultValue;
+-    }@Override
++    }
++
++    
+     public int nextIntValue(int defaultValue) throws IOException
+     {
+         // two distinct cases; either got name and we know next type, or 'other'
+@@ -510,7 +520,9 @@ public class UTF8DataInputJsonParser
+             return defaultValue;
+         }
+         return (nextToken() == JsonToken.VALUE_NUMBER_INT) ? getIntValue() : defaultValue;
+-    }@Override
++    }
++
++    @Override
+     public String nextFieldName() throws IOException
+     {
+         // // // Note: this is almost a verbatim copy of nextToken()
+@@ -550,6 +562,12 @@ public class UTF8DataInputJsonParser
+                 _reportUnexpectedChar(i, "was expecting comma to separate "+_parsingContext.typeDesc()+" entries");
+             }
+             i = _skipWS();
++            if (Feature.ALLOW_TRAILING_COMMA.enabledIn(_features)) {
++                if ((i == INT_RBRACKET) || (i == INT_RCURLY)) {
++                    _closeScope(i);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _nextTokenNotInObject(i);
+@@ -607,7 +625,9 @@ public class UTF8DataInputJsonParser
+         }
+         _nextToken = t;
+         return nameStr;
+-    }@Override
++    }
++
++    
+     public Boolean nextBooleanValue() throws IOException
+     {
+         // two distinct cases; either got name and we know next type, or 'other'
+@@ -653,7 +673,9 @@ public class UTF8DataInputJsonParser
+             return getCurrentName();
+         }
+         return super.getValueAsString(null);
+-    }@Override
++    }
++
++    
+     public String getValueAsString(String defValue) throws IOException
+     {
+         if (_currToken == JsonToken.VALUE_STRING) {
+@@ -667,7 +689,9 @@ public class UTF8DataInputJsonParser
+             return getCurrentName();
+         }
+         return super.getValueAsString(defValue);
+-    }@Override
++    }
++
++    
+     public int getValueAsInt() throws IOException
+     {
+         JsonToken t = _currToken;
+@@ -684,7 +708,9 @@ public class UTF8DataInputJsonParser
+             return _numberInt;
+         }
+         return super.getValueAsInt(0);
+-    }@Override
++    }
++
++    
+     public int getValueAsInt(int defValue) throws IOException
+     {
+         JsonToken t = _currToken;
+@@ -701,10 +727,14 @@ public class UTF8DataInputJsonParser
+             return _numberInt;
+         }
+         return super.getValueAsInt(defValue);
+-    }@Override
++    }
++
++    
+     public JsonLocation getTokenLocation() {
+         return new JsonLocation(_getSourceReference(), -1L, -1L, _tokenInputRow, -1);
+-    }@Override
++    }
++
++    
+     public int getTextOffset() throws IOException
+     {
+         // Most have offset of 0, only some may have other values:
+@@ -725,7 +755,9 @@ public class UTF8DataInputJsonParser
+             }
+         }
+         return 0;
+-    }@Override
++    }
++
++    
+     public int getTextLength() throws IOException
+     {
+         if (_currToken == JsonToken.VALUE_STRING) {
+@@ -745,7 +777,9 @@ public class UTF8DataInputJsonParser
+             return _currToken.asCharArray().length;
+         }
+         return 0;
+-    }@Override
++    }
++
++    
+     public char[] getTextCharacters() throws IOException
+     {
+         if (_currToken != null) { // null only before/after document
+@@ -780,7 +814,9 @@ public class UTF8DataInputJsonParser
+             }
+         }
+         return null;
+-    }@Override
++    }
++
++    
+     public String getText() throws IOException
+     {
+         if (_currToken == JsonToken.VALUE_STRING) {
+@@ -791,7 +827,9 @@ public class UTF8DataInputJsonParser
+             return _textBuffer.contentsAsString();
+         }
+         return _getText2(_currToken);
+-    }@Override
++    }
++
++    
+     public int getText(Writer writer) throws IOException
+     {
+         JsonToken t = _currToken;
+@@ -816,16 +854,24 @@ public class UTF8DataInputJsonParser
+             return ch.length;
+         }
+         return 0;
+-    }@Override
++    }
++
++    
+     public Object getInputSource() {
+         return _inputData;
+-    }@Override
++    }
++
++    
+     public JsonLocation getCurrentLocation() {
+         return new JsonLocation(_getSourceReference(), -1L, -1L, _currInputRow, -1);
+-    }@Override
++    }
++
++    
+     public ObjectCodec getCodec() {
+         return _objectCodec;
+-    }@Override
++    }
++
++    
+     public byte[] getBinaryValue(Base64Variant b64variant) throws IOException
+     {
+         if (_currToken != JsonToken.VALUE_STRING &&
+@@ -854,7 +900,9 @@ public class UTF8DataInputJsonParser
+             }
+         }
+         return _binaryValue;
+-    }@Override
++    }
++
++    
+     public void finishToken() throws IOException {
+         if (_tokenIncomplete) {
+             _tokenIncomplete = false;
+@@ -2382,7 +2430,9 @@ public class UTF8DataInputJsonParser
+             outBuf[outPtr++] = (char) c;
+         }
+         _textBuffer.setCurrentLength(outPtr);
+-    }@Override
++    }
++
++    
+     protected void _finishString() throws IOException
+     {
+         int outPtr = 0;
+@@ -2469,7 +2519,9 @@ public class UTF8DataInputJsonParser
+             _reportInvalidOther(d & 0xFF);
+         }
+         return ((c & 0x1F) << 6) | (d & 0x3F);
+-    }@Override
++    }
++
++    
+     protected char _decodeEscaped() throws IOException
+     {
+         int c = _inputData.readUnsignedByte();
+@@ -2662,7 +2714,9 @@ public class UTF8DataInputJsonParser
+             _parsingContext = _parsingContext.clearAndGetParent();
+             _currToken = JsonToken.END_OBJECT;
+         }
+-    }@Override
++    }
++
++    
+     protected void _closeInput() throws IOException { }private final void _checkMatchEnd(String matchStr, int i, int ch) throws IOException {
+         // but actually only alphanums are problematic
+         char c = (char) _decodeCharForError(ch);
+diff --git a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+index 7c2d5e49..7b3f1917 100644
+--- a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
++++ b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+@@ -289,6 +289,30 @@ public class TrailingCommasTest extends BaseTest {
+     p.close();
+   }
+ 
++  @Test
++  public void testObjectTrailingCommaWithNextFieldName() throws Exception {
++    String json = "{\"a\": true, \"b\": false,}";
++
++    JsonParser p = createParser(factory, mode, json);
++
++    assertEquals(JsonToken.START_OBJECT, p.nextToken());
++
++    assertEquals("a", p.nextFieldName());
++    assertToken(JsonToken.VALUE_TRUE, p.nextToken());
++
++    assertEquals("b", p.nextFieldName());
++    assertToken(JsonToken.VALUE_FALSE, p.nextToken());
++
++    if (features.contains(Feature.ALLOW_TRAILING_COMMA)) {
++      assertNull(p.nextFieldName());
++      assertToken(JsonToken.END_OBJECT, p.getCurrentToken());
++      assertEnd(p);
++    } else {
++      assertUnexpected(p, '}');
++    }
++    p.close();
++  }
++
+   @Test
+   public void testObjectTrailingCommas() throws Exception {
+     String json = "{\"a\": true, \"b\": false,,}";

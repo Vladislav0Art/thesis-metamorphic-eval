@@ -1,0 +1,90 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
+index 1f34d701..4690dc91 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
+@@ -338,7 +338,9 @@ public final class TextBuffer
+                 _allocator.releaseCharBuffer(BufferRecycler.CHAR_TEXT_BUFFER, buf);
+             }
+         }
+-    } /**
++    }
++
++    /**
+      * Method that can be used to check whether textual contents can
+      * be efficiently accessed using {@link #getTextBuffer}.
+      */
+@@ -349,13 +351,17 @@ public final class TextBuffer
+         // not if we have String as value
+         if (_resultString != null) return false;
+         return true;
+-    }public int getTextOffset() {
++    }
++
++    public int getTextOffset() {
+         /* Only shared input buffer can have non-zero offset; buffer
+          * segments start at 0, and if we have to create a combo buffer,
+          * that too will start from beginning of the buffer
+          */
+         return (_inputStart >= 0) ? _inputStart : 0;
+-    }public char[] getTextBuffer()
++    }
++
++    public char[] getTextBuffer()
+     {
+         // Are we just using shared input buffer?
+         if (_inputStart >= 0) return _inputBuffer;
+@@ -364,10 +370,14 @@ public final class TextBuffer
+             return (_resultArray = _resultString.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!_hasSegments)  return _currentSegment;
++        if (!_hasSegments)  return (_currentSegment == null) ? NO_CHARS : _currentSegment;
+         // Nope, need to have/create a non-segmented array and return it
+         return contentsAsArray();
+-    }public int getCurrentSegmentSize() { return _currentSize; }public char[] getCurrentSegment()
++    }
++
++    public int getCurrentSegmentSize() { return _currentSize; }
++
++    public char[] getCurrentSegment()
+     {
+         /* Since the intention of the caller is to directly add stuff into
+          * buffers, we should NOT have anything in shared buffer... ie. may
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 878224ef..d03b14cd 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -77,4 +77,20 @@ public class TestTextBuffer
+               }
+           }
+       }
++
++      public void testEmptyTextBufferConsistency()
++      {
++          TextBuffer tb = new TextBuffer(new BufferRecycler());
++          tb.resetWithEmpty();
++
++          char[] first = tb.getTextBuffer();
++          assertNotNull(first);
++          assertEquals(0, first.length);
++
++          assertEquals("", tb.contentsAsString());
++
++          char[] second = tb.getTextBuffer();
++          assertNotNull(second);
++          assertEquals(0, second.length);
++      }
+ }

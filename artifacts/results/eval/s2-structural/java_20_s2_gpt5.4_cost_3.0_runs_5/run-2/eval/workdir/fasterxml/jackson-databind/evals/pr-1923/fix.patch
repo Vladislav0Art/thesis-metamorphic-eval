@@ -1,0 +1,94 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1271c273b..1077e3bcb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/util/SubTypeValidator.java b/src/main/java/com/fasterxml/jackson/databind/util/SubTypeValidator.java
+index d8cfc8957..e24bbfcc2 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/util/SubTypeValidator.java
++++ b/src/main/java/com/fasterxml/jackson/databind/util/SubTypeValidator.java
+@@ -76,7 +76,7 @@ public class SubTypeValidator
+             // 18-Dec-2017, tatu: As per [databind#1855], need bit more sophisticated handling
+             //    for some Spring framework types
+             if (full.startsWith(PREFIX_STRING)) {
+-                for (Class<?> cls = raw; cls != Object.class; cls = cls.getSuperclass()) {
++                for (Class<?> cls = raw; (cls != null) && (cls != Object.class); cls = cls.getSuperclass()) {
+                     String name = cls.getSimpleName();
+                     // looking for "AbstractBeanFactoryPointcutAdvisor" but no point to allow any is there?
+                     if ("AbstractPointcutAdvisor".equals(name)
+diff --git a/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java b/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
+index 87ee570da..5d1695898 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
++++ b/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
+@@ -2,7 +2,7 @@ package com.fasterxml.jackson.databind.interop;
+ 
+ import org.springframework.jacksontest.BogusApplicationContext;
+ import org.springframework.jacksontest.BogusPointcutAdvisor;
+-
++import org.springframework.jacksontest.SecurityAuthentication;
+ import com.fasterxml.jackson.annotation.JsonTypeInfo;
+ import com.fasterxml.jackson.databind.*;
+ 
+@@ -93,6 +93,21 @@ public class IllegalTypesCheckTest extends BaseMapTest
+         _testIllegalType("com.mchange.v2.c3p0.WrapperConnectionPoolDataSource");
+     }
+     */
++    public void testSpringInterfaceSubtype() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
++
++        String json = aposToQuotes(
++                "{'@class':'org.springframework.jacksontest.SecurityAuthentication',"
++                + "'authorities':['java.util.ArrayList',[]]}"
++        );
++
++        SecurityAuthentication authentication = mapper.readValue(json, SecurityAuthentication.class);
++        assertNotNull(authentication);
++        assertNotNull(authentication.getAuthorities());
++        assertEquals(0, authentication.getAuthorities().size());
++    }
+ 
+     private void _testIllegalType(Class<?> nasty) throws Exception {
+         _testIllegalType(nasty.getName());
+diff --git a/src/test/java/org/springframework/jacksontest/GrantedAuthority.java b/src/test/java/org/springframework/jacksontest/GrantedAuthority.java
+new file mode 100644
+index 000000000..8677928db
+--- /dev/null
++++ b/src/test/java/org/springframework/jacksontest/GrantedAuthority.java
+@@ -0,0 +1,5 @@
++package org.springframework.jacksontest;
++
++public interface GrantedAuthority {
++    String getAuthority();
++}
+diff --git a/src/test/java/org/springframework/jacksontest/SecurityAuthentication.java b/src/test/java/org/springframework/jacksontest/SecurityAuthentication.java
+new file mode 100644
+index 000000000..0c1e409e5
+--- /dev/null
++++ b/src/test/java/org/springframework/jacksontest/SecurityAuthentication.java
+@@ -0,0 +1,16 @@
++package org.springframework.jacksontest;
++
++import java.util.ArrayList;
++import java.util.List;
++
++public class SecurityAuthentication {
++    private List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
++
++    public List<GrantedAuthority> getAuthorities() {
++        return authorities;
++    }
++
++    public void setAuthorities(List<GrantedAuthority> authorities) {
++        this.authorities = authorities;
++    }
++}

@@ -1,0 +1,196 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+index 2cef7a7a..bcc61a77 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+@@ -77,43 +77,38 @@ public class JsonPointer
+             return EMPTY;
+         }
+         JsonPointer prev = null;
+-                
+         for (String segment : segments) {
++            // first construct escaped version
++            StringBuilder sb = new StringBuilder(segment.length()+2);
++            sb.append('/');
++            _appendEscaped(sb, segment);
+             JsonPointer next = new JsonPointer()
+         }
+     }
+     */
+-    
+-    /*
+-    /**********************************************************
+-    /* Public API
+-    /**********************************************************
+-     */
+-
+-    /*
+-    /**********************************************************
+-    /* Standard method overrides
+-    /**********************************************************
+-     */
+-
+-    /*
+-    /**********************************************************
+-    /* Internal methods
+-    /**********************************************************
+-     */
+-
+     /**
+      * Alias for {@link #compile}; added to make instances automatically
+      * deserializable by Jackson databind.
+      */
+-    public static JsonPointer valueOf(String input) { return compile(input); }@Override public String toString() { return _asString; } /**
++    public static JsonPointer valueOf(String input) { return compile(input); }
++
++    @Override
++    public String toString() { return _asString; }
++
++    /**
+      * Accessor for getting a "sub-pointer", instance where current segment
+      * has been removed and pointer includes rest of segments.
+      * For matching state, will return null.
+      */
+     public JsonPointer tail() {
+         return _nextSegment;
+-    }public boolean mayMatchProperty() { return _matchingPropertyName != null; }public boolean mayMatchElement() { return _matchingElementIndex >= 0; } /**
++    }
++
++    public boolean mayMatchProperty() { return _matchingPropertyName != null; }
++
++    public boolean mayMatchElement() { return _matchingElementIndex >= 0; }
++
++    /**
+      * Method that may be called to see if the pointer would match property
+      * (of a JSON Object) with given name.
+      *
+@@ -121,7 +116,9 @@ public class JsonPointer
+      */
+     public boolean matchesProperty(String name) {
+         return (_nextSegment != null) && _matchingPropertyName.equals(name);
+-    } /**
++    }
++
++    /**
+      * Method that may be called to see if the pointer would match
+      * array element (of a JSON Array) with given index.
+      *
+@@ -129,12 +126,25 @@ public class JsonPointer
+      */
+     public boolean matchesElement(int index) {
+         return (index == _matchingElementIndex) && (index >= 0);
+-    }public boolean matches() { return _nextSegment == null; }public JsonPointer matchProperty(String name) {
+-        if (_nextSegment == null || !_matchingPropertyName.equals(name)) {
++    }
++
++    public boolean matches() { return _nextSegment == null; }
++
++    public JsonPointer matchProperty(String name) {
++        if (_nextSegment != null && _matchingPropertyName.equals(name)) {
++            return _nextSegment;
++        }
++        return null;
++    }
++
++    public JsonPointer matchElement(int index) {
++        if (index != _matchingElementIndex || index < 0) {
+             return null;
+         }
+         return _nextSegment;
+-    } /**
++    }
++
++    /**
+      * Accessor for getting a "pointer", instance from current segment to
+      * segment before segment leaf. For root pointer, will return null.
+      *
+@@ -142,12 +152,39 @@ public class JsonPointer
+      */
+     public JsonPointer head() {
+         return _headSegment;
+-    }@Override public int hashCode() { return _asString.hashCode(); }public String getMatchingProperty() { return _matchingPropertyName; }public int getMatchingIndex() { return _matchingElementIndex; }@Override public boolean equals(Object o) {
++    }
++
++    /**
++     * Accessor for getting a "pointer" that contains only the leaf segment
++     * of the current pointer. For root pointer, will return null.
++     */
++    public JsonPointer last() {
++        JsonPointer current = this;
++        if (current._nextSegment == null) {
++            return null;
++        }
++        while (current._nextSegment._nextSegment != null) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
++    public String getMatchingProperty() { return _matchingPropertyName; }
++
++    public int getMatchingIndex() { return _matchingElementIndex; }
++
++    @Override
++    public int hashCode() { return _asString.hashCode(); }
++
++    @Override
++    public boolean equals(Object o) {
+         if (o == this) return true;
+         if (o == null) return false;
+         if (!(o instanceof JsonPointer)) return false;
+         return _asString.equals(((JsonPointer) o)._asString);
+-    } /**
++    }
++
++    /**
+      * Factory method that parses given input and construct matching pointer
+      * instance, if it represents a valid JSON Pointer: if not, a
+      * {@link IllegalArgumentException} is thrown.
+@@ -167,7 +204,9 @@ public class JsonPointer
+             throw new IllegalArgumentException("Invalid input: JSON Pointer expression must start with '/': "+"\""+input+"\"");
+         }
+         return _parseTailAndHead(input);
+-    }protected static JsonPointer _parseTailAndHead(String input) {
++    }
++
++    protected static JsonPointer _parseTailAndHead(String input) {
+         final int end = input.length();
+ 
+         int lastSlash = input.lastIndexOf('/');
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 9ef13aa7..8d0c5227 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,20 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matches());
+         assertNull(ptr.tail());
+     }
++
++    public void testLast() throws Exception
++    {
++        JsonPointer ptr = JsonPointer.compile("/Image/15/name");
++        assertEquals("/name", ptr.last().toString());
++
++        ptr = JsonPointer.compile("/score/-");
++        assertEquals("/-", ptr.last().toString());
++        assertEquals("-", ptr.last().getMatchingProperty());
++
++        ptr = JsonPointer.compile("/Image");
++        assertEquals("/Image", ptr.last().toString());
++
++        ptr = JsonPointer.compile("");
++        assertNull(ptr.last());
++    }
+ }

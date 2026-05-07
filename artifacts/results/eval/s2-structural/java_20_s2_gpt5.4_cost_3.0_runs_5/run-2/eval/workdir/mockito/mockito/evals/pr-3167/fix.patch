@@ -1,0 +1,167 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+index 5e39714cf..82bf7b65c 100644
+--- a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
++++ b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+@@ -71,6 +71,18 @@ public class DeepStubbingTest extends TestBase {
+ 
+     static final class FinalClass {}
+ 
++    interface HasEnum {
++        SampleEnum getSampleEnum();
++    }
++
++    enum SampleEnum {
++        A;
++
++        public int getValue() {
++            return 1;
++        }
++    }
++
+     interface First {
+         Second getSecond();
+ 
+@@ -362,12 +374,21 @@ public class DeepStubbingTest extends TestBase {
+     }
+ 
+     @Test
+-    public void deep_stub_does_not_try_to_mock_generic_final_classes() {
++    public void shouldFailGracefullyWhenClassIsNotMockable() {
+         First first = mock(First.class, RETURNS_DEEP_STUBS);
+         assertNull(first.getString());
+         assertNull(first.getSecond().get(0));
+     }
+ 
++    @Test
++    public void deep_stub_can_mock_enum_chained_call() {
++        HasEnum mock = mock(HasEnum.class, RETURNS_DEEP_STUBS);
++
++        when(mock.getSampleEnum().getValue()).thenReturn(2);
++
++        assertThat(mock.getSampleEnum().getValue()).isEqualTo(2);
++    }
++
+     @Test
+     public void deep_stub_does_not_stack_overflow_on_reversed_generics() {
+         SuperOfReversedGenerics mock = mock(SuperOfReversedGenerics.class, RETURNS_DEEP_STUBS);
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+index a418aab7a..03cca0503 100644
+--- a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+@@ -4,14 +4,26 @@
+  */
+ package org.mockitoinline;
+ 
++import org.junit.Before;
+ import org.junit.Test;
++import org.mockito.Answers;
++import org.mockito.Mock;
+ import org.mockito.Mockito;
++import org.mockito.MockitoAnnotations;
+ 
+ import static org.hamcrest.CoreMatchers.*;
+ import static org.hamcrest.MatcherAssert.assertThat;
+ 
+ public class EnumMockingTest {
+ 
++    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
++    private HasAnimal annotatedDeepStub;
++
++    @Before
++    public void setUp() {
++        MockitoAnnotations.openMocks(this);
++    }
++
+     @Test
+     public void testMockEnum() {
+         Animal a = Mockito.mock(Animal.class);
+@@ -20,6 +32,26 @@ public class EnumMockingTest {
+         assertThat(a.name(), nullValue(String.class));
+     }
+ 
++    @Test
++    public void testDeepStubEnum() {
++        HasAnimal mock = Mockito.mock(HasAnimal.class, Mockito.RETURNS_DEEP_STUBS);
++
++        Mockito.when(mock.getAnimal().sound()).thenReturn("woof");
++
++        assertThat(mock.getAnimal().sound(), is("woof"));
++    }
++
++    @Test
++    public void testAnnotatedDeepStubEnum() {
++        Mockito.when(annotatedDeepStub.getAnimal().sound()).thenReturn("woof");
++
++        assertThat(annotatedDeepStub.getAnimal().sound(), is("woof"));
++    }
++
++    interface HasAnimal {
++        Animal getAnimal();
++    }
++
+     enum Animal {
+         CAT {
+             @Override
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubEnumMockTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubEnumMockTest.java
+new file mode 100644
+index 000000000..63cd9f889
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubEnumMockTest.java
+@@ -0,0 +1,43 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import org.junit.jupiter.api.Test;
++import org.mockito.Mock;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.Answers.RETURNS_DEEP_STUBS;
++import static org.mockito.Mockito.when;
++
++class DeepStubEnumMockTest {
++
++    @Mock(answer = RETURNS_DEEP_STUBS)
++    private Piece piece;
++
++    @Test
++    void deep_stub_can_mock_enum_return_type() {
++        when(piece.getPieceType().getCostPerPieceSpace()).thenReturn(2.5d);
++
++        assertThat(piece.getPieceType().getCostPerPieceSpace()).isEqualTo(2.5d);
++    }
++
++    interface Piece {
++        PieceType getPieceType();
++    }
++
++    enum PieceType {
++        SQUARE(2.0d);
++
++        private final double costPerPieceSpace;
++
++        PieceType(double costPerPieceSpace) {
++            this.costPerPieceSpace = costPerPieceSpace;
++        }
++
++        double getCostPerPieceSpace() {
++            return costPerPieceSpace;
++        }
++    }
++}

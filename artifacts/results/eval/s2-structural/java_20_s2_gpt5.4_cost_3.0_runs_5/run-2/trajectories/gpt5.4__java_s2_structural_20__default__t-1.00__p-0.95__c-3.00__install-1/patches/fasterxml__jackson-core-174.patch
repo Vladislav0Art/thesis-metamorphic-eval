@@ -1,0 +1,87 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+index 2cef7a7a..23a833e8 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+@@ -142,7 +142,24 @@ public class JsonPointer
+      */
+     public JsonPointer head() {
+         return _headSegment;
+-    }@Override public int hashCode() { return _asString.hashCode(); }public String getMatchingProperty() { return _matchingPropertyName; }public int getMatchingIndex() { return _matchingElementIndex; }@Override public boolean equals(Object o) {
++    }
++
++    /**
++     * Accessor for getting the leaf segment of this pointer.
++     * For example, for "/a/b" this returns pointer "/b";
++     * for the empty pointer, returns itself.
++     *
++     * @since 2.5
++     */
++    public JsonPointer last() {
++        JsonPointer current = this;
++        while ((current._nextSegment != null) && (current._nextSegment != EMPTY)) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
++    @Override public int hashCode() { return _asString.hashCode(); }public String getMatchingProperty() { return _matchingPropertyName; }public int getMatchingIndex() { return _matchingElementIndex; }@Override public boolean equals(Object o) {
+         if (o == this) return true;
+         if (o == null) return false;
+         if (!(o instanceof JsonPointer)) return false;
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 9ef13aa7..89528de4 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -38,6 +38,39 @@ public class TestJsonPointer extends BaseTest
+         assertEquals(-1, ptr.getMatchingIndex());
+     }
+ 
++    public void testLast() throws Exception
++    {
++        JsonPointer ptr = JsonPointer.compile("/Image/15/name");
++        JsonPointer last = ptr.last();
++
++        assertNotNull(last);
++        assertEquals("/name", last.toString());
++        assertEquals("name", last.getMatchingProperty());
++        assertEquals(-1, last.getMatchingIndex());
++        assertEquals("", last.head().toString());
++        assertTrue(last.tail().matches());
++    }
++
++    public void testLastWithArrayAppend() throws Exception
++    {
++        JsonPointer ptr = JsonPointer.compile("/score/-");
++        JsonPointer last = ptr.last();
++
++        assertNotNull(last);
++        assertEquals("/-", last.toString());
++        assertEquals("-", last.getMatchingProperty());
++        assertEquals(-1, last.getMatchingIndex());
++        assertEquals("", last.head().toString());
++    }
++
++    public void testLastOnEmptyPointer() throws Exception
++    {
++        JsonPointer ptr = JsonPointer.compile("");
++
++        assertSame(ptr, ptr.last());
++        assertTrue(ptr.last().matches());
++    }
++
+     public void testWonkyNumber173() throws Exception
+     {
+         JsonPointer ptr = JsonPointer.compile("/1e0");

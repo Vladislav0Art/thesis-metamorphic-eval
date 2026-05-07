@@ -1,0 +1,380 @@
+
+diff --git a/.gitignore b/.gitignore
+index 0eb7f3d19e..ffba84c210 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -54,3 +54,6 @@ dubbo-demo/dubbo-demo-native/dubbo-demo-native-consumer/src/main/generated
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/resources/META-INF/native-image
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/generated
+ 
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+index 61b37db84b..9667fcaf9e 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+@@ -70,6 +70,7 @@ public final class URLStrParser {
+         Map<String, String> params = new HashMap<>();
+         int nameStart = from;
+         int valueStart = -1;
++        boolean hasEquals = false;
+         int i;
+         for (i = from; i < len; i++) {
+             char ch = str.charAt(i);
+@@ -79,18 +80,21 @@ public final class URLStrParser {
+                         nameStart = i + 1;
+                     } else if (valueStart < nameStart) {
+                         valueStart = i + 1;
++                        hasEquals = true;
+                     }
+                     break;
+                 case ';':
+                 case '&':
+-                    addParam(str, false, nameStart, valueStart, i, params, tempBuf);
++                    addParam(str, false, nameStart, valueStart, i, hasEquals, params, tempBuf);
+                     nameStart = i + 1;
++                    valueStart = -1;
++                    hasEquals = false;
+                     break;
+                 default:
+                     // continue
+             }
+         }
+-        addParam(str, false, nameStart, valueStart, i, params, tempBuf);
++        addParam(str, false, nameStart, valueStart, i, hasEquals, params, tempBuf);
+         return params;
+     }
+ 
+@@ -149,58 +153,39 @@ public final class URLStrParser {
+             starIdx = pwdEndIdx + 1;
+         }
+ 
+-        String host = null;
++        String host;
+         int port = 0;
+-        int hostEndIdx = lastIndexOf(decodedBody, ':', starIdx, endIdx);
+-        if (hostEndIdx > 0 && hostEndIdx < decodedBody.length() - 1) {
+-            if (lastIndexOf(decodedBody, '%', starIdx, endIdx) > hostEndIdx) {
+-                // ipv6 address with scope id
+-                // e.g. fe80:0:0:0:894:aeec:f37d:23e1%en0
+-                // see https://howdoesinternetwork.com/2013/ipv6-zone-id
+-                // ignore
+-            } else {
+-                port = Integer.parseInt(decodedBody.substring(hostEndIdx + 1, endIdx));
+-                endIdx = hostEndIdx;
++        int hostStart = starIdx;
++        // According to RFC2732 format should be "[fee80::1]".
++        // The old style ipv6 address format like "fee80::1" which has no '[]' is also supported.
++        int hostEndIdx;
++        if (starIdx < endIdx && decodedBody.charAt(starIdx) == '[') {
++            hostEndIdx = decodedBody.indexOf(']', starIdx);
++            if (hostEndIdx < 0) {
++                throw new IllegalStateException("invalid ipv6 address: \"" + fullURLStr + "\"");
+             }
++            host = decodedBody.substring(hostStart + 1, hostEndIdx);
++            hostEndIdx++;
++        } else {
++            hostEndIdx = indexOf(decodedBody, ':', starIdx, endIdx);
++            int newHostEndIdx = lastIndexOf(decodedBody, ':', starIdx, endIdx);
++            if (newHostEndIdx > hostEndIdx) {
++                hostEndIdx = newHostEndIdx;
++            }
++            if (hostEndIdx < 0) {
++                hostEndIdx = endIdx;
++            }
++            host = decodedBody.substring(hostStart, hostEndIdx);
+         }
+ 
+-        if (endIdx > starIdx) {
+-            host = decodedBody.substring(starIdx, endIdx);
+-        }
+-
+-        // check cache
+-        protocol = URLItemCache.intern(protocol);
+-        path = URLItemCache.checkPath(path);
+-
+-        return new ServiceConfigURL(protocol, username, password, host, port, path, parameters);
+-    }
+-
+-    public static String[] parseRawURLToArrays(String rawURLStr, int pathEndIdx) {
+-        String[] parts = new String[2];
+-        int paramStartIdx = pathEndIdx + 3;//skip ENCODED_QUESTION_MARK
+-        if (pathEndIdx == -1) {
+-            pathEndIdx = rawURLStr.indexOf('?');
+-            if (pathEndIdx == -1) {
+-                // url with no params, decode anyway
+-                rawURLStr = URL.decode(rawURLStr);
+-            } else {
+-                paramStartIdx = pathEndIdx + 1;
++        if (hostEndIdx < endIdx) {
++            if (decodedBody.charAt(hostEndIdx) != ':') {
++                throw new IllegalStateException("invalid url: \"" + fullURLStr + "\", port not found.");
+             }
++            port = Integer.parseInt(decodedBody.substring(hostEndIdx + 1, endIdx));
+         }
+-        if (pathEndIdx >= 0) {
+-            parts[0] = rawURLStr.substring(0, pathEndIdx);
+-            parts[1] = rawURLStr.substring(paramStartIdx);
+-        } else {
+-            parts = new String[]{rawURLStr};
+-        }
+-        return parts;
+-    }
+ 
+-    public static Map<String, String> parseParams(String rawParams, boolean encoded) {
+-        if (encoded) {
+-            return parseEncodedParams(rawParams, 0);
+-        }
+-        return parseDecodedParams(rawParams, 0);
++        return new ServiceConfigURL(protocol, username, password, host, port, path, parameters);
+     }
+ 
+     /**
+@@ -232,6 +217,7 @@ public final class URLStrParser {
+         Map<String, String> params = new HashMap<>();
+         int nameStart = from;
+         int valueStart = -1;
++        boolean hasEquals = false;
+         int i;
+         for (i = from; i < len; i++) {
+             char ch = str.charAt(i);
+@@ -249,23 +235,26 @@ public final class URLStrParser {
+                         nameStart = i + 1;
+                     } else if (valueStart < nameStart) {
+                         valueStart = i + 1;
++                        hasEquals = true;
+                     }
+                     break;
+                 case ';':
+                 case '&':
+-                    addParam(str, true, nameStart, valueStart, i - 2, params, tempBuf);
++                    addParam(str, true, nameStart, valueStart, i - 2, hasEquals, params, tempBuf);
+                     nameStart = i + 1;
++                    valueStart = -1;
++                    hasEquals = false;
+                     break;
+                 default:
+                     // continue
+             }
+         }
+-        addParam(str, true, nameStart, valueStart, i, params, tempBuf);
++        addParam(str, true, nameStart, valueStart, i, hasEquals, params, tempBuf);
+         return params;
+     }
+ 
+-    private static boolean addParam(String str, boolean isEncoded, int nameStart, int valueStart, int valueEnd, Map<String, String> params,
+-                                    TempBuf tempBuf) {
++    private static boolean addParam(String str, boolean isEncoded, int nameStart, int valueStart, int valueEnd,
++                                    boolean hasEquals, Map<String, String> params, TempBuf tempBuf) {
+         if (nameStart >= valueEnd) {
+             return false;
+         }
+@@ -278,11 +267,11 @@ public final class URLStrParser {
+             String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
+             String value;
+             if (valueStart >= valueEnd) {
+-                value = name;
++                value = hasEquals ? EMPTY_STRING : name;
+             } else {
+                 value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+             }
+-            URLItemCache.putParams(params,name, value);
++            URLItemCache.putParams(params, name, value);
+             // compatible with lower versions registering "default." keys
+             if (name.startsWith(DEFAULT_KEY_PREFIX)) {
+                 params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
+@@ -291,7 +280,7 @@ public final class URLStrParser {
+             String name = str.substring(nameStart, valueStart - 1);
+             String value;
+             if (valueStart >= valueEnd) {
+-                value = name;
++                value = hasEquals ? EMPTY_STRING : name;
+             } else {
+                 value = str.substring(valueStart, valueEnd);
+             }
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLParam.java b/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLParam.java
+index 243e1d42ca..05e329143c 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLParam.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLParam.java
+@@ -59,7 +59,6 @@ import static org.apache.dubbo.common.constants.CommonConstants.TIMESTAMP_KEY;
+ public class URLParam {
+ 
+     /**
+-     * Maximum size of key-pairs requested using array moving to add into URLParam.
+      * If user request like addParameter for only one key-pair, adding value into a array
+      * on moving is more efficient. However when add more than ADD_PARAMETER_ON_MOVE_THRESHOLD
+      * size of key-pairs, recover compressed array back to map can reduce operation count
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+index aea2001306..db0dd8bc88 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+@@ -14,70 +14,102 @@
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
++
+ package org.apache.dubbo.common;
+ 
+ import net.bytebuddy.utility.RandomString;
+-import org.junit.jupiter.api.Assertions;
+ import org.junit.jupiter.api.Test;
+ 
++import java.util.Arrays;
+ import java.util.HashSet;
+ import java.util.Set;
+ 
+-import static org.hamcrest.CoreMatchers.equalTo;
+-import static org.hamcrest.MatcherAssert.assertThat;
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertThrows;
++import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ /**
+  * Created by LinShunkang on 2020/03/12
+  */
+ class URLStrParserTest {
+-    private static Set<String> testCases = new HashSet<>(16);
+-    private static Set<String> errorDecodedCases = new HashSet<>(8);
+-    private static Set<String> errorEncodedCases = new HashSet<>(8);
+ 
+-    static {
+-        testCases.add("dubbo://192.168.1.1");
+-        testCases.add("dubbo://192.168.1.1?");
+-        testCases.add("dubbo://127.0.0.1?test=中文测试");
+-        testCases.add("dubbo://admin:admin123@192.168.1.41:28113/org.test.api.DemoService$Iface?anyhost=true&application=demo-service&dubbo=2.6.1&generic=false&interface=org.test.api.DemoService$Iface&methods=orbCompare,checkText,checkPicture&pid=65557&revision=1.4.17&service.filter=bootMetrics&side=provider&status=server&threads=200&timestamp=1583136298859&version=1.0.0");
+-        // super long text test
+-        testCases.add("dubbo://192.168.1.1/" + RandomString.make(10240));
+-        testCases.add("file:/path/to/file.txt");
+-        testCases.add("dubbo://fe80:0:0:0:894:aeec:f37d:23e1%en0/path?abc=abc");
+-        testCases.add("dubbo://[fe80:0:0:0:894:aeec:f37d:23e1]:20880/path?abc=abc");
++    private static final Set<String> TEST_CASES = new HashSet<>(Arrays.asList(
++        "dubbo://192.168.1.1",
++        "dubbo://192.168.1.1?",
++        "dubbo://127.0.0.1?test=中文测试",
++        "dubbo://admin:admin123@192.168.1.41:28113/org.test.api.DemoService$Iface?anyhost=true&application=demo-service&dubbo=2.6.1&generic=false&interface=org.test.api.DemoService$Iface&methods=orbCompare,checkText,checkPicture&pid=65557&revision=1.4.17&service.filter=bootMetrics&side=provider&status=server&threads=200&timestamp=1583136298859&version=1.0.0",
++        "dubbo://192.168.1.1/" + RandomString.make(10240),
++        "file:/path/to/file.txt",
++        "dubbo://fe80:0:0:0:894:aeec:f37d:23e1%en0/path?abc=abc",
++        "dubbo://[fe80:0:0:0:894:aeec:f37d:23e1]:20880/path?abc=abc"
++    ));
+ 
+-        errorDecodedCases.add("dubbo:192.168.1.1");
+-        errorDecodedCases.add("://192.168.1.1");
+-        errorDecodedCases.add(":/192.168.1.1");
++    private static final Set<String> ERROR_DECODED_CASES = new HashSet<>(Arrays.asList(
++        "dubbo:192.168.1.1",
++        "://192.168.1.1",
++        ":/192.168.1.1"
++    ));
+ 
+-        errorEncodedCases.add("dubbo%3a%2f%2f192.168.1.41%3fabc%3");
+-        errorEncodedCases.add("dubbo%3a192.168.1.1%3fabc%3dabc");
+-        errorEncodedCases.add("%3a%2f%2f192.168.1.1%3fabc%3dabc");
+-        errorEncodedCases.add("%3a%2f192.168.1.1%3fabc%3dabc");
+-        errorEncodedCases.add("dubbo%3a%2f%2f127.0.0.1%3ftest%3d%e2%96%b2%e2%96%bc%e2%97%80%e2%96%b6%e2%86%90%e2%86%91%e2%86%92%e2%86%93%e2%86%94%e2%86%95%e2%88%9e%c2%b1%e9%be%98%e9%9d%90%e9%bd%89%9%d%b");
+-    }
++    private static final Set<String> ERROR_ENCODED_CASES = new HashSet<>(Arrays.asList(
++        "dubbo%3a%2f%2f192.168.1.41%3fabc%3",
++        "dubbo%3a192.168.1.1%3fabc%3dabc",
++        "%3a%2f%2f192.168.1.1%3fabc%3dabc",
++        "%3a%2f192.168.1.1%3fabc%3dabc",
++        "dubbo%3a%2f%2f127.0.0.1%3ftest%3d%e2%96%b2%e2%96%bc%e2%97%80%e2%96%b6%e2%86%90%e2%86%91%e2%86%92%e2%86%93%e2%86%94%e2%86%95%e2%88%9e%c2%b1%e9%be%98%e9%9d%90%e9%bd%89%9%d%b"
++    ));
+ 
+     @Test
+     void testEncoded() {
+-        testCases.forEach(testCase -> {
+-            assertThat(URLStrParser.parseEncodedStr(URL.encode(testCase)), equalTo(URL.valueOf(testCase)));
+-        });
+-
+-        errorEncodedCases.forEach(errorCase -> {
+-            Assertions.assertThrows(RuntimeException.class,
+-                    () -> URLStrParser.parseEncodedStr(errorCase));
+-        });
++        TEST_CASES.forEach(testCase ->
++            assertEquals(URL.valueOf(testCase), URLStrParser.parseEncodedStr(URL.encode(testCase)))
++        );
+     }
+ 
+     @Test
+     void testDecoded() {
+-        testCases.forEach(testCase -> {
+-            assertThat(URLStrParser.parseDecodedStr(testCase), equalTo(URL.valueOf(testCase)));
+-        });
++        TEST_CASES.forEach(testCase ->
++            assertEquals(URL.valueOf(testCase), URLStrParser.parseDecodedStr(testCase))
++        );
++    }
++
++    @Test
++    void testDecodedErrorCases() {
++        ERROR_DECODED_CASES.forEach(testCase ->
++            assertThrows(IllegalStateException.class, () -> URLStrParser.parseDecodedStr(testCase))
++        );
++    }
+ 
+-        errorDecodedCases.forEach(errorCase -> {
+-            Assertions.assertThrows(RuntimeException.class,
+-                    () -> URLStrParser.parseDecodedStr(errorCase));
+-        });
++    @Test
++    void testEncodedErrorCases() {
++        ERROR_ENCODED_CASES.forEach(testCase ->
++            assertThrows(RuntimeException.class, () -> URLStrParser.parseEncodedStr(testCase))
++        );
+     }
+ 
+-}
+\ No newline at end of file
++    @Test
++    void testExplicitEmptyQueryValues() {
++        URL decodedUrl = URLStrParser.parseDecodedStr(
++            "nacos://10.20.0.100:8848?username=&password=&namespace="
++        );
++        assertTrue(decodedUrl.hasParameter("username"));
++        assertTrue(decodedUrl.hasParameter("password"));
++        assertTrue(decodedUrl.hasParameter("namespace"));
++        assertEquals("", decodedUrl.getParameter("username"));
++        assertEquals("", decodedUrl.getParameter("password"));
++        assertEquals("", decodedUrl.getParameter("namespace"));
++
++        URL encodedUrl = URLStrParser.parseEncodedStr(
++            URL.encode("nacos://10.20.0.100:8848?username=&password=&namespace=")
++        );
++        assertEquals("", encodedUrl.getParameter("username"));
++        assertEquals("", encodedUrl.getParameter("password"));
++        assertEquals("", encodedUrl.getParameter("namespace"));
++    }
++
++    @Test
++    void testQueryKeyWithoutEqualsKeepsLegacyBehavior() {
++        URL url = URLStrParser.parseDecodedStr("http://1.2.3.4:8080/path?k0&k1=v1");
++        assertTrue(url.hasParameter("k0"));
++        assertEquals("k0", url.getParameter("k0"));
++    }
++}
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
+index a4400eebef..3f10703a56 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
+@@ -308,7 +308,7 @@ class URLTest {
+         assertEquals(3, url.getParameters().size());
+         assertEquals("1.0.0", url.getVersion());
+         assertEquals("morgan", url.getParameter("application"));
+-        assertEquals("noValue", url.getParameter("noValue"));
++        assertEquals("", url.getParameter("noValue"));
+     }
+ 
+     // TODO Do not want to use spaces? See: DUBBO-502, URL class handles special conventions for special characters.
+@@ -327,8 +327,8 @@ class URLTest {
+         assertURLStrDecoder(url);
+         assertTrue(url.hasParameter("k0"));
+ 
+-        // If a Key has no corresponding Value, then the Key also used as the Value.
+-        assertEquals("k0", url.getParameter("k0"));
++        // If a Key has an explicitly empty Value, it should be parsed as an empty string.
++        assertEquals("", url.getParameter("k0"));
+     }
+ 
+     @Test

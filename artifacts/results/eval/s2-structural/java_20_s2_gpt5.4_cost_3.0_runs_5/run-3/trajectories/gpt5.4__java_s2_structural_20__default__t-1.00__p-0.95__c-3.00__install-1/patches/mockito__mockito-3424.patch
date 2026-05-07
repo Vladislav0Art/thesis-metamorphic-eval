@@ -1,0 +1,29 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java b/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java
+index 406dea39a..3fee4703c 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java
+@@ -77,6 +77,10 @@ public class MockMethodInterceptor implements Serializable {
+         //
+         // When dropping support for Java 8, instead of this hatch we should use an explicit fence
+         // https://docs.oracle.com/javase/9/docs/api/java/lang/ref/Reference.html#reachabilityFence-java.lang.Object-
++        if (handler == null) {
++            throw new MockitoException(
++                    "This mock has been cleared by Mockito.framework().clearInlineMocks() and can no longer be used.");
++        }
+         weakReferenceHatch.set(mock);
+         try {
+             return handler.handle(

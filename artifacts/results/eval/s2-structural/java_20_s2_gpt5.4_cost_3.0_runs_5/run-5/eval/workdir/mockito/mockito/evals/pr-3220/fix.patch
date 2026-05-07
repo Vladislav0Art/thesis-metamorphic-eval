@@ -1,0 +1,79 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/core/MockitoCore.java b/src/main/java/org/mockito/core/MockitoCore.java
+index 2990f7741..2c3563efb 100644
+--- a/src/main/java/org/mockito/core/MockitoCore.java
++++ b/src/main/java/org/mockito/core/MockitoCore.java
+@@ -197,6 +197,7 @@ public class MockitoCore {
+         }
+         MockSettingsImpl impl = MockSettingsImpl.class.cast(settings);
+         MockCreationSettings<T> creationSettings = impl.buildStatic(classToMock);
++        checkDoNotMockAnnotation(creationSettings.getTypeToMock(), creationSettings);
+         MockMaker.StaticMockControl<T> control = createStaticMock(classToMock, creationSettings);
+         control.enable();
+         mockingProgress().mockingStarted(classToMock, creationSettings);
+diff --git a/src/main/java/org/mockito/internal/MockedConstructionImpl.java b/src/main/java/org/mockito/internal/MockedConstructionImpl.java
+index 5541ba07c..97ddf6ef3 100644
+--- a/src/main/java/org/mockito/internal/MockedConstructionImpl.java
++++ b/src/main/java/org/mockito/internal/MockedConstructionImpl.java
+@@ -23,7 +23,7 @@ public final class MockedConstructionImpl<T> implements MockedConstruction<T> {
+ 
+     private final Location location = LocationFactory.create();
+ 
+-    protected MockedConstructionImpl(MockMaker.ConstructionMockControl<T> control) {
++    public MockedConstructionImpl(MockMaker.ConstructionMockControl<T> control) {
+         this.control = control;
+     }
+ 
+diff --git a/src/main/java/org/mockito/internal/MockedStaticImpl.java b/src/main/java/org/mockito/internal/MockedStaticImpl.java
+index f6705fb81..c5519903b 100644
+--- a/src/main/java/org/mockito/internal/MockedStaticImpl.java
++++ b/src/main/java/org/mockito/internal/MockedStaticImpl.java
+@@ -37,7 +37,7 @@ public final class MockedStaticImpl<T> implements MockedStatic<T> {
+ 
+     private final Location location = LocationFactory.create();
+ 
+-    protected MockedStaticImpl(MockMaker.StaticMockControl<T> control) {
++    public MockedStaticImpl(MockMaker.StaticMockControl<T> control) {
+         this.control = control;
+     }
+ 
+diff --git a/src/test/java/org/mockitousage/annotation/DoNotMockTest.java b/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
+index 936434536..76f71cb49 100644
+--- a/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
++++ b/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
+@@ -6,6 +6,7 @@ package org.mockitousage.annotation;
+ 
+ import static org.assertj.core.api.Assertions.assertThatThrownBy;
+ import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.mockStatic;
+ 
+ import org.junit.Test;
+ import org.mockito.DoNotMock;
+@@ -103,6 +104,14 @@ public class DoNotMockTest {
+                         })
+                 .isInstanceOf(DoNotMockException.class);
+     }
++    @Test
++    public void can_not_mock_static_class_annotated_with_donotmock() {
++        assertThatThrownBy(
++                        () -> {
++                            mockStatic(NotMockable.class);
++                        })
++                .isInstanceOf(DoNotMockException.class);
++    }
+ 
+     @DoNotMock
+     private static class NotMockable {}

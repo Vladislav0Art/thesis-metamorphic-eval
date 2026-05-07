@@ -1,0 +1,105 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+index 2cef7a7a..f9c192d9 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+@@ -129,12 +129,19 @@ public class JsonPointer
+      */
+     public boolean matchesElement(int index) {
+         return (index == _matchingElementIndex) && (index >= 0);
+-    }public boolean matches() { return _nextSegment == null; }public JsonPointer matchProperty(String name) {
++    }
++    public boolean matches() {
++        return _nextSegment == null;
++    }
++
++    public JsonPointer matchProperty(String name) {
+         if (_nextSegment == null || !_matchingPropertyName.equals(name)) {
+             return null;
+         }
+         return _nextSegment;
+-    } /**
++    }
++
++    /**
+      * Accessor for getting a "pointer", instance from current segment to
+      * segment before segment leaf. For root pointer, will return null.
+      *
+@@ -142,12 +149,37 @@ public class JsonPointer
+      */
+     public JsonPointer head() {
+         return _headSegment;
+-    }@Override public int hashCode() { return _asString.hashCode(); }public String getMatchingProperty() { return _matchingPropertyName; }public int getMatchingIndex() { return _matchingElementIndex; }@Override public boolean equals(Object o) {
++    }
++
++    /**
++     * Accessor for getting the leaf segment of this pointer.
++     * For the empty/root pointer, will return null.
++     */
++    public JsonPointer last() {
++        if (this == EMPTY) {
++            return null;
++        }
++        if ((_nextSegment == null) || _nextSegment.matches()) {
++            return this;
++        }
++        return _nextSegment.last();
++    }
++
++    @Override
++    public int hashCode() { return _asString.hashCode(); }
++
++    public String getMatchingProperty() { return _matchingPropertyName; }
++
++    public int getMatchingIndex() { return _matchingElementIndex; }
++
++    @Override
++    public boolean equals(Object o) {
+         if (o == this) return true;
+         if (o == null) return false;
+         if (!(o instanceof JsonPointer)) return false;
+         return _asString.equals(((JsonPointer) o)._asString);
+-    } /**
++    }
++    /**
+      * Factory method that parses given input and construct matching pointer
+      * instance, if it represents a valid JSON Pointer: if not, a
+      * {@link IllegalArgumentException} is thrown.
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 9ef13aa7..cad66440 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -77,6 +77,21 @@ public class TestJsonPointer extends BaseTest
+         assertNull(ptr.tail());
+     }
+ 
++
++    public void testLast()
++    {
++        JsonPointer ptr = JsonPointer.compile("/Image/15/name");
++        assertEquals("/name", ptr.last().toString());
++
++        ptr = JsonPointer.compile("/score/-");
++        assertEquals("/-", ptr.last().toString());
++
++        ptr = JsonPointer.compile("/Image");
++        assertSame(ptr, ptr.last());
++
++        assertNull(JsonPointer.compile("").last());
++    }
++
+     // [Issue#133]
+     public void testLongNumbers() throws Exception
+     {

@@ -1,0 +1,58 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/setup.bat b/bin/setup.bat
+index 5e8acb4d1..73e112183 100644
+--- a/bin/setup.bat
++++ b/bin/setup.bat
+@@ -62,4 +62,4 @@ if not exist %JRUBY_BIN% (
+   exit /b 1
+ )
+ 
+-set RUBYLIB=%LS_HOME%\lib
+\ No newline at end of file
++set RUBYLIB=%LS_HOME%\lib
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..dcc6fe93b 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -860,7 +860,28 @@ tasks.register("copyJdk", Copy) {
+     description = "Download, unpack and copy the JDK"
+     // CLI project properties: -Pjdk_bundle_os=[windows|linux|darwin] -Pjdk_arch=[arm64|x86_64]
+     doLast {
++        File releaseFile = file("${project.ext.jdkBundlingDirectory}/release")
++        if (!releaseFile.exists()) {
++            releaseFile = file("${project.ext.jdkBundlingDirectory}/Contents/Home/release")
++        }
++        if (!releaseFile.exists()) {
++            throw new GradleException("Could not find bundled JDK release metadata under ${project.ext.jdkBundlingDirectory}")
++        }
++
++        String implementorVersion = releaseFile.readLines()
++            .find { it.startsWith("IMPLEMENTOR_VERSION=") }
++            ?.replaceFirst(/^IMPLEMENTOR_VERSION="/, "")
++            ?.replaceFirst(/"$/, "")
++
++        if (!implementorVersion) {
++            throw new GradleException("Could not determine bundled JDK version from ${releaseFile}")
++        }
++
++        File versionFile = file("${project.ext.jdkBundlingDirectory}/VERSION")
++        versionFile.text = "${implementorVersion}\n"
++
+         System.out.println "Download location is ${project.ext.jdkDownloadLocation}, Decompressing ${project.ext.jdkDirectory} to \"${project.ext.jdkBundlingDirectory}\""
++        System.out.println "Bundled JDK version recorded in ${versionFile}"
+     }
+ }
+ 

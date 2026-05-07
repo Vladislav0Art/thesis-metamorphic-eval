@@ -1,0 +1,74 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+index 2cef7a7a..6a9ec9a6 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+@@ -142,6 +142,28 @@ public class JsonPointer
+      */
+     public JsonPointer head() {
+         return _headSegment;
++    } /**
++     * Accessor for getting the leaf segment of the pointer, if any;
++     * returns {@code null} for the empty/root pointer.
++     *
++     * @since 2.5
++     */
++    public JsonPointer last() {
++        JsonPointer current = this;
++        if (current._nextSegment == null) {
++            return null;
++        }
++        while (current._nextSegment != EMPTY) {
++            current = current._nextSegment;
++        }
++        return current;
++    } /**
++     * Alias for {@link #last()}.
++     *
++     * @since 2.5
++     */
++    public JsonPointer leaf() {
++        return last();
+     }@Override public int hashCode() { return _asString.hashCode(); }public String getMatchingProperty() { return _matchingPropertyName; }public int getMatchingIndex() { return _matchingElementIndex; }@Override public boolean equals(Object o) {
+         if (o == this) return true;
+         if (o == null) return false;
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 9ef13aa7..b473ccdd 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,23 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matches());
+         assertNull(ptr.tail());
+     }
++
++    public void testLastAndLeaf() throws Exception
++    {
++        JsonPointer ptr = JsonPointer.compile("/Image/15/name");
++        assertEquals("/name", ptr.last().toString());
++        assertEquals("/name", ptr.leaf().toString());
++
++        ptr = JsonPointer.compile("/score/-");
++        assertEquals("/-", ptr.last().toString());
++        assertEquals("-", ptr.last().getMatchingProperty());
++        assertEquals(-1, ptr.last().getMatchingIndex());
++
++        ptr = JsonPointer.compile("/score");
++        assertEquals("/score", ptr.last().toString());
++        assertEquals("/score", ptr.leaf().toString());
++
++        assertNull(JsonPointer.compile("").last());
++        assertNull(JsonPointer.compile("").leaf());
++    }
+ }

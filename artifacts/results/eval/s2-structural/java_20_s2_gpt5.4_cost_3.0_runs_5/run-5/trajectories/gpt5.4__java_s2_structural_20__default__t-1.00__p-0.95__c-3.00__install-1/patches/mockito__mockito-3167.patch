@@ -1,0 +1,111 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/test/java/org/mockitousage/bugs/deepstubs/DeepStubsWithEnumAndInlineMocksTest.java b/src/test/java/org/mockitousage/bugs/deepstubs/DeepStubsWithEnumAndInlineMocksTest.java
+new file mode 100644
+index 000000000..2205fd4b2
+--- /dev/null
++++ b/src/test/java/org/mockitousage/bugs/deepstubs/DeepStubsWithEnumAndInlineMocksTest.java
+@@ -0,0 +1,49 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage.bugs.deepstubs;
++
++import static org.assertj.core.api.Assertions.assertThatCode;
++import static org.mockito.Answers.RETURNS_DEEP_STUBS;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.when;
++import static org.mockito.Mockito.withSettings;
++
++import org.junit.Test;
++import org.mockito.MockMakers;
++
++public class DeepStubsWithEnumAndInlineMocksTest {
++
++    @Test
++    public void should_allow_deep_stubbing_through_enum_with_inline_mock_maker() {
++        Piece piece =
++                mock(
++                        Piece.class,
++                        withSettings()
++                                .mockMaker(MockMakers.INLINE)
++                                .defaultAnswer(RETURNS_DEEP_STUBS));
++
++        assertThatCode(() -> when(piece.getPiece().getCostPerPieceSpace()).thenReturn(2.5d))
++                .doesNotThrowAnyException();
++    }
++
++    interface Piece {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE(2.0d),
++        CIRCLE(1.5d);
++
++        private final double costPerPieceSpace;
++
++        PieceType(double costPerPieceSpace) {
++            this.costPerPieceSpace = costPerPieceSpace;
++        }
++
++        double getCostPerPieceSpace() {
++            return costPerPieceSpace;
++        }
++    }
++}
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/DeepStubsEnumMockingTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/DeepStubsEnumMockingTest.java
+new file mode 100644
+index 000000000..f73735a55
+--- /dev/null
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/DeepStubsEnumMockingTest.java
+@@ -0,0 +1,36 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitoinline;
++
++import static org.mockito.Answers.RETURNS_DEEP_STUBS;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.when;
++
++import org.junit.Test;
++
++public class DeepStubsEnumMockingTest {
++
++    @Test
++    public void should_allow_deep_stubbing_through_enum() {
++        Board board = mock(Board.class, RETURNS_DEEP_STUBS);
++
++        when(board.getPiece().getCostPerPieceSpace()).thenReturn(2.5d);
++    }
++
++    interface Board {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE {
++            @Override
++            double getCostPerPieceSpace() {
++                return 2.0d;
++            }
++        };
++
++        abstract double getCostPerPieceSpace();
++    }
++}

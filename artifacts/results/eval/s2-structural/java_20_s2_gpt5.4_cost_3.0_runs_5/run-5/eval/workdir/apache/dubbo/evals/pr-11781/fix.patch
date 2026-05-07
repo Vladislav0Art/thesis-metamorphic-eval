@@ -1,0 +1,97 @@
+
+diff --git a/.gitignore b/.gitignore
+index 0eb7f3d19e..ffba84c210 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -54,3 +54,6 @@ dubbo-demo/dubbo-demo-native/dubbo-demo-native-consumer/src/main/generated
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/resources/META-INF/native-image
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/generated
+ 
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+index 61b37db84b..740fee4dec 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+@@ -270,30 +270,32 @@ public final class URLStrParser {
+             return false;
+         }
+ 
+-        if (valueStart <= nameStart) {
+-            valueStart = valueEnd + 1;
+-        }
++        boolean hasValue = valueStart > nameStart;
+ 
+         if (isEncoded) {
+-            String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
++            String name;
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (!hasValue) {
++                name = decodeComponent(str, nameStart, valueEnd, false, tempBuf);
+                 value = name;
+             } else {
+-                value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
++                name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
++                value = valueStart >= valueEnd ? EMPTY_STRING : decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+             }
+-            URLItemCache.putParams(params,name, value);
++            URLItemCache.putParams(params, name, value);
+             // compatible with lower versions registering "default." keys
+             if (name.startsWith(DEFAULT_KEY_PREFIX)) {
+                 params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
+             }
+         } else {
+-            String name = str.substring(nameStart, valueStart - 1);
++            String name;
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (!hasValue) {
++                name = str.substring(nameStart, valueEnd);
+                 value = name;
+             } else {
+-                value = str.substring(valueStart, valueEnd);
++                name = str.substring(nameStart, valueStart - 1);
++                value = valueStart >= valueEnd ? EMPTY_STRING : str.substring(valueStart, valueEnd);
+             }
+             URLItemCache.putParams(params, name, value);
+             // compatible with lower versions registering "default." keys
+@@ -304,6 +306,7 @@ public final class URLStrParser {
+         return true;
+     }
+ 
++
+     private static String decodeComponent(String s, int from, int toExcluded, boolean isPath, TempBuf tempBuf) {
+         int len = toExcluded - from;
+         if (len <= 0) {
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+index aea2001306..8394828602 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+@@ -79,5 +79,23 @@ class URLStrParserTest {
+                     () -> URLStrParser.parseDecodedStr(errorCase));
+         });
+     }
++    @Test
++    void testEmptyParameterValue() {
++        String url = "nacos://10.20.0.100:8848?username=&password=&namespace=";
++
++        URL decodedUrl = URLStrParser.parseDecodedStr(url);
++        Assertions.assertEquals("", decodedUrl.getParameter("username"));
++        Assertions.assertEquals("", decodedUrl.getParameter("password"));
++        Assertions.assertEquals("", decodedUrl.getParameter("namespace"));
+ 
+-}
+\ No newline at end of file
++        URL valueOfUrl = URL.valueOf(url);
++        Assertions.assertEquals("", valueOfUrl.getParameter("username"));
++        Assertions.assertEquals("", valueOfUrl.getParameter("password"));
++        Assertions.assertEquals("", valueOfUrl.getParameter("namespace"));
++
++        URL encodedUrl = URLStrParser.parseEncodedStr(URL.encode(url));
++        Assertions.assertEquals("", encodedUrl.getParameter("username"));
++        Assertions.assertEquals("", encodedUrl.getParameter("password"));
++        Assertions.assertEquals("", encodedUrl.getParameter("namespace"));
++    }
++}

@@ -1,0 +1,161 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/parser/ReaderBasedJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/parser/ReaderBasedJsonParser.java
+index 3f8218d0..bb44ff02 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/parser/ReaderBasedJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/parser/ReaderBasedJsonParser.java
+@@ -475,7 +475,9 @@ public class ReaderBasedJsonParser // final in 2.3, earlier
+             }
+         }
+         return _isNextTokenNameMaybe(i, sstr.getValue());
+-    }@Override
++    }
++
++    @Override
+     public String nextFieldName() throws IOException
+     {
+         // // // Note: this is almost a verbatim copy of nextToken() (minus comments)
+@@ -515,6 +517,14 @@ public class ReaderBasedJsonParser // final in 2.3, earlier
+         }
+         if (_parsingContext.expectComma()) {
+             i = _skipComma(i);
++
++            // Was that a trailing comma?
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if ((i == INT_RBRACKET) || (i == INT_RCURLY)) {
++                    _closeScope(i);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _updateLocation();
+@@ -579,7 +589,9 @@ public class ReaderBasedJsonParser // final in 2.3, earlier
+         }
+         _nextToken = t;
+         return name;
+-    }// note: identical to one in UTF8StreamJsonParser
++    }
++
++    // note: identical to one in UTF8StreamJsonParser
+     @Override
+     public final Boolean nextBooleanValue() throws IOException
+     {
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/parser/UTF8DataInputJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/parser/UTF8DataInputJsonParser.java
+index 6cc77c1b..ed607c2d 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/parser/UTF8DataInputJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/parser/UTF8DataInputJsonParser.java
+@@ -446,7 +446,9 @@ public class UTF8DataInputJsonParser
+         }
+         _nextToken = t;
+         return _currToken;
+-    }@Override
++    }
++
++    @Override
+     public String nextTextValue() throws IOException
+     {
+         // two distinct cases; either got name and we know next type, or 'other'
+@@ -470,7 +472,9 @@ public class UTF8DataInputJsonParser
+             return null;
+         }
+         return (nextToken() == JsonToken.VALUE_STRING) ? getText() : null;
+-    }@Override
++    }
++
++    @Override
+     public long nextLongValue(long defaultValue) throws IOException
+     {
+         // two distinct cases; either got name and we know next type, or 'other'
+@@ -490,7 +494,9 @@ public class UTF8DataInputJsonParser
+             return defaultValue;
+         }
+         return (nextToken() == JsonToken.VALUE_NUMBER_INT) ? getLongValue() : defaultValue;
+-    }@Override
++    }
++
++    @Override
+     public int nextIntValue(int defaultValue) throws IOException
+     {
+         // two distinct cases; either got name and we know next type, or 'other'
+@@ -510,7 +516,9 @@ public class UTF8DataInputJsonParser
+             return defaultValue;
+         }
+         return (nextToken() == JsonToken.VALUE_NUMBER_INT) ? getIntValue() : defaultValue;
+-    }@Override
++    }
++
++    @Override
+     public String nextFieldName() throws IOException
+     {
+         // // // Note: this is almost a verbatim copy of nextToken()
+@@ -550,6 +558,13 @@ public class UTF8DataInputJsonParser
+                 _reportUnexpectedChar(i, "was expecting comma to separate "+_parsingContext.typeDesc()+" entries");
+             }
+             i = _skipWS();
++            // Was that a trailing comma?
++            if (Feature.ALLOW_TRAILING_COMMA.enabledIn(_features)) {
++                if ((i == INT_RBRACKET) || (i == INT_RCURLY)) {
++                    _closeScope(i);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _nextTokenNotInObject(i);
+@@ -607,7 +622,9 @@ public class UTF8DataInputJsonParser
+         }
+         _nextToken = t;
+         return nameStr;
+-    }@Override
++    }
++
++    @Override
+     public Boolean nextBooleanValue() throws IOException
+     {
+         // two distinct cases; either got name and we know next type, or 'other'
+diff --git a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+index 7c2d5e49..bb646b39 100644
+--- a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
++++ b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+@@ -289,6 +289,29 @@ public class TrailingCommasTest extends BaseTest {
+     p.close();
+   }
+ 
++  @Test
++  public void testObjectTrailingCommaWithNextFieldName() throws Exception {
++    String json = "{\"a\": true, \"b\": false,}";
++
++    JsonParser p = createParser(factory, mode, json);
++
++    assertEquals(JsonToken.START_OBJECT, p.nextToken());
++
++    assertEquals("a", p.nextFieldName());
++    assertToken(JsonToken.VALUE_TRUE, p.nextToken());
++
++    assertEquals("b", p.nextFieldName());
++    assertToken(JsonToken.VALUE_FALSE, p.nextToken());
++
++    if (features.contains(Feature.ALLOW_TRAILING_COMMA)) {
++      assertNull(p.nextFieldName());
++      assertToken(JsonToken.END_OBJECT, p.getCurrentToken());
++      assertEnd(p);
++    } else {
++      assertUnexpected(p, '}');
++    }
++    p.close();
++  }
+   @Test
+   public void testObjectTrailingCommas() throws Exception {
+     String json = "{\"a\": true, \"b\": false,,}";

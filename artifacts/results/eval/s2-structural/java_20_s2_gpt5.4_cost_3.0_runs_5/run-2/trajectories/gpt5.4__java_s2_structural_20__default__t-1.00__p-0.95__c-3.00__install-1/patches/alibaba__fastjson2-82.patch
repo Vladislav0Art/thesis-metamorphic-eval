@@ -1,0 +1,61 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+index 7a28d61a8..368b04e2c 100644
+--- a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
++++ b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+@@ -1,27 +1,28 @@
+-package com.alibaba.fastjson;
+-
+-import com.alibaba.fastjson.parser.Feature;
+-import com.alibaba.fastjson.serializer.NameFilter;
+-import com.alibaba.fastjson.serializer.SerializeConfig;
+-import com.alibaba.fastjson.serializer.SerializeFilter;
+-import com.alibaba.fastjson.serializer.SerializerFeature;
+-import com.alibaba.fastjson.util.IOUtils;
+-import com.alibaba.fastjson2.JSONFactory;
+-import com.alibaba.fastjson2.JSONReader;
+-import com.alibaba.fastjson2.JSONWriter;
+-import com.alibaba.fastjson2.filter.PropertyFilter;
+-import com.alibaba.fastjson2.filter.PropertyPreFilter;
+-import com.alibaba.fastjson2.filter.ValueFilter;
+-import com.alibaba.fastjson2.modules.ObjectReaderModule;
+-import com.alibaba.fastjson2.modules.ObjectWriterModule;
+-import com.alibaba.fastjson2.reader.ObjectReader;
+-import com.alibaba.fastjson2.support.AwtRederModule;
+-import com.alibaba.fastjson2.support.AwtWriterModule;
+-import com.alibaba.fastjson2.writer.ObjectWriter;
+-
+-import java.io.IOException;
+-import java.io.OutputStream;
+-import java.lang.reflect.Type;
++package com.alibaba.fastjson.issue_2900;
++
++import com.alibaba.fastjson.JSON;
++import com.alibaba.fastjson.JSONArray;
++import com.alibaba.fastjson.JSONObject;
++import org.junit.jupiter.api.Test;
++
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++public class Issue2982 {
++    @Test
++    public void test_for_issue() {
++        String jsonStr = "[ { \"activity_type\" : 0, \"activity_id\" : \"***\", \"activity_tip\" : \"***\", \"position\" : \"1\" }, { \"activity_type\" : 0, \"activity_id\" : \"2669\", \"activity_tip\" : \"****\", \"position\" : \"1\" }]";
++        assertTrue(JSONArray.isValidArray(jsonStr));
++        assertTrue(JSON.isValidArray(jsonStr));
++        assertTrue(JSONObject.isValidArray(jsonStr));
++    }
++
++    @Test
++    public void test_is_valid_for_object_and_array() {
++        assertFalse(JSONObject.isValid("[]"));
++        assertFalse(JSONArray.isValid("{}"));
++    }
++}
+ import java.nio.ByteBuffer;
+ import java.nio.CharBuffer;
+ import java.nio.charset.CharsetDecoder;

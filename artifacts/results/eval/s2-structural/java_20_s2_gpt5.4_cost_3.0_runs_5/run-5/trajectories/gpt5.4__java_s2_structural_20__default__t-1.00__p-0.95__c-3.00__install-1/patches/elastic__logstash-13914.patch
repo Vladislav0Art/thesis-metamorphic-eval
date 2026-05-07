@@ -1,0 +1,93 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..59316d1c0 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -49,23 +49,18 @@ export SINCEDB_DIR
+ LOGSTASH_JARS=${LOGSTASH_HOME}/logstash-core/lib/jars
+ JRUBY_HOME="${LOGSTASH_HOME}/vendor/jruby"
+ 
+-# iterate over the command line args and look for the argument
+-# after --path.settings to see if the jvm.options file is in
+-# that path and set LS_JVM_OPTS accordingly
+-# This fix is for #6379
+-unset LS_JVM_OPTS
+-found=0
+-for i in "$@"; do
+- if [ $found -eq 1 ]; then
+-   if [ -r "${i}/jvm.options" ]; then
+-     export LS_JVM_OPTS="${i}/jvm.options"
+-     break
+-   fi
+- fi
+- if [ "$i" = "--path.settings" ]; then
+-   found=1
+- fi
+-done
++# Reads the bundled JDK version from the generated VERSION file, if present.
++bundled_jdk_version() {
++  local bundled_jdk_version_file="${LOGSTASH_HOME}/jdk/VERSION"
++
++  if [ ! -r "${bundled_jdk_version_file}" ] && [ "${BUNDLED_JDK_PART}" = "jdk.app/Contents/Home" ]; then
++    bundled_jdk_version_file="${LOGSTASH_HOME}/jdk.app/VERSION"
++  fi
++
++  if [ -r "${bundled_jdk_version_file}" ]; then
++    cat "${bundled_jdk_version_file}"
++  fi
++}
+ 
+ setup_bundled_jdk_part() {
+   OS_NAME="$(uname -s)"
+@@ -91,23 +86,33 @@ CLASSPATH="${JRUBY_HOME}/lib/jruby.jar"
+ CLASSPATH="$(setup_classpath $CLASSPATH $LOGSTASH_JARS)"
+ 
+ setup_java() {
++  local bundled_jdk
++  local bundled_jdk_ver
++
+   # set the path to java into JAVACMD which will be picked up by JRuby to launch itself
+   if [ -z "$JAVACMD" ]; then
+     setup_bundled_jdk_part
++    bundled_jdk="${LOGSTASH_HOME}/${BUNDLED_JDK_PART}"
+     JAVACMD_TEST=`command -v java`
+     if [ -n "$LS_JAVA_HOME" ]; then
+       echo "Using LS_JAVA_HOME defined java: ${LS_JAVA_HOME}."
+       if [ -x "$LS_JAVA_HOME/bin/java" ]; then
+         JAVACMD="$LS_JAVA_HOME/bin/java"
+-        if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+-          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++        if [ -d "${bundled_jdk}" -a -x "${bundled_jdk}/bin/java" ]; then
++          bundled_jdk_ver="$(bundled_jdk_version)"
++          echo -n "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK"
++          if [ -n "${bundled_jdk_ver}" ]; then
++            echo " (${bundled_jdk_ver})."
++          else
++            echo "."
++          fi
+         fi
+       else
+         echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."
+       fi
+-    elif [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+-      echo "Using bundled JDK: ${LOGSTASH_HOME}/${BUNDLED_JDK_PART}"
+-      JAVACMD="${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java"
++    elif [ -d "${bundled_jdk}" -a -x "${bundled_jdk}/bin/java" ]; then
++      echo "Using bundled JDK: ${bundled_jdk}"
++      JAVACMD="${bundled_jdk}/bin/java"
+     elif [ -n "$JAVACMD_TEST" ]; then
+       set +e
+       JAVACMD=`command -v java`
