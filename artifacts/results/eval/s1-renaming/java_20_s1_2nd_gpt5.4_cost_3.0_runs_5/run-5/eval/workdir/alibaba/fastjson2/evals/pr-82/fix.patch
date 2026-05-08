@@ -1,0 +1,50 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/Repro.java b/Repro.java
+new file mode 100644
+index 000000000..808f9a512
+--- /dev/null
++++ b/Repro.java
+@@ -0,0 +1,11 @@
++import com.alibaba.fastjson2.JsonMapper;
++
++public class Repro {
++    public static void main(String[] args) {
++        System.out.println("isValidArray([]): " + JsonMapper.isValidArray("[]"));
++        System.out.println("isValidArray([]a): " + JsonMapper.isValidArray("[]a"));
++        System.out.println("isValid({}): " + JsonMapper.isValid("{}"));
++        System.out.println("isValid({}a): " + JsonMapper.isValid("{}a"));
++        System.out.println("Repro completed successfully.");
++    }
++}
+diff --git a/core/src/test/java/com/alibaba/fastjson2/issues/IssueArrayObjectValidationTailTest.java b/core/src/test/java/com/alibaba/fastjson2/issues/IssueArrayObjectValidationTailTest.java
+new file mode 100644
+index 000000000..aa19eb408
+--- /dev/null
++++ b/core/src/test/java/com/alibaba/fastjson2/issues/IssueArrayObjectValidationTailTest.java
+@@ -0,0 +1,23 @@
++package com.alibaba.fastjson2.issues;
++
++import com.alibaba.fastjson2.JsonMapper;
++import org.junit.jupiter.api.Test;
++
++import static org.junit.jupiter.api.Assertions.assertFalse;
++import static org.junit.jupiter.api.Assertions.assertTrue;
++
++public class IssueArrayObjectValidationTailTest {
++    @Test
++    public void test_isValidArray_with_trailing_chars() {
++        assertTrue(JsonMapper.isValidArray("[]"));
++        assertFalse(JsonMapper.isValidArray("[]a"));
++        assertFalse(JsonMapper.isValidArray("[]1"));
++    }
++
++    @Test
++    public void test_isValid_with_trailing_chars() {
++        assertTrue(JsonMapper.isValid("{}"));
++        assertFalse(JsonMapper.isValid("{}a"));
++        assertFalse(JsonMapper.isValid("{}[]"));
++    }
++}

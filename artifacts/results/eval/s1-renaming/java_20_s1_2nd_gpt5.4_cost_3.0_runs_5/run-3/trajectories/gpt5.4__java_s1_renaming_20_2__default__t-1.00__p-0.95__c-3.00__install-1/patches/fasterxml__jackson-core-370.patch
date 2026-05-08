@@ -1,0 +1,85 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+index c0faa714..98776bbb 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+@@ -904,6 +904,14 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+         }
+         if (_parsingContext.expectComma()) {
+             index = _skipCommaAndWhitespace(index);
++
++            // Was that a trailing comma?
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if ((index == INT_RBRACKET) || (index == INT_RCURLY)) {
++                    _endScope(index);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             updateLocation();
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java
+index 360a36b4..89d716e7 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java
+@@ -785,6 +785,14 @@ public class UTF8InputStreamJsonParser
+                 _reportUnexpectedChar(idx, "was expecting comma to separate "+_parsingContext.typeDesc()+" entries");
+             }
+             idx = _skipWhitespace();
++
++            // Was that a trailing comma?
++            if (Feature.ALLOW_TRAILING_COMMA.enabledIn(_features)) {
++                if (idx == INT_RBRACKET || idx == INT_RCURLY) {
++                    _closeCurrentScope(idx);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _nextTokenOutsideObject(idx);
+diff --git a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+index 16597299..c040d19b 100644
+--- a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
++++ b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+@@ -308,6 +308,29 @@ public class TrailingCommasTest extends BaseTest {
+     assertUnexpected(p, ',');
+     p.close();
+   }
++  @Test
++  public void testObjectTrailingCommaWithNextFieldName() throws Exception {
++    String json = "{\"a\": true, \"b\": false,}";
++
++    JsonParser p = createParser(factory, mode, json);
++
++    assertEquals(JsonToken.START_OBJECT, p.nextToken());
++
++    assertEquals("a", p.nextFieldName());
++    assertToken(JsonToken.VALUE_TRUE, p.nextToken());
++
++    assertEquals("b", p.nextFieldName());
++    assertToken(JsonToken.VALUE_FALSE, p.nextToken());
++
++    if (features.contains(Feature.ALLOW_TRAILING_COMMA)) {
++      assertNull(p.nextFieldName());
++      assertToken(JsonToken.END_OBJECT, p.getCurrentToken());
++      assertEnd(p);
++    } else {
++      assertUnexpected(p, '}');
++    }
++    p.close();
++  }
+ 
+   private void assertEnd(JsonParser p) throws IOException {
+     // Issue #325

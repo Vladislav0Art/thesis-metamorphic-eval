@@ -1,0 +1,529 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java
+index 009daa4cc..80e9879b1 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java
+@@ -1,243 +1,242 @@
+ /*
+- * Copyright (c) 2016 Mockito contributors
++ * Copyright (c) 2007 Mockito contributors
+  * This program is made available under the terms of the MIT License.
+  */
+ package org.mockito.internal.creation.bytebuddy;
+ 
+-import net.bytebuddy.ByteBuddy;
+-import net.bytebuddy.ClassFileVersion;
++import java.io.Serializable;
++import java.lang.invoke.MethodHandle;
++import java.lang.ref.Reference;
++import java.lang.reflect.Method;
++import java.util.Map;
++import java.util.Objects;
++import java.util.concurrent.Callable;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.function.BiConsumer;
++import java.util.function.Predicate;
++
+ import net.bytebuddy.asm.Advice;
+-import net.bytebuddy.asm.AsmVisitorWrapper;
+-import net.bytebuddy.description.field.FieldDescription;
+-import net.bytebuddy.description.field.FieldList;
+ import net.bytebuddy.description.method.MethodDescription;
+-import net.bytebuddy.description.method.MethodList;
+-import net.bytebuddy.description.method.ParameterDescription;
+ import net.bytebuddy.description.type.TypeDescription;
+-import net.bytebuddy.dynamic.ClassFileLocator;
+-import net.bytebuddy.dynamic.scaffold.MethodGraph;
+-import net.bytebuddy.dynamic.scaffold.TypeValidation;
+-import net.bytebuddy.implementation.Implementation;
+-import net.bytebuddy.jar.asm.ClassVisitor;
+-import net.bytebuddy.jar.asm.MethodVisitor;
+-import net.bytebuddy.matcher.ElementMatchers;
+-import net.bytebuddy.pool.TypePool;
+-import net.bytebuddy.utility.OpenedClassReader;
+-import net.bytebuddy.utility.RandomString;
++import net.bytebuddy.implementation.bytecode.assign.Assigner;
++import net.bytebuddy.matcher.ElementMatcher;
+ import org.mockito.exceptions.base.MockitoException;
+-import org.mockito.internal.SuppressSignatureCheck;
+-import org.mockito.internal.creation.bytebuddy.inject.MockMethodDispatcher;
+-import org.mockito.internal.util.concurrent.DetachedThreadLocal;
++import org.mockito.internal.creation.bytebuddy.MockMethodAdvice.Identifier;
++import org.mockito.internal.invocation.DefaultInvocationFactory;
++import org.mockito.internal.invocation.RealMethod;
+ import org.mockito.internal.util.concurrent.WeakConcurrentMap;
+-import org.mockito.internal.util.concurrent.WeakConcurrentSet;
+-import org.mockito.mock.SerializableMode;
+-
+-import java.lang.instrument.ClassFileTransformer;
+-import java.lang.instrument.Instrumentation;
+-import java.lang.instrument.UnmodifiableClassException;
+-import java.lang.reflect.Method;
+-import java.lang.reflect.Modifier;
+-import java.security.ProtectionDomain;
+-import java.util.*;
+-import java.util.function.Predicate;
+-
+-import static net.bytebuddy.implementation.MethodDelegation.withDefaultConfiguration;
+-import static net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFixedValue.OfConstant.of;
+-import static net.bytebuddy.matcher.ElementMatchers.*;
+-import static org.mockito.internal.util.StringUtil.join;
+-
+-@SuppressSignatureCheck
+-public class InlineBytecodeGenerator implements BytecodeGenerator, ClassFileTransformer {
+-
+-    private static final String PRELOAD = "org.mockito.inline.preload";
++import org.mockito.invocation.Location;
++import org.mockito.plugins.MemberAccessor;
++import org.mockito.plugins.MockitoPlugins;
++
++import static net.bytebuddy.matcher.ElementMatchers.isHashCode;
++import static net.bytebuddy.matcher.ElementMatchers.isEquals;
++import static net.bytebuddy.matcher.ElementMatchers.isStatic;
++import static net.bytebuddy.matcher.ElementMatchers.not;
++
++@SuppressWarnings("unused")
++public class MockMethodAdvice extends MockMethodDispatcher {
++
++    private final WeakConcurrentMap<Object, MockMethodInterceptor> interceptors;
++    private final WeakConcurrentMap<Object, String> clearedMockReasons;
++    private final DetachedThreadLocal<Map<Class<?>, MockMethodInterceptor>> mockedStatics;
++    private final String identifier;
++    private final Predicate<Class<?>> isMockConstruction;
++    private final ConstructionCallback onConstruction;
++    private final MethodHandle isOverridden;
++    private final CurrentThreadMockingBridge currentThreadMockingBridge;
+ 
+     @SuppressWarnings("unchecked")
+-    static final Set<Class<?>> EXCLUDES =
+-            new HashSet<Class<?>>(
+-                    Arrays.asList(
+-                            Class.class,
+-                            Boolean.class,
+-                            Byte.class,
+-                            Short.class,
+-                            Character.class,
+-                            Integer.class,
+-                            Long.class,
+-                            Float.class,
+-                            Double.class,
+-                            String.class));
+-
+-    private final Instrumentation instrumentation;
+-
+-    private final ByteBuddy byteBuddy;
+-
+-    private final WeakConcurrentSet<Class<?>> mocked, flatMocked;
+-
+-    private final BytecodeGenerator subclassEngine;
+-
+-    private final AsmVisitorWrapper mockTransformer;
+-
+-    private final Method getModule, canRead, redefineModule;
+-
+-    private volatile Throwable lastException;
+-
+-    public InlineBytecodeGenerator(
+-            Instrumentation instrumentation,
+-            WeakConcurrentMap<Object, MockMethodInterceptor> mocks,
++    public MockMethodAdvice(
++            WeakConcurrentMap<Object, MockMethodInterceptor> interceptors,
++            WeakConcurrentMap<Object, String> clearedMockReasons,
+             DetachedThreadLocal<Map<Class<?>, MockMethodInterceptor>> mockedStatics,
++            String identifier,
+             Predicate<Class<?>> isMockConstruction,
+             ConstructionCallback onConstruction) {
+-        preload();
+-        this.instrumentation = instrumentation;
+-        byteBuddy =
+-                new ByteBuddy()
+-                        .with(TypeValidation.DISABLED)
+-                        .with(Implementation.Context.Disabled.Factory.INSTANCE)
+-                        .with(MethodGraph.Compiler.ForDeclaredMethods.INSTANCE)
+-                        .ignore(isSynthetic().and(not(isConstructor())).or(isDefaultFinalizer()));
+-        mocked = new WeakConcurrentSet<>(WeakConcurrentSet.Cleaner.MANUAL);
+-        flatMocked = new WeakConcurrentSet<>(WeakConcurrentSet.Cleaner.MANUAL);
+-        String identifier = RandomString.make();
+-        subclassEngine =
+-                new TypeCachingBytecodeGenerator(
+-                        new SubclassBytecodeGenerator(
+-                                withDefaultConfiguration()
+-                                        .withBinders(
+-                                                of(MockMethodAdvice.Identifier.class, identifier))
+-                                        .to(MockMethodAdvice.ForReadObject.class),
+-                                isAbstract().or(isNative()).or(isToString())),
+-                        false);
+-        mockTransformer =
+-                new AsmVisitorWrapper.ForDeclaredMethods()
+-                        .method(
+-                                isVirtual()
+-                                        .and(
+-                                                not(
+-                                                        isBridge()
+-                                                                .or(isHashCode())
+-                                                                .or(isEquals())
+-                                                                .or(isDefaultFinalizer())))
+-                                        .and(
+-                                                not(isDeclaredBy(nameStartsWith("java."))
+-                                                                .<MethodDescription>and(
+-                                                                        isPackagePrivate()))
+-                                                        .and(
+-                                                                not(
+-                                                                        BytecodeGenerator
+-                                                                                .isGroovyMethod(
+-                                                                                        true)))),
+-                                Advice.withCustomMapping()
+-                                        .bind(MockMethodAdvice.Identifier.class, identifier)
+-                                        .to(MockMethodAdvice.class))
+-                        .method(
+-                                isStatic().and(not(BytecodeGenerator.isGroovyMethod(true))),
+-                                Advice.withCustomMapping()
+-                                        .bind(MockMethodAdvice.Identifier.class, identifier)
+-                                        .to(MockMethodAdvice.ForStatic.class))
+-                        .constructor(any(), new MockMethodAdvice.ConstructorShortcut(identifier))
+-                        .method(
+-                                isHashCode(),
+-                                Advice.withCustomMapping()
+-                                        .bind(MockMethodAdvice.Identifier.class, identifier)
+-                                        .to(MockMethodAdvice.ForHashCode.class))
+-                        .method(
+-                                isEquals(),
+-                                Advice.withCustomMapping()
+-                                        .bind(MockMethodAdvice.Identifier.class, identifier)
+-                                        .to(MockMethodAdvice.ForEquals.class));
+-        Method getModule, canRead, redefineModule;
+-        try {
+-            getModule = Class.class.getMethod("getModule");
+-            canRead = getModule.getReturnType().getMethod("canRead", getModule.getReturnType());
+-            redefineModule =
+-                    Instrumentation.class.getMethod(
+-                            "redefineModule",
+-                            getModule.getReturnType(),
+-                            Set.class,
+-                            Map.class,
+-                            Map.class,
+-                            Set.class,
+-                            Map.class);
+-        } catch (Exception ignored) {
+-            getModule = null;
+-            canRead = null;
+-            redefineModule = null;
++        this.interceptors = interceptors;
++        this.clearedMockReasons = clearedMockReasons;
++        this.mockedStatics = mockedStatics;
++        this.identifier = identifier;
++        this.isMockConstruction = isMockConstruction;
++        this.onConstruction = onConstruction;
++        this.isOverridden = new MockMethodAdvice.OverriddenMethodLookup(identifier).getMethodHandle();
++        this.currentThreadMockingBridge = new CurrentThreadMockingBridge();
++    }
++
++    @SuppressWarnings("unused")
++    @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
++    private static Callable<?> enter(
++            @Identifier String identifier,
++            @Advice.This Object mock,
++            @Advice.Origin Method origin,
++            @Advice.AllArguments Object[] arguments)
++            throws Throwable {
++        MockMethodDispatcher dispatcher = MockMethodDispatcher.get(identifier, mock);
++        if (dispatcher == null
++                || !dispatcher.isMocked(mock)
++                || dispatcher.isOverridden(mock, origin)) {
++            if (dispatcher != null) {
++                String clearedMockReason = dispatcher.getClearedMockReason(mock);
++                if (clearedMockReason != null) {
++                    throw new MockitoException(clearedMockReason);
++                }
++            }
++            return null;
++        } else {
++            return dispatcher.handle(mock, origin, arguments);
+         }
+-        this.getModule = getModule;
+-        this.canRead = canRead;
+-        this.redefineModule = redefineModule;
+-        MockMethodDispatcher.set(
+-                identifier,
+-                new MockMethodAdvice(
+-                        mocks, mockedStatics, identifier, isMockConstruction, onConstruction));
+-        instrumentation.addTransformer(this, true);
+     }
+ 
+-    /**
+-     * Mockito allows to mock about any type, including such types that we are relying on ourselves. This can cause a circularity:
+-     * In order to check if an instance is a mock we need to look up if this instance is registered in the {@code mocked} set. But to look
+-     * up this instance, we need to create key instances that rely on weak reference properties. Loading the later classes will happen before
+-     * the key instances are completed what will cause Mockito to check if those key instances are themselves mocks what causes a loop which
+-     * results in a circularity error. This is not normally a problem as we explicitly check if the instance that we investigate is one of
+-     * our instance of which we hold a reference by reference equality what does not cause any code execution. But it seems like the load
+-     * order plays a role here with unloaded types being loaded before we even get to check the mock instance property. To avoid this, we are
+-     * making sure that crucuial JVM types are loaded before we create the first inline mock. Unfortunately, these types dependant on a JVM's
+-     * implementation and we can only maintain types that we know of from well-known JVM implementations such as HotSpot and extend this list
+-     * once we learn of further problematic types for future Java versions. To allow users to whitelist their own types, we do not also offer
+-     * a property that allows running problematic tests before a new Mockito version can be released and that allows us to ask users to
+-     * easily validate that whitelisting actually solves a problem as circularities could also be caused by other problems.
+-     */
+-    private static void preload() {
+-        String preloads = System.getProperty(PRELOAD);
+-        if (preloads == null) {
+-            preloads =
+-                    "java.lang.WeakPairMap,java.lang.WeakPairMap$Pair,java.lang.WeakPairMap$Pair$Weak";
++    @SuppressWarnings({"unused", "UnusedAssignment"})
++    @Advice.OnMethodExit
++    private static void exit(
++            @Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object returned,
++            @Advice.Enter Callable<?> mocked)
++            throws Throwable {
++        if (mocked != null) {
++            returned = mocked.call();
+         }
+-        for (String preload : preloads.split(",")) {
+-            try {
+-                Class.forName(preload, false, null);
+-            } catch (ClassNotFoundException ignored) {
+-            }
++    }
++
++    @Override
++    public Callable<?> handle(Object instance, Method origin, Object[] arguments) throws Throwable {
++        MockMethodInterceptor interceptor = interceptors.get(instance);
++        if (interceptor == null) {
++            return null;
++        }
++        RealMethod realMethod;
++        if (instance instanceof Serializable) {
++            realMethod = new SerializableRealMethodCall(identifier, origin, instance, arguments);
++        } else {
++            realMethod = new RealMethodCall(selfCallInfo, origin, instance, arguments);
++        }
++        return new ReturnValueWrapper(
++                interceptor.doIntercept(
++                        instance, origin, arguments, realMethod, LocationFactory.create(true)));
++    }
++
++    @Override
++    public Callable<?> handleStatic(Class<?> type, Method origin, Object[] arguments)
++            throws Throwable {
++        Map<Class<?>, MockMethodInterceptor> interceptors = mockedStatics.get();
++        if (interceptors == null || !interceptors.containsKey(type)) {
++            return null;
+         }
++        return new ReturnValueWrapper(
++                interceptors
++                        .get(type)
++                        .doIntercept(
++                                type,
++                                origin,
++                                arguments,
++                                new StaticMethodCall(selfCallInfo, type, origin, arguments),
++                                LocationFactory.create(true)));
+     }
+ 
+     @Override
+-    public <T> Class<? extends T> mockClass(MockFeatures<T> features) {
+-        boolean subclassingRequired =
+-                !features.interfaces.isEmpty()
+-                        || features.serializableMode != SerializableMode.NONE
+-                        || features.stripAnnotations
+-                        || Modifier.isAbstract(features.mockedType.getModifiers());
++    public Object handleConstruction(
++            Class<?> type, Object object, Object[] arguments, String[] parameterTypeNames) {
++        return onConstruction.apply(type, object, arguments, parameterTypeNames);
++    }
+ 
+-        checkSupportedCombination(subclassingRequired, features);
++    @Override
++    public boolean isMock(Object instance) {
++        return interceptors.containsKey(instance);
++    }
+ 
+-        Set<Class<?>> types = new HashSet<>();
+-        types.add(features.mockedType);
+-        types.addAll(features.interfaces);
++    @Override
++    public boolean isMocked(Object instance) {
++        return isMock(instance) && selfCallInfo.checkSelfCall(instance);
++    }
++
++    @Override
++    public boolean isOverridden(Object instance, Method origin) {
++        SoftReference<MethodGraph> reference = graphs.get(instance.getClass());
++        MethodGraph methodGraph = reference == null ? null : reference.get();
++        if (methodGraph == null) {
++            methodGraph =
++                    compiler.compile(
++                            (TypeDefinition) TypeDescription.ForLoadedType.of(instance.getClass()));
++            graphs.put(instance.getClass(), new SoftReference<>(methodGraph));
++        }
++        MethodGraph.Node node =
++                methodGraph.locate(
++                        new MethodDescription.ForLoadedMethod(origin).asSignatureToken());
++        return !node.getSort().isResolved()
++                || !node.getRepresentative()
++                        .asDefined()
++                        .getDeclaringType()
++                        .represents(origin.getDeclaringClass());
++    }
+ 
+-        synchronized (this) {
+-            triggerRetransformation(types, false);
++    @Override
++    public boolean isMockedStatic(Class<?> type) {
++        if (!selfCallInfo.checkSelfCall(type)) {
++            return false;
+         }
++        Map<Class<?>, ?> interceptors = mockedStatics.get();
++        return interceptors != null && interceptors.containsKey(type);
++    }
+ 
+-        return subclassingRequired ? subclassEngine.mockClass(features) : features.mockedType;
++    @Override
++    public boolean isMockConstruction(Class<?> type) {
++        return isMockConstruction.test(type);
+     }
+ 
+     @Override
+-    public synchronized void mockClassStatic(Class<?> type) {
+-        triggerRetransformation(Collections.singleton(type), true);
++    public String getClearedMockReason(Object instance) {
++        return clearedMockReasons.get(instance);
+     }
+ 
+     @Override
+-    public synchronized void mockClassConstruction(Class<?> type) {
+-        triggerRetransformation(Collections.singleton(type), false);
++    public String toString() {
++        return "MockMethodAdvice for "
++                + Objects.toString(identifier)
++                + " using "
++                + Objects.toString(interceptors);
+     }
+ 
+-    private static void assureInitialization(Class<?> type) {
+-        try {
+-            Class.forName(type.getName(), true, type.getClassLoader());
+-        } catch (ExceptionInInitializerError e) {
+-            throw new MockitoException(
+-                    "Cannot instrument "
+-                            + type
++    private static class ReturnValueWrapper implements Callable<Object> {
++
++        private final Object returned;
++
++        private ReturnValueWrapper(Object returned) {
++            this.returned = returned;
++        }
++
++        @Override
++        public Object call() {
++            return returned;
++        }
++    }
++
++    private static class StaticMethodCall implements RealMethod {
++
++        private final SelfCallInfo selfCallInfo;
++        private final Class<?> type;
++        private final Method origin;
++        private final Object[] arguments;
++
++        private StaticMethodCall(
++                SelfCallInfo selfCallInfo, Class<?> type, Method origin, Object[] arguments) {
++            this.selfCallInfo = selfCallInfo;
++            this.type = type;
++            this.origin = origin;
++            this.arguments = arguments;
++        }
++
++        @Override
++        public boolean isInvokable() {
++            return true;
++        }
++
++        @Override
++        public Object invoke() throws Throwable {
++            selfCallInfo.set(type);
++            return tryInvoke(origin, null, arguments);
++        }
++    }
+                             + " because it or one of its supertypes could not be initialized",
+                     e.getException());
+         } catch (Throwable ignored) {
+diff --git a/src/test/java/org/mockito/internal/framework/DefaultMockitoFrameworkTest.java b/src/test/java/org/mockito/internal/framework/DefaultMockitoFrameworkTest.java
+index 3b2884e52..21b57a791 100644
+--- a/src/test/java/org/mockito/internal/framework/DefaultMockitoFrameworkTest.java
++++ b/src/test/java/org/mockito/internal/framework/DefaultMockitoFrameworkTest.java
+@@ -5,6 +5,7 @@
+ package org.mockito.internal.framework;
+ 
+ import static org.assertj.core.api.Assertions.assertThatThrownBy;
++import static org.junit.Assert.assertEquals;
+ import static org.junit.Assert.assertFalse;
+ import static org.junit.Assert.assertTrue;
+ import static org.junit.Assume.assumeTrue;
+@@ -14,6 +15,7 @@ import static org.mockito.Mockito.mock;
+ import static org.mockito.Mockito.mockingDetails;
+ import static org.mockito.Mockito.verify;
+ import static org.mockito.Mockito.verifyNoMoreInteractions;
++import static org.mockito.Mockito.when;
+ import static org.mockito.Mockito.withSettings;
+ import static org.mockitoutil.ThrowableAssert.assertThat;
+ 
+@@ -25,6 +27,7 @@ import org.junit.Test;
+ import org.mockito.ArgumentMatchers;
+ import org.mockito.MockSettings;
+ import org.mockito.StateMaster;
++import org.mockito.exceptions.base.MockitoException;
+ import org.mockito.exceptions.misusing.RedundantListenerException;
+ import org.mockito.internal.configuration.plugins.Plugins;
+ import org.mockito.listeners.MockCreationListener;
+@@ -167,6 +170,23 @@ public class DefaultMockitoFrameworkTest extends TestBase {
+         assertFalse(mockingDetails(list2).isMock());
+     }
+ 
++    @Test
++    public void accessing_cleared_mock_throws_useful_exception() {
++        assumeTrue(Plugins.getMockMaker() instanceof InlineMockMaker);
++
++        Sample sample = mock(Sample.class);
++        when(sample.getName()).thenReturn("Bob");
++        assertEquals("Bob", sample.getName());
++
++        framework.clearInlineMocks();
++
++        assertFalse(mockingDetails(sample).isMock());
++        assertThatThrownBy(() -> sample.getName())
++                .isInstanceOf(MockitoException.class)
++                .hasMessageContaining("This inline mock has been cleared")
++                .hasMessageContaining("Mockito.framework().clearInlineMocks()");
++    }
++
+     @Test
+     public void clears_mock() {
+         // clearing mocks only works with inline mocking
+@@ -186,5 +206,11 @@ public class DefaultMockitoFrameworkTest extends TestBase {
+         assertTrue(mockingDetails(list2).isMock());
+     }
+ 
++    private static class Sample {
++        String getName() {
++            throw new NullPointerException("should not reach real method");
++        }
++    }
++
+     private static class MyListener implements MockitoListener {}
+ }

@@ -1,0 +1,74 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+index e1f8797a5..0e3b868c9 100644
+--- a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
++++ b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+@@ -477,3 +477,65 @@ public class JSON {
+         return JsonMapper.parseJsonArray(text, types);
+     }
+ }
++    /**
++     * Verify the {@link String} is valid JSON
++     *
++     * @param jsonContent the {@link String} to validate
++     * @return T/F
++     */
++    static boolean isValid(String jsonContent) {
++        if (jsonContent == null || jsonContent.length() == 0) {
++            return false;
++        }
++        JSONReader streamReader = JSONReader.of(jsonContent);
++        try {
++            streamReader.skipValue();
++        } catch (JSONException jsonException) {
++            return false;
++        }
++        return true;
++    }
++
++    /**
++     * Verify the {@link String} is JSON Object
++     *
++     * @param jsonContent the {@link String} to validate
++     * @return T/F
++     */
++    static boolean isValidObject(String jsonContent) {
++        if (jsonContent == null || jsonContent.length() == 0) {
++            return false;
++        }
++        JSONReader streamReader = JSONReader.of(jsonContent);
++        try {
++            if (!streamReader.isObject()) {
++                return false;
++            }
++            streamReader.skipValue();
++        } catch (JSONException jsonException) {
++            return false;
++        }
++        return true;
++    }
++
++    /**
++     * Verify the {@link String} is JSON Array
++     *
++     * @param jsonContent the {@link String} to validate
++     * @return T/F
++     */
++    static boolean isValidArray(String jsonContent) {
++        if (jsonContent == null || jsonContent.length() == 0) {
++            return false;
++        }
++        JSONReader streamReader = JSONReader.of(jsonContent);
++        try {
++            if (!streamReader.isArray()) {
++                return false;
++            }
++            streamReader.skipValue();
++        } catch (JSONException jsonException) {
++            return false;
++        }
++        return true;
++    }

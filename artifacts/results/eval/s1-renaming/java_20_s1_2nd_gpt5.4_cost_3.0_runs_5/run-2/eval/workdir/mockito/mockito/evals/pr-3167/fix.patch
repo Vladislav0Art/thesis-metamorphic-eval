@@ -1,0 +1,142 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java
+index 009daa4cc..988d19327 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java
+@@ -1,39 +1,62 @@
+ /*
+- * Copyright (c) 2016 Mockito contributors
++ * Copyright (c) 2021 Mockito contributors
+  * This program is made available under the terms of the MIT License.
+  */
+-package org.mockito.internal.creation.bytebuddy;
+-
+-import net.bytebuddy.ByteBuddy;
+-import net.bytebuddy.ClassFileVersion;
+-import net.bytebuddy.asm.Advice;
+-import net.bytebuddy.asm.AsmVisitorWrapper;
+-import net.bytebuddy.description.field.FieldDescription;
+-import net.bytebuddy.description.field.FieldList;
+-import net.bytebuddy.description.method.MethodDescription;
+-import net.bytebuddy.description.method.MethodList;
+-import net.bytebuddy.description.method.ParameterDescription;
+-import net.bytebuddy.description.type.TypeDescription;
+-import net.bytebuddy.dynamic.ClassFileLocator;
+-import net.bytebuddy.dynamic.scaffold.MethodGraph;
+-import net.bytebuddy.dynamic.scaffold.TypeValidation;
+-import net.bytebuddy.implementation.Implementation;
+-import net.bytebuddy.jar.asm.ClassVisitor;
+-import net.bytebuddy.jar.asm.MethodVisitor;
+-import net.bytebuddy.matcher.ElementMatchers;
+-import net.bytebuddy.pool.TypePool;
+-import net.bytebuddy.utility.OpenedClassReader;
+-import net.bytebuddy.utility.RandomString;
+-import org.mockito.exceptions.base.MockitoException;
+-import org.mockito.internal.SuppressSignatureCheck;
+-import org.mockito.internal.creation.bytebuddy.inject.MockMethodDispatcher;
+-import org.mockito.internal.util.concurrent.DetachedThreadLocal;
+-import org.mockito.internal.util.concurrent.WeakConcurrentMap;
+-import org.mockito.internal.util.concurrent.WeakConcurrentSet;
+-import org.mockito.mock.SerializableMode;
+-
+-import java.lang.instrument.ClassFileTransformer;
+-import java.lang.instrument.Instrumentation;
++package org.mockitoinline;
++
++import org.junit.Test;
++import org.mockito.Mockito;
++
++import static org.hamcrest.CoreMatchers.*;
++import static org.hamcrest.MatcherAssert.assertThat;
++import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
++import static org.mockito.Mockito.when;
++
++public class EnumMockingTest {
++
++    @Test
++    public void testMockEnum() {
++        Animal a = Mockito.mock(Animal.class);
++        assertThat(a, not(equalTo(Animal.CAT)));
++        assertThat(a.sound(), nullValue(String.class));
++        assertThat(a.name(), nullValue(String.class));
++    }
++
++    @Test
++    public void testDeepStubMockReturningEnum() {
++        BoardPiece piece = Mockito.mock(BoardPiece.class, RETURNS_DEEP_STUBS);
++
++        when(piece.getType().cost()).thenReturn(2.5d);
++
++        assertThat(piece.getType().cost(), is(2.5d));
++    }
++
++    interface BoardPiece {
++        PieceType getType();
++    }
++
++    enum PieceType {
++        SQUARE {
++            @Override
++            double cost() {
++                return 1.0d;
++            }
++        };
++
++        abstract double cost();
++    }
++
++    enum Animal {
++        CAT {
++            @Override
++            public String sound() {
++                return "meow";
++            }
++        };
++
++        public abstract String sound();
++    }
++}
+ import java.lang.instrument.UnmodifiableClassException;
+ import java.lang.reflect.Method;
+ import java.lang.reflect.Modifier;
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java
+index a4c6f0cbd..f21389cd1 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java
+@@ -473,6 +473,11 @@ class InlineDelegateByteBuddyMockFactory
+             generationError);
+     }
+ 
++    @Override
++    public <T> T createMock(MockCreationSettings<T> settings, MockHandler handler) {
++        return createMockInstance(settings, handler);
++    }
++
+     @Override
+     public MockHandler getHandler(Object target) {
+         MockMethodInterceptor constructionHandler;
+@@ -489,6 +494,11 @@ class InlineDelegateByteBuddyMockFactory
+         }
+     }
+ 
++    @Override
++    public void resetMock(Object target, MockHandler replacementHandler, MockCreationSettings creationSettings) {
++        resetMockInterceptor(target, replacementHandler, creationSettings);
++    }
++
+     public void resetMockInterceptor(Object target, MockHandler replacementHandler, MockCreationSettings creationSettings) {
+         MockMethodInterceptor methodInterceptor =
+                 new MockMethodInterceptor(replacementHandler, creationSettings);

@@ -1,0 +1,123 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..73dce618e 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -286,6 +286,18 @@ public enum MapperFeature implements ConfigFeature
+      */
+     USE_STATIC_TYPING(false),
+ 
++    /**
++     * Feature that determines whether, for polymorphic deserialization, a concrete
++     * declared type should be used as the default implementation if no explicit
++     * {@link JsonTypeInfo#defaultImpl()} was specified.
++     *<p>
++     * This allows deserialization into a concrete subtype declared at call site
++     * even when the type id property is missing from input.
++     *<p>
++     * Feature is disabled by default.
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /*
+     /******************************************************
+     /* View-related features
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
+index fbd834ece..d5222a2d1 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
+@@ -95,8 +95,8 @@ public class StandardTypeResolverBuilder
+         case EXTERNAL_PROPERTY:
+             return new AsExternalTypeSerializer(identifierResolver, null, _typeProperty);
+         case EXISTING_PROPERTY:
+-        	// as per [#528]
+-        	return new AsExistingPropertyTypeSerializer(identifierResolver, null, _typeProperty);
++            // as per [#528]
++            return new AsExistingPropertyTypeSerializer(identifierResolver, null, _typeProperty);
+         }
+         throw new IllegalStateException("Do not know how to construct standard type serializer for inclusion type: "+_includeAs);
+     }
+@@ -123,7 +123,12 @@ public class StandardTypeResolverBuilder
+         JavaType defaultImplementation;
+ 
+         if (_defaultImpl == null) {
+-            defaultImplementation = null;
++            if (serializationConfig.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && baseJavaType.isConcrete()) {
++                defaultImplementation = baseJavaType;
++            } else {
++                defaultImplementation = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestTypedDeserialization.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestTypedDeserialization.java
+index c1ea52c2e..17e0e62b6 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestTypedDeserialization.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestTypedDeserialization.java
+@@ -88,6 +88,22 @@ public class TestTypedDeserialization
+     @JsonTypeInfo(use=Id.CLASS, include=As.WRAPPER_ARRAY)
+     interface TypeWithArray { }
+ 
++    @JsonTypeInfo(use=Id.MINIMAL_CLASS, include=As.PROPERTY, property="type")
++    interface BaseTypeAsDefaultInterface {
++        String getName();
++        void setName(String name);
++    }
++
++    static class BaseTypeAsDefaultImpl implements BaseTypeAsDefaultInterface
++    {
++        protected String name;
++
++        public BaseTypeAsDefaultImpl() { }
++
++        public String getName() { return name; }
++        public void setName(String n) { name = n; }
++    }
++
+     static class Issue506DateBean {
+         @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type2")
+         public Date date;
+@@ -239,6 +255,30 @@ public class TestTypedDeserialization
+         Issue506NumberBean output = mapper.readValue(json, Issue506NumberBean.class);
+         assertEquals(input.number, output.number);
+     }
++
++    public void testMissingTypeIdFailsByDefaultForConcreteTarget() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        String json = "{\"name\":\"name\"}";
++
++        try {
++            mapper.readValue(json, BaseTypeAsDefaultImpl.class);
++            fail("Expected InvalidTypeIdException");
++        } catch (com.fasterxml.jackson.databind.exc.InvalidTypeIdException e) {
++            verifyException(e, "missing type id property 'type'");
++        }
++    }
++
++    public void testUseBaseTypeAsDefaultImplForConcreteTarget() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        String json = "{\"name\":\"name\"}";
++
++        BaseTypeAsDefaultImpl result = mapper.readValue(json, BaseTypeAsDefaultImpl.class);
++        assertNotNull(result);
++        assertEquals("name", result.getName());
++    }
+ }
+ 
+ 

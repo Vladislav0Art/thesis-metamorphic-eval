@@ -1,0 +1,145 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..898f317a9 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -140,8 +140,9 @@ public enum MapperFeature implements ConfigFeature
+      * automatically detected based on standard Bean naming convention
+      * or not. If yes, then all public one-argument methods that
+      * start with prefix "set"
+-     * are considered setters. If disabled, only methods explicitly
+-     * annotated are considered setters.
++     * are considered setters.
++     * If disabled, only methods explicitly annotated
++     * are considered setters.
+      *<p>
+      * Note that this feature has lower precedence than per-class
+      * annotations, and is only used if there isn't more granular
+@@ -462,6 +463,19 @@ public enum MapperFeature implements ConfigFeature
+      */
+     IGNORE_DUPLICATE_MODULE_REGISTRATIONS(true),
+ 
++    /**
++     * Feature that when enabled allows polymorphic deserialization to use the
++     * declared base type as the default implementation if no explicit
++     * {@link com.fasterxml.jackson.annotation.JsonTypeInfo#defaultImpl}
++     * has been specified and the declared base type is concrete.
++     * This is useful for cases where a concrete subtype is passed to
++     * {@code ObjectMapper.readValue(...)} but serialized type information is
++     * missing.
++     * <p>
++     * Feature is disabled by default.
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /**
+      * Setting that determines what happens if an attempt is made to explicitly
+      * "merge" value of a property, where value does not support merging; either
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java
+index d37fa604b..4268acfa9 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/TypeDeserializerBase.java
+@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
+ import com.fasterxml.jackson.databind.DeserializationFeatureSet;
+ import com.fasterxml.jackson.databind.JavaType;
+ import com.fasterxml.jackson.databind.JsonDeserializer;
++import com.fasterxml.jackson.databind.MapperFeature;
+ import com.fasterxml.jackson.databind.deser.std.NullifyingDeserializer;
+ import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
+ import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
+@@ -205,6 +206,16 @@ public abstract class TypeDeserializerBase
+          *   to do swift mapping to null
+          */
+         if (_defaultImpl == null) {
++            if (ctxt.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && _baseType.isConcrete()) {
++                synchronized (_baseType) {
++                    if (_defaultImplDeserializer == null) {
++                        _defaultImplDeserializer = ctxt.findContextualValueDeserializer(
++                                _baseType, _property);
++                    }
++                    return _defaultImplDeserializer;
++                }
++            }
+             if (!ctxt.isEnabled(DeserializationFeatureSet.FAIL_ON_INVALID_SUBTYPE)) {
+                 return NullifyingDeserializer.instance;
+             }
+@@ -214,7 +225,7 @@ public abstract class TypeDeserializerBase
+         if (ClassUtil.isBogusClass(raw)) {
+             return NullifyingDeserializer.instance;
+         }
+-        
++
+         synchronized (_defaultImpl) {
+             if (_defaultImplDeserializer == null) {
+                 _defaultImplDeserializer = ctxt.findContextualValueDeserializer(
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+index 46acfa8cb..3bfb825b5 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+@@ -140,6 +140,24 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         public AsProperty value;
+     }
+ 
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY,
++            property = "type")
++    public interface MinimalClassParent {
++        String getName();
++        void setName(String name);
++    }
++
++    public static class MinimalClassChild implements MinimalClassParent {
++        private String name;
++
++        public MinimalClassChild() { }
++
++        @Override
++        public String getName() { return name; }
++
++        @Override
++        public void setName(String name) { this.name = name; }
++    }
+     /*
+     /**********************************************************
+     /* Unit tests, deserialization
+@@ -279,6 +297,28 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         assertNull(wrapper.value);
+     }
+ 
++    public void testMissingTypeIdFailsEvenForConcreteTargetByDefault() throws Exception
++    {
++        try {
++            MAPPER.readValue(aposToQuotes("{'name':'name'}"), MinimalClassChild.class);
++            fail("Expected " + InvalidTypeIdException.class);
++        } catch (InvalidTypeIdException e) {
++            verifyException(e, "missing type id property 'type'");
++        }
++    }
++
++    public void testUseBaseTypeAsDefaultImpl() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++
++        MinimalClassChild result = mapper.readValue(aposToQuotes("{'name':'name'}"),
++                MinimalClassChild.class);
++
++        assertNotNull(result);
++        assertEquals("name", result.getName());
++    }
++
+     /*
+     /**********************************************************
+     /* Unit tests, serialization

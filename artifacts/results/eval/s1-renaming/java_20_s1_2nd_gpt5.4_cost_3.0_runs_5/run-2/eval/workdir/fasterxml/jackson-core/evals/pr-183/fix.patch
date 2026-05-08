@@ -1,0 +1,158 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+index 7f417979..eaf70e20 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+@@ -62,17 +62,15 @@ public final class SegmentedTextBuffer
+ 
+     /**
+      * Character offset of first char in input buffer; -1 to indicate
+-     * that input buffer currently does not contain any useful char data
++     * that input buffer currently does not contain any useful data
+      */
+-    private int inputOffset;
++    private int inputOffset = -1;
+ 
+-    private int inputLength;
+-
+-    /*
+-    /**********************************************************
+-    /* Aggregation segments (when not using input buf)
+-    /**********************************************************
++    /**
++     * Number of characters in input buffer that are part of the contents
++     * of this buffer
+      */
++    private int inputLength;
+ 
+     /**
+      * List of segments prior to currently active segment.
+@@ -206,7 +204,7 @@ public final class SegmentedTextBuffer
+             activeSegment = getCharBuffer(length);
+         }
+         currentSegmentLength = segmentCapacity = 0;
+-        appendChar(bufferToRelease, offset, length);
++        append(bufferToRelease, offset, length);
+     }
+ 
+     public void resetToString(String strValue)
+@@ -304,7 +302,7 @@ public final class SegmentedTextBuffer
+             return (resultChars = cachedString.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!segmentsPresent)  return activeSegment;
++        if (!segmentsPresent)  return (activeSegment == null) ? EMPTY_CHARS : activeSegment;
+         // Nope, need to have/create a non-segmented array and return it
+         return getContentsAsArray();
+     }
+@@ -409,6 +407,10 @@ public final class SegmentedTextBuffer
+     }
+ 
+     public void appendChar(char ch) {
++        append(ch);
++    }
++
++    public void append(char ch) {
+         // Using shared buffer so far?
+         if (inputOffset >= 0) {
+             ensureUnshared(16);
+@@ -417,6 +419,9 @@ public final class SegmentedTextBuffer
+         resultChars = null;
+         // Room in current segment?
+         char[] segment = activeSegment;
++        if (segment == null) {
++            activeSegment = segment = getCharBuffer(0);
++        }
+         if (currentSegmentLength >= segment.length) {
+             expandBuffer(1);
+             segment = activeSegment;
+@@ -425,6 +430,11 @@ public final class SegmentedTextBuffer
+     }
+ 
+     public void appendChar(char[] ch, int offset, int length)
++    {
++        append(ch, offset, length);
++    }
++
++    public void append(char[] ch, int offset, int length)
+     {
+         // Can't append to shared buf (sanity check)
+         if (inputOffset >= 0) {
+@@ -435,6 +445,9 @@ public final class SegmentedTextBuffer
+ 
+         // Room in current segment?
+         char[] segment = activeSegment;
++        if (segment == null) {
++            activeSegment = segment = getCharBuffer(length);
++        }
+         int available = segment.length - currentSegmentLength;
+             
+         if (available >= length) {
+@@ -463,6 +476,11 @@ public final class SegmentedTextBuffer
+     }
+ 
+     public void appendChar(String string, int startOffset, int length)
++    {
++        append(string, startOffset, length);
++    }
++
++    public void append(String string, int startOffset, int length)
+     {
+         // Can't append to shared buf (sanity check)
+         if (inputOffset >= 0) {
+@@ -473,6 +491,9 @@ public final class SegmentedTextBuffer
+ 
+         // Room in current segment?
+         char[] segment = activeSegment;
++        if (segment == null) {
++            activeSegment = segment = getCharBuffer(length);
++        }
+         int available = segment.length - currentSegmentLength;
+         if (available >= length) {
+             string.getChars(startOffset, startOffset + length, segment, currentSegmentLength);
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 044060a5..f5b37b77 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -60,7 +60,7 @@ public class TestTextBuffer
+          assertEquals(EXP, tb.getContentsAsString());
+       }
+ 
+-      // [Core#152]
++      // [core#152]
+       public void testExpand()
+       {
+           SegmentedTextBuffer tb = new SegmentedTextBuffer(new BufferRecycler());
+@@ -74,4 +74,20 @@ public class TestTextBuffer
+               }
+           }
+       }
++
++      public void testEmptyGetTextBufferConsistent()
++      {
++          SegmentedTextBuffer tb = new SegmentedTextBuffer(new BufferRecycler());
++          tb.resetToEmpty();
++
++          char[] buffer = tb.getTextBuffer();
++          assertNotNull(buffer);
++          assertEquals(0, buffer.length);
++
++          assertEquals("", tb.getContentsAsString());
++
++          char[] bufferAfterString = tb.getTextBuffer();
++          assertNotNull(bufferAfterString);
++          assertEquals(0, bufferAfterString.length);
++      }
+ }

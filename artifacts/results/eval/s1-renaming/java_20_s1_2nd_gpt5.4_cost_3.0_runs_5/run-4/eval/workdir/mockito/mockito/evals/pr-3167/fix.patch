@@ -1,0 +1,221 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java
+index a4c6f0cbd..c4a553f13 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java
+@@ -347,6 +347,11 @@ class InlineDelegateByteBuddyMockFactory
+                         true);
+     }
+ 
++    @Override
++    public <T> T createMock(MockCreationSettings<T> settings, MockHandler handler) {
++        return createMockInstance(settings, handler);
++    }
++
+     public <T> T createMockInstance(MockCreationSettings<T> creationSettings, MockHandler invocationHandler) {
+         return createMockInstance(creationSettings, invocationHandler, false);
+     }
+@@ -489,6 +494,11 @@ class InlineDelegateByteBuddyMockFactory
+         }
+     }
+ 
++    @Override
++    public void resetMock(Object target, MockHandler replacementHandler, MockCreationSettings creationSettings) {
++        resetMockInterceptor(target, replacementHandler, creationSettings);
++    }
++
+     public void resetMockInterceptor(Object target, MockHandler replacementHandler, MockCreationSettings creationSettings) {
+         MockMethodInterceptor methodInterceptor =
+                 new MockMethodInterceptor(replacementHandler, creationSettings);
+diff --git a/src/test/java/org/mockitousage/bugs/deepstubs/DeepStubReturnsEnumJava21FailureTest.java b/src/test/java/org/mockitousage/bugs/deepstubs/DeepStubReturnsEnumJava21FailureTest.java
+new file mode 100644
+index 000000000..986c5171d
+--- /dev/null
++++ b/src/test/java/org/mockitousage/bugs/deepstubs/DeepStubReturnsEnumJava21FailureTest.java
+@@ -0,0 +1,49 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage.bugs.deepstubs;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.when;
++
++import org.junit.Test;
++
++public class DeepStubReturnsEnumJava21FailureTest {
++
++    interface Piece {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE;
++
++        double getCostPerPieceSpace() {
++            return 2.5d;
++        }
++    }
++
++    static class Board {
++        private final Piece piece;
++
++        Board(Piece piece) {
++            this.piece = piece;
++        }
++
++        double getCostPerSpace() {
++            return Math.floor(piece.getPiece().getCostPerPieceSpace());
++        }
++    }
++
++    @Test
++    public void can_chain_deep_stubs_through_enum_return_type() {
++        Piece piece = mock(Piece.class, RETURNS_DEEP_STUBS);
++        Board board = new Board(piece);
++
++        when(piece.getPiece().getCostPerPieceSpace()).thenReturn(2.5d);
++
++        assertThat(board.getCostPerSpace()).isEqualTo(2d);
++    }
++}
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/bugs/DeepStubsEnumMockingTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/bugs/DeepStubsEnumMockingTest.java
+new file mode 100644
+index 000000000..50b68960f
+--- /dev/null
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/bugs/DeepStubsEnumMockingTest.java
+@@ -0,0 +1,50 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitoinline.bugs;
++
++import static org.hamcrest.CoreMatchers.is;
++import static org.hamcrest.MatcherAssert.assertThat;
++import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.when;
++
++import org.junit.Test;
++
++public class DeepStubsEnumMockingTest {
++
++    interface Piece {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE;
++
++        public double getCostPerPieceSpace() {
++            return 1d;
++        }
++    }
++
++    static class Board {
++        private final Piece piece;
++
++        Board(Piece piece) {
++            this.piece = piece;
++        }
++
++        double getCostPerSpace() {
++            return Math.floor(piece.getPiece().getCostPerPieceSpace());
++        }
++    }
++
++    @Test
++    public void deep_stubs_should_work_with_enum_return_type() {
++        Piece piece = mock(Piece.class, RETURNS_DEEP_STUBS);
++        Board board = new Board(piece);
++
++        when(piece.getPiece().getCostPerPieceSpace()).thenReturn(2.5d);
++
++        assertThat(board.getCostPerSpace(), is(2d));
++    }
++}
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubsEnumMockingTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubsEnumMockingTest.java
+new file mode 100644
+index 000000000..0a3e21739
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubsEnumMockingTest.java
+@@ -0,0 +1,62 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.Answers.RETURNS_DEEP_STUBS;
++import static org.mockito.Mockito.when;
++
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Mock;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++@ExtendWith(MockitoExtension.class)
++class DeepStubsEnumMockingTest {
++
++    @Mock(answer = RETURNS_DEEP_STUBS)
++    Piece piece;
++
++    private Board board;
++
++    @BeforeEach
++    void setUp() {
++        board = new Board(piece, 10);
++    }
++
++    @Test
++    void deep_stubs_should_work_with_enum_return_type() {
++        when(piece.getPiece().getCostPerPieceSpace()).thenReturn(2.5d);
++
++        assertThat(board.getCostPerSpace()).isEqualTo(2d);
++    }
++
++    interface Piece {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE;
++
++        double getCostPerPieceSpace() {
++            return 1d;
++        }
++    }
++
++    static class Board {
++        private final Piece piece;
++        private final int spaces;
++
++        Board(Piece piece, int spaces) {
++            this.piece = piece;
++            this.spaces = spaces;
++        }
++
++        double getCostPerSpace() {
++            return Math.floor(piece.getPiece().getCostPerPieceSpace());
++        }
++    }
++}

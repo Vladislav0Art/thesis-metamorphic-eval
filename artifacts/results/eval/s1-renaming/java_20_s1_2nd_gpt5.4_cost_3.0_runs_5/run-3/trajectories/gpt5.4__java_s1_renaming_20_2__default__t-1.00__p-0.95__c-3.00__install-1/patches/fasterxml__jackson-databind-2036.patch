@@ -1,0 +1,124 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..d1fc90c03 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -135,21 +135,6 @@ public enum MapperFeature implements ConfigFeature
+      */
+     AUTO_DETECT_IS_GETTERS(true),
+ 
+-    /**
+-     * Feature that determines whether "setter" methods are
+-     * automatically detected based on standard Bean naming convention
+-     * or not. If yes, then all public one-argument methods that
+-     * start with prefix "set"
+-     * are considered setters. If disabled, only methods explicitly
+-     * annotated are considered setters.
+-     *<p>
+-     * Note that this feature has lower precedence than per-class
+-     * annotations, and is only used if there isn't more granular
+-     * configuration available.
+-     *<P>
+-     * Feature is enabled by default.
+-     */
+-    AUTO_DETECT_SETTERS(true),
+ 
+     /**
+      * Feature that determines whether getters (getter methods)
+@@ -462,6 +447,20 @@ public enum MapperFeature implements ConfigFeature
+      */
+     IGNORE_DUPLICATE_MODULE_REGISTRATIONS(true),
+ 
++    /**
++     * Feature that determines whether declared base type of a polymorphic value
++     * is to be used as the default implementation, if no explicit default class
++     * is specified via {@code @JsonTypeInfo.defaultImpl}.
++     *<p>
++     * This is only applicable when the declared base type is concrete; when enabled,
++     * it allows deserialization into a concrete subtype even if type id is missing.
++     *<p>
++     * Feature is disabled by default.
++     *
++     * @since 2.10
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /**
+      * Setting that determines what happens if an attempt is made to explicitly
+      * "merge" value of a property, where value does not support merging; either
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
+index fbd834ece..feaf795d5 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
+@@ -123,7 +123,12 @@ public class StandardTypeResolverBuilder
+         JavaType defaultImplementation;
+ 
+         if (_defaultImpl == null) {
+-            defaultImplementation = null;
++            if (serializationConfig.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && baseJavaType.isConcrete()) {
++                defaultImplementation = baseJavaType;
++            } else {
++                defaultImplementation = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+index 46acfa8cb..fc2e0f28d 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+@@ -140,6 +140,14 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         public AsProperty value;
+     }
+ 
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY,
++            property = "type")
++    public interface Base753 {
++    }
++
++    public static class Impl753 implements Base753 {
++        public String name;
++    }
+     /*
+     /**********************************************************
+     /* Unit tests, deserialization
+@@ -279,6 +287,26 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         assertNull(wrapper.value);
+     }
+ 
++    public void testMissingTypeIdWithConcreteSubTypeByDefault() throws Exception
++    {
++        try {
++            MAPPER.readValue(aposToQuotes("{'name':'name'}"), Impl753.class);
++            fail("Expected " + InvalidTypeIdException.class);
++        } catch (InvalidTypeIdException e) {
++            verifyException(e, "missing type id property 'type'");
++        }
++    }
++
++    public void testUseBaseTypeAsDefaultImplWhenConcreteTarget() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++
++        Impl753 result = mapper.readValue(aposToQuotes("{'name':'name'}"), Impl753.class);
++        assertNotNull(result);
++        assertEquals("name", result.name);
++    }
++
+     /*
+     /**********************************************************
+     /* Unit tests, serialization

@@ -1,0 +1,480 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/MockingEngine.java b/src/main/java/org/mockito/internal/MockingEngine.java
+index 3b626cb04..0ddf838a0 100644
+--- a/src/main/java/org/mockito/internal/MockingEngine.java
++++ b/src/main/java/org/mockito/internal/MockingEngine.java
+@@ -119,6 +119,7 @@ public class MockingEngine {
+     }
+ 
+     public <T> MockedStatic<T> createStaticMock(Class<T> targetClass, MockSettings mockOptions) {
++        validateDoNotMockAnnotationForType(targetClass);
+         if (!MockConfigurationImpl.class.isInstance(mockOptions)) {
+             throw new IllegalArgumentException(
+                     "Unexpected implementation of '"
+diff --git a/src/test/java/org/mockitousage/annotation/DoNotMockTest.java b/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
+index 936434536..42feddbb9 100644
+--- a/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
++++ b/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
+@@ -1,133 +1,276 @@
+-/*
+- * Copyright (c) 2019 Mockito contributors
+- * This program is made available under the terms of the MIT License.
+- */
+-package org.mockitousage.annotation;
++package org.mockitoinline;
+ 
+ import static org.assertj.core.api.Assertions.assertThatThrownBy;
+-import static org.mockito.Mockito.mock;
++import static org.junit.Assert.assertEquals;
++import static org.junit.Assert.assertNull;
++import static org.mockito.ArgumentMatchers.any;
++import static org.mockito.Mockito.times;
++
++import java.util.concurrent.atomic.AtomicReference;
+ 
+ import org.junit.Test;
+ import org.mockito.DoNotMock;
+-import org.mockito.Mock;
+-import org.mockito.MockitoAnnotations;
++import org.mockito.MockedStatic;
++import org.mockito.Mockito;
++import org.mockito.exceptions.base.MockitoException;
+ import org.mockito.exceptions.misusing.DoNotMockException;
++import org.mockito.exceptions.verification.NoInteractionsWanted;
++import org.mockito.exceptions.verification.WantedButNotInvoked;
+ 
+-public class DoNotMockTest {
++public final class StaticMockTest {
+ 
+     @Test
+-    public void can_not_mock_class_annotated_with_donotmock() {
+-        assertThatThrownBy(
+-                        () -> {
+-                            NotMockable notMockable = mock(NotMockable.class);
+-                        })
+-                .isInstanceOf(DoNotMockException.class);
++    public void testStaticMockSimple() {
++        assertEquals("foo", Dummy.foo());
++        try (MockedStatic<Dummy> ignored = Mockito.mockStatic(Dummy.class)) {
++            assertNull(Dummy.foo());
++        }
++        assertEquals("foo", Dummy.foo());
+     }
+ 
+     @Test
+-    public void can_not_mock_class_via_mock_annotation() {
+-        assertThatThrownBy(
+-                        () -> {
+-                            MockitoAnnotations.openMocks(new TestClass());
+-                        })
+-                .isInstanceOf(DoNotMockException.class);
++    public void testStaticMockWithVerification() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            dummy.when(Dummy::foo).thenReturn("bar");
++            assertEquals("bar", Dummy.foo());
++            dummy.verify(Dummy::foo);
++        }
+     }
+ 
+     @Test
+-    public void can_not_mock_class_with_interface_annotated_with_donotmock() {
+-        assertThatThrownBy(
+-                        () -> {
+-                            SubclassOfNotMockableInterface notMockable =
+-                                    mock(SubclassOfNotMockableInterface.class);
+-                        })
+-                .isInstanceOf(DoNotMockException.class);
++    public void testStaticMockWithVerificationFailed() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            assertThatThrownBy(
++                            () -> {
++                                dummy.verify(Dummy::foo);
++                            })
++                    .isInstanceOf(WantedButNotInvoked.class)
++                    .hasMessageContaining("there were zero interactions with this mock");
++        }
+     }
+ 
+     @Test
+-    public void can_not_mock_subclass_with_unmockable_interface() {
+-        assertThatThrownBy(
+-                        () -> {
+-                            DoubleSubclassOfInterface notMockable =
+-                                    mock(DoubleSubclassOfInterface.class);
+-                        })
+-                .isInstanceOf(DoNotMockException.class);
++    public void testStaticMockWithNoInteractions() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            dummy.when(Dummy::foo).thenReturn("bar");
++            dummy.verifyNoInteractions();
++        }
+     }
+ 
+     @Test
+-    public void can_not_mock_subclass_with_unmockable_superclass() {
+-        assertThatThrownBy(
+-                        () -> {
+-                            SubclassOfNotMockableSuperclass notMockable =
+-                                    mock(SubclassOfNotMockableSuperclass.class);
+-                        })
+-                .isInstanceOf(DoNotMockException.class);
++    public void testStaticMockWithNoInteractionsFailed() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            dummy.when(Dummy::foo).thenReturn("bar");
++            assertEquals("bar", Dummy.foo());
++            assertThatThrownBy(
++                            () -> {
++                                dummy.verifyNoInteractions();
++                            })
++                    .isInstanceOf(NoInteractionsWanted.class)
++                    .hasMessageContaining("No interactions wanted here")
++                    .hasMessageContaining("above is the only interaction with this mock.");
++        }
+     }
+ 
+     @Test
+-    public void
+-            can_not_mock_subclass_with_unmockable_interface_that_extends_non_mockable_interface() {
+-        assertThatThrownBy(
+-                        () -> {
+-                            SubclassOfSubInterfaceOfNotMockableInterface notMockable =
+-                                    mock(SubclassOfSubInterfaceOfNotMockableInterface.class);
+-                        })
+-                .isInstanceOf(DoNotMockException.class);
++    public void testStaticMockWithNoMoreInteractions() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            dummy.when(Dummy::foo).thenReturn("bar");
++            assertEquals("bar", Dummy.foo());
++            dummy.verify(Dummy::foo);
++            dummy.verifyNoMoreInteractions();
++        }
+     }
+ 
+     @Test
+-    public void thrown_exception_includes_non_mockable_reason() {
+-        assertThatThrownBy(
+-                        () -> {
+-                            NotMockable notMockable = mock(NotMockable.class);
+-                        })
+-                .isInstanceOf(DoNotMockException.class)
+-                .hasMessageContaining("Create a real instance instead");
++    public void testStaticMockWithNoMoreInteractionsFailed() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            dummy.when(Dummy::foo).thenReturn("bar");
++            assertEquals("bar", Dummy.foo());
++            assertThatThrownBy(
++                            () -> {
++                                dummy.verifyNoInteractions();
++                            })
++                    .isInstanceOf(NoInteractionsWanted.class)
++                    .hasMessageContaining("No interactions wanted here")
++                    .hasMessageContaining("above is the only interaction with this mock.");
++        }
+     }
+ 
+     @Test
+-    public void thrown_exception_includes_special_non_mockable_reason() {
+-        assertThatThrownBy(
+-                        () -> {
+-                            NotMockableWithReason notMockable = mock(NotMockableWithReason.class);
+-                        })
+-                .isInstanceOf(DoNotMockException.class)
+-                .hasMessageContaining("Special reason");
++    public void testStaticMockVoidMethod() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            Dummy.fooVoid("bar");
++            dummy.verify(() -> Dummy.fooVoid("bar"));
++        }
++    }
++
++    @Test
++    public void testStaticMockVoidMethodStubbing() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            dummy.when(() -> Dummy.fooVoid("bar")).thenThrow(new RuntimeException());
++            assertThatThrownBy(
++                            () -> {
++                                Dummy.fooVoid("bar");
++                            })
++                    .isInstanceOf(RuntimeException.class);
++            dummy.verify(() -> Dummy.fooVoid("bar"));
++        }
+     }
+ 
+     @Test
+-    public void can_not_mock_class_with_custom_donotmock_annotation() {
++    public void testStaticMockReset() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            dummy.when(Dummy::foo).thenReturn("bar");
++            dummy.reset();
++            assertNull(Dummy.foo());
++        }
++    }
++
++    @Test
++    public void testStaticMockClear() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            dummy.when(Dummy::foo).thenReturn("bar");
++            assertEquals("bar", Dummy.foo());
++            dummy.clearInvocations();
++            dummy.verifyNoInteractions();
++        }
++    }
++
++    @Test
++    public void testStaticMockName() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            assertEquals("static mock for org.mockitoinline.StaticMockTest$Dummy", dummy.toString());
++        }
++    }
++
++    @Test
++    public void testStaticMockDefaultAnswer() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class, invocation -> "bar")) {
++            assertEquals("bar", Dummy.foo());
++            dummy.verify(Dummy::foo);
++        }
++    }
++
++    @Test
++    public void testStaticMockDoesNotAffectDifferentThread() throws InterruptedException {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            dummy.when(Dummy::foo).thenReturn("bar");
++            assertEquals("bar", Dummy.foo());
++            dummy.verify(Dummy::foo);
++            AtomicReference<String> reference = new AtomicReference<>();
++            Thread thread = new Thread(() -> reference.set(Dummy.foo()));
++            thread.start();
++            thread.join();
++            assertEquals("foo", reference.get());
++            dummy.when(Dummy::foo).thenReturn("bar");
++            assertEquals("bar", Dummy.foo());
++            dummy.verify(Dummy::foo, times(2));
++        }
++    }
++
++    @Test
++    public void testStaticMockCanCoexistWithMockInDifferentThread() throws InterruptedException {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            dummy.when(Dummy::foo).thenReturn("bar");
++            assertEquals("bar", Dummy.foo());
++            dummy.verify(Dummy::foo);
++            AtomicReference<String> reference = new AtomicReference<>();
++            Thread thread =
++                    new Thread(
++                            () -> {
++                                try (MockedStatic<Dummy> dummy2 = Mockito.mockStatic(Dummy.class)) {
++                                    dummy2.when(Dummy::foo).thenReturn("qux");
++                                    reference.set(Dummy.foo());
++                                }
++                            });
++            thread.start();
++            thread.join();
++            assertEquals("qux", reference.get());
++            dummy.when(Dummy::foo).thenReturn("bar");
++            assertEquals("bar", Dummy.foo());
++            dummy.verify(Dummy::foo, times(2));
++        }
++    }
++
++    @Test
++    public void testStaticMockMustBeExclusiveInScopeWithinThread() {
+         assertThatThrownBy(
+                         () -> {
+-                            NotMockableWithDifferentAnnotation notMockable =
+-                                    mock(NotMockableWithDifferentAnnotation.class);
++                            try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class);
++                                    MockedStatic<Dummy> duplicate =
++                                            Mockito.mockStatic(Dummy.class)) {}
+                         })
+-                .isInstanceOf(DoNotMockException.class);
++                .isInstanceOf(MockitoException.class)
++                .hasMessageContaining("static mocking is already registered in the current thread");
+     }
+ 
+-    @DoNotMock
+-    private static class NotMockable {}
++    @Test
++    public void testStaticMockVoid() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            Dummy.fooVoid("bar");
++            assertNull(Dummy.var1);
++            dummy.verify(() -> Dummy.fooVoid("bar"));
++        }
++        Dummy.fooVoid("bar");
++        assertEquals("bar", Dummy.var1);
++    }
+ 
+-    @DoNotMock
+-    private interface NotMockableInterface {}
++    @Test
++    public void testStaticMockMustUseValidMatchers() {
++        try (MockedStatic<Dummy> mockedClass = Mockito.mockStatic(Dummy.class)) {
++            assertThatThrownBy(
++                            () -> {
++                                mockedClass
++                                        .when(() -> Dummy.fooVoid("foo", any()))
++                                        .thenReturn(null);
++                            })
++                    .hasMessageContaining("Invalid use of argument matchers!");
++
++            Dummy.fooVoid("foo", "bar");
++        }
++    }
+ 
+-    @org.mockitousage.annotation.org.mockito.DoNotMock
+-    private static class NotMockableWithDifferentAnnotation {}
++    @Test
++    public void testStaticMockVarargs() {
++        assertEquals("foobar", Dummy.fooVarargs("foo", "bar"));
++        try (MockedStatic<Dummy> ignored = Mockito.mockStatic(Dummy.class)) {
++            assertNull(Dummy.fooVarargs("foo", "bar"));
++        }
++        assertEquals("foobar", Dummy.fooVarargs("foo", "bar"));
++    }
+ 
+-    @DoNotMock(reason = "Special reason")
+-    private interface NotMockableWithReason {}
++    @Test
++    public void testStaticMockRejectsDoNotMockAnnotatedType() {
++        assertThatThrownBy(() -> Mockito.mockStatic(DoNotMockDummy.class))
++                .isInstanceOf(DoNotMockException.class);
++    }
+ 
+-    static class SubclassOfNotMockableInterface implements NotMockableInterface {}
++    static class Dummy {
+ 
+-    private static class DoubleSubclassOfInterface extends SubclassOfNotMockableInterface {}
++        static String var1 = null;
+ 
+-    private static class SubclassOfNotMockableSuperclass extends NotMockable {}
++        static String foo() {
++            return "foo";
++        }
+ 
+-    private interface SubInterfaceOfNotMockableInterface extends NotMockableInterface {}
++        static void fooVoid(String var2) {
++            var1 = var2;
++        }
+ 
+-    private static class SubclassOfSubInterfaceOfNotMockableInterface
+-            implements SubInterfaceOfNotMockableInterface {}
++        static void fooVoid(String var2, String var3) {
++            var1 = var2;
++        }
+ 
+-    private static class TestClass {
+-        @Mock private NotMockable notMockable;
++        static String fooVarargs(String... args) {
++            StringBuilder sb = new StringBuilder();
++            for (String arg : args) {
++                sb.append(arg);
++            }
++            return sb.toString();
++        }
+     }
++
++    @DoNotMock
++    static class DoNotMockDummy {}
+ }
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java
+index e63e5bba8..34cbc66e7 100644
+--- a/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java
+@@ -13,6 +13,7 @@ import static org.mockito.Mockito.times;
+ import java.util.concurrent.atomic.AtomicReference;
+ 
+ import org.junit.Test;
++import org.mockito.DoNotMock;
+ import org.mockito.MockedStatic;
+ import org.mockito.Mockito;
+ import org.mockito.exceptions.base.MockitoException;
+@@ -100,19 +101,23 @@ public final class StaticMockTest {
+     }
+ 
+     @Test
+-    public void testStaticMockWithDefaultAnswer() {
+-        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class, invocation -> "bar")) {
+-            assertEquals("bar", Dummy.foo());
+-            dummy.verify(Dummy::foo);
++    public void testStaticMockVoidMethod() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            Dummy.fooVoid("bar");
++            dummy.verify(() -> Dummy.fooVoid("bar"));
+         }
+     }
+ 
+     @Test
+-    public void testStaticMockWithRealMethodCall() {
++    public void testStaticMockVoidMethodStubbing() {
+         try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
+-            dummy.when(Dummy::foo).thenCallRealMethod();
+-            assertEquals("foo", Dummy.foo());
+-            dummy.verify(Dummy::foo);
++            dummy.when(() -> Dummy.fooVoid("bar")).thenThrow(new RuntimeException());
++            assertThatThrownBy(
++                            () -> {
++                                Dummy.fooVoid("bar");
++                            })
++                    .isInstanceOf(RuntimeException.class);
++            dummy.verify(() -> Dummy.fooVoid("bar"));
+         }
+     }
+ 
+@@ -135,6 +140,21 @@ public final class StaticMockTest {
+         }
+     }
+ 
++    @Test
++    public void testStaticMockName() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
++            assertEquals("static mock for org.mockitoinline.StaticMockTest$Dummy", dummy.toString());
++        }
++    }
++
++    @Test
++    public void testStaticMockDefaultAnswer() {
++        try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class, invocation -> "bar")) {
++            assertEquals("bar", Dummy.foo());
++            dummy.verify(Dummy::foo);
++        }
++    }
++
+     @Test
+     public void testStaticMockDoesNotAffectDifferentThread() throws InterruptedException {
+         try (MockedStatic<Dummy> dummy = Mockito.mockStatic(Dummy.class)) {
+@@ -223,6 +243,14 @@ public final class StaticMockTest {
+         assertEquals("foobar", Dummy.fooVarargs("foo", "bar"));
+     }
+ 
++    @Test
++    public void testStaticMockRejectsDoNotMockAnnotatedType() {
++        assertThatThrownBy(() -> Mockito.mockStatic(DoNotMockDummy.class))
++                .isInstanceOf(MockitoException.class)
++                .hasMessageContaining("Cannot mock/spy")
++                .hasMessageContaining("DoNotMockDummy");
++    }
++
+     static class Dummy {
+ 
+         static String var1 = null;
+@@ -247,4 +275,7 @@ public final class StaticMockTest {
+             return sb.toString();
+         }
+     }
++
++    @DoNotMock
++    static class DoNotMockDummy {}
+ }

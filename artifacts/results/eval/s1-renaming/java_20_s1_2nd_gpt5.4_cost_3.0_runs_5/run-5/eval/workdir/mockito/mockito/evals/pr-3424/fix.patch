@@ -1,0 +1,39 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/test/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMakerTest.java b/src/test/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMakerTest.java
+index dc341d895..a79bb90d9 100644
+--- a/src/test/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMakerTest.java
++++ b/src/test/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMakerTest.java
+@@ -517,6 +517,20 @@ public class InlineDelegateByteBuddyMockMakerTest
+         assertThat(mockMaker.getHandler(proxy2)).isNull();
+     }
+ 
++    @Test
++    public void test_cleared_mock_throws_descriptive_exception_when_invoked() {
++        MockCreationSettings<GenericSubClass> settings = settingsFor(GenericSubClass.class);
++        GenericSubClass proxy =
++                mockMaker.createMock(settings, new MockHandlerImpl<GenericSubClass>(settings));
++
++        mockMaker.clearAllMocks();
++
++        MockitoException exception = assertThrows(MockitoException.class, proxy::value);
++        assertThat(exception)
++                .hasMessageContaining("This inline mock was cleared")
++                .hasMessageContaining("clearInlineMocks()");
++    }
++
+     protected static <T> MockCreationSettings<T> settingsFor(
+             Class<T> type, Class<?>... extraInterfaces) {
+         MockSettingsImpl<T> mockSettings = new MockSettingsImpl<T>();

@@ -1,0 +1,109 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+index cd5194258..b926c0c2c 100644
+--- a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
++++ b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+@@ -87,7 +87,6 @@ public class SpyAnnotationEngine implements AnnotationEngine {
+         return Mockito.mock(
+                 instance.getClass(),
+                 withSettings()
+-                        .genericTypeToMock(field.getGenericType())
+                         .spiedInstance(instance)
+                         .defaultAnswer(CALLS_REAL_METHODS)
+                         .name(field.getName()));
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockMaker.java
+index 7d8972cb0..ff1f6b1bc 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockMaker.java
+@@ -345,6 +345,11 @@ class InlineDelegatingByteBuddyMockMaker
+                         true);
+     }
+ 
++    @Override
++    public <T> T createMock(MockCreationSettings<T> settings, MockHandler handler) {
++        return createMockInstance(settings, handler);
++    }
++
+     public <T> T createMockInstance(MockCreationSettings<T> creationSettings, MockHandler mockOperator) {
+         return createMockInstance(creationSettings, mockOperator, false);
+     }
+@@ -487,7 +492,16 @@ class InlineDelegatingByteBuddyMockMaker
+         }
+     }
+ 
+-    public void resetMockInterceptor(Object candidate, MockHandler replacement, MockCreationSettings creationSettings) {
++    @Override
++    public void resetMock(
++            Object mock, MockHandler newHandler, MockCreationSettings settings) {
++        resetMockInterceptor(mock, newHandler, settings);
++    }
++
++    public void resetMockInterceptor(
++            Object candidate,
++            MockHandler replacement,
++            MockCreationSettings creationSettings) {
+         MockMethodInterceptor methodInterceptor =
+                 new MockMethodInterceptor(replacement, creationSettings);
+         if (candidate instanceof Class<?>) {
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakFinalSpyTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakFinalSpyTest.java
+new file mode 100644
+index 000000000..5a414cd86
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakFinalSpyTest.java
+@@ -0,0 +1,43 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Spy;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import java.util.List;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertNotNull;
++
++@ExtendWith(MockitoExtension.class)
++class GenericSpyDoesNotBreakFinalSpyTest {
++
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private FinalType finalSpy = new FinalType("some value");
++
++    @Test
++    void generic_spy_does_not_reset_existing_inline_spy_state() {
++        assertNotNull(genericSpy);
++        assertEquals("some value", finalSpy.someParameter());
++    }
++
++    static final class FinalType {
++        private final String someParameter;
++
++        FinalType(String someParameter) {
++            this.someParameter = someParameter;
++        }
++
++        String someParameter() {
++            return someParameter;
++        }
++    }
++}

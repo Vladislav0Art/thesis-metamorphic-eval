@@ -1,0 +1,90 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockMaker.java
+index 7d8972cb0..dbe77ed5a 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockMaker.java
+@@ -345,6 +345,11 @@ class InlineDelegatingByteBuddyMockMaker
+                         true);
+     }
+ 
++    @Override
++    public <T> T createMock(MockCreationSettings<T> settings, MockHandler handler) {
++        return createMockInstance(settings, handler);
++    }
++
+     public <T> T createMockInstance(MockCreationSettings<T> creationSettings, MockHandler mockOperator) {
+         return createMockInstance(creationSettings, mockOperator, false);
+     }
+@@ -487,6 +492,11 @@ class InlineDelegatingByteBuddyMockMaker
+         }
+     }
+ 
++    @Override
++    public void resetMock(Object candidate, MockHandler replacement, MockCreationSettings creationSettings) {
++        resetMockInterceptor(candidate, replacement, creationSettings);
++    }
++
+     public void resetMockInterceptor(Object candidate, MockHandler replacement, MockCreationSettings creationSettings) {
+         MockMethodInterceptor methodInterceptor =
+                 new MockMethodInterceptor(replacement, creationSettings);
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyRecordTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyRecordTest.java
+new file mode 100644
+index 000000000..4ba84ebaa
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyRecordTest.java
+@@ -0,0 +1,42 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import java.util.List;
++
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Spy;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import static org.junit.jupiter.api.Assertions.assertNotNull;
++
++@ExtendWith(MockitoExtension.class)
++class GenericSpyRecordTest {
++
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private ExampleFinalClass exampleFinalClass = new ExampleFinalClass("some value");
++
++    @Test
++    void should_keep_initialized_final_spy_state_when_another_spy_has_generic_type() {
++        assertNotNull(exampleFinalClass.someParameter());
++    }
++
++    private static final class ExampleFinalClass {
++        private final String someParameter;
++
++        private ExampleFinalClass(String someParameter) {
++            this.someParameter = someParameter;
++        }
++
++        private String someParameter() {
++            return someParameter;
++        }
++    }
++}
++

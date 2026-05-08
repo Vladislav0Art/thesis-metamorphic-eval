@@ -1,0 +1,57 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+index 16597299..b9ed2674 100644
+--- a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
++++ b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonParser;
+ import com.fasterxml.jackson.core.JsonParser.Feature;
+ import com.fasterxml.jackson.core.JsonToken;
+ import com.fasterxml.jackson.core.json.UTF8InputStreamJsonParser;
++import com.fasterxml.jackson.core.io.SerializedString;
+ 
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+@@ -289,6 +290,31 @@ public class TrailingCommasTest extends BaseTest {
+     p.close();
+   }
+ 
++  @Test
++  public void testObjectTrailingCommaWithNextFieldName() throws Exception {
++    String json = "{\"a\": true, \"b\": false,}";
++
++    JsonParser p = createParser(factory, mode, json);
++
++    assertEquals(JsonToken.START_OBJECT, p.nextToken());
++
++    assertTrue(p.nextFieldName(new SerializedString("a")));
++    assertToken(JsonToken.VALUE_TRUE, p.nextToken());
++
++    assertTrue(p.nextFieldName(new SerializedString("b")));
++    assertToken(JsonToken.VALUE_FALSE, p.nextToken());
++
++    if (features.contains(Feature.ALLOW_TRAILING_COMMA)) {
++      assertNull(p.nextFieldName());
++      assertToken(JsonToken.END_OBJECT, p.getCurrentToken());
++      assertEnd(p);
++    } else {
++      assertUnexpected(p, '}');
++    }
++    p.close();
++  }
++
++
+   @Test
+   public void testObjectTrailingCommas() throws Exception {
+     String json = "{\"a\": true, \"b\": false,,}";

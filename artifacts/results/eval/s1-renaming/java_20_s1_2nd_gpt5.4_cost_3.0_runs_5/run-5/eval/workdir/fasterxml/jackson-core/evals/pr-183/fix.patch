@@ -1,0 +1,172 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/io/SegmentedStringWriter.java b/src/main/java/com/fasterxml/jackson/core/io/SegmentedStringWriter.java
+index 008b6a28..0392f3e4 100644
+--- a/src/main/java/com/fasterxml/jackson/core/io/SegmentedStringWriter.java
++++ b/src/main/java/com/fasterxml/jackson/core/io/SegmentedStringWriter.java
+@@ -85,3 +85,4 @@ public final class SegmentedStringWriter extends Writer
+         return result;
+     }
+ }
++
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+index 7f417979..ea8df4d0 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+@@ -7,49 +7,32 @@ import java.util.Arrays;
+ import com.fasterxml.jackson.core.io.NumberInput;
+ 
+ /**
+- * TextBuffer is a class similar to {@link StringBuffer}, with
++ * TextBuffer is a class similar to {@link java.lang.StringBuffer}, with
+  * following differences:
+  *<ul>
+- *  <li>TextBuffer uses segments character arrays, to avoid having
+- *     to do additional array copies when array is not big enough.
+- *     This means that only reallocating that is necessary is done only once:
+- *     if and when caller
+- *     wants to access contents in a linear array (char[], String).
+- *    </li>
+-*  <li>TextBuffer can also be initialized in "shared mode", in which
+-*     it will just act as a wrapper to a single char array managed
+-*     by another object (like parser that owns it)
+- *    </li>
+- *  <li>TextBuffer is not synchronized.
+- *    </li>
++ * <li>TextBuffer uses segments character arrays, to avoid having to do
++ *   additional array copies when array is not big enough. This means that
++ *   only reallocating that is necessary is done only once: if and when caller
++ *   wants to access contents in a linear array (char[], String).
++ *  </li>
++ * <li>TextBuffer can also be initialized in "shared mode", in which it will just
++ *   act as a wrapper to a single char array managed by another object (like
++ *   parser that owns it)
++ *  </li>
+  * </ul>
+  */
+ public final class SegmentedTextBuffer
+ {
+-    final static char[] EMPTY_CHARS = new char[0];
+-
+-    /**
+-     * Let's start with sizable but not huge buffer, will grow as necessary
+-     */
+     final static int MIN_SEGMENT_LENGTH = 1000;
+-    
+-    /**
+-     * Let's limit maximum segment length to something sensible
+-     * like 256k
+-     */
+-    final static int MAX_SEGMENT_LENGTH = 0x40000;
+-    
+-    /*
+-    /**********************************************************
+-    /* Configuration:
+-    /**********************************************************
+-     */
++    final static int MAX_SEGMENT_LENGTH = 262144;
++
++    final static char[] EMPTY_CHARS = new char[0];
+ 
+     private final BufferRecycler bufferRecycler;
+ 
+     /*
+     /**********************************************************
+-    /* Shared input buffers
++    /* Shared input buf
+     /**********************************************************
+      */
+ 
+@@ -93,6 +76,7 @@ public final class SegmentedTextBuffer
+ 
+     private char[] activeSegment;
+ 
++
+     /**
+      * Number of characters in currently active (last) segment
+      */
+@@ -206,7 +190,7 @@ public final class SegmentedTextBuffer
+             activeSegment = getCharBuffer(length);
+         }
+         currentSegmentLength = segmentCapacity = 0;
+-        appendChar(bufferToRelease, offset, length);
++        append(bufferToRelease, offset, length);
+     }
+ 
+     public void resetToString(String strValue)
+@@ -304,7 +288,9 @@ public final class SegmentedTextBuffer
+             return (resultChars = cachedString.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!segmentsPresent)  return activeSegment;
++        if (!segmentsPresent) {
++            return (activeSegment == null) ? EMPTY_CHARS : activeSegment;
++        }
+         // Nope, need to have/create a non-segmented array and return it
+         return getContentsAsArray();
+     }
+@@ -408,7 +394,7 @@ public final class SegmentedTextBuffer
+         }
+     }
+ 
+-    public void appendChar(char ch) {
++    public void append(char ch) {
+         // Using shared buffer so far?
+         if (inputOffset >= 0) {
+             ensureUnshared(16);
+@@ -424,7 +410,7 @@ public final class SegmentedTextBuffer
+         segment[currentSegmentLength++] = ch;
+     }
+ 
+-    public void appendChar(char[] ch, int offset, int length)
++    public void append(char[] ch, int offset, int length)
+     {
+         // Can't append to shared buf (sanity check)
+         if (inputOffset >= 0) {
+@@ -436,7 +422,7 @@ public final class SegmentedTextBuffer
+         // Room in current segment?
+         char[] segment = activeSegment;
+         int available = segment.length - currentSegmentLength;
+-            
++
+         if (available >= length) {
+             System.arraycopy(ch, offset, segment, currentSegmentLength, length);
+             currentSegmentLength += length;
+@@ -462,7 +448,7 @@ public final class SegmentedTextBuffer
+         } while (length > 0);
+     }
+ 
+-    public void appendChar(String string, int startOffset, int length)
++    public void append(String string, int startOffset, int length)
+     {
+         // Can't append to shared buf (sanity check)
+         if (inputOffset >= 0) {
+@@ -498,6 +484,17 @@ public final class SegmentedTextBuffer
+             length -= toCopy;
+         } while (length > 0);
+     }
++    public void appendChar(char ch) {
++        append(ch);
++    }
++
++    public void appendChar(char[] ch, int offset, int length) {
++        append(ch, offset, length);
++    }
++
++    public void appendChar(String string, int startOffset, int length) {
++        append(string, startOffset, length);
++    }
+ 
+     /*
+     /**********************************************************

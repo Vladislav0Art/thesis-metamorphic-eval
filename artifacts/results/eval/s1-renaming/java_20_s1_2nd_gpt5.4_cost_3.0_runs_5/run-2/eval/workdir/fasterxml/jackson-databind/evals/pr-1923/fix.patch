@@ -1,0 +1,96 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1271c273b..1077e3bcb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeChecker.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeChecker.java
+index 90c81a3a1..75ddc5789 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeChecker.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeChecker.java
+@@ -80,7 +80,9 @@ public class SubTypeChecker
+             // 18-Dec-2017, tatu: As per [databind#1855], need bit more sophisticated handling
+             //    for some Spring framework types
+             if (fullyQualifiedName.startsWith(PREFIX_STRING)) {
+-                for (Class<?> targetClass = underlyingClass; targetClass != Object.class; targetClass = targetClass.getSuperclass()) {
++                for (Class<?> targetClass = underlyingClass;
++                        targetClass != null && targetClass != Object.class;
++                        targetClass = targetClass.getSuperclass()) {
+                     String identifier = targetClass.getSimpleName();
+                     // looking for "AbstractBeanFactoryPointcutAdvisor" but no point to allow any is there?
+                     if ("AbstractPointcutAdvisor".equals(identifier)
+diff --git a/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java b/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
+index 87ee570da..33df63c5d 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
++++ b/src/test/java/com/fasterxml/jackson/databind/interop/IllegalTypesCheckTest.java
+@@ -2,6 +2,7 @@ package com.fasterxml.jackson.databind.interop;
+ 
+ import org.springframework.jacksontest.BogusApplicationContext;
+ import org.springframework.jacksontest.BogusPointcutAdvisor;
++import org.springframework.security.core.Authentication;
+ 
+ import com.fasterxml.jackson.annotation.JsonTypeInfo;
+ import com.fasterxml.jackson.databind.*;
+@@ -76,6 +77,22 @@ public class IllegalTypesCheckTest extends BaseMapTest
+         _testIllegalType(BogusApplicationContext.class);
+     }
+ 
++    public void testSpringInterfaceSubType() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
++
++        String json = aposToQuotes(
++                "{'@class':'org.springframework.security.core.Authentication',"
++                + "'authorities':['java.util.ArrayList',[]]}"
++        );
++
++        Authentication authentication = mapper.readValue(json, Authentication.class);
++        assertNotNull(authentication);
++        assertNotNull(authentication.getAuthorities());
++        assertEquals(0, authentication.getAuthorities().size());
++    }
++
+     // 17-Aug-2017, tatu: Ideally would test handling of 3rd party types, too,
+     //    but would require adding dependencies. This may be practical when
+     //    checking done by module, but for now let's not do that for databind.
+diff --git a/src/test/java/org/springframework/security/core/Authentication.java b/src/test/java/org/springframework/security/core/Authentication.java
+new file mode 100644
+index 000000000..c312d9507
+--- /dev/null
++++ b/src/test/java/org/springframework/security/core/Authentication.java
+@@ -0,0 +1,16 @@
++package org.springframework.security.core;
++
++import java.util.ArrayList;
++import java.util.List;
++
++public class Authentication {
++    private List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
++
++    public List<GrantedAuthority> getAuthorities() {
++        return this.authorities;
++    }
++
++    public void setAuthorities(List<GrantedAuthority> authorities) {
++        this.authorities = authorities;
++    }
++}
+diff --git a/src/test/java/org/springframework/security/core/GrantedAuthority.java b/src/test/java/org/springframework/security/core/GrantedAuthority.java
+new file mode 100644
+index 000000000..14f717569
+--- /dev/null
++++ b/src/test/java/org/springframework/security/core/GrantedAuthority.java
+@@ -0,0 +1,5 @@
++package org.springframework.security.core;
++
++public interface GrantedAuthority {
++    String getAuthority();
++}

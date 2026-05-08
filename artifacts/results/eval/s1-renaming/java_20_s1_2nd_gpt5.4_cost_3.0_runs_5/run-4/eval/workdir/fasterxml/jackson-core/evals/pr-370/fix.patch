@@ -1,0 +1,160 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/build.log b/build.log
+new file mode 100644
+index 00000000..8266965b
+--- /dev/null
++++ b/build.log
+@@ -0,0 +1,88 @@
++[[1;34mINFO[m] Scanning for projects...
++[[1;34mINFO[m] 
++[[1;34mINFO[m] [1m--------------< [0;36mcom.fasterxml.jackson.core:jackson-core[0;1m >---------------[m
++[[1;34mINFO[m] [1mBuilding Jackson-core 2.9.0.pr3-SNAPSHOT[m
++[[1;34mINFO[m] [1m-------------------------------[ bundle ]-------------------------------[m
++[[1;34mINFO[m] 
++[[1;34mINFO[m] [1m--- [0;32mmaven-enforcer-plugin:1.3.1:enforce[m [1m(enforce-java)[m @ [36mjackson-core[0;1m ---[m
++[[1;34mINFO[m] 
++[[1;34mINFO[m] [1m--- [0;32mbuild-helper-maven-plugin:1.7:add-source[m [1m(add-generated-sources)[m @ [36mjackson-core[0;1m ---[m
++[[1;34mINFO[m] Source directory: /home/jackson-core/target/generated-sources added.
++[[1;34mINFO[m] 
++[[1;34mINFO[m] [1m--- [0;32mreplacer:1.5.2:replace[m [1m(process-packageVersion)[m @ [36mjackson-core[0;1m ---[m
++[[1;34mINFO[m] Replacement run on 1 file.
++[[1;34mINFO[m] 
++[[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:2.6:resources[m [1m(default-resources)[m @ [36mjackson-core[0;1m ---[m
++[[1;34mINFO[m] Using 'UTF-8' encoding to copy filtered resources.
++[[1;34mINFO[m] Copying 3 resources
++[[1;34mINFO[m] 
++[[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.2:compile[m [1m(default-compile)[m @ [36mjackson-core[0;1m ---[m
++[[1;34mINFO[m] Changes detected - recompiling the module!
++[[1;34mINFO[m] Compiling 91 source files to /home/jackson-core/target/classes
++[[1;34mINFO[m] -------------------------------------------------------------
++[[1;33mWARNING[m] COMPILATION WARNING : 
++[[1;34mINFO[m] -------------------------------------------------------------
++[[1;33mWARNING[m] bootstrap class path not set in conjunction with -source 1.6
++[[1;34mINFO[m] 1 warning
++[[1;34mINFO[m] -------------------------------------------------------------
++[[1;34mINFO[m] -------------------------------------------------------------
++[[1;31mERROR[m] COMPILATION ERROR : 
++[[1;34mINFO[m] -------------------------------------------------------------
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[19,8] com.fasterxml.jackson.core.json.ReaderBackedJsonParser is not abstract and does not override abstract method nextToken() in com.fasterxml.jackson.core.base.ParserMinimalBase
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[156,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[476,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[630,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[776,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[791,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[867,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[1143,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[1170,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[1193,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[1216,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[35,8] com.fasterxml.jackson.core.json.UTF8InputStreamJsonParser is not abstract and does not override abstract method nextToken() in com.fasterxml.jackson.core.base.ParserMinimalBase
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[135,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[417,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[556,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[731,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[748,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[847,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[873,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[895,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[917,5] method does not override or implement a method from a supertype
++[[1;34mINFO[m] 21 errors 
++[[1;34mINFO[m] -------------------------------------------------------------
++[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
++[[1;34mINFO[m] [1;31mBUILD FAILURE[m
++[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
++[[1;34mINFO[m] Total time:  1.487 s
++[[1;34mINFO[m] Finished at: 2026-05-08T13:57:58Z
++[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
++[[1;31mERROR[m] Failed to execute goal [32morg.apache.maven.plugins:maven-compiler-plugin:3.2:compile[m [1m(default-compile)[m on project [36mjackson-core[m: [1;31mCompilation failure[m: Compilation failure: 
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[19,8] com.fasterxml.jackson.core.json.ReaderBackedJsonParser is not abstract and does not override abstract method nextToken() in com.fasterxml.jackson.core.base.ParserMinimalBase
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[156,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[476,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[630,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[776,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[791,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[867,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[1143,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[1170,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[1193,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java:[1216,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[35,8] com.fasterxml.jackson.core.json.UTF8InputStreamJsonParser is not abstract and does not override abstract method nextToken() in com.fasterxml.jackson.core.base.ParserMinimalBase
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[135,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[417,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[556,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[731,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[748,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[847,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[873,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[895,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] /home/jackson-core/src/main/java/com/fasterxml/jackson/core/json/UTF8InputStreamJsonParser.java:[917,5] method does not override or implement a method from a supertype
++[[1;31mERROR[m] -> [1m[Help 1][m
++[[1;31mERROR[m] 
++[[1;31mERROR[m] To see the full stack trace of the errors, re-run Maven with the [1m-e[m switch.
++[[1;31mERROR[m] Re-run Maven using the [1m-X[m switch to enable full debug logging.
++[[1;31mERROR[m] 
++[[1;31mERROR[m] For more information about the errors and possible solutions, please read the following articles:
++[[1;31mERROR[m] [1m[Help 1][m http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+index c0faa714..9b528857 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+@@ -904,6 +904,14 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+         }
+         if (_parsingContext.expectComma()) {
+             index = _skipCommaAndWhitespace(index);
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if (index == INT_RCURLY) {
++                    updateLocation();
++                    _parsingContext = _parsingContext.clearAndGetParent();
++                    _currToken = JsonToken.END_OBJECT;
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             updateLocation();
+diff --git a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+index 16597299..53c6b7b5 100644
+--- a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
++++ b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+@@ -288,6 +288,29 @@ public class TrailingCommasTest extends BaseTest {
+     }
+     p.close();
+   }
++  @Test
++  public void testObjectTrailingCommaWithNextPropertyName() throws Exception {
++    String json = "{\"a\": true, \"b\": false,}";
++
++    JsonParser p = createParser(factory, mode, json);
++
++    assertEquals(JsonToken.START_OBJECT, p.nextToken());
++
++    assertEquals("a", p.nextPropertyName());
++    assertToken(JsonToken.VALUE_TRUE, p.nextToken());
++
++    assertEquals("b", p.nextPropertyName());
++    assertToken(JsonToken.VALUE_FALSE, p.nextToken());
++
++    if (features.contains(Feature.ALLOW_TRAILING_COMMA)) {
++      assertNull(p.nextPropertyName());
++      assertToken(JsonToken.END_OBJECT, p.getCurrentToken());
++      assertEnd(p);
++    } else {
++      assertUnexpected(p, '}');
++    }
++    p.close();
++  }
+ 
+   @Test
+   public void testObjectTrailingCommas() throws Exception {

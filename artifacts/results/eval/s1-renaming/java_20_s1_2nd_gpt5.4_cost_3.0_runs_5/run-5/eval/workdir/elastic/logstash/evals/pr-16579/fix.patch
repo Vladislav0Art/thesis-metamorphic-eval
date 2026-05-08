@@ -1,0 +1,67 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index cccb9c476..856e008ee 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -43,6 +43,28 @@ describe  FileWatch::BufferedTokenizer  do
+     expect(subject.extract("\n\n\n")).to eq(["", "", ""])
+   end
+ 
++  context "with size limit" do
++    subject { FileWatch::BufferedTokenizer.new("\n", 10) }
++
++    it "clears oversized buffered input so processing can restart from the next payload" do
++      expect(subject.extract("12345678")).to eq([])
++
++      expect { subject.extract("901\nok\n") }.to raise_error(Java::JavaLang::IllegalStateException, "input buffer full")
++
++      expect(subject.extract("ok\n")).to eq(["ok"])
++      expect(subject.extract("next\n")).to eq(["next"])
++    end
++
++    it "discards data until the next delimiter after an overflow" do
++      expect(subject.extract("12345678")).to eq([])
++
++      expect { subject.extract("9012") }.to raise_error(Java::JavaLang::IllegalStateException, "input buffer full")
++
++      expect(subject.extract("345")).to eq([])
++      expect(subject.extract("6\nok\n")).to eq(["ok"])
++    end
++  end
++
+   context 'with delimiter' do
+     subject { FileWatch::BufferedTokenizer.new(delimiter) }
+ 
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+index 2d7b90bba..4fa7d2208 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+@@ -44,6 +44,7 @@ public class BufferedTokenizerExt extends RubyObject {
+     private int sizeLimit;
+     private boolean hasSizeLimit;
+     private int inputSize;
++    private boolean discardingUntilDelimiter;
+ 
+     public BufferedTokenizerExt(final Ruby runtime, final RubyClass metaClass) {
+         super(runtime, metaClass);
+@@ -59,6 +60,7 @@ public class BufferedTokenizerExt extends RubyObject {
+             this.hasSizeLimit = true;
+         }
+         this.inputSize = 0;
++        this.discardingUntilDelimiter = false;
+         return this;
+     }
+ 
