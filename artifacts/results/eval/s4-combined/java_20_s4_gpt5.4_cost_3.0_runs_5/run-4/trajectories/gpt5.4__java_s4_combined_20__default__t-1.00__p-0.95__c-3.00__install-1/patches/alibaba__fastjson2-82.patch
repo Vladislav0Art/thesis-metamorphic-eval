@@ -1,0 +1,143 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+index 1f5cc6862..d441ab389 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+@@ -665,12 +665,15 @@ public interface JsonMapper {
+      * @param jsonString the {@link String} to validate
+      * @return T/F
+      */
+-    static boolean isValid(String jsonString) {
++    static boolean isValidObject(String jsonString) {
+         if (jsonString == null || jsonString.length() == 0) {
+             return false;
+         }
+         JSONReader parser = JSONReader.of(jsonString);
+         try {
++            if (!parser.isObject()) {
++                return false;
++            }
+             parser.skipValue();
+         } catch (JSONException jsonException) {
+             return false;
+@@ -684,6 +687,47 @@ public interface JsonMapper {
+      * @param dataBuffer the byte array to validate
+      * @return T/F
+      */
++    static boolean isValidObject(byte[] dataBuffer) {
++        if (dataBuffer == null || dataBuffer.length == 0) {
++            return false;
++        }
++        JSONReader parser = JSONReader.of(dataBuffer);
++        try {
++            if (!parser.isObject()) {
++                return false;
++            }
++            parser.skipValue();
++        } catch (JSONException jsonException) {
++            return false;
++        }
++        return true;
++    }
++
++    /**
++     * Verify the {@link String} is valid JSON
++     *
++     * @param jsonString the {@link String} to validate
++     * @return T/F
++     */
++    static boolean isValid(String jsonString) {
++        if (jsonString == null || jsonString.length() == 0) {
++            return false;
++        }
++        JSONReader parser = JSONReader.of(jsonString);
++        try {
++            parser.skipValue();
++        } catch (JSONException jsonException) {
++            return false;
++        }
++        return true;
++    }
++
++    /**
++     * Verify the byte array is valid JSON
++     *
++     * @param dataBuffer the byte array to validate
++     * @return T/F
++     */
+     static boolean isValid(byte[] dataBuffer) {
+         if (dataBuffer == null || dataBuffer.length == 0) {
+             return false;
+@@ -698,7 +742,7 @@ public interface JsonMapper {
+     }
+ 
+     /**
+-     * Verify the byte array is JSON Object
++     * Verify the byte array is valid JSON
+      *
+      * @param dataBuffer   the byte array to validate
+      * @param startIndex  the index of the first byte to validate
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 5a57e5305..0e8b0ae4d 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -32,6 +32,13 @@ public class JSONTest {
+         assertTrue(JsonMapper.isValidArray("[]"));
+         assertFalse(JsonMapper.isValidArray("{}"));
+     }
++    @Test
++    public void test_isValidObject_0() {
++        assertTrue(JsonMapper.isValidObject("{}"));
++        assertFalse(JsonMapper.isValidObject("[]"));
++        assertTrue(JsonMapper.isValid("{}"));
++        assertTrue(JsonMapper.isValid("[]"));
++    }
+ 
+     @Test
+     public void test_parseArray_0() {
+diff --git a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+index e1f8797a5..45f02049d 100644
+--- a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
++++ b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+@@ -447,6 +447,10 @@ public class JSON {
+         return JsonMapper.isValid(str);
+     }
+ 
++    public static boolean isValidObject(String str) {
++        return JsonMapper.isValidObject(str);
++    }
++
+     public static boolean isValidArray(String str) {
+         return JsonMapper.isValidArray(str);
+     }
+diff --git a/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
+index 5f165ed35..d525951da 100644
+--- a/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
++++ b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
+@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
+ import com.alibaba.fastjson.JSONObject;
+ import org.junit.jupiter.api.Test;
+ 
++import static org.junit.jupiter.api.Assertions.assertFalse;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ public class Issue2982 {
+@@ -16,5 +17,15 @@ public class Issue2982 {
+         assertTrue(JSONObject.isValidArray(jsonStr));
+     }
+ 
++    @Test
++    public void test_isValidObject() {
++        String jsonStr = "{ \"activity_type\" : 0, \"activity_id\" : \"***\" }";
++        assertTrue(JSON.isValidObject(jsonStr));
++        assertTrue(JSONObject.isValidObject(jsonStr));
++        assertTrue(JSONArray.isValidObject(jsonStr));
+ 
++        assertFalse(JSON.isValidObject("[1,2,3]"));
++        assertFalse(JSONObject.isValidObject("[1,2,3]"));
++        assertFalse(JSONArray.isValidObject("[1,2,3]"));
++    }
+ }

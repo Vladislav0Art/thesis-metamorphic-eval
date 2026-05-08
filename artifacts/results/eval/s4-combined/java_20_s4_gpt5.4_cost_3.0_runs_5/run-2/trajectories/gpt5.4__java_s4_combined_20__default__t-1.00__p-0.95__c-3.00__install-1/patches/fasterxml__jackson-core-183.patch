@@ -1,0 +1,404 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+index 194161a0..944fe36c 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+@@ -159,13 +159,24 @@ public final class SegmentedTextBuffer
+      * {@link #getContentsAsString}, since it's not guaranteed that resulting
+      * String is cached.
+      */
+-    @Override public String toString() { return getContentsAsString(); }public char[] toCharArray() {
++    @Override
++    public String toString() {
++        return getContentsAsString();
++    }
++
++    public char[] toCharArray() {
+         char[] outChars = cachedChars;
+         if (outChars == null) {
+             cachedChars = outChars = getCharArray();
+         }
+         return outChars;
+-    }public void setCurrentLength(int length) { currentLength = length; } /**
++    }
++
++    public void setCurrentLength(int length) {
++        currentLength = length;
++    }
++
++    /**
+      * @since 2.6
+      */
+     public String setCurrentAndReturn(int length) {
+@@ -179,7 +190,9 @@ public final class SegmentedTextBuffer
+         String text = (currentLength == 0) ? "" : new String(activeSegment, 0, currentLength);
+         cachedResult = text;
+         return text;
+-    } /**
++    }
++
++    /**
+      * Method called to initialize the buffer with a shared copy of data;
+      * this means that buffer will just have pointers to actual data. It
+      * also means that if anything is to be appended to the buffer, it
+@@ -200,7 +213,9 @@ public final class SegmentedTextBuffer
+         if (segmentsAvailable) {
+             clearAllSegments();
+         }
+-    }public void resetToString(String text)
++    }
++
++    public void resetToString(String text)
+     {
+         sharedChars = null;
+         bufferOffset = -1;
+@@ -213,8 +228,9 @@ public final class SegmentedTextBuffer
+             clearAllSegments();
+         }
+         currentLength = 0;
++    }
+ 
+-    } /**
++    /**
+      * Method called to clear out any content text buffer may have, and
+      * initializes buffer to use non-shared data.
+      */
+@@ -232,7 +248,9 @@ public final class SegmentedTextBuffer
+         if (segmentsAvailable) {
+             clearAllSegments();
+         }
+-    }public char[] resetAndGetCurrentSegment()
++    }
++
++    public char[] resetAndGetCurrentSegment()
+     {
+         // inlined 'resetWithEmpty()'
+         bufferOffset = -1; // indicates shared buffer not used
+@@ -252,7 +270,9 @@ public final class SegmentedTextBuffer
+             activeSegment = segment = buffer(0);
+         }
+         return segment;
+-    }public void resetAndCopy(char[] buffer, int offset, int length)
++    }
++
++    public void resetAndCopy(char[] buffer, int offset, int length)
+     {
+         sharedChars = null;
+         bufferOffset = -1; // indicates shared buffer not used
+@@ -269,7 +289,9 @@ public final class SegmentedTextBuffer
+         }
+         currentLength = segmentCapacity = 0;
+         appendChar(buffer, offset, length);
+-    } /**
++    }
++
++    /**
+      * Method called to indicate that the underlying buffers should now
+      * be recycled if they haven't yet been recycled. Although caller
+      * can still use this text buffer, it is not advisable to call this
+@@ -292,7 +314,9 @@ public final class SegmentedTextBuffer
+                 bufferRecycler.releaseCharBuffer(BufferRecycler.CHAR_TEXT_BUFFER, buffer);
+             }
+         }
+-    } /**
++    }
++
++    /**
+      * @return Number of characters currently stored by this collector
+      */
+     public int length() {
+@@ -307,7 +331,9 @@ public final class SegmentedTextBuffer
+         }
+         // local segmented buffers
+         return segmentCapacity + currentLength;
+-    } /**
++    }
++
++    /**
+      * Method that can be used to check whether textual contents can
+      * be efficiently accessed using {@link #getTextBuffer}.
+      */
+@@ -318,6 +344,7 @@ public final class SegmentedTextBuffer
+         // not if we have String as value
+         if (cachedResult != null) return false;
+         return true;
++    }
+     } /**
+      * Method called to expand size of the current segment, to
+      * accommodate for more contiguous content. Usually only
+@@ -334,7 +361,9 @@ public final class SegmentedTextBuffer
+             updatedLength = length + (length >> 2);
+         }
+         return (activeSegment = Arrays.copyOf(segment, updatedLength));
+-    } /**
++    }
++
++    /**
+      * Method called to expand size of the current segment, to
+      * accommodate for more contiguous content. Usually only
+      * used when parsing tokens like names if even then.
+@@ -348,25 +377,35 @@ public final class SegmentedTextBuffer
+         if (segment.length >= minCapacity) return segment;
+         activeSegment = segment = Arrays.copyOf(segment, minCapacity);
+         return segment;
+-    }public int getTextOffset() {
++    }
++
++    public int getTextOffset() {
+         /* Only shared input buffer can have non-zero offset; buffer
+          * segments start at 0, and if we have to create a combo buffer,
+          * that too will start from beginning of the buffer
+          */
+         return (bufferOffset >= 0) ? bufferOffset : 0;
+-    }public char[] getTextBuffer()
++    }
++
++    public char[] getTextBuffer()
+     {
+         // Are we just using shared input buffer?
+-        if (bufferOffset >= 0) return sharedChars;
++        if (bufferOffset >= 0) return (inputLength == 0) ? EMPTY_CHARS : sharedChars;
+         if (cachedChars != null)  return cachedChars;
+         if (cachedResult != null) {
+             return (cachedChars = cachedResult.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!segmentsAvailable)  return activeSegment;
++        if (!segmentsAvailable) {
++            return (currentLength == 0) ? EMPTY_CHARS : activeSegment;
++        }
+         // Nope, need to have/create a non-segmented array and return it
+         return toCharArray();
+-    }public int getCurrentSegmentSize() { return currentLength; }public char[] getCurrentSegment()
++    }
++
++    public int getCurrentSegmentSize() { return currentLength; }
++
++    public char[] getCurrentSegment()
+     {
+         /* Since the intention of the caller is to directly add stuff into
+          * buffers, we should NOT have anything in shared buffer... ie. may
+@@ -384,7 +423,9 @@ public final class SegmentedTextBuffer
+             }
+         }
+         return activeSegment;
+-    }public String getContentsAsString()
++    }
++
++    public String getContentsAsString()
+     {
+         if (cachedResult == null) {
+             // Has array been requested? Can make a shortcut, if so:
+@@ -421,13 +462,17 @@ public final class SegmentedTextBuffer
+             }
+         }
+         return cachedResult;
+-    } /**
++    }
++
++    /**
+      * Convenience method for converting contents of the buffer
+      * into a Double value.
+      */
+     public double getContentsAsDouble() throws NumberFormatException {
+         return NumberInput.parseDouble(getContentsAsString());
+-    }private char[] getCharArray()
++    }
++
++    private char[] getCharArray()
+     {
+         if (cachedResult != null) { // Can take a shortcut...
+             return cachedResult.toCharArray();
+@@ -461,7 +506,9 @@ public final class SegmentedTextBuffer
+         }
+         System.arraycopy(activeSegment, 0, outChars, sourceIndex, currentLength);
+         return outChars;
+-    } /**
++    }
++
++    /**
+      * Method called when current segment is full, to allocate new
+      * segment.
+      */
+@@ -486,7 +533,9 @@ public final class SegmentedTextBuffer
+             updatedLength = MAX_SEGMENT_LENGTH;
+         }
+         activeSegment = charArray(updatedLength);
+-    } /**
++    }
++
++    /**
+      * Method called to make sure that buffer is not using shared input
+      * buffer; if it is, it will copy such contents to private buffer.
+      */
+@@ -494,10 +543,8 @@ public final class SegmentedTextBuffer
+         if (bufferOffset >= 0) {
+             ensureUnshared(16);
+         }
+-    } /**
+-     * Method called if/when we need to append content when we have been
+-     * initialized to use shared buffer.
+-     */
++    }
++
+     private void ensureUnshared(int extraNeeded)
+     {
+         int sharedLength = inputLength;
+@@ -517,7 +564,9 @@ public final class SegmentedTextBuffer
+         }
+         segmentCapacity = 0;
+         currentLength = sharedLength;
+-    } /**
++    }
++
++    /**
+      * Convenience method for converting contents of the buffer
+      * into a {@link BigDecimal}.
+      */
+@@ -537,7 +586,9 @@ public final class SegmentedTextBuffer
+         }
+         // If not, let's just get it aggregated...
+         return NumberInput.parseBigDecimal(toCharArray());
+-    }public char[] completeCurrentSegment() {
++    }
++
++    public char[] completeCurrentSegment() {
+         if (segmentBuffers == null) {
+             segmentBuffers = new ArrayList<char[]>();
+         }
+@@ -557,7 +608,9 @@ public final class SegmentedTextBuffer
+         char[] segment = charArray(updatedLength);
+         activeSegment = segment;
+         return segment;
+-    }private void clearAllSegments()
++    }
++
++    private void clearAllSegments()
+     {
+         segmentsAvailable = false;
+         /* Let's start using _last_ segment from list; for one, it's
+@@ -569,7 +622,11 @@ public final class SegmentedTextBuffer
+         //_currentSegment = _segments.get(_segments.size() - 1);
+         segmentBuffers.clear();
+         currentLength = segmentCapacity = 0;
+-    }private char[] charArray(int length) { return new char[length]; } /**
++    }
++
++    private char[] charArray(int length) { return new char[length]; }
++
++    /**
+      * Helper method used to find a buffer to use, ideally one
+      * recycled earlier.
+      */
+@@ -579,7 +636,9 @@ public final class SegmentedTextBuffer
+             return bufferRecycler.allocCharBuffer(BufferRecycler.CHAR_TEXT_BUFFER, required);
+         }
+         return new char[Math.max(required, MIN_SEGMENT_LENGTH)];
+-    }public void appendChar(char ch) {
++    }
++
++    public void appendChar(char ch) {
+         // Using shared buffer so far?
+         if (bufferOffset >= 0) {
+             ensureUnshared(16);
+@@ -593,7 +652,9 @@ public final class SegmentedTextBuffer
+             segment = activeSegment;
+         }
+         segment[currentLength++] = ch;
+-    }public void appendChar(char[] ch, int offset, int length)
++    }
++
++    public void appendChar(char[] ch, int offset, int length)
+     {
+         // Can't append to shared buf (sanity check)
+         if (bufferOffset >= 0) {
+@@ -629,7 +690,9 @@ public final class SegmentedTextBuffer
+             offset += count;
+             length -= count;
+         } while (length > 0);
+-    }public void appendChar(String text, int sourceIndex, int length)
++    }
++
++    public void appendChar(String text, int sourceIndex, int length)
+     {
+         // Can't append to shared buf (sanity check)
+         if (bufferOffset >= 0) {
+@@ -664,6 +727,9 @@ public final class SegmentedTextBuffer
+             sourceIndex += count;
+             length -= count;
+         } while (length > 0);
+-    }public SegmentedTextBuffer(BufferRecycler bufferRecycler) {
++    }
++
++    public SegmentedTextBuffer(BufferRecycler bufferRecycler) {
+         this.bufferRecycler = bufferRecycler;
+-    }}
++    }
++}
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 31cc6c05..b5b9ce3e 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -42,7 +42,7 @@ public class TestTextBuffer
+           }
+          final String STR = sb.toString();
+          final String EXP = "a" + STR + "c";
+- 
++
+          // ok: first test with String:
+          SegmentedTextBuffer tb = new SegmentedTextBuffer(new BufferRecycler());
+          tb.appendChar('a');
+@@ -50,7 +50,7 @@ public class TestTextBuffer
+          tb.appendChar('c');
+          assertEquals(len+2, tb.length());
+          assertEquals(EXP, tb.getContentsAsString());
+- 
++
+          // then char[]
+          tb = new SegmentedTextBuffer(new BufferRecycler());
+          tb.appendChar('a');
+@@ -74,4 +74,32 @@ public class TestTextBuffer
+               }
+           }
+       }
++
++      public void testEmptyGetTextBufferConsistency()
++      {
++          SegmentedTextBuffer tb = new SegmentedTextBuffer(new BufferRecycler());
++          tb.resetToEmpty();
++
++          char[] text = tb.getTextBuffer();
++          assertNotNull(text);
++          assertEquals(0, text.length);
++
++          assertEquals("", tb.getContentsAsString());
++
++          char[] textAfterString = tb.getTextBuffer();
++          assertNotNull(textAfterString);
++          assertEquals(0, textAfterString.length);
++
++          tb.resetWithSharedBuffer(new char[] { 'x' }, 0, 0);
++
++          char[] sharedText = tb.getTextBuffer();
++          assertNotNull(sharedText);
++          assertEquals(0, sharedText.length);
++
++          assertEquals("", tb.getContentsAsString());
++
++          char[] sharedTextAfterString = tb.getTextBuffer();
++          assertNotNull(sharedTextAfterString);
++          assertEquals(0, sharedTextAfterString.length);
++      }
+ }

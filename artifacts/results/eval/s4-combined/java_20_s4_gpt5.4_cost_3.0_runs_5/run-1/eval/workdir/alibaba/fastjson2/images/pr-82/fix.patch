@@ -1,0 +1,24 @@
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+index 1f5cc6862..8c9e401d2 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+@@ -625,6 +625,9 @@ public interface JsonMapper {
+         if (jsonString == null || jsonString.length() == 0) {
+             return false;
+         }
++        if(!jsonString.startsWith("[")){
++            return false;
++        }
+         JSONReader parser = JSONReader.of(jsonString);
+         try {
+             if (!parser.isArray()) {
+@@ -669,6 +672,9 @@ public interface JsonMapper {
+         if (jsonString == null || jsonString.length() == 0) {
+             return false;
+         }
++        if(!jsonString.startsWith("{") & !jsonString.startsWith("[")){
++            return false;
++        }
+         JSONReader parser = JSONReader.of(jsonString);
+         try {
+             parser.skipValue();

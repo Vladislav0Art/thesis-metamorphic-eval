@@ -1,0 +1,100 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/MockedConstructionImpl.java b/src/main/java/org/mockito/internal/MockedConstructionImpl.java
+index 5541ba07c..97ddf6ef3 100644
+--- a/src/main/java/org/mockito/internal/MockedConstructionImpl.java
++++ b/src/main/java/org/mockito/internal/MockedConstructionImpl.java
+@@ -23,7 +23,7 @@ public final class MockedConstructionImpl<T> implements MockedConstruction<T> {
+ 
+     private final Location location = LocationFactory.create();
+ 
+-    protected MockedConstructionImpl(MockMaker.ConstructionMockControl<T> control) {
++    public MockedConstructionImpl(MockMaker.ConstructionMockControl<T> control) {
+         this.control = control;
+     }
+ 
+diff --git a/src/main/java/org/mockito/internal/MockedStaticImpl.java b/src/main/java/org/mockito/internal/MockedStaticImpl.java
+index f6705fb81..c5519903b 100644
+--- a/src/main/java/org/mockito/internal/MockedStaticImpl.java
++++ b/src/main/java/org/mockito/internal/MockedStaticImpl.java
+@@ -37,7 +37,7 @@ public final class MockedStaticImpl<T> implements MockedStatic<T> {
+ 
+     private final Location location = LocationFactory.create();
+ 
+-    protected MockedStaticImpl(MockMaker.StaticMockControl<T> control) {
++    public MockedStaticImpl(MockMaker.StaticMockControl<T> control) {
+         this.control = control;
+     }
+ 
+diff --git a/src/main/java/org/mockito/internal/util/MockitoEngine.java b/src/main/java/org/mockito/internal/util/MockitoEngine.java
+index da69eba72..fab98f860 100644
+--- a/src/main/java/org/mockito/internal/util/MockitoEngine.java
++++ b/src/main/java/org/mockito/internal/util/MockitoEngine.java
+@@ -258,6 +258,7 @@ public class MockitoEngine {
+         }
+         DefaultMockSettingsImpl settingsImplementation = DefaultMockSettingsImpl.class.cast(mockConfig);
+         MockCreationConfiguration<T> mockCreationConfig = settingsImplementation.buildStatic(targetClass);
++        verifyDoNotMockAnnotation(mockCreationConfig.getTypeToMock(), mockCreationConfig);
+         MockMaker.StaticMockControl<T> staticManager = MockUtil.createStaticMock(targetClass, mockCreationConfig);
+         staticManager.enable();
+         mockingProgress().mockingStarted(targetClass, mockCreationConfig);
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java
+index e63e5bba8..55ad2e68f 100644
+--- a/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/StaticMockTest.java
+@@ -13,9 +13,11 @@ import static org.mockito.Mockito.times;
+ import java.util.concurrent.atomic.AtomicReference;
+ 
+ import org.junit.Test;
++import org.mockito.DoNotMock;
+ import org.mockito.MockedStatic;
+ import org.mockito.Mockito;
+ import org.mockito.exceptions.base.MockitoException;
++import org.mockito.exceptions.misusing.DoNotMockException;
+ import org.mockito.exceptions.verification.NoInteractionsWanted;
+ import org.mockito.exceptions.verification.WantedButNotInvoked;
+ 
+@@ -198,7 +200,6 @@ public final class StaticMockTest {
+         Dummy.fooVoid("bar");
+         assertEquals("bar", Dummy.var1);
+     }
+-
+     @Test
+     public void testStaticMockMustUseValidMatchers() {
+         try (MockedStatic<Dummy> mockedClass = Mockito.mockStatic(Dummy.class)) {
+@@ -223,6 +224,15 @@ public final class StaticMockTest {
+         assertEquals("foobar", Dummy.fooVarargs("foo", "bar"));
+     }
+ 
++    @Test
++    public void testStaticMockMustRespectDoNotMock() {
++        assertThatThrownBy(
++                        () -> {
++                            Mockito.mockStatic(DoNotMockType.class);
++                        })
++                .isInstanceOf(DoNotMockException.class);
++    }
++
+     static class Dummy {
+ 
+         static String var1 = null;
+@@ -247,4 +257,7 @@ public final class StaticMockTest {
+             return sb.toString();
+         }
+     }
++
++    @DoNotMock
++    static class DoNotMockType {}
+ }

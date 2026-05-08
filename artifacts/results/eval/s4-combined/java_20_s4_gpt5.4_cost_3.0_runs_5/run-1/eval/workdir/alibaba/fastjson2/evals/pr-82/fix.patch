@@ -1,0 +1,92 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+index 1f5cc6862..0f49a8cb3 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+@@ -665,6 +665,28 @@ public interface JsonMapper {
+      * @param jsonString the {@link String} to validate
+      * @return T/F
+      */
++    static boolean isValidObject(String jsonString) {
++        if (jsonString == null || jsonString.length() == 0) {
++            return false;
++        }
++        JSONReader parser = JSONReader.of(jsonString);
++        try {
++            if (!parser.isObject()) {
++                return false;
++            }
++            parser.skipValue();
++        } catch (JSONException jsonException) {
++            return false;
++        }
++        return true;
++    }
++
++    /**
++     * Verify the {@link String} is valid JSON
++     *
++     * @param jsonString the {@link String} to validate
++     * @return T/F
++     */
+     static boolean isValid(String jsonString) {
+         if (jsonString == null || jsonString.length() == 0) {
+             return false;
+diff --git a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONArray.java b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONArray.java
+index 3a6b4a10f..77121a1f9 100644
+--- a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONArray.java
++++ b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONArray.java
+@@ -13,6 +13,10 @@ import java.util.function.Function;
+ public class JSONArray extends JSON implements List {
+     private List list = new com.alibaba.fastjson2.JSONArray();
+ 
++    public static boolean isValid(String str) {
++        return JsonMapper.isValidArray(str);
++    }
++
+     public JSONArray() {
+ 
+     }
+diff --git a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONObject.java b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONObject.java
+index 747e0d909..1dd58942b 100755
+--- a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONObject.java
++++ b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSONObject.java
+@@ -47,6 +47,10 @@ public class JSONObject extends JSON implements Map<String, Object>, Cloneable,
+ 
+     private final Map<String, Object> map;
+ 
++    public static boolean isValid(String str) {
++        return JsonMapper.isValidObject(str);
++    }
++
+     public JSONObject(){
+         this(DEFAULT_INITIAL_CAPACITY, false);
+     }
+diff --git a/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
+index 5f165ed35..d0a859b84 100644
+--- a/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
++++ b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
+@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
+ import com.alibaba.fastjson.JSONObject;
+ import org.junit.jupiter.api.Test;
+ 
++import static org.junit.jupiter.api.Assertions.assertFalse;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ public class Issue2982 {
+@@ -16,5 +17,12 @@ public class Issue2982 {
+         assertTrue(JSONObject.isValidArray(jsonStr));
+     }
+ 
++    @Test
++    public void test_is_valid_for_object_and_array() {
++        assertTrue(JSONObject.isValid("{}"));
++        assertFalse(JSONObject.isValid("[]"));
+ 
++        assertTrue(JSONArray.isValid("[]"));
++        assertFalse(JSONArray.isValid("{}"));
++    }
+ }

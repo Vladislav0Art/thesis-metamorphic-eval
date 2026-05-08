@@ -1,0 +1,89 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+index 194161a0..e64b7c92 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+@@ -363,7 +363,7 @@ public final class SegmentedTextBuffer
+             return (cachedChars = cachedResult.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!segmentsAvailable)  return activeSegment;
++        if (!segmentsAvailable)  return (activeSegment == null) ? EMPTY_CHARS : activeSegment;
+         // Nope, need to have/create a non-segmented array and return it
+         return toCharArray();
+     }public int getCurrentSegmentSize() { return currentLength; }public char[] getCurrentSegment()
+@@ -579,7 +579,7 @@ public final class SegmentedTextBuffer
+             return bufferRecycler.allocCharBuffer(BufferRecycler.CHAR_TEXT_BUFFER, required);
+         }
+         return new char[Math.max(required, MIN_SEGMENT_LENGTH)];
+-    }public void appendChar(char ch) {
++    }public void append(char ch) { appendChar(ch); }public void appendChar(char ch) {
+         // Using shared buffer so far?
+         if (bufferOffset >= 0) {
+             ensureUnshared(16);
+@@ -593,7 +593,7 @@ public final class SegmentedTextBuffer
+             segment = activeSegment;
+         }
+         segment[currentLength++] = ch;
+-    }public void appendChar(char[] ch, int offset, int length)
++    }public void append(char[] ch, int offset, int length) { appendChar(ch, offset, length); }public void appendChar(char[] ch, int offset, int length)
+     {
+         // Can't append to shared buf (sanity check)
+         if (bufferOffset >= 0) {
+@@ -629,7 +629,7 @@ public final class SegmentedTextBuffer
+             offset += count;
+             length -= count;
+         } while (length > 0);
+-    }public void appendChar(String text, int sourceIndex, int length)
++    }public void append(String text, int sourceIndex, int length) { appendChar(text, sourceIndex, length); }public void appendChar(String text, int sourceIndex, int length)
+     {
+         // Can't append to shared buf (sanity check)
+         if (bufferOffset >= 0) {
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 31cc6c05..d1610e1c 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -19,6 +19,22 @@ public class TestTextBuffer
+         assertNotNull(tb.growCurrentSegment());
+     }
+ 
++    public void testEmptyBufferHasConsistentTextBuffer()
++    {
++        SegmentedTextBuffer tb = new SegmentedTextBuffer(new BufferRecycler());
++        tb.resetToEmpty();
++
++        char[] result = tb.getTextBuffer();
++        assertNotNull(result);
++        assertEquals(0, result.length);
++
++        assertEquals("", tb.getContentsAsString());
++
++        char[] resultAfterString = tb.getTextBuffer();
++        assertNotNull(resultAfterString);
++        assertEquals(0, resultAfterString.length);
++    }
++
+     public void testLonger()
+     {
+         SegmentedTextBuffer tb = new SegmentedTextBuffer(new BufferRecycler());
+@@ -54,7 +70,7 @@ public class TestTextBuffer
+          // then char[]
+          tb = new SegmentedTextBuffer(new BufferRecycler());
+          tb.appendChar('a');
+-         tb.append(STR.toCharArray(), 0, len);
++         tb.appendChar(STR.toCharArray(), 0, len);
+          tb.appendChar('c');
+          assertEquals(len+2, tb.length());
+          assertEquals(EXP, tb.getContentsAsString());

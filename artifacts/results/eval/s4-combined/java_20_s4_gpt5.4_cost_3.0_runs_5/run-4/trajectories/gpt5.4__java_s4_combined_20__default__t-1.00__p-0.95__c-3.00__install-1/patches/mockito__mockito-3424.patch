@@ -1,0 +1,159 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java
+index 009daa4cc..fcf283522 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java
+@@ -83,6 +83,7 @@ public class InlineBytecodeGenerator implements BytecodeGenerator, ClassFileTran
+     public InlineBytecodeGenerator(
+             Instrumentation instrumentation,
+             WeakConcurrentMap<Object, MockMethodInterceptor> mocks,
++            WeakConcurrentMap<Object, Boolean> clearedMocks,
+             DetachedThreadLocal<Map<Class<?>, MockMethodInterceptor>> mockedStatics,
+             Predicate<Class<?>> isMockConstruction,
+             ConstructionCallback onConstruction) {
+@@ -128,11 +129,6 @@ public class InlineBytecodeGenerator implements BytecodeGenerator, ClassFileTran
+                                 Advice.withCustomMapping()
+                                         .bind(MockMethodAdvice.Identifier.class, identifier)
+                                         .to(MockMethodAdvice.class))
+-                        .method(
+-                                isStatic().and(not(BytecodeGenerator.isGroovyMethod(true))),
+-                                Advice.withCustomMapping()
+-                                        .bind(MockMethodAdvice.Identifier.class, identifier)
+-                                        .to(MockMethodAdvice.ForStatic.class))
+                         .constructor(any(), new MockMethodAdvice.ConstructorShortcut(identifier))
+                         .method(
+                                 isHashCode(),
+@@ -167,6 +163,15 @@ public class InlineBytecodeGenerator implements BytecodeGenerator, ClassFileTran
+         this.redefineModule = redefineModule;
+         MockMethodDispatcher.set(
+                 identifier,
++                new MockMethodAdvice(
++                        mocks,
++                        clearedMocks,
++                        mockedStatics,
++                        identifier,
++                        isMockConstruction,
++                        onConstruction));
++        instrumentation.addTransformer(this, true);
++    }
+                 new MockMethodAdvice(
+                         mocks, mockedStatics, identifier, isMockConstruction, onConstruction));
+         instrumentation.addTransformer(this, true);
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMaker.java
+index e03d11b9e..62b52c6b5 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMaker.java
+@@ -212,6 +212,8 @@ class InlineDelegateByteBuddyMockMaker
+     private final WeakConcurrentMap<Object, MockMethodInterceptor> mocks =
+             new WeakConcurrentMap<>(false);
+ 
++    private final WeakConcurrentMap<Object, Boolean> clearedMocks = new WeakConcurrentMap<>(false);
++
+     private final DetachedThreadLocal<Map<Class<?>, MockMethodInterceptor>> mockedStatics =
+             new DetachedThreadLocal<>(DetachedThreadLocal.Cleaner.MANUAL);
+ 
+@@ -341,6 +343,7 @@ class InlineDelegateByteBuddyMockMaker
+                         new InlineBytecodeGenerator(
+                                 INSTRUMENTATION,
+                                 mocks,
++                                clearedMocks,
+                                 mockedStatics,
+                                 isMockConstruction,
+                                 onConstruction),
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodAdvice.java b/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodAdvice.java
+index 245917671..ac5d31783 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodAdvice.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodAdvice.java
+@@ -64,6 +64,7 @@ import org.mockito.plugins.MemberAccessor;
+ public class MockMethodAdvice extends MockMethodDispatcher {
+ 
+     private final WeakConcurrentMap<Object, MockMethodInterceptor> interceptors;
++    private final WeakConcurrentMap<Object, Boolean> clearedMocks;
+     private final DetachedThreadLocal<Map<Class<?>, MockMethodInterceptor>> mockedStatics;
+ 
+     private final String identifier;
+@@ -78,11 +79,13 @@ public class MockMethodAdvice extends MockMethodDispatcher {
+ 
+     public MockMethodAdvice(
+             WeakConcurrentMap<Object, MockMethodInterceptor> interceptors,
++            WeakConcurrentMap<Object, Boolean> clearedMocks,
+             DetachedThreadLocal<Map<Class<?>, MockMethodInterceptor>> mockedStatics,
+             String identifier,
+             Predicate<Class<?>> isMockConstruction,
+             ConstructionCallback onConstruction) {
+         this.interceptors = interceptors;
++        this.clearedMocks = clearedMocks;
+         this.mockedStatics = mockedStatics;
+         this.onConstruction = onConstruction;
+         this.identifier = identifier;
+@@ -122,6 +125,12 @@ public class MockMethodAdvice extends MockMethodDispatcher {
+     public Callable<?> handle(Object instance, Method origin, Object[] arguments) throws Throwable {
+         MockMethodInterceptor interceptor = interceptors.get(instance);
+         if (interceptor == null) {
++            if (clearedMocks.containsKey(instance)) {
++                throw new MockitoException(
++                        "This invocation was made on a cleared inline mock. "
++                                + "Inline mocks cleared by Mockito.framework().clearInlineMocks() "
++                                + "or Mockito.framework().clearInlineMock(...) can no longer be used.");
++            }
+             return null;
+         }
+         RealMethod realMethod;
+@@ -163,13 +172,15 @@ public class MockMethodAdvice extends MockMethodDispatcher {
+     public boolean isMock(Object instance) {
+         // We need to exclude 'interceptors.target' explicitly to avoid a recursive check on whether
+         // the map is a mock object what requires reading from the map.
+-        return instance != interceptors.target && interceptors.containsKey(instance);
++        return instance != interceptors.target
++                && (interceptors.containsKey(instance) || clearedMocks.containsKey(instance));
+     }
+ 
+     @Override
+     public boolean isMocked(Object instance) {
+         return isMock(instance) && selfCallInfo.checkSelfCall(instance);
+     }
++    }
+ 
+     @Override
+     public boolean isMockedStatic(Class<?> type) {
+diff --git a/src/test/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMakerTest.java b/src/test/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMakerTest.java
+index dc341d895..0ac55be42 100644
+--- a/src/test/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMakerTest.java
++++ b/src/test/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockMakerTest.java
+@@ -496,6 +496,23 @@ public class InlineDelegateByteBuddyMockMakerTest
+         // then
+         assertThat(mockMaker.getHandler(proxy)).isNull();
+     }
++    @Test
++    public void test_cleared_mock_throws_mockito_exception_when_invoked() {
++        MockCreationSettings<FinalClass> settings = settingsFor(FinalClass.class);
++        FinalClass proxy =
++                mockMaker.createMock(settings, new MockHandlerImpl<FinalClass>(settings));
++
++        mockMaker.clearMock(proxy);
++
++        try {
++            proxy.foo();
++            fail("Expected MockitoException to be thrown");
++        } catch (MockitoException e) {
++            assertThat(e)
++                    .hasMessageContaining("cleared inline mock")
++                    .hasMessageContaining("clearInlineMocks");
++        }
++    }
+ 
+     @Test
+     public void test_clear_all_mock_clears_handler() {

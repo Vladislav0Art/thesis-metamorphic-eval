@@ -1,0 +1,523 @@
+diff --git a/src/main/java/org/mockito/configuration/MockCreationConfiguration.java b/src/main/java/org/mockito/configuration/MockCreationConfiguration.java
+index e9bd4f9f5..71c211c5f 100644
+--- a/src/main/java/org/mockito/configuration/MockCreationConfiguration.java
++++ b/src/main/java/org/mockito/configuration/MockCreationConfiguration.java
+@@ -13,6 +13,7 @@ import org.mockito.NotExtensible;
+ import org.mockito.listeners.InvocationListener;
+ import org.mockito.listeners.StubbingLookupListener;
+ import org.mockito.listeners.VerificationStartedListener;
++import org.mockito.mock.kind.MockKind;
+ import org.mockito.mock.MockName;
+ import org.mockito.mock.SerializableMode;
+ import org.mockito.plugins.MockMaker;
+@@ -109,6 +110,14 @@ public interface MockCreationConfiguration<T> {
+      */
+     Object getOuterClassInstance();
+ 
++    /**
++     * Returns the {@link MockKind} for the mock being created.
++     *
++     * @see MockKind
++     * @since 5.9.0
++     */
++    MockKind getMockType();
++
+     /**
+      * the name of this mock, as printed on verification errors; see {@link MockSettings#name}.
+      */
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginRegistry.java b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginRegistry.java
+index c27c5dfce..a2a4ca0e0 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginRegistry.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginRegistry.java
+@@ -12,7 +12,7 @@ import java.util.Set;
+ import org.mockito.MockMakers;
+ import org.mockito.internal.util.MockUtil;
+ import org.mockito.plugins.AnnotationEngine;
+-import org.mockito.quality.DoNotMockRuleEnforcer;
++import org.mockito.plugins.enforcers.DoNotMockTypeEnforcer;
+ import org.mockito.plugins.InstantiatorProvider2;
+ import org.mockito.plugins.MemberAccessor;
+ import org.mockito.plugins.MockMaker;
+@@ -62,7 +62,7 @@ public class DefaultMockitoPluginRegistry implements MockitoPlugins {
+         STANDARD_PLUGINS.put(
+             INTROSPECTION_ALIAS, "org.mockito.internal.util.reflection.ReflectionMemberAccessor");
+         STANDARD_PLUGINS.put(
+-                DoNotMockRuleEnforcer.class.getName(),
++                DoNotMockTypeEnforcer.class.getName(),
+                 "org.mockito.internal.configuration.DefaultDoNotMockEnforcer");
+ 
+         MOCK_MAKER_ALIASES.add(EMBEDDED_ALIAS);
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/PluginComponentRegistry.java b/src/main/java/org/mockito/internal/configuration/plugins/PluginComponentRegistry.java
+index 03a5544d5..3d575f1e7 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/PluginComponentRegistry.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/PluginComponentRegistry.java
+@@ -5,7 +5,9 @@
+ package org.mockito.internal.configuration.plugins;
+ 
+ import java.util.List;
++
+ import org.mockito.plugins.AnnotationEngine;
++import org.mockito.plugins.enforcers.DoNotMockTypeEnforcer;
+ import org.mockito.quality.DoNotMockRuleEnforcer;
+ import org.mockito.plugins.InstantiatorProvider2;
+ import org.mockito.plugins.MemberAccessor;
+@@ -46,8 +48,10 @@ class PluginComponentRegistry {
+     private final List<MockResolver> resolverCollection =
+             new PluginLoader(featureToggle).loadPlugins(MockResolver.class);
+ 
+-    private final DoNotMockRuleEnforcer mockingBanEnforcer =
+-            new PluginLoader(featureToggle).loadPlugin(DoNotMockRuleEnforcer.class);
++    private final DoNotMockTypeEnforcer mockingBanEnforcer =
++            (DoNotMockTypeEnforcer)
++                    (new PluginLoader(featureToggle)
++                            .loadPlugin(DoNotMockTypeEnforcer.class, DoNotMockRuleEnforcer.class));
+ 
+     /**
+      * The implementation of the stack trace cleaner
+@@ -113,7 +117,7 @@ class PluginComponentRegistry {
+      * <p> Returns {@link org.mockito.internal.configuration.DefaultDoNotMockEnforcer} if no
+      * {@link DoNotMockRuleEnforcer} extension exists or is visible in the current classpath.</p>
+      */
+-    DoNotMockRuleEnforcer getDoNotMockEnforcer() {
++    DoNotMockTypeEnforcer getDoNotMockEnforcer() {
+         return mockingBanEnforcer;
+     }
+ 
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/PluginRegistry.java b/src/main/java/org/mockito/internal/configuration/plugins/PluginRegistry.java
+index 38d825974..d048b37f8 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/PluginRegistry.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/PluginRegistry.java
+@@ -4,9 +4,11 @@
+  */
+ package org.mockito.internal.configuration.plugins;
+ 
+-import org.mockito.DoNotMock;
+ import java.util.List;
++
++import org.mockito.DoNotMock;
+ import org.mockito.plugins.AnnotationEngine;
++import org.mockito.plugins.enforcers.DoNotMockTypeEnforcer;
+ import org.mockito.quality.DoNotMockRuleEnforcer;
+ import org.mockito.plugins.InstantiatorProvider2;
+ import org.mockito.plugins.MemberAccessor;
+@@ -16,7 +18,9 @@ import org.mockito.plugins.MockitoLogger;
+ import org.mockito.plugins.MockitoPlugins;
+ import org.mockito.plugins.StackTraceCleanerProvider;
+ 
+-/** Access to Mockito behavior that can be reconfigured by plugins */
++/**
++ * Access to Mockito behavior that can be reconfigured by plugins
++ */
+ public final class PluginRegistry {
+ 
+     private static final PluginComponentRegistry PLUGIN_COMPONENT_STORE = new PluginComponentRegistry();
+@@ -89,9 +93,10 @@ public final class PluginRegistry {
+      * Returns the {@link DoNotMock} enforcer available for the current runtime.
+      *
+      * <p> Returns {@link org.mockito.internal.configuration.DefaultDoNotMockEnforcer} if no
+-     * {@link DoNotMockRuleEnforcer} extension exists or is visible in the current classpath.</p>
++     * {@link DoNotMockTypeEnforcer} or {@link DoNotMockRuleEnforcer} extension exists or is visible
++     * in the current classpath.</p>
+      */
+-    public static DoNotMockRuleEnforcer getDoNotMockEnforcer() {
++    public static DoNotMockTypeEnforcer getDoNotMockEnforcer() {
+         return PLUGIN_COMPONENT_STORE.getDoNotMockEnforcer();
+     }
+ 
+diff --git a/src/main/java/org/mockito/internal/creation/DefaultMockSettingsImpl.java b/src/main/java/org/mockito/internal/creation/DefaultMockSettingsImpl.java
+index 7091940ff..8638f2ef5 100644
+--- a/src/main/java/org/mockito/internal/creation/DefaultMockSettingsImpl.java
++++ b/src/main/java/org/mockito/internal/creation/DefaultMockSettingsImpl.java
+@@ -33,6 +33,7 @@ import org.mockito.listeners.InvocationListener;
+ import org.mockito.listeners.StubbingLookupListener;
+ import org.mockito.listeners.VerificationStartedListener;
+ import org.mockito.configuration.MockCreationConfiguration;
++import org.mockito.mock.kind.MockKind;
+ import org.mockito.mock.MockName;
+ import org.mockito.mock.SerializableMode;
+ import org.mockito.quality.Strictness;
+@@ -249,10 +250,7 @@ public class DefaultMockSettingsImpl<T> extends MockCreationSettings<T>
+                     "Cannot specify spied instance for static mock of " + targetClass);
+         }
+ 
+-        MockCreationSettings<T> creationConfig = new MockCreationSettings<T>(inputSettings);
+-        creationConfig.setMockName(new MockNameImplementation(inputSettings.getName(), targetClass, true));
+-        creationConfig.setTypeToMock(targetClass);
+-        return creationConfig;
++        return createCreationSettings(targetClass, inputSettings, MockKind.STATIC);
+     }
+ 
+     private static <T> MockCreationSettings<T> createValidatedSettings(
+@@ -271,13 +269,20 @@ public class DefaultMockSettingsImpl<T> extends MockCreationSettings<T>
+         // TODO SF - I don't think we really need CreationSettings type
+         // TODO do we really need to copy the entire settings every time we create mock object? it
+         // does not seem necessary.
+-        MockCreationSettings<T> creationConfig = new MockCreationSettings<T>(inputSettings);
+-        creationConfig.setMockName(new MockNameImplementation(inputSettings.getName(), targetType, false));
+-        creationConfig.setTypeToMock(targetType);
++        MockCreationSettings<T> creationConfig = createCreationSettings(targetType, inputSettings, MockKind.INSTANCE);
+         creationConfig.setExtraInterfaces(collectExtraInterfaces(inputSettings));
+         return creationConfig;
+     }
+ 
++    private static <T> MockCreationSettings<T> createCreationSettings(
++        Class<T> targetClass, MockCreationSettings<T> baseCreationSettings, MockKind mockingMode) {
++        MockCreationSettings<T> creationConfig = new MockCreationSettings<>(baseCreationSettings);
++        creationConfig.setMockName(new MockNameImplementation(baseCreationSettings.getName(), targetClass, mockingMode));
++        creationConfig.setTypeToMock(targetClass);
++        creationConfig.setMockType(mockingMode);
++        return creationConfig;
++    }
++
+     private boolean containsInvocationListenerType(Class<?> targetClass) {
+         for (InvocationListener handler : invocationListeners) {
+             if (handler.getClass().equals(targetClass)) {
+diff --git a/src/main/java/org/mockito/internal/creation/settings/MockCreationSettings.java b/src/main/java/org/mockito/internal/creation/settings/MockCreationSettings.java
+index 62b8ba2e5..e9cf323c0 100644
+--- a/src/main/java/org/mockito/internal/creation/settings/MockCreationSettings.java
++++ b/src/main/java/org/mockito/internal/creation/settings/MockCreationSettings.java
+@@ -17,6 +17,7 @@ import org.mockito.listeners.InvocationListener;
+ import org.mockito.listeners.StubbingLookupListener;
+ import org.mockito.listeners.VerificationStartedListener;
+ import org.mockito.configuration.MockCreationConfiguration;
++import org.mockito.mock.kind.MockKind;
+ import org.mockito.mock.MockName;
+ import org.mockito.mock.SerializableMode;
+ import org.mockito.quality.Strictness;
+@@ -49,6 +50,7 @@ public class MockCreationSettings<T> implements MockCreationConfiguration<T>, Se
+     private Object[] constructorParams;
+     protected Strictness strictness = null;
+     protected String mockMaker;
++    protected MockKind mockType;
+ 
+     public MockCreationSettings<T> setTypeToMock(Class<T> targetType) {
+         this.typeToMock = targetType;
+@@ -60,6 +62,10 @@ public class MockCreationSettings<T> implements MockCreationConfiguration<T>, Se
+         return this;
+     }
+ 
++    public void setMockType(MockKind doubleType) {
++        this.mockType = doubleType;
++    }
++
+     public MockCreationSettings<T> setMockName(MockName nameForMock) {
+         this.mockName = nameForMock;
+         return this;
+@@ -139,6 +145,11 @@ public class MockCreationSettings<T> implements MockCreationConfiguration<T>, Se
+         return name;
+     }
+ 
++    @Override
++    public MockKind getMockType() {
++        return mockType;
++    }
++
+     @Override
+     public MockName getMockName() {
+         return mockName;
+@@ -197,5 +208,6 @@ public class MockCreationSettings<T> implements MockCreationConfiguration<T>, Se
+         this.strictness = sourceSettings.strictness;
+         this.stripAnnotations = sourceSettings.stripAnnotations;
+         this.mockMaker = sourceSettings.mockMaker;
++        this.mockType = sourceSettings.mockType;
+     }
+ }
+diff --git a/src/main/java/org/mockito/internal/util/MockitoEngine.java b/src/main/java/org/mockito/internal/util/MockitoEngine.java
+index da69eba72..35fada38c 100644
+--- a/src/main/java/org/mockito/internal/util/MockitoEngine.java
++++ b/src/main/java/org/mockito/internal/util/MockitoEngine.java
+@@ -23,10 +23,7 @@ import static org.mockito.internal.verification.VerificationModeFactory.noIntera
+ import static org.mockito.internal.verification.VerificationModeFactory.noMoreInteractions;
+ 
+ import java.util.Arrays;
+-import java.util.Collections;
+-import java.util.HashSet;
+ import java.util.List;
+-import java.util.Set;
+ import java.util.function.Function;
+ 
+ import org.mockito.InOrder;
+@@ -57,7 +54,7 @@ import org.mockito.internal.verification.api.VerificationDataInOrderImpl;
+ import org.mockito.invocation.Invocation;
+ import org.mockito.invocation.MockHandler;
+ import org.mockito.configuration.MockCreationConfiguration;
+-import org.mockito.quality.DoNotMockRuleEnforcer;
++import org.mockito.plugins.enforcers.DoNotMockTypeEnforcer;
+ import org.mockito.plugins.MockMaker;
+ import org.mockito.quality.Strictness;
+ import org.mockito.stubbing.LenientStubber;
+@@ -68,9 +65,8 @@ import org.mockito.verification.VerificationMode;
+ @SuppressWarnings("unchecked")
+ public class MockitoEngine {
+ 
+-    private static final DoNotMockRuleEnforcer DONT_MOCK_ENFORCER = PluginRegistry.getDoNotMockEnforcer();
+-    private static final Set<Class<?>> ALLOWED_MOCK_TYPES =
+-            Collections.synchronizedSet(new HashSet<>());
++    private static final DoNotMockTypeEnforcer DONT_MOCK_ENFORCER =
++            PluginRegistry.getDoNotMockEnforcer();
+ 
+     public void verifyNoUnexpectedInteractions(Object... targets) {
+         verifyMocksNotEmpty(targets);
+@@ -146,37 +142,6 @@ public class MockitoEngine {
+         return proxyInstance;
+     }
+ 
+-    private static void verifyDoNotMockAnnotationForType(Class<?> targetType) {
+-        // Object and interfaces do not have a super class
+-        if (targetType == null) {
+-            return;
+-        }
+-
+-        if (ALLOWED_MOCK_TYPES.contains(targetType)) {
+-            return;
+-        }
+-
+-        String warningMessage = DONT_MOCK_ENFORCER.validateTypeForDoNotMockViolation(targetType);
+-        if (warningMessage != null) {
+-            throw new DoNotMockException(warningMessage);
+-        }
+-
+-        verifyDoNotMockAnnotationForType(targetType.getSuperclass());
+-        for (Class<?> targetClass : targetType.getInterfaces()) {
+-            verifyDoNotMockAnnotationForType(targetClass);
+-        }
+-
+-        ALLOWED_MOCK_TYPES.add(targetType);
+-    }
+-
+-    private void verifyDoNotMockAnnotation(
+-        Class<?> mockTargetType, MockCreationConfiguration<?> mockCreationConfig) {
+-        verifyDoNotMockAnnotationForType(mockTargetType);
+-        for (Class<?> targetClass : mockCreationConfig.getExtraInterfaces()) {
+-            verifyDoNotMockAnnotationForType(targetClass);
+-        }
+-    }
+-
+     public void validateMockitoState() {
+         mockingProgress().validateState();
+     }
+@@ -248,6 +213,13 @@ public class MockitoEngine {
+         return invocations.get(invocations.size() - 1);
+     }
+ 
++    private void enforceDoNotMockAnnotation(MockCreationConfiguration<?> mockConfig) {
++        String alertMessage = DONT_MOCK_ENFORCER.validateTypeForDoNotMockViolation(mockConfig);
++        if (alertMessage != null) {
++            throw new DoNotMockException(alertMessage);
++        }
++    }
++
+     public <T> MockedStatic<T> createStaticMock(Class<T> targetClass, MockSettings mockConfig) {
+         if (!DefaultMockSettingsImpl.class.isInstance(mockConfig)) {
+             throw new IllegalArgumentException(
+@@ -258,6 +230,7 @@ public class MockitoEngine {
+         }
+         DefaultMockSettingsImpl settingsImplementation = DefaultMockSettingsImpl.class.cast(mockConfig);
+         MockCreationConfiguration<T> mockCreationConfig = settingsImplementation.buildStatic(targetClass);
++        enforceDoNotMockAnnotation(mockCreationConfig);
+         MockMaker.StaticMockControl<T> staticManager = MockUtil.createStaticMock(targetClass, mockCreationConfig);
+         staticManager.enable();
+         mockingProgress().mockingStarted(targetClass, mockCreationConfig);
+@@ -274,7 +247,7 @@ public class MockitoEngine {
+         }
+         DefaultMockSettingsImpl settingsImplementation = (DefaultMockSettingsImpl) mockConfig;
+         MockCreationConfiguration<T> mockCreationConfig = settingsImplementation.build(mockTargetType);
+-        verifyDoNotMockAnnotation(mockCreationConfig.getTypeToMock(), mockCreationConfig);
++        enforceDoNotMockAnnotation(mockCreationConfig);
+         T proxyInstance = MockUtil.createMock(mockCreationConfig);
+         mockingProgress().mockingStarted(proxyInstance, mockCreationConfig);
+         return proxyInstance;
+diff --git a/src/main/java/org/mockito/internal/utils/MockNameImplementation.java b/src/main/java/org/mockito/internal/utils/MockNameImplementation.java
+index 695d23011..9a86c35d0 100644
+--- a/src/main/java/org/mockito/internal/utils/MockNameImplementation.java
++++ b/src/main/java/org/mockito/internal/utils/MockNameImplementation.java
+@@ -7,6 +7,7 @@ package org.mockito.internal.utils;
+ import java.io.Serializable;
+ 
+ import org.mockito.mock.MockName;
++import org.mockito.mock.kind.MockKind;
+ 
+ public class MockNameImplementation implements MockName, Serializable {
+ 
+@@ -44,12 +45,12 @@ public class MockNameImplementation implements MockName, Serializable {
+     }
+ 
+     @SuppressWarnings("unchecked")
+-    public MockNameImplementation(String instanceName, Class<?> targetClass, boolean isStaticMock) {
+-        if (instanceName == null) {
+-            this.instanceName = isStaticMock ? toClassLiteral(targetClass) : toInstanceVariableName(targetClass);
++    public MockNameImplementation(String mockIdentifier, Class<?> targetClass, MockKind mockCategory) {
++        if (mockIdentifier == null) {
++            this.instanceName = mockCategory == MockKind.STATIC ? toClassLiteral(targetClass) : toInstanceVariableName(targetClass);
+             this.useDefault = true;
+         } else {
+-            this.instanceName = instanceName;
++            this.instanceName = mockIdentifier;
+         }
+     }
+ 
+diff --git a/src/main/java/org/mockito/mock/kind/MockKind.java b/src/main/java/org/mockito/mock/kind/MockKind.java
+new file mode 100644
+index 000000000..5c8da9443
+--- /dev/null
++++ b/src/main/java/org/mockito/mock/kind/MockKind.java
+@@ -0,0 +1,21 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockito.mock.kind;
++
++/**
++ * The type of mock being created
++ */
++public enum MockKind {
++
++    /**
++     * Mock created as an instance of the mocked type
++     */
++    INSTANCE,
++
++    /**
++     * Mock replaces the mocked type through static mocking
++     */
++    STATIC,
++}
+diff --git a/src/main/java/org/mockito/plugins/enforcers/DoNotMockTypeEnforcer.java b/src/main/java/org/mockito/plugins/enforcers/DoNotMockTypeEnforcer.java
+new file mode 100644
+index 000000000..6ea96bd48
+--- /dev/null
++++ b/src/main/java/org/mockito/plugins/enforcers/DoNotMockTypeEnforcer.java
+@@ -0,0 +1,24 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockito.plugins.enforcers;
++
++import org.mockito.configuration.MockCreationConfiguration;
++
++/**
++ * Enforcer that checks if a mock can be created given its type and other settings used in its creation.
++ *
++ * @since 5.9.0
++ */
++public interface DoNotMockTypeEnforcer {
++
++    /**
++     * Check whether this type is allowed to be mocked. Return {@code null} if the enforcer allows
++     * this type to be mocked. Return a message if there is a reason this type can not be mocked.
++     *
++     * @param mockCreationConfig The mock creation settings
++     * @return Optional message if this type can not be mocked, or {@code null} otherwise
++     */
++    String validateTypeForDoNotMockViolation(MockCreationConfiguration<?> mockCreationConfig);
++}
+diff --git a/src/main/java/org/mockito/quality/DoNotMockRuleEnforcer.java b/src/main/java/org/mockito/quality/DoNotMockRuleEnforcer.java
+index c29a319ce..1d36fc9c7 100644
+--- a/src/main/java/org/mockito/quality/DoNotMockRuleEnforcer.java
++++ b/src/main/java/org/mockito/quality/DoNotMockRuleEnforcer.java
+@@ -4,20 +4,97 @@
+  */
+ package org.mockito.quality;
+ 
++import org.mockito.NotExtensible;
++import org.mockito.configuration.MockCreationConfiguration;
++import org.mockito.plugins.enforcers.DoNotMockTypeEnforcer;
++
++import java.util.Set;
++import java.util.concurrent.ConcurrentHashMap;
++
+ /**
+  * Enforcer that is applied to every type in the type hierarchy of the class-to-be-mocked.
+  */
+-public interface DoNotMockRuleEnforcer {
++public interface DoNotMockRuleEnforcer extends DoNotMockTypeEnforcer {
+ 
+     /**
+-     * If this type is allowed to be mocked. Return an empty optional if the enforcer allows
++     * Check whether this type is allowed to be mocked. Return {@code null} if the enforcer allows
+      * this type to be mocked. Return a message if there is a reason this type can not be mocked.
+-     *
+-     * Note that Mockito performs traversal of the type hierarchy. Implementations of this class
+-     * should therefore not perform type traversal themselves but rely on Mockito.
++     * <p>
++     * Note that traversal of the type hierarchy is performed externally to this method.
++     * Implementations of it should therefore not perform type traversal themselves.
+      *
+      * @param targetClass The type to check
+-     * @return Optional message if this type can not be mocked, or an empty optional if type can be mocked
++     * @return Optional message if this type can not be mocked, or {@code null} otherwise
++     * @see #validateTypeForDoNotMockViolation(MockCreationConfiguration)
+      */
+     String validateTypeForDoNotMockViolation(Class<?> targetClass);
++
++    /**
++     * Check whether this type is allowed to be mocked. Return {@code null} if the enforcer allows
++     * this type to be mocked. Return a message if there is a reason this type can not be mocked.
++     * <p>
++     * The default implementation traverses the class hierarchy of the type to be mocked and
++     * checks it against {@link #validateTypeForDoNotMockViolation(Class)}. If any types fails
++     * the validation, the traversal is interrupted and the error message is returned.
++     *
++     * @param mockCreationConfig The mock creation settings
++     * @return Optional message if this type can not be mocked, or {@code null} otherwise
++     * @since 5.9.0
++     */
++    @Override
++    default String validateTypeForDoNotMockViolation(MockCreationConfiguration<?> mockCreationConfig) {
++        String alertMessage = checkDoNotMockAnnotationRecursivelyForType(mockCreationConfig.getTypeToMock());
++        if (alertMessage != null) {
++            return alertMessage;
++        }
++
++        for (Class<?> targetClass : mockCreationConfig.getExtraInterfaces()) {
++            alertMessage = checkDoNotMockAnnotationRecursivelyForType(targetClass);
++            if (alertMessage != null) {
++                return alertMessage;
++            }
++        }
++
++        return null;
++    }
++
++    private String checkDoNotMockAnnotationRecursivelyForType(Class<?> targetType) {
++        // Object and interfaces do not have a super class
++        if (targetType == null) {
++            return null;
++        }
++
++        if (CacheStore.ALLOWED_MOCK_TYPES.contains(targetType)) {
++            return null;
++        }
++
++        String alertMessage = validateTypeForDoNotMockViolation(targetType);
++        if (alertMessage != null) {
++            return alertMessage;
++        }
++
++        alertMessage = checkDoNotMockAnnotationRecursivelyForType(targetType.getSuperclass());
++        if (alertMessage != null) {
++            return alertMessage;
++        }
++
++        for (Class<?> targetClass : targetType.getInterfaces()) {
++            alertMessage = checkDoNotMockAnnotationRecursivelyForType(targetClass);
++            if (alertMessage != null) {
++                return alertMessage;
++            }
++        }
++
++        CacheStore.ALLOWED_MOCK_TYPES.add(targetType);
++        return null;
++    }
++
++    /**
++     * Static cache for types that are known to be mockable and
++     * thus may be skipped while traversing the class hierarchy.
++     */
++    @NotExtensible
++    class CacheStore {
++        private static final Set<Class<?>> ALLOWED_MOCK_TYPES = ConcurrentHashMap.newKeySet();
++    }
+ }

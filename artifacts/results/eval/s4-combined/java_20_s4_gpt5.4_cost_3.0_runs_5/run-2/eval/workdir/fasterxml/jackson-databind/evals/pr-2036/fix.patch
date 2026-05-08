@@ -1,0 +1,144 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..670f7ab01 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -398,6 +398,16 @@ public enum MapperFeature implements ConfigFeature
+      */
+     USE_STD_BEAN_NAMING(false),
+ 
++    /**
++     * Feature that determines whether the declared base type of a polymorphic value
++     * should be used as the default implementation when no explicit
++     * {@link com.fasterxml.jackson.annotation.JsonTypeInfo#defaultImpl} is configured.
++     * This is only applicable when the declared type is concrete.
++     *<p>
++     * Feature is disabled by default.
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /**
+      * Feature that when enabled will allow explicitly named properties (i.e., fields or methods
+      * annotated with {@link com.fasterxml.jackson.annotation.JsonProperty}("explicitName")) to
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java
+index 81935c220..237325f1a 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java
+@@ -181,7 +181,12 @@ public class StandardTypeResolverBuilder
+         JavaType fallbackType;
+ 
+         if (_defaultImpl == null) {
+-            fallbackType = null;
++            if (serializationSettings.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && rootType.isConcrete()) {
++                fallbackType = rootType;
++            } else {
++                fallbackType = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+@@ -249,7 +254,7 @@ public class StandardTypeResolverBuilder
+         case CLASS:
+             return new ClassNameIdResolver(rootType, serializationSettings.getTypeFactory());
+         case MINIMAL_CLASS:
+-            return new MinimalClassNameIdResolver(rootType, serializationSettings.getTypeFactory());
++            return MinimalClassNameIdResolver.construct(rootType, serializationSettings.getTypeFactory());
+         case NAME:
+             return TypeNameIdResolver.construct(serializationSettings, rootType, knownSubtypes, forSerialization, forDeserialization);
+         case NONE: // hmmh. should never get this far with 'none'
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/ClassNameIdResolver.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/ClassNameIdResolver.java
+index 934cdd39a..04df4b786 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/ClassNameIdResolver.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/ClassNameIdResolver.java
+@@ -34,6 +34,7 @@ public class ClassNameIdResolver
+         return _idFrom(value, value.getClass(), _typeFactory);
+     }
+ 
++
+     @Override
+     public String idFromValueAndType(Object value, Class<?> type) {
+         return _idFrom(value, type, _typeFactory);
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
+index d208c307b..ca06f077a 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
+@@ -22,6 +22,10 @@ public class MinimalClassNameIdResolver
+      */
+     protected final String _basePackagePrefix;
+ 
++    public static MinimalClassNameIdResolver construct(JavaType baseType, TypeFactory typeFactory) {
++        return new MinimalClassNameIdResolver(baseType, typeFactory);
++    }
++
+     protected MinimalClassNameIdResolver(JavaType baseType, TypeFactory typeFactory)
+     {
+         super(baseType, typeFactory);
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+index 00b72c899..e88f18609 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+@@ -64,8 +64,23 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+     abstract static class MysteryPolymorphic { }
+ 
+-    // [databind#511] types
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
++    interface BaseTypeAsDefaultInterface {
++        String getName();
++        void setName(String name);
++    }
++
++    static class BaseTypeAsDefaultImpl implements BaseTypeAsDefaultInterface {
++        private String name;
++
++        @Override
++        public String getName() { return name; }
++
++        @Override
++        public void setName(String name) { this.name = name; }
++    }
+ 
++    // [databind#511] types
+     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME,
+             include = JsonTypeInfo.As.WRAPPER_OBJECT)
+     @JsonSubTypes(@JsonSubTypes.Type(name="sub1", value = BadSub1.class))
+@@ -271,7 +286,25 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         }
+     }
+ 
+-    // [databind#1533]
++    public void testMissingTypeIdWithConcreteTargetFailsByDefault() throws Exception
++    {
++        try {
++            MAPPER.readValue("{\"name\":\"name\"}", BaseTypeAsDefaultImpl.class);
++            fail("Expected " + InvalidTypeIdException.class);
++        } catch (InvalidTypeIdException e) {
++            verifyException(e, "missing type id property 'type'");
++        }
++    }
++
++    public void testUseBaseTypeAsDefaultImpl() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.configure(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL, true);
++        BaseTypeAsDefaultImpl value = mapper.readValue("{\"name\":\"name\"}", BaseTypeAsDefaultImpl.class);
++        assertNotNull(value);
++        assertEquals("name", value.getName());
++    }
++
+     public void testWithEmptyStringAsNullObject1533() throws Exception
+     {
+         ObjectReader r = MAPPER.readerFor(AsPropertyWrapper.class)

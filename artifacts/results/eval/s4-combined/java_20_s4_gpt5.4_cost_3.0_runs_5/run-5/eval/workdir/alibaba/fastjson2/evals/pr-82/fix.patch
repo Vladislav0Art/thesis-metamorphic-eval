@@ -1,0 +1,103 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+index 1f5cc6862..c95079d3b 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+@@ -631,10 +631,10 @@ public interface JsonMapper {
+                 return false;
+             }
+             parser.skipValue();
++            return parser.current() == JSONReader.EOI;
+         } catch (JSONException jsonException) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -653,10 +653,10 @@ public interface JsonMapper {
+                 return false;
+             }
+             parser.skipValue();
++            return parser.current() == JSONReader.EOI;
+         } catch (JSONException jsonException) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -672,10 +672,10 @@ public interface JsonMapper {
+         JSONReader parser = JSONReader.of(jsonString);
+         try {
+             parser.skipValue();
++            return parser.current() == JSONReader.EOI;
+         } catch (JSONException jsonException) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+@@ -691,10 +691,11 @@ public interface JsonMapper {
+         JSONReader parser = JSONReader.of(dataBuffer);
+         try {
+             parser.skipValue();
++            return parser.current() == JSONReader.EOI;
+         } catch (JSONException jsonException) {
+             return false;
+         }
+-        return true;
++
+     }
+ 
+     /**
+@@ -713,10 +714,10 @@ public interface JsonMapper {
+         JSONReader parser = JSONReader.of(dataBuffer, startIndex, count, encoding);
+         try {
+             parser.skipValue();
++            return parser.current() == JSONReader.EOI;
+         } catch (JSONException jsonException) {
+             return false;
+         }
+-        return true;
+     }
+ 
+     /**
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 5a57e5305..5f488b807 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -19,6 +19,8 @@ import java.util.concurrent.*;
+ 
+ import static junit.framework.TestCase.*;
+ 
++
++
+ public class JSONTest {
+     @Test
+     public void test_parseObject_0() {
+@@ -31,6 +33,15 @@ public class JSONTest {
+     public void test_isValidArray_0() {
+         assertTrue(JsonMapper.isValidArray("[]"));
+         assertFalse(JsonMapper.isValidArray("{}"));
++        assertFalse(JsonMapper.isValidArray("[]a"));
++    }
++
++    @Test
++    public void test_isValid_0() {
++        assertTrue(JsonMapper.isValid("{}"));
++        assertTrue(JsonMapper.isValid("[]"));
++        assertFalse(JsonMapper.isValid("{}a"));
++        assertFalse(JsonMapper.isValid("[]a"));
+     }
+ 
+     @Test
+@@ -589,3 +600,4 @@ public class JSONTest {
+ 
+     }
+ }
++

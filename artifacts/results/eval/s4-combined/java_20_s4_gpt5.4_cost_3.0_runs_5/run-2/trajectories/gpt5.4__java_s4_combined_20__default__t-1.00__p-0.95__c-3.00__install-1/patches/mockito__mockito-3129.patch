@@ -1,0 +1,306 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/MockUtilities.java b/src/main/java/org/mockito/internal/MockUtilities.java
+index a6c8a81d4..8bd3946fc 100644
+--- a/src/main/java/org/mockito/internal/MockUtilities.java
++++ b/src/main/java/org/mockito/internal/MockUtilities.java
+@@ -4,92 +4,96 @@
+  */
+ package org.mockito.internal;
+ 
+-import org.mockito.MockedConstruction;
+-import org.mockito.Mockito;
+-import org.mockito.exceptions.misusing.NotAMockException;
+-import org.mockito.internal.configuration.plugins.DefaultMockitoPluginRegistry;
+-import org.mockito.internal.configuration.plugins.Plugins;
+-import org.mockito.internal.creation.settings.CreationSettings;
+-import org.mockito.internal.stubbing.InvocationContainerImpl;
+-import org.mockito.internal.util.MockNameImpl;
+-import org.mockito.internal.util.reflection.LenientCopyTool;
+-import org.mockito.invocation.MockHandler;
+-import org.mockito.mock.MockCreationSettings;
+-import org.mockito.mock.MockName;
+-import org.mockito.plugins.MockMaker;
+-import org.mockito.plugins.MockMaker.TypeMockability;
+-import org.mockito.plugins.MockResolver;
+-
+-import java.util.Collections;
++import java.util.HashMap;
++import java.util.HashSet;
+ import java.util.Map;
+-import java.util.concurrent.ConcurrentHashMap;
+-import java.util.function.Function;
+-
+-import static org.mockito.internal.handler.MockHandlerFactory.createMockHandler;
+-
+-@SuppressWarnings("unchecked")
+-public class MockUtilities {
+-
+-    private static final MockMaker DEFAULT_FACTORY = Plugins.getMockMaker();
+-    private static final Map<Class<? extends MockMaker>, MockMaker> MAKER_REGISTRY =
+-            new ConcurrentHashMap<>(
+-                    Collections.singletonMap(DEFAULT_FACTORY.getClass(), DEFAULT_FACTORY));
+-
+-    private static Object resolveMock(Object mockInstance) {
+-        if (mockInstance instanceof Class<?>) { // static mocks are resolved by definition
+-            return mockInstance;
+-        }
+-        for (MockResolver resolver : Plugins.getMockResolvers()) {
+-            mockInstance = resolver.resolve(mockInstance);
+-        }
+-        return mockInstance;
+-    }
+-
+-    public static void resetMockHandler(Object mockInstance) {
+-        MockHandler previousHandler = getMockHandler(mockInstance);
+-        MockCreationSettings creationSettings = previousHandler.getMockSettings();
+-        MockHandler replacementHandler = createMockHandler(creationSettings);
+-
+-        mockInstance = resolveMock(mockInstance);
+-        getMockMaker(creationSettings.getMockMaker()).resetMock(mockInstance, replacementHandler, creationSettings);
+-    }
+-
+-    public static void redefineMockNameIfDefault(Object mockInstance, String replacementName) {
+-        MockName resolvedName = getMockName(mockInstance);
+-        // TODO SF hacky...
+-        MockCreationSettings creationSettings = getMockHandler(mockInstance).getMockSettings();
+-        if (resolvedName.isDefault() && creationSettings instanceof CreationSettings) {
+-            ((CreationSettings) creationSettings).setMockName(new MockNameImpl(replacementName));
+-        }
+-    }
+-
+-    public static TypeMockability isTypeMockable(Class<?> makerClass, String makerName) {
+-        return getMockMaker(makerName).isTypeMockable(makerClass);
+-    }
+-
+-    public static boolean isSpy(Object mockInstance) {
+-        return isMock(mockInstance)
+-                && getMockSettings(mockInstance).getDefaultAnswer() == Mockito.CALLS_REAL_METHODS;
+-    }
+-
+-    public static boolean isMock(Object mockInstance) {
+-        // TODO SF (perf tweak) in our codebase we call mockMaker.getHandler() multiple times
+-        // unnecessarily
+-        // This is not ideal because getHandler() can be expensive (reflective calls inside mock
+-        // maker)
+-        // The frequent pattern in the codebase are separate calls to: 1) isMock(mock) then 2)
+-        // getMockHandler(mock)
+-        // We could replace it with using mockingDetails().isMock()
+-        // Let's refactor the codebase and use new mockingDetails() in all relevant places.
+-        // Potentially we could also move other methods to MockitoMock, some other candidates:
+-        // getInvocationContainer, isSpy, etc.
+-        // This also allows us to reuse our public API MockingDetails
+-        if (mockInstance == null) {
+-            return false;
+-        }
+-        return getMockHandlerOrNull(mockInstance) != null;
++import java.util.Set;
++
++import org.mockito.MockMakers;
++import org.mockito.internal.MockUtilities;
++import org.mockito.plugins.AnnotationEngine;
++import org.mockito.plugins.DoNotMockEnforcer;
++import org.mockito.plugins.InstantiatorProvider2;
++import org.mockito.plugins.MemberAccessor;
++import org.mockito.plugins.MockMaker;
++import org.mockito.plugins.MockitoLogger;
++import org.mockito.plugins.PluginSwitch;
++import org.mockito.plugins.StackTraceCleanerProvider;
++import org.mockito.plugins.infra.MockitoPluginRegistry;
++
++public class DefaultMockitoPluginRegistry implements MockitoPluginRegistry {
++
++    private static final Map<String, String> BUILTIN_PLUGIN_MAP = new HashMap<>();
++    static final String EMBEDDED_ALIAS = MockMakers.INLINE;
++    static final String PROXY_IDENTIFIER = MockMakers.PROXY;
++    static final String DERIVED_ALIAS = MockMakers.SUBCLASS;
++    public static final Set<String> MOCK_MAKER_ALIASES = new HashSet<>();
++    static final String MODULE_IDENTIFIER = "member-accessor-module";
++    static final String REFLECTIVE_ALIAS = "member-accessor-reflection";
++    public static final Set<String> MEMBER_ACCESSOR_ALIASES = new HashSet<>();
++
++    static {
++        // Keep the mapping: plugin interface name -> plugin implementation class name
++        BUILTIN_PLUGIN_MAP.put(PluginSwitch.class.getName(), DefaultPluginSwitch.class.getName());
++        BUILTIN_PLUGIN_MAP.put(
++                MockMaker.class.getName(),
++                "org.mockito.internal.creation.bytebuddy.InlineByteBuddyMockMaker");
++        BUILTIN_PLUGIN_MAP.put(
++                StackTraceCleanerProvider.class.getName(),
++                "org.mockito.internal.exceptions.stacktrace.DefaultStackTraceCleanerProvider");
++        BUILTIN_PLUGIN_MAP.put(
++                InstantiatorProvider2.class.getName(),
++                "org.mockito.internal.creation.instance.DefaultInstantiatorProvider");
++        BUILTIN_PLUGIN_MAP.put(
++                AnnotationEngine.class.getName(),
++                "org.mockito.internal.configuration.InjectingAnnotationEngine");
++        BUILTIN_PLUGIN_MAP.put(
++                EMBEDDED_ALIAS,
++                "org.mockito.internal.creation.bytebuddy.InlineByteBuddyMockMaker");
++        BUILTIN_PLUGIN_MAP.put(
++                PROXY_IDENTIFIER, "org.mockito.internal.creation.proxy.ProxyMockMaker");
++        BUILTIN_PLUGIN_MAP.put(
++                DERIVED_ALIAS, "org.mockito.internal.creation.bytebuddy.ByteBuddyMockMaker");
++        BUILTIN_PLUGIN_MAP.put(
++                MockitoLogger.class.getName(), "org.mockito.internal.util.ConsoleMockitoLogger");
++        BUILTIN_PLUGIN_MAP.put(
++                MemberAccessor.class.getName(),
++                "org.mockito.internal.util.reflection.ModuleMemberAccessor");
++        BUILTIN_PLUGIN_MAP.put(
++                MODULE_IDENTIFIER, "org.mockito.internal.util.reflection.ModuleMemberAccessor");
++        BUILTIN_PLUGIN_MAP.put(
++                REFLECTIVE_ALIAS, "org.mockito.internal.util.reflection.ReflectionMemberAccessor");
++        BUILTIN_PLUGIN_MAP.put(
++                DoNotMockEnforcer.class.getName(),
++                "org.mockito.internal.configuration.DefaultDoNotMockEnforcer");
++
++        MOCK_MAKER_ALIASES.add(EMBEDDED_ALIAS);
++        MOCK_MAKER_ALIASES.add(PROXY_IDENTIFIER);
++        MOCK_MAKER_ALIASES.add(DERIVED_ALIAS);
++
++        MEMBER_ACCESSOR_ALIASES.add(MODULE_IDENTIFIER);
++        MEMBER_ACCESSOR_ALIASES.add(REFLECTIVE_ALIAS);
++    }
++
++    @Override
++    public MockMaker getInlineMockMaker() {
++        return getMockMaker(EMBEDDED_ALIAS);
++    }
++
++    @Override
++    public MockMaker getMockMaker(String mockMaker) {
++        return MockUtilities.getMockMaker(mockMaker);
++    }
++
++    public static String getDefaultPluginClass(String nameOrAlias) {
++        return BUILTIN_PLUGIN_MAP.get(nameOrAlias);
++    }
++
++    @Override
++    public <T> T getDefaultPlugin(Class<T> pluginClass) {
++        String implementationClass = BUILTIN_PLUGIN_MAP.get(pluginClass.getName());
++        return createDefaultImplementation(pluginClass, implementationClass);
+     }
+-
+     public static MockCreationSettings getMockSettings(Object mockInstance) {
+         return getMockHandler(mockInstance).getMockSettings();
+     }
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginRegistry.java b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginRegistry.java
+index 4ed5685f4..d4f597b56 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginRegistry.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginRegistry.java
+@@ -8,6 +8,7 @@ import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.Map;
+ import java.util.Set;
++import java.util.concurrent.ConcurrentHashMap;
+ 
+ import org.mockito.MockMakers;
+ import org.mockito.plugins.AnnotationEngine;
+@@ -16,13 +17,14 @@ import org.mockito.plugins.InstantiatorProvider2;
+ import org.mockito.plugins.MemberAccessor;
+ import org.mockito.plugins.MockMaker;
+ import org.mockito.plugins.MockitoLogger;
+-import org.mockito.plugins.infra.MockitoPluginRegistry;
+ import org.mockito.plugins.PluginSwitch;
+ import org.mockito.plugins.StackTraceCleanerProvider;
++import org.mockito.plugins.infra.MockitoPluginRegistry;
+ 
+ public class DefaultMockitoPluginRegistry implements MockitoPluginRegistry {
+ 
+     private static final Map<String, String> BUILTIN_PLUGIN_MAP = new HashMap<>();
++    private static final Map<String, MockMaker> MOCK_MAKER_CACHE = new ConcurrentHashMap<>();
+     static final String EMBEDDED_ALIAS = MockMakers.INLINE;
+     static final String PROXY_IDENTIFIER = MockMakers.PROXY;
+     static final String DERIVED_ALIAS = MockMakers.SUBCLASS;
+@@ -47,19 +49,21 @@ public class DefaultMockitoPluginRegistry implements MockitoPluginRegistry {
+                 AnnotationEngine.class.getName(),
+                 "org.mockito.internal.configuration.InjectingAnnotationEngine");
+         BUILTIN_PLUGIN_MAP.put(
+-            EMBEDDED_ALIAS, "org.mockito.internal.creation.bytebuddy.InlineByteBuddyMockMaker");
+-        BUILTIN_PLUGIN_MAP.put(PROXY_IDENTIFIER, "org.mockito.internal.creation.proxy.ProxyMockMaker");
++                EMBEDDED_ALIAS,
++                "org.mockito.internal.creation.bytebuddy.InlineByteBuddyMockMaker");
++        BUILTIN_PLUGIN_MAP.put(
++                PROXY_IDENTIFIER, "org.mockito.internal.creation.proxy.ProxyMockMaker");
+         BUILTIN_PLUGIN_MAP.put(
+-            DERIVED_ALIAS, "org.mockito.internal.creation.bytebuddy.ByteBuddyMockMaker");
++                DERIVED_ALIAS, "org.mockito.internal.creation.bytebuddy.ByteBuddyMockMaker");
+         BUILTIN_PLUGIN_MAP.put(
+                 MockitoLogger.class.getName(), "org.mockito.internal.util.ConsoleMockitoLogger");
+         BUILTIN_PLUGIN_MAP.put(
+                 MemberAccessor.class.getName(),
+                 "org.mockito.internal.util.reflection.ModuleMemberAccessor");
+         BUILTIN_PLUGIN_MAP.put(
+-            MODULE_IDENTIFIER, "org.mockito.internal.util.reflection.ModuleMemberAccessor");
++                MODULE_IDENTIFIER, "org.mockito.internal.util.reflection.ModuleMemberAccessor");
+         BUILTIN_PLUGIN_MAP.put(
+-            REFLECTIVE_ALIAS, "org.mockito.internal.util.reflection.ReflectionMemberAccessor");
++                REFLECTIVE_ALIAS, "org.mockito.internal.util.reflection.ReflectionMemberAccessor");
+         BUILTIN_PLUGIN_MAP.put(
+                 DoNotMockEnforcer.class.getName(),
+                 "org.mockito.internal.configuration.DefaultDoNotMockEnforcer");
+@@ -74,7 +78,17 @@ public class DefaultMockitoPluginRegistry implements MockitoPluginRegistry {
+ 
+     @Override
+     public MockMaker getInlineMockMaker() {
+-        return createDefaultImplementation(MockMaker.class, BUILTIN_PLUGIN_MAP.get(EMBEDDED_ALIAS));
++        return getMockMaker(EMBEDDED_ALIAS);
++    }
++
++    @Override
++    public MockMaker getMockMaker(String mockMaker) {
++        String implementationClass = MOCK_MAKER_ALIASES.contains(mockMaker)
++                ? BUILTIN_PLUGIN_MAP.get(mockMaker)
++                : mockMaker;
++        return MOCK_MAKER_CACHE.computeIfAbsent(
++                implementationClass,
++                key -> createDefaultImplementation(MockMaker.class, implementationClass));
+     }
+ 
+     public static String getDefaultPluginClass(String nameOrAlias) {
+diff --git a/src/main/java/org/mockito/plugins/infra/MockitoPluginRegistry.java b/src/main/java/org/mockito/plugins/infra/MockitoPluginRegistry.java
+index d0825a211..43d34eebc 100644
+--- a/src/main/java/org/mockito/plugins/infra/MockitoPluginRegistry.java
++++ b/src/main/java/org/mockito/plugins/infra/MockitoPluginRegistry.java
+@@ -22,8 +22,7 @@ public interface MockitoPluginRegistry {
+ 
+     /**
+      * Returns inline mock maker, an optional mock maker that is bundled with Mockito distribution.
+-     * This method is needed because {@link #getDefaultPlugin(Class)} does not provide an instance of inline mock maker.
+-     * Creates new instance each time is called so it is recommended to keep hold of the resulting object for future invocations.
++     * This method is equivalent to {@code getMockMaker("mock-maker-inline")}.
+      * For more information about inline mock maker see the javadoc for main {@link Mockito} class.
+      *
+      * @return instance of inline mock maker
+@@ -31,6 +30,18 @@ public interface MockitoPluginRegistry {
+      */
+     MockMaker getInlineMockMaker();
+ 
++    /**
++     * Returns a mock maker by alias or fully qualified implementation class name.
++     * Mockito caches mock maker instances, so repeated invocations with the same argument
++     * return the same mock maker instance.
++     *
++     * @param mockMaker alias such as {@code mock-maker-inline}, {@code mock-maker-proxy},
++     *     {@code mock-maker-subclass}, or a fully qualified implementation class name
++     * @return the mock maker instance
++     * @since 5.0.0
++     */
++    MockMaker getMockMaker(String mockMaker);
++
+     /**
+      * Returns the default plugin implementation used by Mockito.
+      * Mockito plugins are stateless so it is recommended to keep hold of the returned plugin implementation

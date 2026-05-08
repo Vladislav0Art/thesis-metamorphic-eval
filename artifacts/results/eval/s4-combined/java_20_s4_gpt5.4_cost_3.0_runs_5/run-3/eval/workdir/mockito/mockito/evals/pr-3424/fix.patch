@@ -1,0 +1,26 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java b/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java
+index 406dea39a..c89da1866 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java
+@@ -12,7 +12,6 @@ import java.io.ObjectStreamException;
+ import java.io.Serializable;
+ import java.lang.reflect.Method;
+ import java.util.concurrent.Callable;
+-
+ import net.bytebuddy.implementation.bind.annotation.AllArguments;
+ import net.bytebuddy.implementation.bind.annotation.Argument;
+ import net.bytebuddy.implementation.bind.annotation.BindingPriority;

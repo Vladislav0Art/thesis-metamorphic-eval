@@ -1,0 +1,143 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/UTF8StreamJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/UTF8StreamJsonParser.java
+index 1471ce2a..fc0187dc 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/UTF8StreamJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/UTF8StreamJsonParser.java
+@@ -345,9 +345,6 @@ public class UTF8StreamJsonParser
+         }
+         return 0;
+     }
+-
+-    // // // Let's override default impls for improved performance
+-    
+     // @since 2.1
+     @Override
+     public String getValueAsString() throws IOException
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/parsers/JsonParserFromReader.java b/src/main/java/com/fasterxml/jackson/core/json/parsers/JsonParserFromReader.java
+index 0466e2f2..4966af88 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/parsers/JsonParserFromReader.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/parsers/JsonParserFromReader.java
+@@ -302,7 +302,9 @@ public class JsonParserFromReader // final in 2.3, earlier
+             }
+         }
+         return _isNextTokenNameMatch(index, serializableStringObj.getValue());
+-    }@Override
++    }
++
++    @Override
+     public String nextName() throws IOException
+     {
+         // // // Note: this is almost a verbatim copy of nextToken() (minus comments)
+@@ -342,6 +344,12 @@ public class JsonParserFromReader // final in 2.3, earlier
+         }
+         if (_parsingContext.expectComma()) {
+             index = _skipAfterComma(index);
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if (index == INT_RCURLY) {
++                    _closeContainer(index);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _updateTokenLocation();
+@@ -406,7 +414,9 @@ public class JsonParserFromReader // final in 2.3, earlier
+         }
+         _nextToken = token;
+         return fieldName;
+-    }// note: identical to one in Utf8StreamParser
++    }
++
++    // note: identical to one in Utf8StreamParser
+     @Override
+     public final long nextLongOrDefault(long defaultInt) throws IOException
+     {
+@@ -427,7 +437,9 @@ public class JsonParserFromReader // final in 2.3, earlier
+         }
+         // !!! TODO: optimize this case as well
+         return (nextJsonToken() == JsonToken.VALUE_NUMBER_INT) ? getLongValue() : defaultInt;
+-    } /**
++    }
++
++    /**
+      * @return Next token from the stream, if any found, or null
+      *   to indicate end-of-input
+      */
+diff --git a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+index 9e169207..03a5bc70 100644
+--- a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
++++ b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonFactory;
+ import com.fasterxml.jackson.core.JsonParser;
+ import com.fasterxml.jackson.core.JsonParser.Feature;
+ import com.fasterxml.jackson.core.JsonToken;
++import com.fasterxml.jackson.core.json.parsers.JsonParserFromReader;
+ import com.fasterxml.jackson.core.json.parsers.UTF8JsonInputParser;
+ 
+ import org.junit.Test;
+@@ -288,6 +289,53 @@ public class TrailingCommasTest extends BaseTest {
+     }
+     p.close();
+   }
++  @Test
++  public void testObjectTrailingCommaWithNextName() throws Exception {
++    String json = "{\"a\": true, \"b\": false,}";
++
++    JsonParser p = createParser(factory, mode, json);
++
++    assertEquals(JsonToken.START_OBJECT, p.nextToken());
++
++    if (mode == MODE_READER) {
++      JsonParserFromReader readerParser = (JsonParserFromReader) p;
++
++      assertEquals("a", readerParser.nextName());
++      assertToken(JsonToken.VALUE_TRUE, p.nextToken());
++
++      assertEquals("b", readerParser.nextName());
++      assertToken(JsonToken.VALUE_FALSE, p.nextToken());
++
++      if (features.contains(Feature.ALLOW_TRAILING_COMMA)) {
++        assertNull(readerParser.nextName());
++        assertToken(JsonToken.END_OBJECT, p.getCurrentToken());
++        assertEnd(p);
++      } else {
++        try {
++          readerParser.nextName();
++          fail("No exception thrown");
++        } catch (Exception e) {
++          verifyException(e, "Unexpected character ('}' (code 125))");
++        }
++      }
++    } else {
++      assertToken(JsonToken.FIELD_NAME, p.nextToken());
++      assertEquals("a", p.getText());
++      assertToken(JsonToken.VALUE_TRUE, p.nextToken());
++
++      assertToken(JsonToken.FIELD_NAME, p.nextToken());
++      assertEquals("b", p.getText());
++      assertToken(JsonToken.VALUE_FALSE, p.nextToken());
++
++      if (features.contains(Feature.ALLOW_TRAILING_COMMA)) {
++        assertToken(JsonToken.END_OBJECT, p.nextToken());
++        assertEnd(p);
++      } else {
++        assertUnexpected(p, '}');
++      }
++    }
++    p.close();
++  }
+ 
+   @Test
+   public void testObjectTrailingCommas() throws Exception {

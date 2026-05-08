@@ -1,0 +1,22 @@
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/util/UrlQueryStringParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/util/UrlQueryStringParser.java
+index 086687e901..e6a00dc14b 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/util/UrlQueryStringParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/util/UrlQueryStringParser.java
+@@ -386,7 +386,7 @@ public final class UrlQueryStringParser {
+             String paramKey = decodeUrlComponent(inputString, nameStartIndex, valueStartIndex - 3, false, buffer);
+             String paramValue;
+             if (valueStartIndex >= valueFinish) {
+-                paramValue = paramKey;
++                paramValue = "";
+             } else {
+                 paramValue = decodeUrlComponent(inputString, valueStartIndex, valueFinish, false, buffer);
+             }
+@@ -399,7 +399,7 @@ public final class UrlQueryStringParser {
+             String paramKey = inputString.substring(nameStartIndex, valueStartIndex - 1);
+             String paramValue;
+             if (valueStartIndex >= valueFinish) {
+-                paramValue = paramKey;
++                paramValue = "";
+             } else {
+                 paramValue = inputString.substring(valueStartIndex, valueFinish);
+             }

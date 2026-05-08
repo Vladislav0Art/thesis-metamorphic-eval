@@ -1,0 +1,88 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index c60648423..f7ea4c865 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -343,12 +343,13 @@ public final class DeadLetterQueueWriter implements Closeable {
+         if (retentionTime == null) {
+             return false;
+         }
+-        final Instant now = clock.instant();
+         return oldestSegmentTimestamp
+-                .map(t -> t.toInstant().isBefore(now.minus(retentionTime)))
++                .map(t -> t.toInstant().isBefore(clock.instant().minus(retentionTime)))
+                 .orElse(false);
+     }
+ 
++
++
+     private void deleteExpiredSegments() throws IOException {
+         // remove all the old segments that verifies the age retention condition
+         boolean cleanNextSegment;
+@@ -408,7 +409,12 @@ public final class DeadLetterQueueWriter implements Closeable {
+      * Start from the end of the latest block, and going backward try to read the next event from its start.
+      * */
+     private static Optional<Timestamp> readTimestampOfLastEventInSegment(Path segmentPath) throws IOException {
+-        final int lastBlockId = (int) Math.ceil(((Files.size(segmentPath) - VERSION_SIZE) / (double) BLOCK_SIZE)) - 1;
++        final long segmentSize = Files.size(segmentPath);
++        if (segmentSize <= VERSION_SIZE) {
++            return Optional.of(new Timestamp(Files.getLastModifiedTime(segmentPath).toInstant()));
++        }
++
++        final int lastBlockId = (int) Math.ceil(((segmentSize - VERSION_SIZE) / (double) BLOCK_SIZE)) - 1;
+         byte[] eventBytes;
+         try (RecordIOReader recordReader = new RecordIOReader(segmentPath)) {
+             int blockId = lastBlockId;
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+index 8bcfb6359..751a8e0ec 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterAgeRetentionTest.java
+@@ -316,3 +316,4 @@ public class DeadLetterQueueWriterAgeRetentionTest {
+         }
+     }
+ }
++
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 5702d169a..c289a4cb8 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -247,6 +247,26 @@ public class DeadLetterQueueWriterTest {
+         return new String(fillArray);
+     }
+ 
++    @Test
++    public void testWriterInitializesWithHeaderOnlySegment() throws IOException {
++        Files.write(dir.resolve("1.log"), new byte[]{(byte) RecordIOWriter.VERSION});
++
++        try (DeadLetterQueueWriter writer = DeadLetterQueueWriter
++                .newBuilder(dir, 10 * MB, 20 * MB, Duration.ofSeconds(1))
++                .build()) {
++            Event event = DeadLetterQueueReaderTest.createEventWithConstantSerializationOverhead(Collections.emptyMap());
++            DLQEntry entry = new DLQEntry(
++                    event, "", "", "00001",
++                    DeadLetterQueueReaderTest.constantSerializationLengthTimestamp(System.currentTimeMillis())
++            );
++
++            writer.writeEntry(entry);
++        }
++
++        assertTrue(Files.exists(dir.resolve("1.log")));
++        assertTrue(Files.exists(dir.resolve("2.log.tmp")) || Files.exists(dir.resolve("2.log")));
++    }
++
+     @Test
+     public void testRemoveOldestSegmentWhenRetainedSizeIsExceededAndDropOlderModeIsEnabled() throws IOException {
+         Event event = DeadLetterQueueReaderTest.createEventWithConstantSerializationOverhead(Collections.emptyMap());

@@ -1,0 +1,45 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
+index 0e717bbbc..b317e027d 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
+@@ -441,6 +441,11 @@ class InlineDelegatingByteBuddyMockFactory
+         }
+     }
+ 
++    @Override
++    public void resetMock(Object mock, MockHandler newHandler, MockCreationSettings settings) {
++        resetMockInterceptor(mock, newHandler, settings);
++    }
++
+     public void resetMockInterceptor(Object subject, MockHandler replacementHandler, MockCreationSettings creationConfig) {
+         MockMethodInterceptor methodInterceptor =
+                 new MockMethodInterceptor(replacementHandler, creationConfig);
+@@ -676,7 +681,13 @@ class InlineDelegatingByteBuddyMockFactory
+         }
+     }
+ 
+-    public <T> T createMockInstance(MockCreationSettings<T> creationConfig, MockHandler mockDelegate) {
++    @Override
++    public <T> T createMock(MockCreationSettings<T> creationConfig, MockHandler mockDelegate) {
++        return createMockInstance(creationConfig, mockDelegate);
++    }
++
++    public <T> T createMockInstance(
++            MockCreationSettings<T> creationConfig, MockHandler mockDelegate) {
+         return createMockInstance(creationConfig, mockDelegate, false);
+     }
+ 

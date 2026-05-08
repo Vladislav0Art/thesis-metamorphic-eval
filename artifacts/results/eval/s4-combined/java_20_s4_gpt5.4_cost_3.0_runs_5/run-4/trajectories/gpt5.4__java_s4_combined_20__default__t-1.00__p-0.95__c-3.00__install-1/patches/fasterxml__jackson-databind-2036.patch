@@ -1,0 +1,288 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..2270c9878 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -462,6 +462,17 @@ public enum MapperFeature implements ConfigFeature
+      */
+     IGNORE_DUPLICATE_MODULE_REGISTRATIONS(true),
+ 
++    /**
++     * Feature that determines whether the declared base type of a polymorphic value
++     * should be used as the default implementation when no explicit
++     * {@link com.fasterxml.jackson.annotation.JsonTypeInfo#defaultImpl} is configured.
++     * This is most commonly used when the declared type passed to deserialization
++     * is already a concrete subtype, but incoming data omits the type id property.
++     *<p>
++     * Feature is disabled by default.
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /**
+      * Setting that determines what happens if an attempt is made to explicitly
+      * "merge" value of a property, where value does not support merging; either
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java
+index 81935c220..4bbd29051 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java
+@@ -181,7 +181,13 @@ public class StandardTypeResolverBuilder
+         JavaType fallbackType;
+ 
+         if (_defaultImpl == null) {
+-            fallbackType = null;
++            if (serializationSettings.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && !rootType.isPrimitive()
++                    && rootType.isConcrete()) {
++                fallbackType = rootType;
++            } else {
++                fallbackType = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+@@ -249,7 +255,7 @@ public class StandardTypeResolverBuilder
+         case CLASS:
+             return new ClassNameIdResolver(rootType, serializationSettings.getTypeFactory());
+         case MINIMAL_CLASS:
+-            return new MinimalClassNameIdResolver(rootType, serializationSettings.getTypeFactory());
++            return MinimalClassNameIdResolver.construct(rootType, serializationSettings.getTypeFactory());
+         case NAME:
+             return TypeNameIdResolver.construct(serializationSettings, rootType, knownSubtypes, forSerialization, forDeserialization);
+         case NONE: // hmmh. should never get this far with 'none'
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
+index d208c307b..ec82a88b5 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
+@@ -22,6 +22,11 @@ public class MinimalClassNameIdResolver
+      */
+     protected final String _basePackagePrefix;
+ 
++    public static MinimalClassNameIdResolver construct(JavaType baseType, TypeFactory typeFactory)
++    {
++        return new MinimalClassNameIdResolver(baseType, typeFactory);
++    }
++
+     protected MinimalClassNameIdResolver(JavaType baseType, TypeFactory typeFactory)
+     {
+         super(baseType, typeFactory);
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+index 00b72c899..61f849e89 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+@@ -64,6 +64,23 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+     abstract static class MysteryPolymorphic { }
+ 
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS,
++            include = JsonTypeInfo.As.PROPERTY, property = "type")
++    public static interface MinimalClassInterface {
++        public String getName();
++        public void setName(String name);
++    }
++
++    public static class MinimalClassImpl implements MinimalClassInterface {
++        public String name;
++
++        @Override
++        public String getName() { return name; }
++
++        @Override
++        public void setName(String name) { this.name = name; }
++    }
++
+     // [databind#511] types
+ 
+     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME,
+@@ -98,101 +115,93 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+     }
+ 
+     // for [databind#656]
+-    @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include= JsonTypeInfo.As.WRAPPER_OBJECT, defaultImpl=ImplFor656.class)
+-    static abstract class BaseFor656 { }
++    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_OBJECT)
++    public static abstract class BaseFor656 { }
+ 
+-    static class ImplFor656 extends BaseFor656 {
++    public static class ImplFor656 extends BaseFor656 {
+         public int a;
+     }
+ 
+-    static class CallRecord {
+-        public float version;
+-        public String application;
+-        public Item item;
+-        public Item item2;
+-        public CallRecord() {}
++    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", defaultImpl = DefaultImpl.class)
++    public static abstract class Base {
++        public int a;
+     }
+ 
+-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
+-    @JsonSubTypes({@JsonSubTypes.Type(value = Event.class, name = "event")})
+-    @JsonIgnoreProperties(ignoreUnknown=true)
+-    public interface Item { }
++    public static class DefaultImpl extends Base { }
+ 
+-    static class Event implements Item {
+-        public String location;
+-        public Event() {}
++    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
++    public static abstract class Base2 {
++        public int a;
+     }
+ 
+-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
+-            property = "clazz")
+-    abstract static class BaseClass { }    
++    public static class Impl2 extends Base2 { }
+ 
+-    static class BaseWrapper {
+-        public BaseClass value;
++    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "clazz")
++    public static class BaseType {
++    }
++
++    public static class BaseWrapper {
++        public BaseType value;
+     }
+ 
+-    // [databind#1533]
+     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY,
+             property = "type")
+-    static class AsProperty {
++    static abstract class AsPropertyValue {
++        public int value;
+     }
+ 
+     static class AsPropertyWrapper {
+-        public AsProperty value;
++        public AsPropertyValue value;
+     }
+ 
+-    /*
+-    /**********************************************************
+-    /* Unit tests, deserialization
+-    /**********************************************************
+-     */
+-
+-    private final ObjectMapper MAPPER = new ObjectMapper();
+-
+-    public void testDeserializationWithObject() throws Exception
+-    {
+-        Inter inter = MAPPER.readerFor(Inter.class).readValue("{\"type\": \"mine\", \"blah\": [\"a\", \"b\", \"c\"]}");
+-        assertTrue(inter instanceof MyInter);
+-        assertFalse(inter instanceof LegacyInter);
+-        assertEquals(Arrays.asList("a", "b", "c"), ((MyInter) inter).blah);
++    public static class CallRecord {
++        public double version;
++        public String application;
++        public Item item;
++        public Item item2;
+     }
+ 
+-    public void testDeserializationWithString() throws Exception
+-    {
+-        Inter inter = MAPPER.readerFor(Inter.class).readValue("\"a,b,c,d\"");
+-        assertTrue(inter instanceof LegacyInter);
+-        assertEquals(Arrays.asList("a", "b", "c", "d"), ((MyInter) inter).blah);
++    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY,
++            property = "type", defaultImpl = Event.class)
++    @JsonSubTypes({ @JsonSubTypes.Type(Event.class), @JsonSubTypes.Type(OtherEvent.class) })
++    public static abstract class Item {
++        public String location;
+     }
+ 
+-    public void testDeserializationWithArray() throws Exception
++    public static class Event extends Item { }
++
++    public static class OtherEvent extends Item { }
++
++    private final ObjectMapper MAPPER = new ObjectMapper();
++
++    public void testWithDefaultImpl() throws Exception
+     {
+-        Inter inter = MAPPER.readerFor(Inter.class).readValue("[\"a\", \"b\", \"c\", \"d\"]");
+-        assertTrue(inter instanceof LegacyInter);
+-        assertEquals(Arrays.asList("a", "b", "c", "d"), ((MyInter) inter).blah);
++        Inter inter = MAPPER.readValue("{\"blah\":[\"a\",\"b\",\"c\"]}", Inter.class);
++        assertEquals(LegacyInter.class, inter.getClass());
++        assertEquals(3, ((LegacyInter) inter).blah.size());
+     }
+ 
+-    public void testDeserializationWithArrayOfSize2() throws Exception
++    // [JACKSON-460]
++    public void testWithNaturalScalar() throws Exception
+     {
+-        Inter inter = MAPPER.readerFor(Inter.class).readValue("[\"a\", \"b\"]");
+-        assertTrue(inter instanceof LegacyInter);
+-        assertEquals(Arrays.asList("a", "b"), ((MyInter) inter).blah);
++        Inter inter = MAPPER.readValue(quote("a,b,c"), Inter.class);
++        assertEquals(LegacyInter.class, inter.getClass());
++        assertEquals(3, ((LegacyInter) inter).blah.size());
+     }
+ 
+-    // [databind#148]
+-    public void testDefaultAsNoClass() throws Exception
++    // [JACKSON-460]
++    public void testWithInvalidType() throws Exception
+     {
+-        Object ob = MAPPER.readerFor(DefaultWithNoClass.class).readValue("{ }");
+-        assertNull(ob);
+-        ob = MAPPER.readerFor(DefaultWithNoClass.class).readValue("{ \"bogus\":3 }");
++        Object ob = MAPPER.readValue("{ \"type\":\"foobar\" }", Inter.class);
+         assertNull(ob);
+     }
+ 
+-    // same, with 2.5 and Void.class
+-    public void testDefaultAsVoid() throws Exception
++    // [JACKSON-460]
++    public void testWithObjectAsDefault() throws Exception
+     {
+-        Object ob = MAPPER.readerFor(DefaultWithVoidAsDefault.class).readValue("{ }");
++        Object ob = MAPPER.readValue("{ \"a\" : 3 }", DefaultWithNoClass.class);
+         assertNull(ob);
+-        ob = MAPPER.readerFor(DefaultWithVoidAsDefault.class).readValue("{ \"bogus\":3 }");
++        ob = MAPPER.readValue("{ \"a\" : 3 }", DefaultWithVoidAsDefault.class);
+         assertNull(ob);
+     }
+ 
+@@ -280,6 +289,26 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         assertNull(wrapper.value);
+     }
+ 
++    public void testMissingTypeIdForConcreteTargetFailsByDefault() throws Exception
++    {
++        try {
++            MAPPER.readValue("{\"name\":\"name\"}", MinimalClassImpl.class);
++            fail("Expected " + InvalidTypeIdException.class);
++        } catch (InvalidTypeIdException e) {
++            verifyException(e, "missing type id property 'type'");
++        }
++    }
++
++    public void testUseBaseTypeAsDefaultImpl() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++
++        MinimalClassImpl result = mapper.readValue("{\"name\":\"name\"}", MinimalClassImpl.class);
++        assertNotNull(result);
++        assertEquals("name", result.name);
++    }
++
+     /*
+     /**********************************************************
+     /* Unit tests, serialization

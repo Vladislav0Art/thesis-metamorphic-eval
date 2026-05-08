@@ -1,0 +1,55 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/ReproIssue.java b/ReproIssue.java
+new file mode 100644
+index 000000000..fb1222b9b
+--- /dev/null
++++ b/ReproIssue.java
+@@ -0,0 +1,19 @@
++import com.alibaba.fastjson.JSON;
++
++public class ReproIssue {
++    public static void main(String[] args) {
++        String[] inputs = {
++                "{}",
++                "[]",
++                "{}1",
++                "[]1",
++                "{]",
++                "[}"
++        };
++
++        for (String input : inputs) {
++            System.out.println(input + " -> isValid=" + JSON.isValid(input)
++                    + ", isValidArray=" + JSON.isValidArray(input));
++        }
++    }
++}
+diff --git a/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
+index 5f165ed35..d6d395e7a 100644
+--- a/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
++++ b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
+@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
+ import com.alibaba.fastjson.JSONObject;
+ import org.junit.jupiter.api.Test;
+ 
++import static org.junit.jupiter.api.Assertions.assertFalse;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ public class Issue2982 {
+@@ -16,5 +17,13 @@ public class Issue2982 {
+         assertTrue(JSONObject.isValidArray(jsonStr));
+     }
+ 
++    @Test
++    public void test_invalid_when_trailing_characters_present() {
++        assertFalse(JSON.isValid("[]1"));
++        assertFalse(JSON.isValidArray("[]1"));
++        assertFalse(JSONArray.isValidArray("[]1"));
++        assertFalse(JSONObject.isValidArray("[]1"));
++    }
++
+ 
+ }

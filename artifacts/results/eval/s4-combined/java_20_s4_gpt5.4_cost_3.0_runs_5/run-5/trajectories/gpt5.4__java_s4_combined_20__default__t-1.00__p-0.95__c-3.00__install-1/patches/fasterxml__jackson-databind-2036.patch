@@ -1,0 +1,113 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..bcc09bed9 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -286,6 +286,18 @@ public enum MapperFeature implements ConfigFeature
+      */
+     USE_STATIC_TYPING(false),
+ 
++    /**
++     * Feature that determines whether the declared base type is used as the
++     * default implementation for polymorphic deserialization when no explicit
++     * default implementation has been configured.
++     *<p>
++     * This only applies when the declared type is concrete and not
++     * {@link java.lang.Object}.
++     *<p>
++     * Feature is disabled by default.
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /*
+     /******************************************************
+     /* View-related features
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java
+index 81935c220..95931d1eb 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java
+@@ -181,7 +181,13 @@ public class StandardTypeResolverBuilder
+         JavaType fallbackType;
+ 
+         if (_defaultImpl == null) {
+-            fallbackType = null;
++            if (serializationSettings.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && rootType.isConcrete()
++                    && !rootType.hasRawClass(Object.class)) {
++                fallbackType = rootType;
++            } else {
++                fallbackType = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
+index d208c307b..68c58ac42 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/MinimalClassNameIdResolver.java
+@@ -22,7 +22,7 @@ public class MinimalClassNameIdResolver
+      */
+     protected final String _basePackagePrefix;
+ 
+-    protected MinimalClassNameIdResolver(JavaType baseType, TypeFactory typeFactory)
++    public MinimalClassNameIdResolver(JavaType baseType, TypeFactory typeFactory)
+     {
+         super(baseType, typeFactory);
+         String base = baseType.getRawClass().getName();
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+index 00b72c899..a73f92003 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+@@ -140,6 +140,13 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+     static class AsPropertyWrapper {
+         public AsProperty value;
+     }
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY,
++            property = "type")
++    interface BaseWithMinimalClass { }
++
++    static class ImplWithMinimalClass implements BaseWithMinimalClass {
++        public String name;
++    }
+ 
+     /*
+     /**********************************************************
+@@ -280,6 +287,26 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         assertNull(wrapper.value);
+     }
+ 
++    public void testMissingTypeIdForConcreteTargetFailsByDefault() throws Exception
++    {
++        try {
++            MAPPER.readValue(aposToQuotes("{'name':'name'}"), ImplWithMinimalClass.class);
++            fail("Expected " + InvalidTypeIdException.class);
++        } catch (InvalidTypeIdException e) {
++            verifyException(e, "missing type id property 'type'");
++        }
++    }
++
++    public void testUseBaseTypeAsDefaultImplForConcreteTarget() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper()
++                .enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        ImplWithMinimalClass result = mapper.readValue(aposToQuotes("{'name':'name'}"),
++                ImplWithMinimalClass.class);
++        assertNotNull(result);
++        assertEquals("name", result.name);
++    }
++
+     /*
+     /**********************************************************
+     /* Unit tests, serialization

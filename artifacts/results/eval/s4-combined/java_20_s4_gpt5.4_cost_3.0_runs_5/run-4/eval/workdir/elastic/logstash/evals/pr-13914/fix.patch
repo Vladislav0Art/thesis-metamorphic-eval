@@ -1,0 +1,83 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/setup.bat b/bin/setup.bat
+index 5e8acb4d1..73e112183 100644
+--- a/bin/setup.bat
++++ b/bin/setup.bat
+@@ -62,4 +62,4 @@ if not exist %JRUBY_BIN% (
+   exit /b 1
+ )
+ 
+-set RUBYLIB=%LS_HOME%\lib
+\ No newline at end of file
++set RUBYLIB=%LS_HOME%\lib
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..ea661ed79 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -80,7 +80,7 @@ allprojects {
+   }
+ 
+   //https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
+-  tasks.withType(Test) {
++  tasks.withType(Test).configureEach {
+     testLogging {
+       // set options for log level LIFECYCLE
+       events "passed", "skipped", "failed", "standardOut"
+@@ -88,25 +88,8 @@ allprojects {
+       exceptionFormat "full"
+       showCauses true
+       showStackTraces true
+-      enableAssertions false
+-
+-      // set options for log level DEBUG and INFO
+-      debug {
+-        events "started", "passed", "skipped", "failed", "standardOut", "standardError"
+-        exceptionFormat "full"
+-      }
+-      info.events = debug.events
+-      info.exceptionFormat = debug.exceptionFormat
+-
+-      afterSuite { desc, result ->
+-        if (!desc.parent) { // will match the outermost suite
+-          def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+-          def startItem = '|  ', endItem = '  |'
+-          def repeatLength = startItem.length() + output.length() + endItem.length()
+-          println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+-        }
+-      }
+     }
++    enableAssertions false
+   }
+ }
+ 
+@@ -860,6 +843,17 @@ tasks.register("copyJdk", Copy) {
+     description = "Download, unpack and copy the JDK"
+     // CLI project properties: -Pjdk_bundle_os=[windows|linux|darwin] -Pjdk_arch=[arm64|x86_64]
+     doLast {
++        File bundledJavaHome = selectOsType() == "darwin" ?
++                new File(project.ext.jdkBundlingDirectory, "Contents/Home") :
++                new File(project.ext.jdkBundlingDirectory)
++        File releaseFile = new File(bundledJavaHome, "release")
++        String implementorVersion = releaseFile.readLines()
++                .find { it.startsWith('IMPLEMENTOR_VERSION=') }
++                ?.replaceFirst(/^IMPLEMENTOR_VERSION="/, '')
++                ?.replaceFirst(/"$/, '')
++        if (implementorVersion != null) {
++            new File(bundledJavaHome, "VERSION").text = "${implementorVersion}\n"
++        }
+         System.out.println "Download location is ${project.ext.jdkDownloadLocation}, Decompressing ${project.ext.jdkDirectory} to \"${project.ext.jdkBundlingDirectory}\""
+     }
+ }

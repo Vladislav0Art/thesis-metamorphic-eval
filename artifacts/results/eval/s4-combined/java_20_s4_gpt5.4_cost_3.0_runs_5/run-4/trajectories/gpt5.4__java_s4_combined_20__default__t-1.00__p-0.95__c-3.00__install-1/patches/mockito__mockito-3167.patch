@@ -1,0 +1,77 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
+index 0e717bbbc..d61b21594 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
+@@ -441,7 +441,9 @@ class InlineDelegatingByteBuddyMockFactory
+         }
+     }
+ 
+-    public void resetMockInterceptor(Object subject, MockHandler replacementHandler, MockCreationSettings creationConfig) {
++    @Override
++    public void resetMock(
++            Object subject, MockHandler replacementHandler, MockCreationSettings creationConfig) {
+         MockMethodInterceptor methodInterceptor =
+                 new MockMethodInterceptor(replacementHandler, creationConfig);
+         if (subject instanceof Class<?>) {
+@@ -466,6 +468,11 @@ class InlineDelegatingByteBuddyMockFactory
+         }
+     }
+ 
++    public void resetMockInterceptor(
++            Object subject, MockHandler replacementHandler, MockCreationSettings creationConfig) {
++        resetMock(subject, replacementHandler, creationConfig);
++    }
++
+     @Override
+     @SuppressWarnings("unchecked")
+     public <T> T newInstance(Class<T> targetClass) throws InstantiationException {
+@@ -676,6 +683,11 @@ class InlineDelegatingByteBuddyMockFactory
+         }
+     }
+ 
++    @Override
++    public <T> T createMock(MockCreationSettings<T> creationConfig, MockHandler mockDelegate) {
++        return createMockInstance(creationConfig, mockDelegate);
++    }
++
+     public <T> T createMockInstance(MockCreationSettings<T> creationConfig, MockHandler mockDelegate) {
+         return createMockInstance(creationConfig, mockDelegate, false);
+     }
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+index a418aab7a..270ce1054 100644
+--- a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+@@ -20,6 +20,19 @@ public class EnumMockingTest {
+         assertThat(a.name(), nullValue(String.class));
+     }
+ 
++    @Test
++    public void testDeepStubMockEnum() {
++        Holder holder = Mockito.mock(Holder.class, Mockito.RETURNS_DEEP_STUBS);
++
++        Mockito.when(holder.getAnimal().sound()).thenReturn("woof");
++
++        assertThat(holder.getAnimal().sound(), is("woof"));
++    }
++
++    interface Holder {
++        Animal getAnimal();
++    }
++
+     enum Animal {
+         CAT {
+             @Override

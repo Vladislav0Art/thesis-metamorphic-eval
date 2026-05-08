@@ -1,0 +1,150 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/JavaType.java b/src/main/java/com/fasterxml/jackson/databind/JavaType.java
+index 3fdbb2b1f..a0369ce1c 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/JavaType.java
++++ b/src/main/java/com/fasterxml/jackson/databind/JavaType.java
+@@ -272,19 +272,8 @@ public abstract class JavaType
+     @Override
+     public boolean isConcrete() {
+         int mod = _class.getModifiers();
+-        if ((mod & (Modifier.INTERFACE | Modifier.ABSTRACT)) == 0) {
+-            return true;
+-        }
+-        /* 19-Feb-2010, tatus: Holy mackarel; primitive types
+-         *    have 'abstract' flag set...
+-         */
+-        return _class.isPrimitive();
++        return (mod & (Modifier.INTERFACE | Modifier.ABSTRACT)) == 0;
+     }
+-
+-    @Override
+-    public boolean isThrowable() { return Throwable.class.isAssignableFrom(_class); }
+-
+-    @Override
+     public boolean isArrayType() { return false; }
+ 
+     @Override
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..c75093135 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -159,6 +159,8 @@ public enum MapperFeature implements ConfigFeature
+      * false, all auto-detectable getters can be discovered.
+      *<p>
+      * Feature is disabled by default.
++     *
++     * @since 2.2
+      */
+     REQUIRE_SETTERS_FOR_GETTERS(false),
+ 
+@@ -269,6 +271,20 @@ public enum MapperFeature implements ConfigFeature
+     /******************************************************
+      */
+ 
++    /**
++     * Feature that determines whether the declared base type of a polymorphic
++     * value is to be used as the default implementation when no explicit
++     * default implementation ({@link com.fasterxml.jackson.annotation.JsonTypeInfo#defaultImpl})
++     * is specified.
++     *<p>
++     * If enabled, when deserializing a polymorphic value with missing type id,
++     * the explicitly requested concrete target type may be used instead of
++     * failing due to missing type information.
++     *<p>
++     * Feature is disabled by default.
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /**
+      * Feature that determines whether the type detection for
+      * serialization should be using actual dynamic runtime type,
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java
+index 81935c220..dbd251a48 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/StandardTypeResolverBuilder.java
+@@ -181,7 +181,12 @@ public class StandardTypeResolverBuilder
+         JavaType fallbackType;
+ 
+         if (_defaultImpl == null) {
+-            fallbackType = null;
++            if (serializationSettings.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && rootType.isConcrete()) {
++                fallbackType = rootType;
++            } else {
++                fallbackType = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+@@ -271,3 +276,4 @@ public class StandardTypeResolverBuilder
+         _typeProperty = propertyName;
+     }
+ }
++
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+index 00b72c899..075fb0bbe 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+@@ -141,6 +141,23 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         public AsProperty value;
+     }
+ 
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY,
++            property = "type")
++    public interface BaseWithMinimalClass {
++        public String getName();
++        public void setName(String name);
++    }
++
++    public static class ImplWithMinimalClass implements BaseWithMinimalClass {
++        public String name;
++
++        @Override
++        public String getName() { return name; }
++
++        @Override
++        public void setName(String n) { name = n; }
++    }
++
+     /*
+     /**********************************************************
+     /* Unit tests, deserialization
+@@ -280,6 +297,26 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         assertNull(wrapper.value);
+     }
+ 
++    public void testMissingTypeIdConcreteTargetStillFailsByDefault() throws Exception
++    {
++        try {
++            MAPPER.readValue("{\"name\":\"name\"}", ImplWithMinimalClass.class);
++            fail("Expected " + InvalidTypeIdException.class);
++        } catch (InvalidTypeIdException e) {
++            verifyException(e, "missing type id property 'type'");
++        }
++    }
++
++    public void testMissingTypeIdUsesConcreteTargetAsDefaultImpl() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++
++        ImplWithMinimalClass result = mapper.readValue("{\"name\":\"name\"}",
++                ImplWithMinimalClass.class);
++        assertNotNull(result);
++        assertEquals("name", result.name);
++    }
+     /*
+     /**********************************************************
+     /* Unit tests, serialization

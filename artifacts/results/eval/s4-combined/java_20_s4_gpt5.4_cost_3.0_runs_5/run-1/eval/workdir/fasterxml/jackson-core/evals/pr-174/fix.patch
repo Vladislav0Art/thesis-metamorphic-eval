@@ -1,0 +1,380 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
+index 417599a3..801c74db 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
+@@ -12,9 +12,9 @@ import com.fasterxml.jackson.core.io.NumberInput;
+  * as well (not implemented yet for 2.3).
+  *<p>
+  * Instances are fully immutable and can be shared, cached.
+- * 
++ *
+  * @author Tatu Saloranta
+- * 
++ *
+  * @since 2.3
+  */
+ public class JsonPointerPath
+@@ -26,7 +26,7 @@ public class JsonPointerPath
+      * node or position.
+      */
+     protected final static JsonPointerPath EMPTY = new JsonPointerPath();
+-    
++
+     /**
+      * Reference to rest of the pointer beyond currently matching
+      * segment (if any); null if this pointer refers to a matching
+@@ -45,7 +45,7 @@ public class JsonPointerPath
+      * so that {@link #toString} should be as efficient as possible.
+      */
+     protected final String _asString;
+-    
++
+     protected final String _matchingPropertyName;
+ 
+     protected final int _matchingElementIndex;
+@@ -55,19 +55,19 @@ public class JsonPointerPath
+     /* Cosntruction
+     /**********************************************************
+      */
+-    
++
+     /*
+     /**********************************************************
+     /* Factory methods
+     /**********************************************************
+      */
+-    
++
+     /* Factory method that composes a pointer instance, given a set
+      * of 'raw' segments: raw meaning that no processing will be done,
+      * no escaping may is present.
+-     * 
++     *
+      * @param segments
+-     * 
++     *
+      * @return Constructed path instance
+      */
+     /* TODO!
+@@ -77,32 +77,16 @@ public class JsonPointerPath
+             return EMPTY;
+         }
+         JsonPointer prev = null;
+-                
+-        for (String segment : segments) {
+-            JsonPointer next = new JsonPointer()
+-        }
+     }
+     */
+-    
+-    /*
+-    /**********************************************************
+-    /* Public API
+-    /**********************************************************
+-     */
+-
+-    /*
+-    /**********************************************************
+-    /* Standard method overrides
+-    /**********************************************************
+-     */
+ 
+-    /*
+-    /**********************************************************
+-    /* Internal methods
+-    /**********************************************************
++    /**
++     * Factory method that parses given input and construct matching pointer
++     * instances, splitting off the first segment and recursively parsing the
++     * remainder while also retaining the head path for each segment.
+      */
+-
+-    @Override public String toString() { return _asString; }protected static JsonPointerPath parseTailAndHead(String sourceText) {
++    protected static JsonPointerPath parseTailAndHead(String sourceText)
++    {
+         final int tailIndex = sourceText.length();
+ 
+         int slashIndex = sourceText.lastIndexOf('/');
+@@ -111,12 +95,13 @@ public class JsonPointerPath
+         for (int idx = 1; idx < tailIndex; ) {
+             char ch = sourceText.charAt(idx);
+             if (ch == '/') { // common case, got a segment
+-                if(idx == NO_SLASH) {
++                if (idx == NO_SLASH) {
+                     return new JsonPointerPath(sourceText, sourceText.substring(1, idx),
+                             parseTailAndHead(sourceText.substring(idx)), EMPTY);
+                 } else {
+                     return new JsonPointerPath(sourceText, sourceText.substring(1, idx),
+-                            parseTailAndHead(sourceText.substring(idx)), parse(sourceText.substring(0, slashIndex)));
++                            parseTailAndHead(sourceText.substring(idx)),
++                            parse(sourceText.substring(0, slashIndex)));
+                 }
+             }
+             ++idx;
+@@ -128,7 +113,9 @@ public class JsonPointerPath
+         }
+         // end of the road, no escapes
+         return new JsonPointerPath(sourceText, sourceText.substring(1), EMPTY, EMPTY);
+-    }private final static int parseIndex(String text) {
++    }
++
++    private final static int parseIndex(String text) {
+         final int length = text.length();
+         // [Issue#133]: beware of super long indexes; assume we never
+         // have arrays over 2 billion entries so ints are fine.
+@@ -148,7 +135,9 @@ public class JsonPointerPath
+             }
+         }
+         return NumberInput.parseInt(text);
+-    } /**
++    }
++
++    /**
+      * Factory method that parses given input and construct matching pointer
+      * instance, if it represents a valid JSON Pointer: if not, a
+      * {@link IllegalArgumentException} is thrown.
+@@ -165,21 +154,45 @@ public class JsonPointerPath
+         }
+         // And then quick validity check:
+         if (sourceText.charAt(0) != '/') {
+-            throw new IllegalArgumentException("Invalid input: JSON Pointer expression must start with '/': "+"\""+ sourceText +"\"");
++            throw new IllegalArgumentException("Invalid input: JSON Pointer expression must start with '/': "
++                    + "\"" + sourceText + "\"");
+         }
+         return parseTailAndHead(sourceText);
+-    } /**
++    }
++
++    /**
+      * Alias for {@link #parse}; added to make instances automatically
+      * deserializable by Jackson databind.
+      */
+-    public static JsonPointerPath of(String sourceText) { return parse(sourceText); } /**
++    public static JsonPointerPath of(String sourceText) {
++        return parse(sourceText);
++    }
++
++    /**
+      * Accessor for getting a "sub-pointer", instance where current segment
+      * has been removed and pointer includes rest of segments.
+      * For matching state, will return null.
+      */
+     public JsonPointerPath nextSegment() {
+         return _nextSegment;
+-    } /**
++    }
++
++    /**
++     * Accessor for getting a pointer that contains only the terminal segment
++     * of this path. For root pointer, will return null.
++     */
++    public JsonPointerPath getLastSegment() {
++        if (_nextSegment == null) {
++            return null;
++        }
++        JsonPointerPath current = this;
++        while (current._nextSegment != EMPTY) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
++    /**
+      * Method that may be called to see if the pointer would match property
+      * (of a JSON Object) with given name.
+      *
+@@ -187,7 +200,13 @@ public class JsonPointerPath
+      */
+     public boolean matchesPropertyName(String property) {
+         return (_nextSegment != null) && _matchingPropertyName.equals(property);
+-    }public boolean matchesExactly() { return _nextSegment == null; } /**
++    }
++
++    public boolean matchesExactly() {
++        return _nextSegment == null;
++    }
++
++    /**
+      * Method that may be called to see if the pointer would match
+      * array element (of a JSON Array) with given index.
+      *
+@@ -195,12 +214,37 @@ public class JsonPointerPath
+      */
+     public boolean isMatchingElement(int idx) {
+         return (idx == _matchingElementIndex) && (idx >= 0);
+-    }@Override public int hashCode() { return _asString.hashCode(); }public boolean hasMatchingPropertyName() { return _matchingPropertyName != null; }public boolean hasMatchingElement() { return _matchingElementIndex >= 0; }public JsonPointerPath getMatchingPropertySegment(String property) {
++    }
++
++    @Override
++    public int hashCode() {
++        return _asString.hashCode();
++    }
++
++    public boolean hasMatchingPropertyName() {
++        return _matchingPropertyName != null;
++    }
++
++    public boolean hasMatchingElement() {
++        return _matchingElementIndex >= 0;
++    }
++
++    public JsonPointerPath getMatchingPropertySegment(String property) {
+         if (_nextSegment == null || !_matchingPropertyName.equals(property)) {
+             return null;
+         }
+         return _nextSegment;
+-    }public String getMatchingProperty() { return _matchingPropertyName; }public int getMatchingIndex() { return _matchingElementIndex; } /**
++    }
++
++    public String getMatchingProperty() {
++        return _matchingPropertyName;
++    }
++
++    public int getMatchingIndex() {
++        return _matchingElementIndex;
++    }
++
++    /**
+      * Accessor for getting a "pointer", instance from current segment to
+      * segment before segment leaf. For root pointer, will return null.
+      *
+@@ -208,12 +252,17 @@ public class JsonPointerPath
+      */
+     public JsonPointerPath getHead() {
+         return _headSegment;
+-    }@Override public boolean equals(Object other) {
++    }
++
++    @Override
++    public boolean equals(Object other) {
+         if (other == this) return true;
+         if (other == null) return false;
+         if (!(other instanceof JsonPointerPath)) return false;
+         return _asString.equals(((JsonPointerPath) other)._asString);
+-    }private static void appendEscapeSequence(StringBuilder builder, char ch) {
++    }
++
++    private static void appendEscapeSequence(StringBuilder builder, char ch) {
+         if (ch == '0') {
+             ch = '~';
+         } else if (ch == '1') {
+@@ -222,7 +271,9 @@ public class JsonPointerPath
+             builder.append('~');
+         }
+         builder.append(ch);
+-    } /**
++    }
++
++    /**
+      * Method called to parse tail of pointer path, when a potentially
+      * escaped character has been seen.
+      *
+@@ -233,7 +284,7 @@ public class JsonPointerPath
+         final int tailIndex = sourceText.length();
+         StringBuilder builder = new StringBuilder(Math.max(16, tailIndex));
+         if (idx > 2) {
+-            builder.append(sourceText, 1, idx -1);
++            builder.append(sourceText, 1, idx - 1);
+         }
+         appendEscapeSequence(builder, sourceText.charAt(idx++));
+ 
+@@ -242,12 +293,13 @@ public class JsonPointerPath
+         while (idx < tailIndex) {
+             char ch = sourceText.charAt(idx);
+             if (ch == '/') { // end is nigh!
+-                if(idx == NO_SLASH) {
++                if (idx == NO_SLASH) {
+                     return new JsonPointerPath(sourceText, builder.toString(),
+                             parseTailAndHead(sourceText.substring(idx)), EMPTY);
+                 } else {
+                     return new JsonPointerPath(sourceText, builder.toString(),
+-                            parseTailAndHead(sourceText.substring(idx)), parse(sourceText.substring(0, slashIndex)));
++                            parseTailAndHead(sourceText.substring(idx)),
++                            parse(sourceText.substring(0, slashIndex)));
+                 }
+             }
+             ++idx;
+@@ -259,7 +311,9 @@ public class JsonPointerPath
+         }
+         // end of the road, last segment
+         return new JsonPointerPath(sourceText, builder.toString(), EMPTY, EMPTY);
+-    } /**
++    }
++
++    /**
+      * Constructor used for creating "empty" instance, used to represent
+      * state that matches current node.
+      */
+@@ -269,14 +323,23 @@ public class JsonPointerPath
+         _matchingPropertyName = "";
+         _matchingElementIndex = -1;
+         _asString = "";
+-    } /**
++    }
++
++    /**
+      * Constructor used for creating non-empty Segments
+      */
+-    protected JsonPointerPath(String completeText, String pathPart, JsonPointerPath followingPath, JsonPointerPath leadingPath) {
++    protected JsonPointerPath(String completeText, String pathPart,
++            JsonPointerPath followingPath, JsonPointerPath leadingPath) {
+         _asString = completeText;
+         _nextSegment = followingPath;
+         _headSegment = leadingPath;
+         // Ok; may always be a property
+         _matchingPropertyName = pathPart;
+         _matchingElementIndex = parseIndex(pathPart);
+-    }}
++    }
++
++    @Override
++    public String toString() {
++        return _asString;
++    }
++}
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 7874c474..08888c86 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,28 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesExactly());
+         assertNull(ptr.nextSegment());
+     }
++    public void testLastSegment() throws Exception
++    {
++        JsonPointerPath ptr = JsonPointerPath.parse("/Image/15/name");
++        JsonPointerPath last = ptr.getLastSegment();
++        assertNotNull(last);
++        assertEquals("/name", last.toString());
++        assertEquals("name", last.getMatchingProperty());
++        assertEquals("", last.getHead().toString());
++
++        JsonPointerPath arrayAppend = JsonPointerPath.parse("/score/-");
++        JsonPointerPath arrayLeaf = arrayAppend.getLastSegment();
++        assertNotNull(arrayLeaf);
++        assertEquals("/-", arrayLeaf.toString());
++        assertEquals("-", arrayLeaf.getMatchingProperty());
++        assertEquals(-1, arrayLeaf.getMatchingIndex());
++        assertEquals("", arrayLeaf.getHead().toString());
++
++        JsonPointerPath single = JsonPointerPath.parse("/score");
++        JsonPointerPath singleLeaf = single.getLastSegment();
++        assertNotNull(singleLeaf);
++        assertSame(single, singleLeaf);
++
++        assertNull(JsonPointerPath.parse("").getLastSegment());
++    }
+ }

@@ -1,0 +1,114 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..cea4561fa 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -76,6 +76,13 @@ setup_bundled_jdk_part() {
+   fi
+ }
+ 
++setup_bundled_jdk_version() {
++  BUNDLED_JDK_VERSION=""
++  if [ -r "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION" ]; then
++    BUNDLED_JDK_VERSION="$(cat "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION")"
++  fi
++}
++
+ # Accepts 1 parameter which is the path the directory where logstash jar are contained.
+ setup_classpath() {
+   local classpath="${1?classpath (and jar_directory) required}"
+@@ -100,7 +107,12 @@ setup_java() {
+       if [ -x "$LS_JAVA_HOME/bin/java" ]; then
+         JAVACMD="$LS_JAVA_HOME/bin/java"
+         if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+-          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          setup_bundled_jdk_version
++          if [ -n "$BUNDLED_JDK_VERSION" ]; then
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK (${BUNDLED_JDK_VERSION})."
++          else
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          fi
+         fi
+       else
+         echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."
+diff --git a/bin/setup.bat b/bin/setup.bat
+index 5e8acb4d1..18c77415c 100644
+--- a/bin/setup.bat
++++ b/bin/setup.bat
+@@ -24,7 +24,11 @@ if defined LS_JAVA_HOME (
+   set JAVACMD=%LS_JAVA_HOME%\bin\java.exe
+   echo Using LS_JAVA_HOME defined java: %LS_JAVA_HOME%
+   if exist "%LS_HOME%\jdk" (
+-    echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK.
++    if exist "%LS_HOME%\jdk\VERSION" (
++      for /f "usebackq delims=" %%I in ("%LS_HOME%\jdk\VERSION") do echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK (%%I).
++    ) else (
++      echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK.
++    )
+   )
+ ) else (
+   if exist "%LS_HOME%\jdk" (
+@@ -62,4 +66,4 @@ if not exist %JRUBY_BIN% (
+   exit /b 1
+ )
+ 
+-set RUBYLIB=%LS_HOME%\lib
+\ No newline at end of file
++set RUBYLIB=%LS_HOME%\lib
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..47b4397df 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -71,10 +71,6 @@ allprojects {
+       }
+   }
+ 
+-  tasks.withType(Copy).configureEach {
+-      duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+-  }
+-
+   clean {
+       delete "${projectDir}/out/"
+   }
+@@ -861,6 +857,28 @@ tasks.register("copyJdk", Copy) {
+     // CLI project properties: -Pjdk_bundle_os=[windows|linux|darwin] -Pjdk_arch=[arm64|x86_64]
+     doLast {
+         System.out.println "Download location is ${project.ext.jdkDownloadLocation}, Decompressing ${project.ext.jdkDirectory} to \"${project.ext.jdkBundlingDirectory}\""
++
++        File releaseFile = file("${project.ext.jdkBundlingDirectory}/release")
++        File versionFile = file("${project.ext.jdkBundlingDirectory}/VERSION")
++
++        if (!releaseFile.exists()) {
++            releaseFile = file("${project.ext.jdkBundlingDirectory}/Contents/Home/release")
++            versionFile = file("${project.ext.jdkBundlingDirectory}/Contents/Home/VERSION")
++        }
++
++        if (!releaseFile.exists()) {
++            throw new GradleException("Unable to locate bundled JDK release file at ${project.ext.jdkBundlingDirectory}")
++        }
++
++        String implementorVersion = releaseFile.readLines()
++            .find { it.startsWith("IMPLEMENTOR_VERSION=") }
++            ?.replaceFirst(/^IMPLEMENTOR_VERSION="(.*)"$/, '$1')
++
++        if (!implementorVersion) {
++            throw new GradleException("Unable to determine bundled JDK version from ${releaseFile}")
++        }
++
++        versionFile.text = "${implementorVersion}\n"
+     }
+ }
+ 

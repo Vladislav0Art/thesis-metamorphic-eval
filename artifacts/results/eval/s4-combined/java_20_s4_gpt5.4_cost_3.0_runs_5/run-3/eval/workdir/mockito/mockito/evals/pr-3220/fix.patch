@@ -1,0 +1,67 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/util/MockitoEngine.java b/src/main/java/org/mockito/internal/util/MockitoEngine.java
+index da69eba72..fab98f860 100644
+--- a/src/main/java/org/mockito/internal/util/MockitoEngine.java
++++ b/src/main/java/org/mockito/internal/util/MockitoEngine.java
+@@ -258,6 +258,7 @@ public class MockitoEngine {
+         }
+         DefaultMockSettingsImpl settingsImplementation = DefaultMockSettingsImpl.class.cast(mockConfig);
+         MockCreationConfiguration<T> mockCreationConfig = settingsImplementation.buildStatic(targetClass);
++        verifyDoNotMockAnnotation(mockCreationConfig.getTypeToMock(), mockCreationConfig);
+         MockMaker.StaticMockControl<T> staticManager = MockUtil.createStaticMock(targetClass, mockCreationConfig);
+         staticManager.enable();
+         mockingProgress().mockingStarted(targetClass, mockCreationConfig);
+diff --git a/src/test/java/org/mockitousage/annotation/DoNotMockTest.java b/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
+index 936434536..10e8b4ef9 100644
+--- a/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
++++ b/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
+@@ -5,13 +5,18 @@
+ package org.mockitousage.annotation;
+ 
+ import static org.assertj.core.api.Assertions.assertThatThrownBy;
++import static org.hamcrest.CoreMatchers.instanceOf;
+ import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.mockStatic;
+ 
++import org.junit.Assume;
+ import org.junit.Test;
+ import org.mockito.DoNotMock;
+ import org.mockito.Mock;
+ import org.mockito.MockitoAnnotations;
+ import org.mockito.exceptions.misusing.DoNotMockException;
++import org.mockito.internal.configuration.plugins.PluginRegistry;
++import org.mockito.plugins.InlineMockMaker;
+ 
+ public class DoNotMockTest {
+ 
+@@ -94,6 +99,17 @@ public class DoNotMockTest {
+                 .hasMessageContaining("Special reason");
+     }
+ 
++    @Test
++    public void can_not_static_mock_class_annotated_with_donotmock() {
++        Assume.assumeThat(PluginRegistry.getMockMaker(), instanceOf(InlineMockMaker.class));
++
++        assertThatThrownBy(
++                        () -> {
++                            mockStatic(NotMockable.class);
++                        })
++                .isInstanceOf(DoNotMockException.class);
++    }
++
+     @Test
+     public void can_not_mock_class_with_custom_donotmock_annotation() {
+         assertThatThrownBy(

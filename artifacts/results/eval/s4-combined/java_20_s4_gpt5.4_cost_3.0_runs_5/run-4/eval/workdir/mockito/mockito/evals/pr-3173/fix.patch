@@ -1,0 +1,164 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockFactory.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockFactory.java
+index 8632d683a..58cffd27c 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockFactory.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockFactory.java
+@@ -441,6 +441,12 @@ class InlineByteBuddyMockFactory
+         }
+     }
+ 
++    @Override
++    public void resetMock(
++            Object mockInstance, MockHandler replacementHandler, MockCreationSettings creationConfig) {
++        resetMockInterceptor(mockInstance, replacementHandler, creationConfig);
++    }
++
+     public void resetMockInterceptor(Object mockInstance, MockHandler replacementHandler, MockCreationSettings creationConfig) {
+         MockMethodInterceptor methodInterceptor =
+                 new MockMethodInterceptor(replacementHandler, creationConfig);
+@@ -633,6 +639,11 @@ class InlineByteBuddyMockFactory
+         }
+     }
+ 
++    @Override
++    public <T> T createMock(MockCreationSettings<T> creationConfig, MockHandler invocationHandler) {
++        return createMockInstance(creationConfig, invocationHandler);
++    }
++
+     @Override
+     public <T> Class<? extends T> createMockType(MockCreationSettings<T> creationConfig) {
+         try {
+diff --git a/subprojects/junit-jupiter/src/test/java/org/mockitousage/JunitJupiterTest.java b/subprojects/junit-jupiter/src/test/java/org/mockitousage/JunitJupiterTest.java
+index 8ecd9d223..62608d8c1 100644
+--- a/subprojects/junit-jupiter/src/test/java/org/mockitousage/JunitJupiterTest.java
++++ b/subprojects/junit-jupiter/src/test/java/org/mockitousage/JunitJupiterTest.java
+@@ -4,23 +4,24 @@
+  */
+ package org.mockitousage;
+ 
++import static org.assertj.core.api.Assertions.assertThat;
++import static org.mockito.Mockito.verify;
++
++import java.util.List;
+ import java.util.function.Function;
+ import java.util.function.Predicate;
+ 
+ import org.junit.jupiter.api.Nested;
+ import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.extension.ExtendWith;
+-import org.mockito.Captor;
+ import org.mockito.ArgumentCaptor;
++import org.mockito.Captor;
+ import org.mockito.InjectMocks;
+ import org.mockito.Mock;
+ import org.mockito.Mockito;
++import org.mockito.Spy;
+ import org.mockito.internal.util.MockUtil;
+ import org.mockito.junit.jupiter.MockitoExtension;
+-
+-import static org.assertj.core.api.Assertions.assertThat;
+-import static org.mockito.Mockito.verify;
+-
+ @ExtendWith(MockitoExtension.class)
+ class JunitJupiterTest {
+ 
+@@ -149,12 +150,38 @@ class JunitJupiterTest {
+             assertThat(rootMock).isNotNull();
+         }
+     }
+-
+     @Test
+     void should_be_injected_correct_instance_of_mock() {
+         assertThat(classWithDependency.dependency).isSameAs(rootMock);
+     }
+ 
++    @Nested
++    class NestedTestWithGenericSpyAndImmutableSpy {
++        @Spy
++        private final List<String> genericSpy = List.of("item A", "item B");
++
++        @Spy
++        private ImmutableType immutableType = new ImmutableType("some value");
++
++        @Test
++        void should_keep_immutable_state_when_generic_spy_is_present() {
++            assertThat(genericSpy).containsExactly("item A", "item B");
++            assertThat(immutableType.someParameter()).isEqualTo("some value");
++        }
++    }
++
++    private static final class ImmutableType {
++        private final String someParameter;
++
++        private ImmutableType(String someParameter) {
++            this.someParameter = someParameter;
++        }
++
++        String someParameter() {
++            return someParameter;
++        }
++    }
++
+     private static class ClassWithDependency {
+         private final Function<Integer, String> dependency;
+ 
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotCorruptInlineSpyTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotCorruptInlineSpyTest.java
+new file mode 100644
+index 000000000..5bd952f53
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotCorruptInlineSpyTest.java
+@@ -0,0 +1,41 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Spy;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++@ExtendWith(MockitoExtension.class)
++class GenericSpyDoesNotCorruptInlineSpyTest {
++
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private FinalType finalType = new FinalType("some value");
++
++    @Test
++    void keeps_pre_initialized_final_spy_state() {
++        assertThat(genericSpy).containsExactly("item A", "item B");
++        assertThat(finalType.someParameter()).isEqualTo("some value");
++    }
++
++    private static final class FinalType {
++        private final String someParameter;
++
++        private FinalType(String someParameter) {
++            this.someParameter = someParameter;
++        }
++
++        String someParameter() {
++            return someParameter;
++        }
++    }
++}

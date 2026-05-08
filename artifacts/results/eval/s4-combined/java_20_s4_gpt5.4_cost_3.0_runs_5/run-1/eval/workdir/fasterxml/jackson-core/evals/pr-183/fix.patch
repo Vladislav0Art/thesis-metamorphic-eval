@@ -1,0 +1,141 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+index 194161a0..87fbc5c6 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+@@ -348,30 +348,44 @@ public final class SegmentedTextBuffer
+         if (segment.length >= minCapacity) return segment;
+         activeSegment = segment = Arrays.copyOf(segment, minCapacity);
+         return segment;
+-    }public int getTextOffset() {
++    }
++
++    public int getTextOffset() {
+         /* Only shared input buffer can have non-zero offset; buffer
+          * segments start at 0, and if we have to create a combo buffer,
+          * that too will start from beginning of the buffer
+          */
+         return (bufferOffset >= 0) ? bufferOffset : 0;
+-    }public char[] getTextBuffer()
++    }
++
++    public char[] getTextBuffer()
+     {
+-        // Are we just using shared input buffer?
+-        if (bufferOffset >= 0) return sharedChars;
+-        if (cachedChars != null)  return cachedChars;
++        if (bufferOffset >= 0) {
++            return sharedChars;
++        }
++        if (cachedChars != null) {
++            return cachedChars;
++        }
+         if (cachedResult != null) {
+-            return (cachedChars = cachedResult.toCharArray());
++            return cachedChars = cachedResult.toCharArray();
+         }
+-        // Nope; but does it fit in just one segment?
+-        if (!segmentsAvailable)  return activeSegment;
+-        // Nope, need to have/create a non-segmented array and return it
+-        return toCharArray();
+-    }public int getCurrentSegmentSize() { return currentLength; }public char[] getCurrentSegment()
++        if (segmentsAvailable || currentLength > 0) {
++            return contentsAsArray();
++        }
++        return EMPTY_CHARS;
++    }
++
++    /**
++     * Accessor for getting a read-only reference to the current active
++     * buffer. To ensure modifiability, caller may need to call
++     * {@link #emptyAndGetCurrentSegment()} first.
++     *<p>
++     * Warning: if using this method to get a reference to the underlying
++     * buffers, we should NOT have anything in shared buffer... ie. may
++     * need to unshare contents.
++     */
++    public char[] getCurrentSegment()
+     {
+-        /* Since the intention of the caller is to directly add stuff into
+-         * buffers, we should NOT have anything in shared buffer... ie. may
+-         * need to unshare contents.
+-         */
+         if (bufferOffset >= 0) {
+             ensureUnshared(1);
+         } else {
+@@ -384,7 +398,13 @@ public final class SegmentedTextBuffer
+             }
+         }
+         return activeSegment;
+-    }public String getContentsAsString()
++    }
++
++    public int getCurrentSegmentSize() {
++        return currentLength;
++    }
++
++    public String getContentsAsString()
+     {
+         if (cachedResult == null) {
+             // Has array been requested? Can make a shortcut, if so:
+@@ -461,7 +481,22 @@ public final class SegmentedTextBuffer
+         }
+         System.arraycopy(activeSegment, 0, outChars, sourceIndex, currentLength);
+         return outChars;
+-    } /**
++    }
++
++    private char[] contentsAsArray()
++    {
++        char[] result = cachedChars;
++        if (result == null) {
++            result = getCharArray();
++            cachedChars = result;
++        }
++        return result;
++    }
++
++    /**
++     * Method called when current segment is full, to allocate new
++     * segment.
++     */
+      * Method called when current segment is full, to allocate new
+      * segment.
+      */
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 31cc6c05..7172529e 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -74,4 +74,20 @@ public class TestTextBuffer
+               }
+           }
+       }
++
++      public void testEmptyGetTextBufferConsistency()
++      {
++          SegmentedTextBuffer tb = new SegmentedTextBuffer(new BufferRecycler());
++          tb.resetToEmpty();
++
++          char[] text = tb.getTextBuffer();
++          assertNotNull(text);
++          assertEquals(0, text.length);
++
++          assertEquals("", tb.getContentsAsString());
++
++          text = tb.getTextBuffer();
++          assertNotNull(text);
++          assertEquals(0, text.length);
++      }
+ }

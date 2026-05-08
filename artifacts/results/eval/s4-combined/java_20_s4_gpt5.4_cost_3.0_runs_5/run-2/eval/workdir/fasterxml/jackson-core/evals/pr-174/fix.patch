@@ -1,0 +1,153 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
+index 417599a3..ad44fdb5 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
+@@ -179,7 +179,25 @@ public class JsonPointerPath
+      */
+     public JsonPointerPath nextSegment() {
+         return _nextSegment;
+-    } /**
++    }
++
++    /**
++     * Accessor for getting a pointer instance that represents only the
++     * terminal segment of this pointer expression.
++     * For empty/root matching state, will return null.
++     */
++    public JsonPointerPath getLastSegment() {
++        JsonPointerPath current = this;
++        if (current._nextSegment == null) {
++            return null;
++        }
++        while (current._nextSegment != EMPTY) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
++    /**
+      * Method that may be called to see if the pointer would match property
+      * (of a JSON Object) with given name.
+      *
+@@ -187,7 +205,11 @@ public class JsonPointerPath
+      */
+     public boolean matchesPropertyName(String property) {
+         return (_nextSegment != null) && _matchingPropertyName.equals(property);
+-    }public boolean matchesExactly() { return _nextSegment == null; } /**
++    }
++
++    public boolean matchesExactly() { return _nextSegment == null; }
++
++    /**
+      * Method that may be called to see if the pointer would match
+      * array element (of a JSON Array) with given index.
+      *
+@@ -195,12 +217,27 @@ public class JsonPointerPath
+      */
+     public boolean isMatchingElement(int idx) {
+         return (idx == _matchingElementIndex) && (idx >= 0);
+-    }@Override public int hashCode() { return _asString.hashCode(); }public boolean hasMatchingPropertyName() { return _matchingPropertyName != null; }public boolean hasMatchingElement() { return _matchingElementIndex >= 0; }public JsonPointerPath getMatchingPropertySegment(String property) {
++    }
++
++    @Override
++    public int hashCode() { return _asString.hashCode(); }
++
++    public boolean hasMatchingPropertyName() { return _matchingPropertyName != null; }
++
++    public boolean hasMatchingElement() { return _matchingElementIndex >= 0; }
++
++    public JsonPointerPath getMatchingPropertySegment(String property) {
+         if (_nextSegment == null || !_matchingPropertyName.equals(property)) {
+             return null;
+         }
+         return _nextSegment;
+-    }public String getMatchingProperty() { return _matchingPropertyName; }public int getMatchingIndex() { return _matchingElementIndex; } /**
++    }
++
++    public String getMatchingProperty() { return _matchingPropertyName; }
++
++    public int getMatchingIndex() { return _matchingElementIndex; }
++
++    /**
+      * Accessor for getting a "pointer", instance from current segment to
+      * segment before segment leaf. For root pointer, will return null.
+      *
+@@ -208,12 +245,17 @@ public class JsonPointerPath
+      */
+     public JsonPointerPath getHead() {
+         return _headSegment;
+-    }@Override public boolean equals(Object other) {
++    }
++
++    @Override
++    public boolean equals(Object other) {
+         if (other == this) return true;
+         if (other == null) return false;
+         if (!(other instanceof JsonPointerPath)) return false;
+         return _asString.equals(((JsonPointerPath) other)._asString);
+-    }private static void appendEscapeSequence(StringBuilder builder, char ch) {
++    }
++
++    private static void appendEscapeSequence(StringBuilder builder, char ch) {
+         if (ch == '0') {
+             ch = '~';
+         } else if (ch == '1') {
+@@ -222,7 +264,9 @@ public class JsonPointerPath
+             builder.append('~');
+         }
+         builder.append(ch);
+-    } /**
++    }
++
++    /**
+      * Method called to parse tail of pointer path, when a potentially
+      * escaped character has been seen.
+      *
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 7874c474..39424e88 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,30 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesExactly());
+         assertNull(ptr.nextSegment());
+     }
++
++    public void testGetLastSegment() throws Exception
++    {
++        JsonPointerPath ptr = JsonPointerPath.parse("/Image/15/name");
++        JsonPointerPath last = ptr.getLastSegment();
++        assertNotNull(last);
++        assertEquals("/name", last.toString());
++        assertEquals("name", last.getMatchingProperty());
++        assertEquals("", last.getHead().toString());
++        assertSame(last, last.getLastSegment());
++
++        ptr = JsonPointerPath.parse("/score/-");
++        last = ptr.getLastSegment();
++        assertNotNull(last);
++        assertEquals("/-", last.toString());
++        assertEquals("-", last.getMatchingProperty());
++        assertEquals(-1, last.getMatchingIndex());
++
++        ptr = JsonPointerPath.parse("/score");
++        last = ptr.getLastSegment();
++        assertNotNull(last);
++        assertEquals("/score", last.toString());
++        assertEquals("score", last.getMatchingProperty());
++
++        assertNull(JsonPointerPath.parse("").getLastSegment());
++    }
+ }
