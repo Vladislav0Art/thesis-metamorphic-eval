@@ -1,0 +1,72 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java
+index 9d50b7f5d..2a7de8574 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java
+@@ -19,6 +19,7 @@ import org.mockito.plugins.MockitoLogger;
+ import org.mockito.plugins.MockitoPluginProvider;
+ import org.mockito.plugins.PluginSwitch;
+ import org.mockito.plugins.StackTraceCleanerProvider;
++import org.mockito.internal.util.MockUtilities;
+ 
+ public class DefaultMockitoPluginFactory implements MockitoPluginProvider {
+ 
+@@ -114,4 +115,9 @@ public class DefaultMockitoPluginFactory implements MockitoPluginProvider {
+     public MockMaker getInlineMockMaker() {
+         return createDefaultImplementation(MockMaker.class, CORE_PLUGINS.get(IMMEDIATE_ALIAS));
+     }
++
++    @Override
++    public MockMaker getMockMaker(String mockMakerType) {
++        return MockUtilities.getMockMaker(mockMakerType);
++    }
+ }
+diff --git a/src/main/java/org/mockito/internal/util/MockUtilities.java b/src/main/java/org/mockito/internal/util/MockUtilities.java
+index a176500b5..6a5843e27 100644
+--- a/src/main/java/org/mockito/internal/util/MockUtilities.java
++++ b/src/main/java/org/mockito/internal/util/MockUtilities.java
+@@ -36,7 +36,7 @@ public class MockUtilities {
+ 
+     private MockUtilities() {}
+ 
+-    private static MockMaker getMockMaker(String makerName) {
++    public static MockMaker getMockMaker(String makerName) {
+         if (makerName == null) {
+             return PRIMARY_MOCK_PROVIDER;
+         }
+diff --git a/src/main/java/org/mockito/plugins/MockitoPluginProvider.java b/src/main/java/org/mockito/plugins/MockitoPluginProvider.java
+index f7409ee2a..c66abda53 100644
+--- a/src/main/java/org/mockito/plugins/MockitoPluginProvider.java
++++ b/src/main/java/org/mockito/plugins/MockitoPluginProvider.java
+@@ -41,4 +41,18 @@ public interface MockitoPluginProvider {
+      * @since 2.10.0
+      */
+     MockMaker getInlineMockMaker();
++
++    /**
++     * Returns a mock maker by its type identifier or class name.
++     * Unlike {@link #getInlineMockMaker()}, this method returns a shared instance
++     * rather than creating a new instance each time.
++     * This is useful for framework integrators who want to use a specific mock maker
++     * and share it with Mockito's internal infrastructure.
++     *
++     * @param mockMakerType the mock maker type identifier (e.g. "mock-maker-inline") or fully qualified class name.
++     *                      If {@code null}, returns the default mock maker.
++     * @return the mock maker instance
++     * @since 5.1.0
++     */
++    MockMaker getMockMaker(String mockMakerType);
+ }

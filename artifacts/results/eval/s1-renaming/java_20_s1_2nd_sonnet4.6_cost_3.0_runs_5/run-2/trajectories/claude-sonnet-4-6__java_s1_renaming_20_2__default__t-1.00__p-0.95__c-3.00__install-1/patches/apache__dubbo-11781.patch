@@ -1,0 +1,78 @@
+
+diff --git a/.gitignore b/.gitignore
+index 0eb7f3d19e..ffba84c210 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -54,3 +54,6 @@ dubbo-demo/dubbo-demo-native/dubbo-demo-native-consumer/src/main/generated
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/resources/META-INF/native-image
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/generated
+ 
++out/
++*.class
++.gradle/
+diff --git a/TestURLParsing.java b/TestURLParsing.java
+new file mode 100644
+index 0000000000..88df907ee5
+--- /dev/null
++++ b/TestURLParsing.java
+@@ -0,0 +1,25 @@
++import org.apache.dubbo.common.URL;
++
++public class TestURLParsing {
++    public static void main(String[] args) {
++        // Test URL with empty query parameters
++        URL url = URL.valueOf("nacos://10.20.0.100:8848?username=&password=&namespace=");
++        
++        String username = url.getParameter("username");
++        String password = url.getParameter("password");
++        String namespace = url.getParameter("namespace");
++        
++        System.out.println("username: '" + username + "' (expected empty string '')");
++        System.out.println("password: '" + password + "' (expected empty string '')");
++        System.out.println("namespace: '" + namespace + "' (expected empty string '')");
++        
++        boolean passed = "".equals(username) && "".equals(password) && "".equals(namespace);
++        
++        if (passed) {
++            System.out.println("TEST PASSED: Empty parameters correctly parsed as empty strings.");
++        } else {
++            System.out.println("TEST FAILED: Empty parameters were not correctly parsed.");
++            System.exit(1);
++        }
++    }
++}
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java
+index f689cf25b9..e0418fc9c9 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java
+@@ -774,7 +774,7 @@ class URL implements Serializable {
+ 
+     public boolean hasParameter(String key) {
+         String value = getParameter(key);
+-        return value != null && value.length() > 0;
++        return value != null;
+     }
+ 
+     public String getMethodParameterAndDecoded(String method, String key) {
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+index 61b37db84b..b8cbfe7247 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+@@ -277,7 +277,7 @@ public final class URLStrParser {
+         if (isEncoded) {
+             String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (valueStart > valueEnd) {
+                 value = name;
+             } else {
+                 value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+@@ -290,7 +290,7 @@ public final class URLStrParser {
+         } else {
+             String name = str.substring(nameStart, valueStart - 1);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (valueStart > valueEnd) {
+                 value = name;
+             } else {
+                 value = str.substring(valueStart, valueEnd);

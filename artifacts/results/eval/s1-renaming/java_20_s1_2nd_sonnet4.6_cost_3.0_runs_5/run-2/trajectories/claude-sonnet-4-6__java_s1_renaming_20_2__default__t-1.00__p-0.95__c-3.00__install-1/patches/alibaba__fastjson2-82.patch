@@ -1,0 +1,137 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+index 74419c0dd..5944d0793 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+@@ -601,6 +601,9 @@ public interface JsonMapper {
+         }
+         JSONReader streamReader = JSONReader.of(jsonContent);
+         try {
++            if (!streamReader.isObject()) {
++                return false;
++            }
+             streamReader.skipValue();
+         } catch (JSONException jsonException) {
+             return false;
+@@ -642,6 +645,9 @@ public interface JsonMapper {
+         }
+         JSONReader streamReader = JSONReader.of(binaryPayload);
+         try {
++            if (!streamReader.isObject()) {
++                return false;
++            }
+             streamReader.skipValue();
+         } catch (JSONException jsonException) {
+             return false;
+@@ -670,6 +676,30 @@ public interface JsonMapper {
+         }
+         return true;
+     }
++    /**
++     * Verify the byte array is JSON Array
++     *
++     * @param binaryPayload   the byte array to validate
++     * @param startIndex  the index of the first byte to validate
++     * @param size  the number of bytes to validate
++     * @param encoding specify {@link Charset} to validate
++     * @return T/F
++     */
++    static boolean isValidArray(byte[] binaryPayload, int startIndex, int size, Charset encoding) {
++        if (binaryPayload == null || binaryPayload.length == 0) {
++            return false;
++        }
++        JSONReader streamReader = JSONReader.of(binaryPayload, startIndex, size, encoding);
++        try {
++            if (!streamReader.isArray()) {
++                return false;
++            }
++            streamReader.skipValue();
++        } catch (JSONException jsonException) {
++            return false;
++        }
++        return true;
++    }
+ 
+     /**
+      * Verify the byte array is JSON Object
+@@ -686,6 +716,9 @@ public interface JsonMapper {
+         }
+         JSONReader streamReader = JSONReader.of(binaryPayload, startIndex, size, encoding);
+         try {
++            if (!streamReader.isObject()) {
++                return false;
++            }
+             streamReader.skipValue();
+         } catch (JSONException jsonException) {
+             return false;
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
+index d679fd05f..880411df4 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
+@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
+ import java.nio.charset.StandardCharsets;
+ 
+ import static org.junit.Assert.assertFalse;
++import static org.junit.Assert.assertTrue;
+ 
+ public class JSONValidatorTest {
+     @Test
+@@ -15,4 +16,24 @@ public class JSONValidatorTest {
+         assertFalse(JsonMapper.isValid(utf8, 0, utf8.length, StandardCharsets.UTF_8));
+         assertFalse(JsonMapper.isValid(utf8, 0, utf8.length, StandardCharsets.US_ASCII));
+     }
++
++    @Test
++    public void validate_test_object_vs_array() {
++        // isValid should return true for objects
++        assertTrue(JsonMapper.isValid("{\"key\":\"value\"}"));
++        byte[] objUtf8 = "{\"key\":\"value\"}".getBytes(StandardCharsets.UTF_8);
++        assertTrue(JsonMapper.isValid(objUtf8));
++        assertTrue(JsonMapper.isValid(objUtf8, 0, objUtf8.length, StandardCharsets.UTF_8));
++
++        // isValid should return false for arrays
++        assertFalse(JsonMapper.isValid("[1,2,3]"));
++        byte[] arrUtf8 = "[1,2,3]".getBytes(StandardCharsets.UTF_8);
++        assertFalse(JsonMapper.isValid(arrUtf8));
++        assertFalse(JsonMapper.isValid(arrUtf8, 0, arrUtf8.length, StandardCharsets.UTF_8));
++
++        // isValidArray should return true for arrays
++        assertTrue(JsonMapper.isValidArray("[1,2,3]"));
++        // isValidArray should return false for objects
++        assertFalse(JsonMapper.isValidArray("{\"key\":\"value\"}"));
++    }
+ }
+diff --git a/core/src/test/java/com/alibaba/fastjson2/v1issues/Issue1344.java b/core/src/test/java/com/alibaba/fastjson2/v1issues/Issue1344.java
+index f77fcfd99..28b4ca0cd 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/v1issues/Issue1344.java
++++ b/core/src/test/java/com/alibaba/fastjson2/v1issues/Issue1344.java
+@@ -3,7 +3,7 @@ package com.alibaba.fastjson2.v1issues;
+ import com.alibaba.fastjson2.JsonMapper;
+ import com.alibaba.fastjson2.annotation.JSONCreator;
+ import org.junit.jupiter.api.Test;
+-
++import static org.junit.jupiter.api.Assertions.assertNull;
+ /**
+  * Created by wenshao on 26/07/2017.
+  */
+diff --git a/core/src/test/java/com/alibaba/fastjson2/v1issues/issue_3600/Issue3671.java b/core/src/test/java/com/alibaba/fastjson2/v1issues/issue_3600/Issue3671.java
+index af3827068..9a8f4dd4b 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/v1issues/issue_3600/Issue3671.java
++++ b/core/src/test/java/com/alibaba/fastjson2/v1issues/issue_3600/Issue3671.java
+@@ -24,9 +24,9 @@ public class Issue3671 {
+                 "}]\n";
+         byte[] utf8 = json.getBytes(StandardCharsets.UTF_8);
+ 
+-        assertTrue(JsonMapper.isValid(json));
+-        assertTrue(JsonMapper.isValid(utf8));
+-        assertTrue(JsonMapper.isValid(utf8, 0, utf8.length, StandardCharsets.UTF_8));
+-        assertTrue(JsonMapper.isValid(utf8, 0, utf8.length, StandardCharsets.US_ASCII));
++        assertTrue(JsonMapper.isValidArray(json));
++        assertTrue(JsonMapper.isValidArray(utf8));
++        assertTrue(JsonMapper.isValidArray(utf8, 0, utf8.length, StandardCharsets.UTF_8));
++        assertTrue(JsonMapper.isValidArray(utf8, 0, utf8.length, StandardCharsets.US_ASCII));
+     }
+ }

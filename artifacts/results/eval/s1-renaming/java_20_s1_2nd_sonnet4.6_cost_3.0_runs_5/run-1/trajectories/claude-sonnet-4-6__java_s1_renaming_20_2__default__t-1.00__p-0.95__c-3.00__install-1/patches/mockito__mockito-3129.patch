@@ -1,0 +1,87 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java
+index 9d50b7f5d..286998dac 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java
+@@ -20,6 +20,8 @@ import org.mockito.plugins.MockitoPluginProvider;
+ import org.mockito.plugins.PluginSwitch;
+ import org.mockito.plugins.StackTraceCleanerProvider;
+ 
++import org.mockito.internal.util.MockUtilities;
++
+ public class DefaultMockitoPluginFactory implements MockitoPluginProvider {
+ 
+     private static final Map<String, String> CORE_PLUGINS = new HashMap<>();
+@@ -114,4 +116,9 @@ public class DefaultMockitoPluginFactory implements MockitoPluginProvider {
+     public MockMaker getInlineMockMaker() {
+         return createDefaultImplementation(MockMaker.class, CORE_PLUGINS.get(IMMEDIATE_ALIAS));
+     }
++
++    @Override
++    public MockMaker getMockMaker(String mockMakerIdentifier) {
++        return MockUtilities.getMockMaker(mockMakerIdentifier);
++    }
+ }
+diff --git a/src/main/java/org/mockito/internal/util/MockUtilities.java b/src/main/java/org/mockito/internal/util/MockUtilities.java
+index a176500b5..6a5843e27 100644
+--- a/src/main/java/org/mockito/internal/util/MockUtilities.java
++++ b/src/main/java/org/mockito/internal/util/MockUtilities.java
+@@ -36,7 +36,7 @@ public class MockUtilities {
+ 
+     private MockUtilities() {}
+ 
+-    private static MockMaker getMockMaker(String makerName) {
++    public static MockMaker getMockMaker(String makerName) {
+         if (makerName == null) {
+             return PRIMARY_MOCK_PROVIDER;
+         }
+diff --git a/src/main/java/org/mockito/plugins/MockitoPluginProvider.java b/src/main/java/org/mockito/plugins/MockitoPluginProvider.java
+index f7409ee2a..66e8fc660 100644
+--- a/src/main/java/org/mockito/plugins/MockitoPluginProvider.java
++++ b/src/main/java/org/mockito/plugins/MockitoPluginProvider.java
+@@ -39,6 +39,32 @@ public interface MockitoPluginProvider {
+      *
+      * @return instance of inline mock maker
+      * @since 2.10.0
++     * @deprecated Use {@link #getMockMaker(String)} instead, which returns a shared instance from a registry
++     *             rather than creating a new one each time.
+      */
++    @Deprecated
+     MockMaker getInlineMockMaker();
++
++    /**
++     * Returns a mock maker for the given identifier from a shared registry.
++     * Unlike {@link #getInlineMockMaker()}, this method uses a shared registry of mock makers,
++     * so the same mock maker instance is returned for the same identifier.
++     * This is important for frameworks that integrate with Mockito to avoid duplicate mock maker
++     * instances, which can cause issues with static mocking.
++     *
++     * <p>Example use case: an integration framework (e.g. Spock) that uses Mockito under the hood
++     * should call this method with the same identifier that end users might use when calling
++     * Mockito directly. This ensures both use the same shared mock maker instance and can properly
++     * coordinate static mocking.
++     *
++     * @param mockMakerIdentifier the string identifier for the mock maker,
++     *                            e.g. {@link org.mockito.MockMakers#INLINE}
++     * @return the shared mock maker instance from the registry
++     * @since 5.x.x
++     */
++    default MockMaker getMockMaker(String mockMakerIdentifier) {
++        throw new UnsupportedOperationException(
++                "This MockitoPluginProvider implementation does not support getMockMaker(String). "
++                        + "Please upgrade to a version that supports it.");
++    }
+ }

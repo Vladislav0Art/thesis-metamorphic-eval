@@ -1,0 +1,66 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/io/SegmentedStringWriter.java b/src/main/java/com/fasterxml/jackson/core/io/SegmentedStringWriter.java
+index 008b6a28..cb8a0ef4 100644
+--- a/src/main/java/com/fasterxml/jackson/core/io/SegmentedStringWriter.java
++++ b/src/main/java/com/fasterxml/jackson/core/io/SegmentedStringWriter.java
+@@ -37,14 +37,14 @@ public final class SegmentedStringWriter extends Writer
+     @Override
+     public Writer append(CharSequence csq) {
+         String str = csq.toString();
+-        _buffer.append(str, 0, str.length());
++        _buffer.appendChar(str, 0, str.length());
+         return this;
+     }
+ 
+     @Override
+     public Writer append(CharSequence csq, int start, int end) {
+         String str = csq.subSequence(start, end).toString();
+-        _buffer.append(str, 0, str.length());
++        _buffer.appendChar(str, 0, str.length());
+         return this;
+     }
+ 
+@@ -61,7 +61,7 @@ public final class SegmentedStringWriter extends Writer
+     public void write(int c) { _buffer.appendChar((char) c); }
+ 
+     @Override
+-    public void write(String str) { _buffer.append(str, 0, str.length()); }
++    public void write(String str) { _buffer.appendChar(str, 0, str.length()); }
+ 
+     @Override
+     public void write(String str, int off, int len) { _buffer.appendChar(str, off, len); }
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+index 7f417979..beef4b6b 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+@@ -304,7 +304,7 @@ public final class SegmentedTextBuffer
+             return (resultChars = cachedString.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!segmentsPresent)  return activeSegment;
++        if (!segmentsPresent) return (activeSegment == null) ? EMPTY_CHARS : activeSegment;
+         // Nope, need to have/create a non-segmented array and return it
+         return getContentsAsArray();
+     }
+@@ -461,6 +461,9 @@ public final class SegmentedTextBuffer
+             length -= toCopy;
+         } while (length > 0);
+     }
++    public void append(char[] ch, int offset, int length) {
++        appendChar(ch, offset, length);
++    }
+ 
+     public void appendChar(String string, int startOffset, int length)
+     {

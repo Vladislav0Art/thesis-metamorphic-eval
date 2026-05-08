@@ -1,0 +1,84 @@
+
+diff --git a/.gitignore b/.gitignore
+index 0eb7f3d19e..ffba84c210 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -54,3 +54,6 @@ dubbo-demo/dubbo-demo-native/dubbo-demo-native-consumer/src/main/generated
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/resources/META-INF/native-image
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/generated
+ 
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+index 61b37db84b..3a674238a5 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+@@ -41,9 +41,8 @@ public final class URLStrParser {
+         //empty
+     }
+ 
+-
+     /**
+-     * @param decodedURLStr : after {@link URL#decode} string
++     * @param decodedURLStr : decodedURLString
+      *                      decodedURLStr format: protocol://username:password@host:port/path?k1=v1&k2=v2
+      *                      [protocol://][username:password@][host:port]/[path][?k1=v1&k2=v2]
+      */
+@@ -277,7 +276,7 @@ public final class URLStrParser {
+         if (isEncoded) {
+             String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (valueStart > valueEnd) {
+                 value = name;
+             } else {
+                 value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+@@ -290,7 +289,7 @@ public final class URLStrParser {
+         } else {
+             String name = str.substring(nameStart, valueStart - 1);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (valueStart > valueEnd) {
+                 value = name;
+             } else {
+                 value = str.substring(valueStart, valueEnd);
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+index aea2001306..b6cb705732 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+@@ -44,6 +44,7 @@ class URLStrParserTest {
+         testCases.add("file:/path/to/file.txt");
+         testCases.add("dubbo://fe80:0:0:0:894:aeec:f37d:23e1%en0/path?abc=abc");
+         testCases.add("dubbo://[fe80:0:0:0:894:aeec:f37d:23e1]:20880/path?abc=abc");
++        testCases.add("nacos://10.20.0.100:8848?username=&password=&namespace=");
+ 
+         errorDecodedCases.add("dubbo:192.168.1.1");
+         errorDecodedCases.add("://192.168.1.1");
+@@ -79,5 +80,24 @@ class URLStrParserTest {
+                     () -> URLStrParser.parseDecodedStr(errorCase));
+         });
+     }
++    @Test
++    void testEmptyParamValues() {
++        URL url = URL.valueOf("nacos://10.20.0.100:8848?username=&password=&namespace=");
++        Assertions.assertEquals("", url.getParameter("username"),
++                "Empty username parameter should be empty string, not 'username'");
++        Assertions.assertEquals("", url.getParameter("password"),
++                "Empty password parameter should be empty string, not 'password'");
++        Assertions.assertEquals("", url.getParameter("namespace"),
++                "Empty namespace parameter should be empty string, not 'namespace'");
++
++        // Test URLStrParser directly
++        URL parsedUrl = URLStrParser.parseDecodedStr("nacos://10.20.0.100:8848?username=&password=&namespace=");
++        Assertions.assertEquals("", parsedUrl.getParameter("username"),
++                "Empty username parameter should be empty string, not 'username'");
++        Assertions.assertEquals("", parsedUrl.getParameter("password"),
++                "Empty password parameter should be empty string, not 'password'");
++        Assertions.assertEquals("", parsedUrl.getParameter("namespace"),
++                "Empty namespace parameter should be empty string, not 'namespace'");
++    }
+ 
+-}
+\ No newline at end of file
++}

@@ -1,0 +1,45 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/TestJsonMapper.java b/TestJsonMapper.java
+new file mode 100644
+index 000000000..8b1378917
+--- /dev/null
++++ b/TestJsonMapper.java
+@@ -0,0 +1 @@
++
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+index 74419c0dd..4cc8f2600 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+@@ -601,6 +601,9 @@ public interface JsonMapper {
+         }
+         JSONReader streamReader = JSONReader.of(jsonContent);
+         try {
++            if (!streamReader.isObject()) {
++                return false;
++            }
+             streamReader.skipValue();
+         } catch (JSONException jsonException) {
+             return false;
+@@ -642,6 +645,9 @@ public interface JsonMapper {
+         }
+         JSONReader streamReader = JSONReader.of(binaryPayload);
+         try {
++            if (!streamReader.isObject()) {
++                return false;
++            }
+             streamReader.skipValue();
+         } catch (JSONException jsonException) {
+             return false;
+@@ -686,6 +692,9 @@ public interface JsonMapper {
+         }
+         JSONReader streamReader = JSONReader.of(binaryPayload, startIndex, size, encoding);
+         try {
++            if (!streamReader.isObject()) {
++                return false;
++            }
+             streamReader.skipValue();
+         } catch (JSONException jsonException) {
+             return false;

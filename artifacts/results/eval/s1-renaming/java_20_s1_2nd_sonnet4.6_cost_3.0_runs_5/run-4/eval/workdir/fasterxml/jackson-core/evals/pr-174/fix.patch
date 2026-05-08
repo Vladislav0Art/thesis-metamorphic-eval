@@ -1,0 +1,84 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+index 4aa3e3a2..96c8b42f 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+@@ -193,6 +193,27 @@ public class JsonPointerReference
+     public JsonPointerReference headSegment() {
+         return _headSegment;
+     }
++    /**
++     * Method that returns the leaf of this pointer expression.
++     * For example, for pointer {@code /a/b/c}, this method returns
++     * a pointer that represents {@code /c}.
++     * For an "empty" pointer, returns {@code null}.
++     *
++     * @return Pointer for the last segment; {@code null} if this pointer is empty
++     *
++     * @since 2.5
++     */
++    public JsonPointerReference last() {
++        JsonPointerReference current = this;
++        if (current == EMPTY) {
++            return null;
++        }
++        JsonPointerReference next;
++        while ((next = current._nextSegment) != EMPTY) {
++            current = next;
++        }
++        return current;
++    }
+ 
+     /*
+     /**********************************************************
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index e2c21487..32eecddc 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -100,6 +100,33 @@ public class TestJsonPointer extends BaseTest
+         // done!
+         ptr = ptr.nextSegment();
+         assertTrue(ptr.matchesFully());
+-        assertNull(ptr.nextSegment());
++    }
++
++    public void testLastMethod() throws Exception
++    {
++        // simple path
++        JsonPointerReference ptr = JsonPointerReference.parse("/Image/15/name");
++        JsonPointerReference last = ptr.last();
++        assertNotNull(last);
++        assertEquals("name", last.getMatchingProperty());
++        assertEquals("/name", last.toString());
++
++        // single segment
++        ptr = JsonPointerReference.parse("/name");
++        last = ptr.last();
++        assertNotNull(last);
++        assertEquals("name", last.getMatchingProperty());
++
++        // array append indicator
++        ptr = JsonPointerReference.parse("/score/-");
++        last = ptr.last();
++        assertNotNull(last);
++        assertEquals("-", last.getMatchingProperty());
++        assertEquals("/-", last.toString());
++
++        // empty pointer
++        ptr = JsonPointerReference.parse("");
++        last = ptr.last();
++        assertNull(last);
+     }
+ }

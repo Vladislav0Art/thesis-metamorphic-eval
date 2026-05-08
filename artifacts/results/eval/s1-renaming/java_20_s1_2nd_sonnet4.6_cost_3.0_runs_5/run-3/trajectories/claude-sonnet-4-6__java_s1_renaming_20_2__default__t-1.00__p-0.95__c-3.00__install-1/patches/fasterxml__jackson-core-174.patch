@@ -1,0 +1,76 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+index 4aa3e3a2..2853f2d7 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+@@ -194,6 +194,25 @@ public class JsonPointerReference
+         return _headSegment;
+     }
+ 
++    /**
++     * Accessor for getting the last segment of this pointer expression.
++     * For example, for pointer "/score/-", this would return the pointer
++     * for "/-". If the pointer is empty (matchesFully), returns null.
++     *
++     * @since 2.9
++     */
++    public JsonPointerReference last() {
++        JsonPointerReference current = this;
++        if (current.matchesFully()) {
++            return null;
++        }
++        JsonPointerReference next;
++        while ((next = current._nextSegment) != null && !next.matchesFully()) {
++            current = next;
++        }
++        return current;
++    }
++
+     /*
+     /**********************************************************
+     /* Standard method overrides
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index e2c21487..a6aaea1d 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,28 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesFully());
+         assertNull(ptr.nextSegment());
+     }
++
++    public void testLastSegment() throws Exception
++    {
++        // Test single segment
++        JsonPointerReference ptr = JsonPointerReference.parse("/name");
++        assertNotNull(ptr.last());
++        assertEquals("/name", ptr.last().toString());
++
++        // Test multiple segments - last should return the last segment
++        ptr = JsonPointerReference.parse("/Image/15/name");
++        assertNotNull(ptr.last());
++        assertEquals("/name", ptr.last().toString());
++
++        // Test array end indicator
++        ptr = JsonPointerReference.parse("/score/-");
++        assertNotNull(ptr.last());
++        assertEquals("/-", ptr.last().toString());
++        assertEquals("-", ptr.last().getMatchingProperty());
++
++        // Test that matchesFully pointer returns null
++        ptr = JsonPointerReference.parse("/name").nextSegment();
++        assertTrue(ptr.matchesFully());
++        assertNull(ptr.last());
++    }
+ }

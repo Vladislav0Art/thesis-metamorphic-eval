@@ -1,0 +1,72 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1271c273b..1077e3bcb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeChecker.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeChecker.java
+index 90c81a3a1..9111d84a7 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeChecker.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/SubTypeChecker.java
+@@ -80,7 +80,7 @@ public class SubTypeChecker
+             // 18-Dec-2017, tatu: As per [databind#1855], need bit more sophisticated handling
+             //    for some Spring framework types
+             if (fullyQualifiedName.startsWith(PREFIX_STRING)) {
+-                for (Class<?> targetClass = underlyingClass; targetClass != Object.class; targetClass = targetClass.getSuperclass()) {
++                for (Class<?> targetClass = underlyingClass; targetClass != null && targetClass != Object.class; targetClass = targetClass.getSuperclass()) {
+                     String identifier = targetClass.getSimpleName();
+                     // looking for "AbstractBeanFactoryPointcutAdvisor" but no point to allow any is there?
+                     if ("AbstractPointcutAdvisor".equals(identifier)
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/SubTypeCheckerSpringInterfaceTest.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/SubTypeCheckerSpringInterfaceTest.java
+new file mode 100644
+index 000000000..b54104a17
+--- /dev/null
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/SubTypeCheckerSpringInterfaceTest.java
+@@ -0,0 +1,40 @@
++package com.fasterxml.jackson.databind.jsontype;
++
++import java.util.*;
++
++import com.fasterxml.jackson.annotation.JsonTypeInfo;
++import com.fasterxml.jackson.databind.*;
++
++public class SubTypeCheckerSpringInterfaceTest extends BaseMapTest
++{
++    // Simulating org.springframework.security.core.GrantedAuthority (an interface)
++    interface GrantedAuthority {
++        String getAuthority();
++    }
++
++    // Simulating org.springframework.security.core.Authentication
++    static class Authentication {
++        private List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
++
++        public List<GrantedAuthority> getAuthorities() {
++            return this.authorities;
++        }
++
++        public void setAuthorities(List<GrantedAuthority> authorities) {
++            this.authorities = authorities;
++        }
++    }
++
++    public void testSubTypeWithInterfaceNoNPE() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
++
++        String json = "{\"@class\":\"com.fasterxml.jackson.databind.jsontype.SubTypeCheckerSpringInterfaceTest$Authentication\","
++                + "\"authorities\":[\"java.util.ArrayList\",[]]}";
++
++        Authentication authentication = mapper.readValue(json, Authentication.class);
++        assertNotNull(authentication);
++        assertNotNull(authentication.getAuthorities());
++    }
++}

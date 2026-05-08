@@ -1,0 +1,59 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+index c0faa714..1f880c19 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+@@ -904,6 +904,14 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+         }
+         if (_parsingContext.expectComma()) {
+             index = _skipCommaAndWhitespace(index);
++
++            // Was that a trailing comma?
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if ((index == INT_RBRACKET) || (index == INT_RCURLY)) {
++                    _endScope(index);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             updateLocation();
+@@ -1160,7 +1168,7 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+ 
+     // note: identical to one in Utf8StreamParser
+     @Override
+-    public final int nextIntValueOrDefault(int fallback) throws IOException
++    public final int nextIntValue(int fallback) throws IOException
+     {
+         if (_currToken == JsonToken.FIELD_NAME) {
+             _nameCopied = false;
+@@ -1183,7 +1191,7 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+ 
+     // note: identical to one in Utf8StreamParser
+     @Override
+-    public final long nextLongValueOrDefault(long fallback) throws IOException
++    public final long nextLongValue(long fallback) throws IOException
+     {
+         if (_currToken == JsonToken.FIELD_NAME) { // mostly copied from '_nextAfterName'
+             _nameCopied = false;
+@@ -1206,7 +1214,7 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+ 
+     // note: identical to one in UTF8StreamJsonParser
+     @Override
+-    public final Boolean nextBoolean() throws IOException
++    public final Boolean nextBooleanValue() throws IOException
+     {
+         if (_currToken == JsonToken.FIELD_NAME) { // mostly copied from '_nextAfterName'
+             _nameCopied = false;
