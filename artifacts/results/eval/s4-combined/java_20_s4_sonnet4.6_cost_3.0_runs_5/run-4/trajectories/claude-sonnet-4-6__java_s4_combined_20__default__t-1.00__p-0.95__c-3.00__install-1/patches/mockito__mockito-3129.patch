@@ -1,0 +1,81 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/MockUtilities.java b/src/main/java/org/mockito/internal/MockUtilities.java
+index a6c8a81d4..da4134833 100644
+--- a/src/main/java/org/mockito/internal/MockUtilities.java
++++ b/src/main/java/org/mockito/internal/MockUtilities.java
+@@ -73,10 +73,6 @@ public class MockUtilities {
+     }
+ 
+     public static boolean isMock(Object mockInstance) {
+-        // TODO SF (perf tweak) in our codebase we call mockMaker.getHandler() multiple times
+-        // unnecessarily
+-        // This is not ideal because getHandler() can be expensive (reflective calls inside mock
+-        // maker)
+         // The frequent pattern in the codebase are separate calls to: 1) isMock(mock) then 2)
+         // getMockHandler(mock)
+         // We could replace it with using mockingDetails().isMock()
+@@ -98,7 +94,7 @@ public class MockUtilities {
+         return getMockHandler(mockInstance).getMockSettings().getMockName();
+     }
+ 
+-    private static MockMaker getMockMaker(String makerName) {
++    public static MockMaker getMockMaker(String makerName) {
+         if (makerName == null) {
+             return DEFAULT_FACTORY;
+         }
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginRegistry.java b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginRegistry.java
+index 4ed5685f4..7c7aaf1cc 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginRegistry.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginRegistry.java
+@@ -77,6 +77,11 @@ public class DefaultMockitoPluginRegistry implements MockitoPluginRegistry {
+         return createDefaultImplementation(MockMaker.class, BUILTIN_PLUGIN_MAP.get(EMBEDDED_ALIAS));
+     }
+ 
++    @Override
++    public MockMaker getMockMaker(String mockMaker) {
++        return org.mockito.internal.MockUtilities.getMockMaker(mockMaker);
++    }
++
+     public static String getDefaultPluginClass(String nameOrAlias) {
+         return BUILTIN_PLUGIN_MAP.get(nameOrAlias);
+     }
+diff --git a/src/main/java/org/mockito/plugins/infra/MockitoPluginRegistry.java b/src/main/java/org/mockito/plugins/infra/MockitoPluginRegistry.java
+index d0825a211..49f783c36 100644
+--- a/src/main/java/org/mockito/plugins/infra/MockitoPluginRegistry.java
++++ b/src/main/java/org/mockito/plugins/infra/MockitoPluginRegistry.java
+@@ -31,6 +31,17 @@ public interface MockitoPluginRegistry {
+      */
+     MockMaker getInlineMockMaker();
+ 
++    /**
++     * Returns a mock maker by its name or alias.
++     * Unlike {@link #getInlineMockMaker()}, this method caches the mock maker instance,
++     * so subsequent calls with the same name return the same instance.
++     *
++     * @param mockMaker the name or alias of the mock maker, e.g. {@link org.mockito.MockMakers#INLINE}
++     * @return the mock maker instance
++     * @since 5.0.0
++     */
++    MockMaker getMockMaker(String mockMaker);
++
+     /**
+      * Returns the default plugin implementation used by Mockito.
+      * Mockito plugins are stateless so it is recommended to keep hold of the returned plugin implementation
+@@ -43,3 +54,4 @@ public interface MockitoPluginRegistry {
+      */
+     <T> T getDefaultPlugin(Class<T> pluginClass);
+ }
++

@@ -1,0 +1,79 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
+index 417599a3..d92ab697 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
+@@ -208,7 +208,28 @@ public class JsonPointerPath
+      */
+     public JsonPointerPath getHead() {
+         return _headSegment;
+-    }@Override public boolean equals(Object other) {
++    }
++
++    /**
++     * Accessor for getting a "leaf" pointer, which is the terminal segment
++     * of this pointer expression. For example, for pointer "/score/-",
++     * calling this method would return a pointer representing "/-".
++     * For a root (empty) pointer, returns this instance.
++     *
++     * @return The last segment of this pointer expression, or this instance
++     *   if this pointer is already the terminal segment
++     *
++     * @since 2.14
++     */
++    public JsonPointerPath getLastSegment() {
++        JsonPointerPath current = this;
++        while (current._nextSegment != null && !current._nextSegment.matchesExactly()) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
++    @Override public boolean equals(Object other) {
+         if (other == this) return true;
+         if (other == null) return false;
+         if (!(other instanceof JsonPointerPath)) return false;
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 7874c474..84241fad 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,27 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesExactly());
+         assertNull(ptr.nextSegment());
+     }
++    public void testGetLastSegment() throws Exception
++    {
++        // Test multi-segment pointer - /score/-
++        JsonPointerPath ptr = JsonPointerPath.parse("/score/-");
++        JsonPointerPath last = ptr.getLastSegment();
++        assertNotNull(last);
++        assertEquals("-", last.getMatchingProperty());
++        assertEquals("/-", last.toString());
++
++        // Test single-segment pointer - /name
++        JsonPointerPath single = JsonPointerPath.parse("/name");
++        JsonPointerPath singleLast = single.getLastSegment();
++        assertNotNull(singleLast);
++        assertEquals("name", singleLast.getMatchingProperty());
++        assertEquals("/name", singleLast.toString());
++
++        // Test longer path /a/b/c
++        JsonPointerPath longer = JsonPointerPath.parse("/a/b/c");
++        JsonPointerPath longerLast = longer.getLastSegment();
++        assertNotNull(longerLast);
++        assertEquals("c", longerLast.getMatchingProperty());
++        assertEquals("/c", longerLast.toString());
++    }
+ }

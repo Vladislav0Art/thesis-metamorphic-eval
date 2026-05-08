@@ -1,0 +1,100 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+index 1f5cc6862..d9f9e9731 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JsonMapper.java
+@@ -671,6 +671,9 @@ public interface JsonMapper {
+         }
+         JSONReader parser = JSONReader.of(jsonString);
+         try {
++            if (!parser.isObject()) {
++                return false;
++            }
+             parser.skipValue();
+         } catch (JSONException jsonException) {
+             return false;
+@@ -690,6 +693,9 @@ public interface JsonMapper {
+         }
+         JSONReader parser = JSONReader.of(dataBuffer);
+         try {
++            if (!parser.isObject()) {
++                return false;
++            }
+             parser.skipValue();
+         } catch (JSONException jsonException) {
+             return false;
+@@ -712,6 +718,9 @@ public interface JsonMapper {
+         }
+         JSONReader parser = JSONReader.of(dataBuffer, startIndex, count, encoding);
+         try {
++            if (!parser.isObject()) {
++                return false;
++            }
+             parser.skipValue();
+         } catch (JSONException jsonException) {
+             return false;
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
+index d679fd05f..939758ef7 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
+@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
+ import java.nio.charset.StandardCharsets;
+ 
+ import static org.junit.Assert.assertFalse;
++import static org.junit.Assert.assertTrue;
+ 
+ public class JSONValidatorTest {
+     @Test
+@@ -15,4 +16,36 @@ public class JSONValidatorTest {
+         assertFalse(JsonMapper.isValid(utf8, 0, utf8.length, StandardCharsets.UTF_8));
+         assertFalse(JsonMapper.isValid(utf8, 0, utf8.length, StandardCharsets.US_ASCII));
+     }
++
++    @Test
++    public void validate_test_object() {
++        assertTrue(JsonMapper.isValid("{\"key\":\"value\"}"));
++        byte[] utf8 = "{\"key\":\"value\"}".getBytes(StandardCharsets.UTF_8);
++        assertTrue(JsonMapper.isValid(utf8));
++        assertTrue(JsonMapper.isValid(utf8, 0, utf8.length, StandardCharsets.UTF_8));
++    }
++
++    @Test
++    public void validate_test_array_returns_false() {
++        // isValid should return false for arrays (not JSON objects)
++        assertFalse(JsonMapper.isValid("[1,2,3]"));
++        byte[] utf8 = "[1,2,3]".getBytes(StandardCharsets.UTF_8);
++        assertFalse(JsonMapper.isValid(utf8));
++        assertFalse(JsonMapper.isValid(utf8, 0, utf8.length, StandardCharsets.UTF_8));
++    }
++
++    @Test
++    public void validate_test_valid_array() {
++        assertTrue(JsonMapper.isValidArray("[1,2,3]"));
++        byte[] utf8 = "[1,2,3]".getBytes(StandardCharsets.UTF_8);
++        assertTrue(JsonMapper.isValidArray(utf8));
++    }
++
++    @Test
++    public void validate_test_object_returns_false_for_array() {
++        // isValidArray should return false for objects (not JSON arrays)
++        assertFalse(JsonMapper.isValidArray("{\"key\":\"value\"}"));
++        byte[] utf8 = "{\"key\":\"value\"}".getBytes(StandardCharsets.UTF_8);
++        assertFalse(JsonMapper.isValidArray(utf8));
++    }
+ }
+diff --git a/core/src/test/java/com/alibaba/fastjson2/v1issues/Issue1344.java b/core/src/test/java/com/alibaba/fastjson2/v1issues/Issue1344.java
+index f77fcfd99..b43a8c672 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/v1issues/Issue1344.java
++++ b/core/src/test/java/com/alibaba/fastjson2/v1issues/Issue1344.java
+@@ -4,6 +4,8 @@ import com.alibaba.fastjson2.JsonMapper;
+ import com.alibaba.fastjson2.annotation.JSONCreator;
+ import org.junit.jupiter.api.Test;
+ 
++import static org.junit.Assert.assertNull;
++
+ /**
+  * Created by wenshao on 26/07/2017.
+  */

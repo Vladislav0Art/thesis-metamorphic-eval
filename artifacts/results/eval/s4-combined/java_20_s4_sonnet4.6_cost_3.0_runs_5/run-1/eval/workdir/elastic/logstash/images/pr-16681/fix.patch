@@ -1,0 +1,31 @@
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineEventBusV2.java b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineEventBusV2.java
+index 7480c37df..7a5efc403 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineEventBusV2.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineEventBusV2.java
+@@ -38,16 +38,20 @@ class PipelineEventBusV2 extends AbstractPipelineBus implements PipelineBus {
+ 
+                 stateHandler.accept(stateSnapshot);
+ 
+-                // If this addressState has a listener, ensure that any waiting
++                return stateSnapshot.isEmpty() ? null : stateSnapshot;
++            });
++
++            if (lookupState == null) {
++                return null;
++            } else {
++                // If the resulting addressState had a listener, ensure that any waiting
+                 // threads get notified so that they can resume immediately
+-                final PipelineInput activeInput = stateSnapshot.getInput();
++                final PipelineInput activeInput = lookupState.getInput();
+                 if (activeInput != null) {
+                     synchronized (activeInput) { activeInput.notifyAll(); }
+                 }
+-
+-                return stateSnapshot.isEmpty() ? null : stateSnapshot;
+-            });
+-            return lookupState == null ? null : lookupState.getReadOnlyView();
++                return lookupState.getReadOnlyView();
++            }
+         }
+ 
+         private AddressState.ReadOnly get(final String addrStr) {

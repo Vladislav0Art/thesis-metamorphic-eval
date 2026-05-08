@@ -1,0 +1,13 @@
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+index 194161a0..1f9513fe 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+@@ -363,7 +363,7 @@ public final class SegmentedTextBuffer
+             return (cachedChars = cachedResult.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!segmentsAvailable)  return activeSegment;
++        if (!segmentsAvailable && activeSegment != null)  return activeSegment;
+         // Nope, need to have/create a non-segmented array and return it
+         return toCharArray();
+     }public int getCurrentSegmentSize() { return currentLength; }public char[] getCurrentSegment()

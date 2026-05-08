@@ -1,0 +1,35 @@
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
+index 417599a3..14df5c7a 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
+@@ -201,6 +201,16 @@ public class JsonPointerPath
+         }
+         return _nextSegment;
+     }public String getMatchingProperty() { return _matchingPropertyName; }public int getMatchingIndex() { return _matchingElementIndex; } /**
++     * Returns the leaf of current json pointer expression.
++     * Leaf is the last non-null segment of current json pointer.
++     */
++    public JsonPointerPath getLastSegment() {
++        JsonPointerPath activePointer = this;
++        while(!JsonPointerPath.EMPTY.equals(activePointer._nextSegment)) {
++            activePointer = activePointer._nextSegment;
++        }
++        return activePointer;
++    } /**
+      * Accessor for getting a "pointer", instance from current segment to
+      * segment before segment leaf. For root pointer, will return null.
+      *
+@@ -213,6 +223,13 @@ public class JsonPointerPath
+         if (other == null) return false;
+         if (!(other instanceof JsonPointerPath)) return false;
+         return _asString.equals(((JsonPointerPath) other)._asString);
++    }public JsonPointerPath appendPath(JsonPointerPath incomingPointer) {
++        String pointerText = _asString;
++        if(pointerText.endsWith("/")) {
++            //removes final slash
++            pointerText = pointerText.substring(0, pointerText.length()-1);
++        }
++        return parse(pointerText + incomingPointer._asString);
+     }private static void appendEscapeSequence(StringBuilder builder, char ch) {
+         if (ch == '0') {
+             ch = '~';

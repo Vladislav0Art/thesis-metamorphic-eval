@@ -1,0 +1,97 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/MockedConstructionImpl.java b/src/main/java/org/mockito/internal/MockedConstructionImpl.java
+index 5541ba07c..97ddf6ef3 100644
+--- a/src/main/java/org/mockito/internal/MockedConstructionImpl.java
++++ b/src/main/java/org/mockito/internal/MockedConstructionImpl.java
+@@ -23,7 +23,7 @@ public final class MockedConstructionImpl<T> implements MockedConstruction<T> {
+ 
+     private final Location location = LocationFactory.create();
+ 
+-    protected MockedConstructionImpl(MockMaker.ConstructionMockControl<T> control) {
++    public MockedConstructionImpl(MockMaker.ConstructionMockControl<T> control) {
+         this.control = control;
+     }
+ 
+diff --git a/src/main/java/org/mockito/internal/MockedStaticImpl.java b/src/main/java/org/mockito/internal/MockedStaticImpl.java
+index f6705fb81..c5519903b 100644
+--- a/src/main/java/org/mockito/internal/MockedStaticImpl.java
++++ b/src/main/java/org/mockito/internal/MockedStaticImpl.java
+@@ -37,7 +37,7 @@ public final class MockedStaticImpl<T> implements MockedStatic<T> {
+ 
+     private final Location location = LocationFactory.create();
+ 
+-    protected MockedStaticImpl(MockMaker.StaticMockControl<T> control) {
++    public MockedStaticImpl(MockMaker.StaticMockControl<T> control) {
+         this.control = control;
+     }
+ 
+diff --git a/src/main/java/org/mockito/internal/util/MockitoEngine.java b/src/main/java/org/mockito/internal/util/MockitoEngine.java
+index da69eba72..3f0aa3d90 100644
+--- a/src/main/java/org/mockito/internal/util/MockitoEngine.java
++++ b/src/main/java/org/mockito/internal/util/MockitoEngine.java
+@@ -258,6 +258,7 @@ public class MockitoEngine {
+         }
+         DefaultMockSettingsImpl settingsImplementation = DefaultMockSettingsImpl.class.cast(mockConfig);
+         MockCreationConfiguration<T> mockCreationConfig = settingsImplementation.buildStatic(targetClass);
++        verifyDoNotMockAnnotation(targetClass, mockCreationConfig);
+         MockMaker.StaticMockControl<T> staticManager = MockUtil.createStaticMock(targetClass, mockCreationConfig);
+         staticManager.enable();
+         mockingProgress().mockingStarted(targetClass, mockCreationConfig);
+diff --git a/src/test/java/org/mockito/internal/exceptions/ReporterTest.java b/src/test/java/org/mockito/internal/exceptions/ReporterTest.java
+index 9e4ca2381..7df3c5150 100644
+--- a/src/test/java/org/mockito/internal/exceptions/ReporterTest.java
++++ b/src/test/java/org/mockito/internal/exceptions/ReporterTest.java
+@@ -191,7 +191,7 @@ public class ReporterTest extends TestBase {
+                 .isInstanceOf(MockitoException.class)
+                 .hasMessageContainingAll(
+                         "Mockito couldn't inject mock dependency 'iMethods' on field",
+-                        "'static final org.mockito.internal.MockitoCore org.mockito.Mockito.MOCKITO_CORE'",
++                        "'static final org.mockito.internal.util.MockitoEngine org.mockito.Mockito.MOCKITO_CORE'",
+                         "whose type 'org.mockito.Mockito' was annotated by @InjectMocks in your test.",
+                         "Also I failed because: null");
+     }
+diff --git a/src/test/java/org/mockitousage/annotation/DoNotMockTest.java b/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
+index 936434536..20fc27193 100644
+--- a/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
++++ b/src/test/java/org/mockitousage/annotation/DoNotMockTest.java
+@@ -6,6 +6,7 @@ package org.mockitousage.annotation;
+ 
+ import static org.assertj.core.api.Assertions.assertThatThrownBy;
+ import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.mockStatic;
+ 
+ import org.junit.Test;
+ import org.mockito.DoNotMock;
+@@ -104,9 +105,19 @@ public class DoNotMockTest {
+                 .isInstanceOf(DoNotMockException.class);
+     }
+ 
++    @Test
++    public void can_not_static_mock_class_annotated_with_donotmock() {
++        assertThatThrownBy(
++                        () -> {
++                            mockStatic(NotMockable.class);
++                        })
++                .isInstanceOf(DoNotMockException.class);
++    }
++
+     @DoNotMock
+     private static class NotMockable {}
+ 
++
+     @DoNotMock
+     private interface NotMockableInterface {}
+ 

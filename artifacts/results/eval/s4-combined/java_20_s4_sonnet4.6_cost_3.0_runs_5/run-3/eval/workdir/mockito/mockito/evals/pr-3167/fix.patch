@@ -1,0 +1,54 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockMaker.java
+index 5339364c2..cbac98405 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockMaker.java
+@@ -69,7 +69,7 @@ public class InlineByteBuddyMockMaker
+ 
+     @Override
+     public void resetMock(Object mock, MockHandler newHandler, MockCreationSettings settings) {
+-        inlineDelegateByteBuddyMockMaker.resetMockInterceptor(mock, newHandler, settings);
++        inlineDelegateByteBuddyMockMaker.resetMock(mock, newHandler, settings);
+     }
+ 
+     @Override
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
+index 0e717bbbc..62c14b5d2 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
+@@ -441,7 +441,7 @@ class InlineDelegatingByteBuddyMockFactory
+         }
+     }
+ 
+-    public void resetMockInterceptor(Object subject, MockHandler replacementHandler, MockCreationSettings creationConfig) {
++    public void resetMock(Object subject, MockHandler replacementHandler, MockCreationSettings creationConfig) {
+         MockMethodInterceptor methodInterceptor =
+                 new MockMethodInterceptor(replacementHandler, creationConfig);
+         if (subject instanceof Class<?>) {
+diff --git a/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java b/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
+index 27faed9d9..2f4f0866c 100644
+--- a/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
++++ b/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
+@@ -58,7 +58,8 @@ public class ReturnsDeepStubs implements Answer<Object>, Serializable {
+         if (emptyValue != null) {
+             return emptyValue;
+         }
+-        if (!typeMockabilityOf(rawType, mockSettings.getMockMaker()).mockable()) {
++        if (!typeMockabilityOf(rawType, mockSettings.getMockMaker()).mockable()
++                || rawType.isEnum()) {
+             if (invocation.getMethod().getReturnType().equals(rawType)) {
+                 return delegate().answer(invocation);
+             } else {

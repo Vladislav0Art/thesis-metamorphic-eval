@@ -1,0 +1,107 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/TestReproduction.java b/TestReproduction.java
+new file mode 100644
+index 00000000..c599719a
+--- /dev/null
++++ b/TestReproduction.java
+@@ -0,0 +1,23 @@
++import com.fasterxml.jackson.core.util.SegmentedTextBuffer;
++import com.fasterxml.jackson.core.util.BufferRecycler;
++
++public class TestReproduction {
++    public static void main(String[] args) {
++        SegmentedTextBuffer buffer = new SegmentedTextBuffer(new BufferRecycler());
++        buffer.resetToEmpty();
++        char[] first = buffer.getTextBuffer();
++        System.out.println("First getTextBuffer() result: " + (first == null ? "null" : "array of length " + first.length));
++        String s = buffer.getContentsAsString();
++        System.out.println("getContentsAsString() result: \"" + s + "\"");
++        char[] second = buffer.getTextBuffer();
++        System.out.println("Second getTextBuffer() result: " + (second == null ? "null" : "array of length " + second.length));
++        
++        if (first == null || second == null) {
++            System.out.println("FAIL: getTextBuffer() returned null");
++        } else if (first.length != second.length) {
++            System.out.println("FAIL: inconsistent results: " + first.length + " vs " + second.length);
++        } else {
++            System.out.println("PASS: consistent results");
++        }
++    }
++}
+diff --git a/src/main/java/com/fasterxml/jackson/core/io/SegmentedStringWriter.java b/src/main/java/com/fasterxml/jackson/core/io/SegmentedStringWriter.java
+index 008b6a28..cb8a0ef4 100644
+--- a/src/main/java/com/fasterxml/jackson/core/io/SegmentedStringWriter.java
++++ b/src/main/java/com/fasterxml/jackson/core/io/SegmentedStringWriter.java
+@@ -37,14 +37,14 @@ public final class SegmentedStringWriter extends Writer
+     @Override
+     public Writer append(CharSequence csq) {
+         String str = csq.toString();
+-        _buffer.append(str, 0, str.length());
++        _buffer.appendChar(str, 0, str.length());
+         return this;
+     }
+ 
+     @Override
+     public Writer append(CharSequence csq, int start, int end) {
+         String str = csq.subSequence(start, end).toString();
+-        _buffer.append(str, 0, str.length());
++        _buffer.appendChar(str, 0, str.length());
+         return this;
+     }
+ 
+@@ -61,7 +61,7 @@ public final class SegmentedStringWriter extends Writer
+     public void write(int c) { _buffer.appendChar((char) c); }
+ 
+     @Override
+-    public void write(String str) { _buffer.append(str, 0, str.length()); }
++    public void write(String str) { _buffer.appendChar(str, 0, str.length()); }
+ 
+     @Override
+     public void write(String str, int off, int len) { _buffer.appendChar(str, off, len); }
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+index 194161a0..9eb9c5a7 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+@@ -54,7 +54,7 @@ public final class SegmentedTextBuffer
+      */
+ 
+     /**
+-     * Shared input buffer; stored here in case some input can be returned
++     * Character array that is shared and passed in. Content of the array
+      * as is, without being copied to collector's own buffers. Note that
+      * this is read-only for this Object.
+      */
+@@ -363,7 +363,7 @@ public final class SegmentedTextBuffer
+             return (cachedChars = cachedResult.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!segmentsAvailable)  return activeSegment;
++        if (!segmentsAvailable)  return (activeSegment == null) ? EMPTY_CHARS : activeSegment;
+         // Nope, need to have/create a non-segmented array and return it
+         return toCharArray();
+     }public int getCurrentSegmentSize() { return currentLength; }public char[] getCurrentSegment()
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 31cc6c05..5fc584a9 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -54,7 +54,7 @@ public class TestTextBuffer
+          // then char[]
+          tb = new SegmentedTextBuffer(new BufferRecycler());
+          tb.appendChar('a');
+-         tb.append(STR.toCharArray(), 0, len);
++         tb.appendChar(STR.toCharArray(), 0, len);
+          tb.appendChar('c');
+          assertEquals(len+2, tb.length());
+          assertEquals(EXP, tb.getContentsAsString());

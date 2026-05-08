@@ -1,0 +1,47 @@
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockFactory.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockFactory.java
+index 8632d683a..8e0ede814 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockFactory.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineByteBuddyMockFactory.java
+@@ -218,7 +218,7 @@ class InlineByteBuddyMockFactory
+     private final DetachedThreadLocal<Map<Class<?>, BiConsumer<Object, MockedConstruction.Context>>>
+         constructionInterceptors = new DetachedThreadLocal<>(DetachedThreadLocal.Cleaner.MANUAL);
+ 
+-    private final ThreadLocal<Boolean> constructionFlag = ThreadLocal.withInitial(() -> false);
++    private final ThreadLocal<Class<?>> activeMockClass = ThreadLocal.withInitial(() -> null);
+ 
+     private final ThreadLocal<Object> currentSpy = new ThreadLocal<>();
+ 
+@@ -492,11 +492,11 @@ class InlineByteBuddyMockFactory
+                     memberBridge.newInstance(
+                         chosenCtor,
+                         constructionDispatcher -> {
+-                                constructionFlag.set(true);
++                                activeMockClass.set(targetClass);
+                                 try {
+                                     return constructionDispatcher.newInstance();
+                                 } finally {
+-                                    constructionFlag.set(false);
++                                    activeMockClass.remove();
+                                 }
+                             },
+                         args);
+@@ -823,7 +823,9 @@ class InlineByteBuddyMockFactory
+             targetClass -> {
+                     if (suspendedFlag.get()) {
+                         return false;
+-                    } else if (constructionFlag.get() || constructingClass.get() != null) {
++                    } else if ((activeMockClass.get() != null
++                                    && targetClass.isAssignableFrom(activeMockClass.get()))
++                            || constructingClass.get() != null) {
+                         return true;
+                     }
+                     Map<Class<?>, ?> classHandlerMap = constructionInterceptors.get();
+@@ -841,7 +843,7 @@ class InlineByteBuddyMockFactory
+                 };
+         ConstructionCallback constructionCallback =
+                 (targetClass, instance, args, paramTypeNames) -> {
+-                    if (constructionFlag.get()) {
++                    if (activeMockClass.get() != null) {
+                         Object spyInstance = currentSpy.get();
+                         if (spyInstance == null) {
+                             return null;

@@ -1,0 +1,57 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..e4dc8b213 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -100,7 +100,15 @@ setup_java() {
+       if [ -x "$LS_JAVA_HOME/bin/java" ]; then
+         JAVACMD="$LS_JAVA_HOME/bin/java"
+         if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+-          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          BUNDLED_JDK_VERSION=""
++          if [ -f "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION" ]; then
++            BUNDLED_JDK_VERSION=$(cat "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION")
++          fi
++          if [ -n "$BUNDLED_JDK_VERSION" ]; then
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK (${BUNDLED_JDK_VERSION})"
++          else
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          fi
+         fi
+       else
+         echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..953a22f9f 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -861,6 +861,17 @@ tasks.register("copyJdk", Copy) {
+     // CLI project properties: -Pjdk_bundle_os=[windows|linux|darwin] -Pjdk_arch=[arm64|x86_64]
+     doLast {
+         System.out.println "Download location is ${project.ext.jdkDownloadLocation}, Decompressing ${project.ext.jdkDirectory} to \"${project.ext.jdkBundlingDirectory}\""
++        // Create a VERSION file in the JDK directory from the release file
++        def releaseFile = new File("${project.ext.jdkBundlingDirectory}/release")
++        if (releaseFile.exists()) {
++            def version = releaseFile.readLines()
++                .find { it.startsWith("IMPLEMENTOR_VERSION") }
++                ?.replaceAll(/IMPLEMENTOR_VERSION="(.+)"/, '$1')
++            if (version) {
++                new File("${project.ext.jdkBundlingDirectory}/VERSION").text = version
++                println "Created JDK VERSION file with version: ${version}"
++            }
++        }
+     }
+ }
+ 

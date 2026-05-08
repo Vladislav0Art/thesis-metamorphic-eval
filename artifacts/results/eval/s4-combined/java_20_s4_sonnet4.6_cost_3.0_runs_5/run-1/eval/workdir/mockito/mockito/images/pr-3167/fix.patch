@@ -1,0 +1,55 @@
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
+index 0e717bbbc..ed117a7ba 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
+@@ -570,15 +570,15 @@ class InlineDelegatingByteBuddyMockFactory
+ 
+     private <T> RuntimeException formatFailureMessage(
+         MockCreationSettings<T> featuresSettings, Exception generationException) {
+-        if (featuresSettings.getTypeToMock().isArray()) {
++        Class<T> targetClass = featuresSettings.getTypeToMock();
++        if (targetClass.isArray()) {
+             throw new MockitoException(
+-                    join("Arrays cannot be mocked: " + featuresSettings.getTypeToMock() + ".", ""),
+-                generationException);
++                    join("Arrays cannot be mocked: " + targetClass + ".", ""), generationException);
+         }
+-        if (Modifier.isFinal(featuresSettings.getTypeToMock().getModifiers())) {
++        if (Modifier.isFinal(targetClass.getModifiers())) {
+             throw new MockitoException(
+                     join(
+-                            "Mockito cannot mock this class: " + featuresSettings.getTypeToMock() + ".",
++                            "Mockito cannot mock this class: " + targetClass + ".",
+                             "Can not mock final classes with the following settings :",
+                             " - explicit serialization (e.g. withSettings().serializable())",
+                             " - extra interfaces (e.g. withSettings().extraInterfaces(...))",
+@@ -589,10 +589,18 @@ class InlineDelegatingByteBuddyMockFactory
+                             "Underlying exception : " + generationException),
+                 generationException);
+         }
+-        if (Modifier.isPrivate(featuresSettings.getTypeToMock().getModifiers())) {
++        if (TypeSupport.INSTANCE.isSealed(targetClass) && targetClass.isEnum()) {
++            throw new MockitoException(
++                    join(
++                            "Mockito cannot mock this class: " + targetClass + ".",
++                            "Sealed abstract enums can't be mocked. Since Java 15 abstract enums are declared sealed, which prevents mocking.",
++                            "You can still return an existing enum literal from a stubbed method call."),
++                generationException);
++        }
++        if (Modifier.isPrivate(targetClass.getModifiers())) {
+             throw new MockitoException(
+                     join(
+-                            "Mockito cannot mock this class: " + featuresSettings.getTypeToMock() + ".",
++                            "Mockito cannot mock this class: " + targetClass + ".",
+                             "Most likely it is a private class that is not visible by Mockito",
+                             "",
+                             "You are seeing this disclaimer because Mockito is configured to create inlined mocks.",
+@@ -602,7 +610,7 @@ class InlineDelegatingByteBuddyMockFactory
+         }
+         throw new MockitoException(
+                 join(
+-                        "Mockito cannot mock this class: " + featuresSettings.getTypeToMock() + ".",
++                        "Mockito cannot mock this class: " + targetClass + ".",
+                         "",
+                         "If you're not sure why you're getting this error, please open an issue on GitHub.",
+                         "",

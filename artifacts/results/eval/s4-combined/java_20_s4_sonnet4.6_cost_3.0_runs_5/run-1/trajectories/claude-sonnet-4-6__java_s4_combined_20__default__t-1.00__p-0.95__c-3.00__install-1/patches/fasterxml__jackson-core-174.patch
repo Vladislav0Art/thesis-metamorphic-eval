@@ -1,0 +1,81 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
+index 417599a3..adebf79a 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerPath.java
+@@ -208,7 +208,30 @@ public class JsonPointerPath
+      */
+     public JsonPointerPath getHead() {
+         return _headSegment;
+-    }@Override public boolean equals(Object other) {
++    }
++
++    /**
++     * Accessor for getting the last segment of this pointer path (the "leaf" segment).
++     * Returns a new {@link JsonPointerPath} that represents only the terminal segment
++     * of this pointer expression.
++     *<p>
++     * For example, for pointer {@code /score/-}, calling this method would return
++     * the segment for {@code /-}.
++     * For the empty pointer or a single-segment pointer, returns {@code this}.
++     *
++     * @return Last segment of this pointer path
++     *
++     * @since 2.16
++     */
++    public JsonPointerPath getLast() {
++        JsonPointerPath current = this;
++        while (current._nextSegment != null && current._nextSegment != EMPTY) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
++    @Override public boolean equals(Object other) {
+         if (other == this) return true;
+         if (other == null) return false;
+         if (!(other instanceof JsonPointerPath)) return false;
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 7874c474..78442457 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,27 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesExactly());
+         assertNull(ptr.nextSegment());
+     }
++
++    public void testGetLast() throws Exception
++    {
++        // Test with multi-segment path
++        JsonPointerPath ptr = JsonPointerPath.parse("/score/-");
++        JsonPointerPath last = ptr.getLast();
++        assertNotNull(last);
++        assertEquals("/-", last.toString());
++        assertEquals("-", last.getMatchingProperty());
++
++        // Test with longer path
++        ptr = JsonPointerPath.parse("/Image/15/name");
++        last = ptr.getLast();
++        assertNotNull(last);
++        assertEquals("/name", last.toString());
++        assertEquals("name", last.getMatchingProperty());
++
++        // Test with single-segment path - should return self
++        ptr = JsonPointerPath.parse("/name");
++        last = ptr.getLast();
++        assertNotNull(last);
++        assertEquals("/name", last.toString());
++    }
+ }

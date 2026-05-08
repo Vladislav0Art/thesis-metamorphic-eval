@@ -1,0 +1,32 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/parsers/JsonParserFromReader.java b/src/main/java/com/fasterxml/jackson/core/json/parsers/JsonParserFromReader.java
+index 0466e2f2..f4ac9313 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/parsers/JsonParserFromReader.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/parsers/JsonParserFromReader.java
+@@ -342,6 +342,14 @@ public class JsonParserFromReader // final in 2.3, earlier
+         }
+         if (_parsingContext.expectComma()) {
+             index = _skipAfterComma(index);
++
++            // Was that a trailing comma?
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if ((index == INT_RBRACKET) || (index == INT_RCURLY)) {
++                    _closeContainer(index);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _updateTokenLocation();

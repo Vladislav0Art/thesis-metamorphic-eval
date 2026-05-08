@@ -1,0 +1,59 @@
+
+diff --git a/.gitignore b/.gitignore
+index 0eb7f3d19e..ffba84c210 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -54,3 +54,6 @@ dubbo-demo/dubbo-demo-native/dubbo-demo-native-consumer/src/main/generated
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/resources/META-INF/native-image
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/generated
+ 
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+index 61b37db84b..889ff52b1c 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+@@ -277,12 +277,12 @@ public final class URLStrParser {
+         if (isEncoded) {
+             String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (valueStart > valueEnd) {
+                 value = name;
+             } else {
+                 value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+             }
+-            URLItemCache.putParams(params,name, value);
++            URLItemCache.putParams(params, name, value);
+             // compatible with lower versions registering "default." keys
+             if (name.startsWith(DEFAULT_KEY_PREFIX)) {
+                 params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
+@@ -290,7 +290,7 @@ public final class URLStrParser {
+         } else {
+             String name = str.substring(nameStart, valueStart - 1);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (valueStart > valueEnd) {
+                 value = name;
+             } else {
+                 value = str.substring(valueStart, valueEnd);
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+index aea2001306..a3e4494329 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+@@ -39,6 +39,7 @@ class URLStrParserTest {
+         testCases.add("dubbo://192.168.1.1?");
+         testCases.add("dubbo://127.0.0.1?test=中文测试");
+         testCases.add("dubbo://admin:admin123@192.168.1.41:28113/org.test.api.DemoService$Iface?anyhost=true&application=demo-service&dubbo=2.6.1&generic=false&interface=org.test.api.DemoService$Iface&methods=orbCompare,checkText,checkPicture&pid=65557&revision=1.4.17&service.filter=bootMetrics&side=provider&status=server&threads=200&timestamp=1583136298859&version=1.0.0");
++        testCases.add("nacos://10.20.0.100:8848?username=&password=&namespace=");
+         // super long text test
+         testCases.add("dubbo://192.168.1.1/" + RandomString.make(10240));
+         testCases.add("file:/path/to/file.txt");
+@@ -80,4 +81,4 @@ class URLStrParserTest {
+         });
+     }
+ 
+-}
+\ No newline at end of file
++}

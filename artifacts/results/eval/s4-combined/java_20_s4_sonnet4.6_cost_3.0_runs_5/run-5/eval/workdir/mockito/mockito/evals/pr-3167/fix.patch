@@ -1,0 +1,85 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
+index 0e717bbbc..d464cea5b 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockFactory.java
+@@ -441,6 +441,32 @@ class InlineDelegatingByteBuddyMockFactory
+         }
+     }
+ 
++    @Override
++    public void resetMock(Object subject, MockHandler replacementHandler, MockCreationSettings creationConfig) {
++        MockMethodInterceptor methodInterceptor =
++                new MockMethodInterceptor(replacementHandler, creationConfig);
++        if (subject instanceof Class<?>) {
++            Map<Class<?>, MockMethodInterceptor> interceptorRegistry = staticInterceptorLocal.get();
++            if (interceptorRegistry == null || !interceptorRegistry.containsKey(subject)) {
++                throw new MockitoException(
++                        "Cannot reset "
++                                + subject
++                                + " which is not currently registered as a static mock");
++            }
++            interceptorRegistry.put((Class<?>) subject, methodInterceptor);
++        } else {
++            if (!interceptorMap.containsKey(subject)) {
++                throw new MockitoException(
++                        "Cannot reset " + subject + " which is not currently registered as a mock");
++            }
++            interceptorMap.put(subject, methodInterceptor);
++            if (subject instanceof MockAccess) {
++                ((MockAccess) subject).setMockitoInterceptor(methodInterceptor);
++            }
++            interceptorMap.expungeStaleEntries();
++        }
++    }
++
+     public void resetMockInterceptor(Object subject, MockHandler replacementHandler, MockCreationSettings creationConfig) {
+         MockMethodInterceptor methodInterceptor =
+                 new MockMethodInterceptor(replacementHandler, creationConfig);
+diff --git a/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java b/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
+index 27faed9d9..688229bb3 100644
+--- a/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
++++ b/src/main/java/org/mockito/internal/stubbing/defaultanswers/ReturnsDeepStubs.java
+@@ -58,7 +58,8 @@ public class ReturnsDeepStubs implements Answer<Object>, Serializable {
+         if (emptyValue != null) {
+             return emptyValue;
+         }
+-        if (!typeMockabilityOf(rawType, mockSettings.getMockMaker()).mockable()) {
++        if (rawType.isEnum()
++                || !typeMockabilityOf(rawType, mockSettings.getMockMaker()).mockable()) {
+             if (invocation.getMethod().getReturnType().equals(rawType)) {
+                 return delegate().answer(invocation);
+             } else {
+diff --git a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+index 5e39714cf..d99f4797d 100644
+--- a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
++++ b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+@@ -376,4 +376,15 @@ public class DeepStubbingTest extends TestBase {
+ 
+         assertThat(mock.reverse().finalMethod()).isEqualTo(5L);
+     }
++    enum TestEnum { VALUE1, VALUE2 }
++
++    interface WithEnum {
++        TestEnum getEnum();
++    }
++
++    @Test
++    public void deep_stub_does_not_fail_when_method_returns_enum() {
++        WithEnum mock = mock(WithEnum.class, RETURNS_DEEP_STUBS);
++        assertNull(mock.getEnum());
++    }
+ }
