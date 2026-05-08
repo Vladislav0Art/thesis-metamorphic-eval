@@ -23,19 +23,21 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$SCRIPT_DIR/repo"
 cd "$REPO_DIR"
 
+> "$SCRIPT_DIR/verdict.txt"
+
 ERR=$(git apply --whitespace=nowarn "$SCRIPT_DIR/fix.patch" 2>&1)
 if [ $? -ne 0 ]; then
-    printf "FAILED (fix.patch)\\n%s" "$ERR" > "$SCRIPT_DIR/verdict.txt"
+    printf "FAILED (fix.patch):\\n%s" "$ERR" >> "$SCRIPT_DIR/verdict.txt"
     exit 1
 fi
+echo "PASSED (fix.patch)" >> "$SCRIPT_DIR/verdict.txt"
 
 ERR=$(git apply --whitespace=nowarn "$SCRIPT_DIR/test.patch" 2>&1)
 if [ $? -ne 0 ]; then
-    printf "FAILED (test.patch)\\n%s" "$ERR" > "$SCRIPT_DIR/verdict.txt"
+    printf "FAILED (test.patch):\\n%s" "$ERR" >> "$SCRIPT_DIR/verdict.txt"
     exit 1
 fi
-
-echo "PASSED" > "$SCRIPT_DIR/verdict.txt"
+echo "PASSED (test.patch)" >> "$SCRIPT_DIR/verdict.txt"
 """
 
 
@@ -116,7 +118,7 @@ def _process_instance(entry: dict, repos_dir: str) -> tuple[bool, str]:
     with open(verdict_path) as f:
         verdict = f.read().strip()
 
-    passed = verdict.startswith("PASSED")
+    passed = "FAILED" not in verdict
     logger.info(f"[{instance_id}] Verdict: {verdict}")
     return passed, verdict_path
 
