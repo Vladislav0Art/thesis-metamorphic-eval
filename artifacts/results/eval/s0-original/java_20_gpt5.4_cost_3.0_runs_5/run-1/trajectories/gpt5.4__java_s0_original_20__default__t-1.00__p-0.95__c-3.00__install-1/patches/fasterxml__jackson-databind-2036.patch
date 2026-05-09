@@ -1,0 +1,126 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..8ddfb3fb8 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -462,6 +462,20 @@ public enum MapperFeature implements ConfigFeature
+      */
+     IGNORE_DUPLICATE_MODULE_REGISTRATIONS(true),
+ 
++    /**
++     * Feature that determines whether the declared base type of a polymorphic value
++     * is used as the default implementation if no explicit {@link com.fasterxml.jackson.annotation.JsonTypeInfo#defaultImpl}
++     * is specified and the declared type is concrete.
++     *<p>
++     * This allows deserialization into a concrete subtype to succeed even if type
++     * information is missing, as long as that concrete subtype was the declared target type.
++     *<p>
++     * Feature is disabled by default.
++     *
++     * @since 2.10
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /**
+      * Setting that determines what happens if an attempt is made to explicitly
+      * "merge" value of a property, where value does not support merging; either
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
+index 17d5ec72f..53d8b48fe 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StdTypeResolverBuilder.java
+@@ -123,7 +123,12 @@ public class StdTypeResolverBuilder
+         JavaType defaultImpl;
+ 
+         if (_defaultImpl == null) {
+-            defaultImpl = null;
++            if (config.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && baseType.isConcrete()) {
++                defaultImpl = baseType;
++            } else {
++                defaultImpl = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+index 7d260c785..f5a77910d 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+@@ -140,6 +140,23 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         public AsProperty value;
+     }
+ 
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY,
++            property = "type")
++    public interface BaseWithMinimalClass {
++        public String getName();
++        public void setName(String name);
++    }
++
++    public static class MinimalClassConcrete implements BaseWithMinimalClass {
++        protected String name;
++
++        @Override
++        public String getName() { return name; }
++
++        @Override
++        public void setName(String n) { name = n; }
++    }
++
+     /*
+     /**********************************************************
+     /* Unit tests, deserialization
+@@ -270,25 +287,24 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         }
+     }
+ 
+-    // [databind#1533]
+-    public void testWithEmptyStringAsNullObject1533() throws Exception
++
++    public void testMissingTypeIdWithConcreteTargetTypeFailsByDefault() throws Exception
+     {
+-        ObjectReader r = MAPPER.readerFor(AsPropertyWrapper.class)
+-                .with(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
+-        AsPropertyWrapper wrapper = r.readValue("{ \"value\": \"\" }");
+-        assertNull(wrapper.value);
++        try {
++            MAPPER.readValue("{\"name\":\"abc\"}", MinimalClassConcrete.class);
++            fail("Should not pass");
++        } catch (InvalidTypeIdException e) {
++            verifyException(e, "missing type id property 'type'");
++        }
+     }
+ 
+-    /*
+-    /**********************************************************
+-    /* Unit tests, serialization
+-    /**********************************************************
+-     */
+-
+-    /*
+-    public void testDontWriteIfDefaultImpl() throws Exception {
+-        String json = MAPPER.writeValueAsString(new MyInter());
+-        assertEquals("{\"blah\":null}", json);
++    public void testMissingTypeIdWithConcreteTargetTypeAsDefaultImpl() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper()
++                .enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++        MinimalClassConcrete result = mapper.readValue("{\"name\":\"abc\"}",
++                MinimalClassConcrete.class);
++        assertNotNull(result);
++        assertEquals("abc", result.getName());
+     }
+-    */
+ }

@@ -1,0 +1,104 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/test/java/org/mockitousage/bugs/deepstubs/DeepStubReturnsEnumJavaTest.java b/src/test/java/org/mockitousage/bugs/deepstubs/DeepStubReturnsEnumJavaTest.java
+new file mode 100644
+index 000000000..5b411b098
+--- /dev/null
++++ b/src/test/java/org/mockitousage/bugs/deepstubs/DeepStubReturnsEnumJavaTest.java
+@@ -0,0 +1,39 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage.bugs.deepstubs;
++
++import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.when;
++
++import org.junit.Test;
++
++public class DeepStubReturnsEnumJavaTest {
++
++    interface Piece {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE(2.5d);
++
++        private final double costPerPieceSpace;
++
++        PieceType(double costPerPieceSpace) {
++            this.costPerPieceSpace = costPerPieceSpace;
++        }
++
++        double getCostPerPieceSpace() {
++            return costPerPieceSpace;
++        }
++    }
++
++    @Test
++    public void should_allow_stubbing_on_enum_return_type_with_deep_stubs() {
++        Piece piece = mock(Piece.class, RETURNS_DEEP_STUBS);
++
++        when(piece.getPiece().getCostPerPieceSpace()).thenReturn(2.5d);
++    }
++}
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/DeepStubReturnsEnumTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/DeepStubReturnsEnumTest.java
+new file mode 100644
+index 000000000..927624f9a
+--- /dev/null
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/DeepStubReturnsEnumTest.java
+@@ -0,0 +1,39 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitoinline;
++
++import static org.mockito.Answers.RETURNS_DEEP_STUBS;
++import static org.mockito.Mockito.when;
++
++import org.junit.Rule;
++import org.junit.Test;
++import org.mockito.Mock;
++import org.mockito.junit.MockitoJUnit;
++import org.mockito.junit.MockitoRule;
++
++public class DeepStubReturnsEnumTest {
++
++    @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
++
++    @Mock(answer = RETURNS_DEEP_STUBS)
++    Piece piece;
++
++    interface Piece {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE;
++
++        double getCostPerPieceSpace() {
++            return 2.0d;
++        }
++    }
++
++    @Test
++    public void should_allow_stubbing_on_enum_return_type_with_deep_stubs() {
++        when(piece.getPiece().getCostPerPieceSpace()).thenReturn(2.5d);
++    }
++}

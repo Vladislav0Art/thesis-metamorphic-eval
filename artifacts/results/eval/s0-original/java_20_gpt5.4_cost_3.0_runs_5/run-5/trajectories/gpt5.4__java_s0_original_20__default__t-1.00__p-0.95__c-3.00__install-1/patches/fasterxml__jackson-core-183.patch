@@ -1,0 +1,61 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
+index e6f1cbc5..78867fea 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
+@@ -34,7 +34,7 @@ public final class TextBuffer
+     final static int MIN_SEGMENT_LEN = 1000;
+     
+     /**
+-     * Let's limit maximum segment length to something sensible
++     * Let's limit maximum segment length to something sensible,
+      * like 256k
+      */
+     final static int MAX_SEGMENT_LEN = 0x40000;
+@@ -159,7 +159,7 @@ public final class TextBuffer
+ 
+         _inputBuffer = null;
+         _resultString = null;
+-        _resultArray = null;
++        _resultArray = NO_CHARS;
+ 
+         // And then reset internal input buffers, if necessary:
+         if (_hasSegments) {
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 878224ef..64d994c5 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -77,4 +77,21 @@ public class TestTextBuffer
+               }
+           }
+       }
++
++      public void testEmpty()
++      {
++          TextBuffer tb = new TextBuffer(new BufferRecycler());
++          tb.resetWithEmpty();
++
++          char[] text = tb.getTextBuffer();
++          assertNotNull(text);
++          assertEquals(0, text.length);
++
++          assertEquals("", tb.contentsAsString());
++
++          char[] text2 = tb.getTextBuffer();
++          assertNotNull(text2);
++          assertEquals(0, text2.length);
++          assertSame(text, text2);
++      }
+ }

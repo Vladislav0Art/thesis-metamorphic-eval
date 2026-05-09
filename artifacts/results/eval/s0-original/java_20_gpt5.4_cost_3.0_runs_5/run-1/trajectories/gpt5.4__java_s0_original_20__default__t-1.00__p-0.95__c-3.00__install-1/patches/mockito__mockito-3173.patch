@@ -1,0 +1,99 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyWithRecordTest.java b/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyWithRecordTest.java
+new file mode 100644
+index 000000000..424a3f2b4
+--- /dev/null
++++ b/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyWithRecordTest.java
+@@ -0,0 +1,42 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockito.java21;
++
++import static org.junit.Assert.assertEquals;
++import static org.junit.Assert.assertNotNull;
++
++import java.util.List;
++import org.junit.Test;
++import org.mockito.Mockito;
++import org.mockito.MockitoAnnotations;
++import org.mockito.Spy;
++
++public class GenericSpyWithRecordTest {
++
++    @Spy private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy private ExampleRecord exampleRecord = new ExampleRecord("some value");
++
++    @Test
++    public void annotationBasedSpyKeepsRecordStateWhenGenericSpyIsPresent() throws Exception {
++        try (AutoCloseable ignored = MockitoAnnotations.openMocks(this)) {
++            assertEquals(List.of("item A", "item B"), genericSpy);
++            assertNotNull(exampleRecord.someParameter());
++            assertEquals("some value", exampleRecord.someParameter());
++        }
++    }
++
++    @Test
++    public void directSpyKeepsRecordStateAfterGenericSpy() {
++        List<String> genericSpy = Mockito.spy(List.of("item A", "item B"));
++        ExampleRecord exampleRecord = Mockito.spy(new ExampleRecord("some value"));
++
++        assertEquals(List.of("item A", "item B"), genericSpy);
++        assertNotNull(exampleRecord.someParameter());
++        assertEquals("some value", exampleRecord.someParameter());
++    }
++
++    record ExampleRecord(String someParameter) {}
++}
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyWithRecordTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyWithRecordTest.java
+new file mode 100644
+index 000000000..976d76a87
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyWithRecordTest.java
+@@ -0,0 +1,31 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Spy;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import java.util.List;
++
++import static org.junit.jupiter.api.Assertions.assertNotNull;
++
++@ExtendWith(MockitoExtension.class)
++class GenericSpyWithRecordTest {
++
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private ExampleRecord exampleRecord = new ExampleRecord("some value");
++
++    @Test
++    void keeps_record_state_when_generic_spy_is_present() {
++        assertNotNull(exampleRecord.someParameter());
++    }
++
++    record ExampleRecord(String someParameter) {}
++}

@@ -1,0 +1,176 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/Repro.java b/Repro.java
+new file mode 100644
+index 000000000..ad495b157
+--- /dev/null
++++ b/Repro.java
+@@ -0,0 +1,24 @@
++import com.alibaba.fastjson2.JSON;
++
++public class Repro {
++    public static void main(String[] args) {
++        String[] samples = {
++                "{}",
++                "[]",
++                "\"123\"",
++                "1",
++                "{}a",
++                "[]a",
++                " {} ",
++                " [] "
++        };
++
++        for (String s : samples) {
++            System.out.println("input=" + s);
++            System.out.println("  isValid=" + JSON.isValid(s));
++            System.out.println("  isValidArray=" + JSON.isValidArray(s));
++        }
++
++        System.out.println("done");
++    }
++}
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSONReaderStr.java b/core/src/main/java/com/alibaba/fastjson2/JSONReaderStr.java
+index 92bf492d6..d07b728b9 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSONReaderStr.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSONReaderStr.java
+@@ -551,9 +551,13 @@ final class JSONReaderStr extends JSONReader {
+             }
+ 
+             if (c == '"') {
+-                ;
+                 offset++;
+-                c = str.charAt(offset);
++                if (offset == end) {
++                    c = EOI;
++                    offset++;
++                } else {
++                    c = str.charAt(offset);
++                }
+ 
+                 while (c <= ' ' && ((1L << c) & SPACE) != 0) {
+                     offset++;
+@@ -582,105 +586,6 @@ final class JSONReaderStr extends JSONReader {
+         return true;
+     }
+ 
+-    @Override
+-    public int readInt32Value() {
+-        boolean negative = false;
+-        int firstOffset = offset;
+-        char firstChar = ch;
+-
+-        int intValue = 0;
+-
+-        char quote = '\0';
+-        if (ch == '"' || ch == '\'') {
+-            quote = ch;
+-            ch = str.charAt(offset++);
+-        }
+-
+-        if (ch == '-') {
+-            negative = true;
+-            ch = str.charAt(offset++);
+-        }
+-
+-        boolean overflow = false;
+-        while (ch >= '0' && ch <= '9') {
+-            if (!overflow) {
+-                int intValue10 = intValue * 10 + (ch - '0');
+-                if (intValue10 < intValue) {
+-                    overflow = true;
+-                    break;
+-                } else {
+-                    intValue = intValue10;
+-                }
+-            }
+-            if (offset == end) {
+-                ch = EOI;
+-                break;
+-            }
+-            ch = str.charAt(offset++);
+-        }
+-
+-        boolean notMatch = false;
+-        if (ch == '.'
+-                || ch == 'e'
+-                || ch == 'E'
+-                || ch == 't'
+-                || ch == 'f'
+-                || ch == 'n'
+-                || ch == '{'
+-                || ch == '['
+-                || overflow) {
+-            notMatch = true;
+-        } else if (quote != 0 && ch != quote) {
+-            notMatch = true;
+-        }
+-
+-        if (notMatch) {
+-            this.offset = firstOffset;
+-            this.ch = firstChar;
+-            readNumber0();
+-            if (valueType == JSON_TYPE_INT) {
+-                BigInteger bigInteger = getBigInteger();
+-                try {
+-                    return bigInteger.intValueExact();
+-                } catch (ArithmeticException ex) {
+-                    throw new JSONException("int overflow, value " + bigInteger);
+-                }
+-            } else {
+-                return getInt32Value();
+-            }
+-        }
+-
+-        if (quote != 0) {
+-            ch = str.charAt(offset++);
+-        }
+-
+-        while (ch <= ' ' && ((1L << ch) & SPACE) != 0) {
+-            if (offset >= end) {
+-                ch = EOI;
+-            } else {
+-                ch = str.charAt(offset++);
+-            }
+-        }
+-
+-        if (ch == ',') {
+-            this.ch = str.charAt(this.offset++);
+-            // next inline
+-            if (this.offset >= end) {
+-                this.ch = EOI;
+-            } else {
+-                while (ch <= ' ' && ((1L << ch) & SPACE) != 0) {
+-                    if (offset >= end) {
+-                        ch = EOI;
+-                    } else {
+-                        ch = str.charAt(offset++);
+-                    }
+-                }
+-            }
+-        }
+-
+-        return negative ? -intValue : intValue;
+-    }
+-
+     @Override
+     public Integer readInt32() {
+         boolean negative = false;
+diff --git a/core/src/test/java/com/alibaba/fastjson2/v1issues/issue_3500/Issue3521.java b/core/src/test/java/com/alibaba/fastjson2/v1issues/issue_3500/Issue3521.java
+index 549f51908..d772aacd8 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/v1issues/issue_3500/Issue3521.java
++++ b/core/src/test/java/com/alibaba/fastjson2/v1issues/issue_3500/Issue3521.java
+@@ -9,6 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
+ public class Issue3521 {
+     @Test
+     public void test_for_issue() throws Exception {
+-//         assertFalse(JSON.isValid("{\"cat\":\"dog\"\"cat\":\"dog\"}")); // TODO true
++        assertFalse(JSON.isValid("{\"cat\":\"dog\"\"cat\":\"dog\"}"));
++        assertFalse(JSON.isValid("{}a"));
++        assertFalse(JSON.isValid("[]a"));
++        assertFalse(JSON.isValidArray("[]a"));
++        assertFalse(JSON.isValidArray("{}"));
+     }
+ }

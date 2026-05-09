@@ -1,0 +1,85 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..1087a795b 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -76,6 +76,14 @@ setup_bundled_jdk_part() {
+   fi
+ }
+ 
++bundled_jdk_version() {
++  local bundled_jdk_version_file="${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION"
++
++  if [ -f "${bundled_jdk_version_file}" ]; then
++    tr -d '\r\n' < "${bundled_jdk_version_file}"
++  fi
++}
++
+ # Accepts 1 parameter which is the path the directory where logstash jar are contained.
+ setup_classpath() {
+   local classpath="${1?classpath (and jar_directory) required}"
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..e1345297d 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -71,10 +71,6 @@ allprojects {
+       }
+   }
+ 
+-  tasks.withType(Copy).configureEach {
+-      duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+-  }
+-
+   clean {
+       delete "${projectDir}/out/"
+   }
+@@ -109,11 +105,6 @@ allprojects {
+     }
+   }
+ }
+-
+-subprojects {
+-    repositories {
+-        mavenCentral()
+-        maven {
+             url 'https://plugins.gradle.org/m2/'
+         }
+     }
+@@ -860,6 +851,24 @@ tasks.register("copyJdk", Copy) {
+     description = "Download, unpack and copy the JDK"
+     // CLI project properties: -Pjdk_bundle_os=[windows|linux|darwin] -Pjdk_arch=[arm64|x86_64]
+     doLast {
++        File releaseFile = file("${project.ext.jdkBundlingDirectory}/release")
++        if (!releaseFile.exists()) {
++            releaseFile = file("${project.ext.jdkBundlingDirectory}/Contents/Home/release")
++        }
++
++        if (!releaseFile.exists()) {
++            throw new GradleException("Could not find bundled JDK release file in ${project.ext.jdkBundlingDirectory}")
++        }
++
++        String implementorVersionLine = releaseFile.readLines().find { it.startsWith("IMPLEMENTOR_VERSION=") }
++        if (implementorVersionLine == null) {
++            throw new GradleException("Could not determine bundled JDK version from ${releaseFile}")
++        }
++
++        String jdkVersion = implementorVersionLine.split("=", 2)[1].trim().replaceAll(/^"(.*)"$/, '$1')
++        File versionFile = new File(releaseFile.parentFile, "VERSION")
++        versionFile.text = "${jdkVersion}\n"
++
+         System.out.println "Download location is ${project.ext.jdkDownloadLocation}, Decompressing ${project.ext.jdkDirectory} to \"${project.ext.jdkBundlingDirectory}\""
+     }
+ }

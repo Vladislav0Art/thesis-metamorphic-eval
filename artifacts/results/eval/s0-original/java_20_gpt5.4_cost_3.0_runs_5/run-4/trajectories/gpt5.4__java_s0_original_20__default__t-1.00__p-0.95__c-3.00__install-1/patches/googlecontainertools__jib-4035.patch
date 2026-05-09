@@ -1,0 +1,73 @@
+
+diff --git a/.gitignore b/.gitignore
+index 5030f209..f51c646a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -14,3 +14,6 @@ bin/
+ .classpath
+ .project
+ .DS_Store
++out/
++*.class
++*.jar
+diff --git a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticator.java b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticator.java
+index 1b4acde6..e7206a7b 100644
+--- a/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticator.java
++++ b/jib-core/src/main/java/com/google/cloud/tools/jib/registry/RegistryAuthenticator.java
+@@ -72,16 +72,16 @@ public class RegistryAuthenticator {
+       @Nullable String userAgent,
+       FailoverHttpClient httpClient)
+       throws RegistryAuthenticationFailedException {
+-    // If the authentication method starts with 'basic ' (case insensitive), no registry
++    // If the authentication method starts with 'basic' (case insensitive), no registry
+     // authentication is needed.
+-    if (authenticationMethod.matches("^(?i)(basic) .*")) {
++    if (authenticationMethod.matches("^(?i)(basic)(\\s.*)?$")) {
+       return Optional.empty();
+     }
+ 
+     String registryUrl = registryEndpointRequestProperties.getServerUrl();
+     String imageName = registryEndpointRequestProperties.getImageName();
+-    // Checks that the authentication method starts with 'bearer ' (case insensitive).
+-    if (!authenticationMethod.matches("^(?i)(bearer) .*")) {
++    // Checks that the authentication method starts with 'bearer' (case insensitive).
++    if (!authenticationMethod.matches("^(?i)(bearer)(\\s.*)?$")) {
+       throw newRegistryAuthenticationFailedException(
+           registryUrl, imageName, authenticationMethod, "Bearer");
+     }
+diff --git a/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryAuthenticatorTest.java b/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryAuthenticatorTest.java
+index fad7c41f..5f3937d8 100644
+--- a/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryAuthenticatorTest.java
++++ b/jib-core/src/test/java/com/google/cloud/tools/jib/registry/RegistryAuthenticatorTest.java
+@@ -74,15 +74,8 @@ public class RegistryAuthenticatorTest {
+   }
+ 
+   @Test
+-  public void testFromAuthenticationMethod_bearer()
++  public void testGetAuthenticationUrl_caseInsensitiveBearer()
+       throws MalformedURLException, RegistryAuthenticationFailedException {
+-    RegistryAuthenticator registryAuthenticator =
+-        RegistryAuthenticator.fromAuthenticationMethod(
+-                "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
+-                registryEndpointRequestProperties,
+-                "user-agent",
+-                httpClient)
+-            .get();
+     Assert.assertEquals(
+         new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
+         registryAuthenticator.getAuthenticationUrl(
+@@ -171,6 +164,14 @@ public class RegistryAuthenticatorTest {
+                 httpClient)
+             .isPresent());
+ 
++    Assert.assertFalse(
++        RegistryAuthenticator.fromAuthenticationMethod(
++                "Basic",
++                registryEndpointRequestProperties,
++                "user-agent",
++                httpClient)
++            .isPresent());
++
+     Assert.assertFalse(
+         RegistryAuthenticator.fromAuthenticationMethod(
+                 "bASIC realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",

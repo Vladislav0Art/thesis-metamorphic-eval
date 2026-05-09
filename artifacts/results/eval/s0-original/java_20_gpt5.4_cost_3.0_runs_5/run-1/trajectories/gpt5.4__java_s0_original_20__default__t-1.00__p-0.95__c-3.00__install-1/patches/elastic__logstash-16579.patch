@@ -1,0 +1,54 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index cccb9c476..2f20a27e6 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -17,7 +17,7 @@
+ 
+ require "spec_helper"
+ 
+-describe  FileWatch::BufferedTokenizer  do
++describe FileWatch::BufferedTokenizer do
+   subject { FileWatch::BufferedTokenizer.new }
+ 
+   it "should tokenize a single token" do
+@@ -43,18 +43,16 @@ describe  FileWatch::BufferedTokenizer  do
+     expect(subject.extract("\n\n\n")).to eq(["", "", ""])
+   end
+ 
+-  context 'with delimiter' do
+-    subject { FileWatch::BufferedTokenizer.new(delimiter) }
++  context "with size limit" do
++    subject { FileWatch::BufferedTokenizer.new("\n", size_limit) }
+ 
+-    let(:delimiter) { "||" }
++    let(:size_limit) { 10 }
+ 
+-    it "should tokenize multiple token" do
+-      expect(subject.extract("foo||b|r||")).to eq(["foo", "b|r"])
+-    end
+-
+-    it "should ignore empty payload" do
+-      expect(subject.extract("")).to eq([])
+-      expect(subject.extract("foo||bar")).to eq(["foo"])
++    it "drops oversized payload content through the next delimiter before resuming" do
++      expect(subject.extract("1234567")).to eq([])
++      expect { subject.extract("8901") }.to raise_error(IllegalStateException, "input buffer full")
++      expect(subject.extract("234\nabc\n")).to eq(["abc"])
++      expect(subject.flush).to eq("")
+     end
+   end
+ end

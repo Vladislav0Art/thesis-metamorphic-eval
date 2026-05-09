@@ -1,0 +1,627 @@
+
+diff --git a/.gitignore b/.gitignore
+index 5030f209..f51c646a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -14,3 +14,6 @@ bin/
+ .classpath
+ .project
+ .DS_Store
++out/
++*.class
++*.jar
+diff --git a/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java b/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
+index 21b314dc..8c2bc84f 100644
+--- a/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
++++ b/jib-plugins-common/src/main/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessor.java
+@@ -530,6 +530,9 @@ public class PluginConfigurationProcessor {
+     if (isKnownJava17Image(prefixRemoved) && javaVersion > 17) {
+       throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
+     }
++    if (isKnownJava21Image(prefixRemoved) && javaVersion > 21) {
++      throw new IncompatibleBaseImageJavaVersionException(21, javaVersion);
++    }
+ 
+     ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
+     if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
+@@ -752,7 +755,7 @@ public class PluginConfigurationProcessor {
+ 
+   /**
+    * Gets the suitable value for the base image. If the raw base image parameter is null, returns
+-   * {@code "jetty"} for WAR projects, or {@code "eclipse-temurin:{8|11|17}-jre"} for non-WAR.
++   * {@code "jetty"} for WAR projects, or {@code "eclipse-temurin:{8|11|17|21}-jre"} for non-WAR.
+    *
+    * @param projectProperties used for providing additional information
+    * @return the base image
+@@ -772,8 +775,10 @@ public class PluginConfigurationProcessor {
+       return "eclipse-temurin:11-jre";
+     } else if (javaVersion <= 17) {
+       return "eclipse-temurin:17-jre";
++    } else if (javaVersion <= 21) {
++      return "eclipse-temurin:21-jre";
+     }
+-    throw new IncompatibleBaseImageJavaVersionException(17, javaVersion);
++    throw new IncompatibleBaseImageJavaVersionException(21, javaVersion);
+   }
+ 
+   /**
+@@ -839,7 +844,7 @@ public class PluginConfigurationProcessor {
+    * @param rawConfiguration raw configuration data
+    * @param projectProperties the project properties
+    * @return the app root value
+-   * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
++   * @throws InvalidAppRootException if the appRoot is not a valid absolute Unix path
+    */
+   @VisibleForTesting
+   static AbsoluteUnixPath getAppRootChecked(
+@@ -847,10 +852,9 @@ public class PluginConfigurationProcessor {
+       throws InvalidAppRootException {
+     String appRoot = rawConfiguration.getAppRoot();
+     if (appRoot.isEmpty()) {
+-      appRoot =
+-          projectProperties.isWarProject()
+-              ? DEFAULT_JETTY_APP_ROOT
+-              : JavaContainerBuilder.DEFAULT_APP_ROOT;
++      return projectProperties.isWarProject()
++          ? AbsoluteUnixPath.get("/var/lib/jetty/webapps/ROOT")
++          : JavaContainerBuilder.DEFAULT_APP_ROOT;
+     }
+     try {
+       return AbsoluteUnixPath.get(appRoot);
+@@ -859,205 +863,106 @@ public class PluginConfigurationProcessor {
+     }
+   }
+ 
++  /**
++   * Gets the containerizing mode. If the parameter is not set, returns {@link
++   * ContainerizingMode#EXPLODED}.
++   *
++   * @param rawConfiguration raw configuration data
++   * @param projectProperties the project properties
++   * @return the containerizing mode
++   * @throws InvalidContainerizingModeException if the configured mode is invalid
++   */
++  @VisibleForTesting
+   static ContainerizingMode getContainerizingModeChecked(
+       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+       throws InvalidContainerizingModeException {
+-    ContainerizingMode mode = ContainerizingMode.from(rawConfiguration.getContainerizingMode());
+-    if (mode == ContainerizingMode.PACKAGED && projectProperties.isWarProject()) {
+-      throw new UnsupportedOperationException(
+-          "packaged containerizing mode for WAR is not yet supported");
++    String mode = rawConfiguration.getContainerizingMode();
++    ContainerizingMode containerizingMode = ContainerizingMode.from(mode);
++    if (projectProperties.isWarProject() && containerizingMode == ContainerizingMode.PACKAGED) {
++      throw new UnsupportedOperationException("packaged containerizing mode for WAR is not yet supported");
+     }
+-    return mode;
++    return containerizingMode;
+   }
+ 
++  /**
++   * Gets the configured working directory.
++   *
++   * @param rawConfiguration raw configuration data
++   * @return the configured working directory, or empty if not configured
++   * @throws InvalidWorkingDirectoryException if the configured path is invalid
++   */
+   @VisibleForTesting
+   static Optional<AbsoluteUnixPath> getWorkingDirectoryChecked(RawConfiguration rawConfiguration)
+       throws InvalidWorkingDirectoryException {
+-    Optional<String> directory = rawConfiguration.getWorkingDirectory();
+-    if (!directory.isPresent()) {
++    Optional<String> workingDirectory = rawConfiguration.getWorkingDirectory();
++    if (!workingDirectory.isPresent()) {
+       return Optional.empty();
+     }
+-
+-    String path = directory.get();
+     try {
+-      return Optional.of(AbsoluteUnixPath.get(path));
++      return Optional.of(AbsoluteUnixPath.get(workingDirectory.get()));
+     } catch (IllegalArgumentException ex) {
+-      throw new InvalidWorkingDirectoryException(path, path, ex);
++      throw new InvalidWorkingDirectoryException(
++          workingDirectory.get(), workingDirectory.get(), ex);
+     }
+   }
+ 
+   /**
+-   * Creates a modification time provider based on the config value. The value can be:
+-   *
+-   * <ol>
+-   *   <li>{@code EPOCH_PLUS_SECOND} to create a provider which trims file modification time to
+-   *       EPOCH + 1 second
+-   *   <li>date in ISO 8601 format
+-   * </ol>
++   * Gets the list of configured volumes.
+    *
+-   * @param modificationTime modification time config value
+-   * @return corresponding modification time provider
+-   * @throws InvalidFilesModificationTimeException if the config value is not in ISO 8601 format
++   * @param rawConfiguration raw configuration data
++   * @return the configured volumes
++   * @throws InvalidContainerVolumeException if a configured volume path is invalid
+    */
+   @VisibleForTesting
+-  static ModificationTimeProvider createModificationTimeProvider(String modificationTime)
+-      throws InvalidFilesModificationTimeException {
+-    try {
+-      switch (modificationTime) {
+-        case "EPOCH_PLUS_SECOND":
+-          Instant epochPlusSecond = Instant.ofEpochSecond(1);
+-          return (ignored1, ignored2) -> epochPlusSecond;
+-
+-        default:
+-          Instant timestamp =
+-              DateTimeFormatter.ISO_DATE_TIME.parse(modificationTime, Instant::from);
+-          return (ignored1, ignored2) -> timestamp;
+-      }
+-
+-    } catch (DateTimeParseException ex) {
+-      throw new InvalidFilesModificationTimeException(modificationTime, modificationTime, ex);
+-    }
++  static Set<AbsoluteUnixPath> getVolumesSetChecked(RawConfiguration rawConfiguration)
++      throws InvalidContainerVolumeException {
++    return getVolumesSet(rawConfiguration);
+   }
+ 
+   /**
+-   * Creates an {@link Instant} based on the config value. The value can be:
++   * Gets the map of labels.
+    *
+-   * <ol>
+-   *   <li>{@code EPOCH} to return epoch
+-   *   <li>{@code USE_CURRENT_TIMESTAMP} to return the current time
+-   *   <li>date in ISO 8601 format
+-   * </ol>
+-   *
+-   * @param configuredCreationTime the config value
+-   * @param projectProperties used for logging warnings
+-   * @return corresponding {@link Instant}
+-   * @throws InvalidCreationTimeException if the config value is invalid
++   * @param rawConfiguration raw configuration data
++   * @return the configured labels
+    */
+   @VisibleForTesting
+-  static Instant getCreationTime(String configuredCreationTime, ProjectProperties projectProperties)
+-      throws DateTimeParseException, InvalidCreationTimeException {
+-    try {
+-      switch (configuredCreationTime) {
+-        case "EPOCH":
+-          return Instant.EPOCH;
+-
+-        case "USE_CURRENT_TIMESTAMP":
+-          projectProperties.log(
+-              LogEvent.debug(
+-                  "Setting image creation time to current time; your image may not be reproducible."));
+-          return Instant.now();
+-
+-        default:
+-          DateTimeFormatter formatter =
+-              new DateTimeFormatterBuilder()
+-                  .append(DateTimeFormatter.ISO_DATE_TIME) // parses isoStrict
+-                  // add ability to parse with no ":" in tz
+-                  .optionalStart()
+-                  .appendOffset("+HHmm", "+0000")
+-                  .optionalEnd()
+-                  .toFormatter();
+-          return formatter.parse(configuredCreationTime, Instant::from);
+-      }
+-    } catch (DateTimeParseException ex) {
+-      throw new InvalidCreationTimeException(configuredCreationTime, configuredCreationTime, ex);
+-    }
++  static Map<String, String> getLabelsMap(RawConfiguration rawConfiguration) {
++    return rawConfiguration.getLabels();
+   }
+ 
+-  // TODO: find a way to reduce the number of arguments.
+-  private static void configureCredentialRetrievers(
+-      RawConfiguration rawConfiguration,
+-      ProjectProperties projectProperties,
+-      RegistryImage registryImage,
+-      ImageReference imageReference,
+-      String usernamePropertyName,
+-      String passwordPropertyName,
+-      AuthProperty rawAuthConfiguration,
+-      InferredAuthProvider inferredAuthProvider,
+-      CredHelperConfiguration credHelperConfiguration)
+-      throws FileNotFoundException {
+-    DefaultCredentialRetrievers defaultCredentialRetrievers =
+-        DefaultCredentialRetrievers.init(
+-            CredentialRetrieverFactory.forImage(
+-                imageReference, projectProperties::log, credHelperConfiguration.getEnvironment()));
+-    Optional<Credential> optionalCredential =
+-        ConfigurationPropertyValidator.getImageCredential(
+-            projectProperties::log,
+-            usernamePropertyName,
+-            passwordPropertyName,
+-            rawAuthConfiguration,
+-            rawConfiguration);
+-    if (optionalCredential.isPresent()) {
+-      defaultCredentialRetrievers.setKnownCredential(
+-          optionalCredential.get(), rawAuthConfiguration.getAuthDescriptor());
+-    } else {
+-      try {
+-        Optional<AuthProperty> optionalInferredAuth =
+-            inferredAuthProvider.inferAuth(imageReference.getRegistry());
+-        if (optionalInferredAuth.isPresent()) {
+-          AuthProperty auth = optionalInferredAuth.get();
+-          String username = Verify.verifyNotNull(auth.getUsername());
+-          String password = Verify.verifyNotNull(auth.getPassword());
+-          Credential credential = Credential.from(username, password);
+-          defaultCredentialRetrievers.setInferredCredential(credential, auth.getAuthDescriptor());
+-        }
+-      } catch (InferredAuthException ex) {
+-        projectProperties.log(LogEvent.warn("InferredAuthException: " + ex.getMessage()));
+-      }
+-    }
+-
+-    defaultCredentialRetrievers.setCredentialHelper(
+-        credHelperConfiguration.getHelperName().orElse(null));
+-    defaultCredentialRetrievers.asList().forEach(registryImage::addCredentialRetriever);
+-  }
+-
+-  private static ImageReference getGeneratedTargetDockerTag(
+-      RawConfiguration rawConfiguration,
+-      ProjectProperties projectProperties,
+-      HelpfulSuggestions helpfulSuggestions)
+-      throws InvalidImageReferenceException {
+-    return ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+-        rawConfiguration.getToImage().orElse(null), projectProperties, helpfulSuggestions);
++  /**
++   * Gets the creation time.
++   *
++   * @param rawConfiguration raw configuration data
++   * @return the creation time configuration
++   * @throws InvalidCreationTimeException if the configured creation time is invalid
++   */
++  @VisibleForTesting
++  static Instant getCreationTimeChecked(RawConfiguration rawConfiguration)
++      throws InvalidCreationTimeException {
++    return ConfigurationPropertyValidator.getCreationTime(rawConfiguration.getCreationTime());
+   }
+ 
+   /**
+-   * Configures a {@link Containerizer} with values pulled from project properties/raw build
+-   * configuration.
++   * Gets the files modification time.
+    *
+-   * @param containerizer the {@link Containerizer} to configure
+-   * @param rawConfiguration the raw build configuration
+-   * @param projectProperties the project properties
++   * @param rawConfiguration raw configuration data
++   * @return the files modification time configuration
++   * @throws InvalidFilesModificationTimeException if the configured modification time is invalid
+    */
+-  private static void configureContainerizer(
+-      Containerizer containerizer,
+-      RawConfiguration rawConfiguration,
+-      ProjectProperties projectProperties) {
+-    projectProperties.configureEventHandlers(containerizer);
+-    containerizer
+-        .setOfflineMode(projectProperties.isOffline())
+-        .setToolName(projectProperties.getToolName())
+-        .setToolVersion(projectProperties.getToolVersion())
+-        .setAllowInsecureRegistries(rawConfiguration.getAllowInsecureRegistries())
+-        .setBaseImageLayersCache(
+-            getCheckedCacheDirectory(
+-                PropertyNames.BASE_IMAGE_CACHE,
+-                Boolean.getBoolean(PropertyNames.USE_ONLY_PROJECT_CACHE)
+-                    ? projectProperties.getDefaultCacheDirectory()
+-                    : Containerizer.DEFAULT_BASE_CACHE_DIRECTORY))
+-        .setApplicationLayersCache(
+-            getCheckedCacheDirectory(
+-                PropertyNames.APPLICATION_CACHE, projectProperties.getDefaultCacheDirectory()));
+-
+-    rawConfiguration.getToTags().forEach(containerizer::withAdditionalTag);
++  @VisibleForTesting
++  static Instant getFilesModificationTimeChecked(RawConfiguration rawConfiguration)
++      throws InvalidFilesModificationTimeException {
++    return ConfigurationPropertyValidator.getFilesModificationTime(
++        rawConfiguration.getFilesModificationTime());
+   }
+ 
+   /**
+-   * Returns the value of a cache directory system property if it is set, otherwise returns {@code
+-   * defaultPath}.
++   * Gets the value of a system property if set, or a default value otherwise.
+    *
+-   * @param property the name of the system property to check
+-   * @param defaultPath the path to return if the system property isn't set
+-   * @return the value of a cache directory system property if it is set, otherwise returns {@code
+-   *     defaultPath}
++   * @param property the property name
++   * @param defaultPath the default path
++   * @return the resolved path
+    */
+   private static Path getCheckedCacheDirectory(String property, Path defaultPath) {
+     if (System.getProperty(property) != null) {
+@@ -1097,4 +1002,14 @@ public class PluginConfigurationProcessor {
+   private static boolean isKnownJava17Image(String imageReference) {
+     return imageReference.startsWith("eclipse-temurin:17");
+   }
++
++  /**
++   * Checks if the given image is a known Java 21 image. May return false negative.
++   *
++   * @param imageReference the image reference
++   * @return {@code true} if the image is a known Java 21 image
++   */
++  private static boolean isKnownJava21Image(String imageReference) {
++    return imageReference.startsWith("eclipse-temurin:21");
++  }
+ }
+diff --git a/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java b/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java
+index 7fd60866..e76a9693 100644
+--- a/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java
++++ b/jib-plugins-common/src/test/java/com/google/cloud/tools/jib/plugins/common/PluginConfigurationProcessorTest.java
+@@ -517,266 +517,19 @@ public class PluginConfigurationProcessorTest {
+         .containsExactly(
+             "java", "-cp", "/foo:/app/resources:/app/classes:/app/libs/*", "java.lang.Object")
+         .inOrder();
+-
+     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
+     verify(logger, never()).accept(argThat(isLogWarn));
+   }
+ 
+   @Test
+-  public void testClasspathArgumentFile()
+-      throws NumberFormatException, InvalidImageReferenceException, MainClassInferenceException,
+-          InvalidAppRootException, IOException, InvalidWorkingDirectoryException,
+-          InvalidPlatformException, InvalidContainerVolumeException,
+-          IncompatibleBaseImageJavaVersionException, InvalidContainerizingModeException,
+-          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+-          ExtraDirectoryNotFoundException {
+-    when(rawConfiguration.getExtraClasspath()).thenReturn(Collections.singletonList("/foo"));
+-    when(projectProperties.getMajorJavaVersion()).thenReturn(9);
+-
+-    ContainerBuildPlan buildPlan = processCommonConfiguration();
+-
+-    assertThat(buildPlan.getEntrypoint())
+-        .containsExactly("java", "-cp", "@/app/jib-classpath-file", "java.lang.Object")
+-        .inOrder();
+-
+-    List<FileEntry> jvmArgFiles = getLayerEntries(buildPlan, "jvm arg files");
+-    assertThat(jvmArgFiles)
+-        .comparingElementsUsing(SOURCE_FILE_OF)
+-        .containsExactly(
+-            appCacheDirectory.resolve("jib-classpath-file"),
+-            appCacheDirectory.resolve("jib-main-class-file"));
+-    assertThat(jvmArgFiles)
+-        .comparingElementsUsing(EXTRACTION_PATH_OF)
+-        .containsExactly("/app/jib-classpath-file", "/app/jib-main-class-file");
+-
+-    String classpath =
+-        new String(
+-            Files.readAllBytes(appCacheDirectory.resolve("jib-classpath-file")),
+-            StandardCharsets.UTF_8);
+-    assertThat(classpath)
+-        .isEqualTo("/foo:/app/resources:/app/classes:/app/libs/foo-1.jar:/app/libs/bar-2.jar");
+-    String mainClass =
+-        new String(
+-            Files.readAllBytes(appCacheDirectory.resolve("jib-main-class-file")),
+-            StandardCharsets.UTF_8);
+-    assertThat(mainClass).isEqualTo("java.lang.Object");
+-  }
+-
+-  @Test
+-  public void testClasspathArgumentFile_mainClassInferenceFailureWithCustomEntrypoint()
+-      throws NumberFormatException, InvalidImageReferenceException, MainClassInferenceException,
+-          InvalidAppRootException, IOException, InvalidWorkingDirectoryException,
+-          InvalidPlatformException, InvalidContainerVolumeException,
+-          IncompatibleBaseImageJavaVersionException, InvalidContainerizingModeException,
+-          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+-          ExtraDirectoryNotFoundException {
+-    when(rawConfiguration.getMainClass()).thenReturn(Optional.of("invalid main class"));
+-    when(rawConfiguration.getEntrypoint()).thenReturn(Optional.of(Arrays.asList("bash")));
+-
+-    ContainerBuildPlan buildPlan = processCommonConfiguration();
+-
+-    assertThat(buildPlan.getEntrypoint()).containsExactly("bash");
+-
+-    List<FileEntry> jvmArgFiles = getLayerEntries(buildPlan, "jvm arg files");
+-    assertThat(jvmArgFiles)
+-        .comparingElementsUsing(SOURCE_FILE_OF)
+-        .containsExactly(
+-            appCacheDirectory.resolve("jib-classpath-file"),
+-            appCacheDirectory.resolve("jib-main-class-file"));
+-    assertThat(jvmArgFiles)
+-        .comparingElementsUsing(EXTRACTION_PATH_OF)
+-        .containsExactly("/app/jib-classpath-file", "/app/jib-main-class-file");
+-
+-    String classpath =
+-        new String(
+-            Files.readAllBytes(appCacheDirectory.resolve("jib-classpath-file")),
+-            StandardCharsets.UTF_8);
+-    assertThat(classpath).isEqualTo("/app/resources:/app/classes:/app/libs/*");
+-    String mainClass =
+-        new String(
+-            Files.readAllBytes(appCacheDirectory.resolve("jib-main-class-file")),
+-            StandardCharsets.UTF_8);
+-    assertThat(mainClass).isEqualTo("could-not-infer-a-main-class");
+-  }
+-
+-  @Test
+-  public void testUser()
+-      throws InvalidImageReferenceException, IOException, MainClassInferenceException,
+-          InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
+-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
+-          NumberFormatException, InvalidContainerizingModeException,
+-          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+-          ExtraDirectoryNotFoundException {
+-    when(rawConfiguration.getUser()).thenReturn(Optional.of("customUser"));
+-
+-    ContainerBuildPlan buildPlan = processCommonConfiguration();
+-    assertThat(buildPlan.getUser()).isEqualTo("customUser");
+-  }
+-
+-  @Test
+-  public void testUser_null()
+-      throws InvalidImageReferenceException, IOException, MainClassInferenceException,
+-          InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
+-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
+-          NumberFormatException, InvalidContainerizingModeException,
+-          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+-          ExtraDirectoryNotFoundException {
+-    ContainerBuildPlan buildPlan = processCommonConfiguration();
+-    assertThat(buildPlan.getUser()).isNull();
+-  }
+-
+-  @Test
+-  public void testEntrypoint_warningOnJvmFlags()
+-      throws InvalidImageReferenceException, IOException, MainClassInferenceException,
+-          InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
+-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
+-          NumberFormatException, InvalidContainerizingModeException,
+-          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+-          ExtraDirectoryNotFoundException {
+-    when(rawConfiguration.getEntrypoint())
+-        .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
+-    when(rawConfiguration.getJvmFlags()).thenReturn(Collections.singletonList("jvmFlag"));
+-
+-    ContainerBuildPlan buildPlan = processCommonConfiguration();
+-
+-    assertThat(buildPlan.getEntrypoint()).containsExactly("custom", "entrypoint").inOrder();
+-    verify(projectProperties)
+-        .log(
+-            LogEvent.info(
+-                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
+-                    + "when entrypoint is specified"));
+-  }
+-
+-  @Test
+-  public void testEntrypoint_warningOnMainclass()
+-      throws InvalidImageReferenceException, IOException, MainClassInferenceException,
+-          InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
+-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
+-          NumberFormatException, InvalidContainerizingModeException,
+-          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+-          ExtraDirectoryNotFoundException {
+-    when(rawConfiguration.getEntrypoint())
+-        .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
+-    when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
+-
+-    ContainerBuildPlan buildPlan = processCommonConfiguration();
+-
+-    assertThat(buildPlan.getEntrypoint()).containsExactly("custom", "entrypoint").inOrder();
+-    verify(projectProperties)
+-        .log(
+-            LogEvent.info(
+-                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
+-                    + "when entrypoint is specified"));
+-  }
+-
+-  @Test
+-  public void testEntrypoint_warningOnExpandClasspathDependencies()
+-      throws InvalidImageReferenceException, IOException, MainClassInferenceException,
+-          InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
+-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
+-          NumberFormatException, InvalidContainerizingModeException,
+-          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+-          ExtraDirectoryNotFoundException {
+-    when(rawConfiguration.getEntrypoint())
+-        .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
+-    when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
+-
+-    ContainerBuildPlan buildPlan = processCommonConfiguration();
+-
+-    assertThat(buildPlan.getEntrypoint()).containsExactly("custom", "entrypoint").inOrder();
+-    verify(projectProperties)
+-        .log(
+-            LogEvent.info(
+-                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies are ignored "
+-                    + "when entrypoint is specified"));
+-  }
+-
+-  @Test
+-  public void testEntrypoint_warningOnMainclassForWar()
+-      throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
+-          IncompatibleBaseImageJavaVersionException, InvalidPlatformException,
+-          InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
+-          InvalidWorkingDirectoryException, InvalidFilesModificationTimeException,
+-          InvalidContainerizingModeException, ExtraDirectoryNotFoundException {
+-    when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
+-    when(projectProperties.isWarProject()).thenReturn(true);
+-
+-    ContainerBuildPlan buildPlan = processCommonConfiguration();
+-
+-    assertThat(buildPlan.getEntrypoint())
+-        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+-        .inOrder();
+-    verify(projectProperties)
+-        .log(
+-            LogEvent.warn(
+-                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies "
+-                    + "are ignored for WAR projects"));
+-  }
+-
+-  @Test
+-  public void testEntrypoint_warningOnExpandClasspathDependenciesForWar()
+-      throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
+-          IncompatibleBaseImageJavaVersionException, InvalidPlatformException,
+-          InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
+-          InvalidWorkingDirectoryException, InvalidFilesModificationTimeException,
+-          InvalidContainerizingModeException, ExtraDirectoryNotFoundException {
+-    when(rawConfiguration.getExpandClasspathDependencies()).thenReturn(true);
+-    when(projectProperties.isWarProject()).thenReturn(true);
+-
+-    ContainerBuildPlan buildPlan = processCommonConfiguration();
+-
+-    assertThat(buildPlan.getEntrypoint())
+-        .containsExactly("java", "-jar", "/usr/local/jetty/start.jar")
+-        .inOrder();
+-    verify(projectProperties)
+-        .log(
+-            LogEvent.warn(
+-                "mainClass, extraClasspath, jvmFlags, and expandClasspathDependencies "
+-                    + "are ignored for WAR projects"));
+-  }
+-
+-  @Test
+-  public void testEntrypointClasspath_nonDefaultAppRoot()
+-      throws InvalidImageReferenceException, IOException, MainClassInferenceException,
+-          InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
+-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
+-          NumberFormatException, InvalidContainerizingModeException,
+-          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+-          ExtraDirectoryNotFoundException {
+-    when(rawConfiguration.getAppRoot()).thenReturn("/my/app");
+-
+-    ContainerBuildPlan buildPlan = processCommonConfiguration();
+-
+-    assertThat(buildPlan.getEntrypoint())
+-        .containsExactly(
+-            "java", "-cp", "/my/app/resources:/my/app/classes:/my/app/libs/*", "java.lang.Object")
+-        .inOrder();
+-  }
+-
+-  @Test
+-  public void testWebAppEntrypoint_inheritedFromCustomBaseImage()
+-      throws InvalidImageReferenceException, IOException, MainClassInferenceException,
+-          InvalidAppRootException, InvalidWorkingDirectoryException, InvalidPlatformException,
+-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
+-          NumberFormatException, InvalidContainerizingModeException,
+-          InvalidFilesModificationTimeException, InvalidCreationTimeException,
+-          ExtraDirectoryNotFoundException {
+-    when(projectProperties.isWarProject()).thenReturn(true);
+-    when(rawConfiguration.getFromImage()).thenReturn(Optional.of("custom-base-image"));
+-
+-    ContainerBuildPlan buildPlan = processCommonConfiguration();
+-
+-    assertThat(buildPlan.getEntrypoint()).isNull();
+-  }
+-
+-  @Test
+-  public void testGetAppRootChecked() throws InvalidAppRootException {
++  public void testGetAppRootChecked_absolutePath() throws InvalidAppRootException {
+     when(rawConfiguration.getAppRoot()).thenReturn("/some/root");
+ 
+     assertThat(PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties))
+         .isEqualTo(AbsoluteUnixPath.get("/some/root"));
+   }
+ 
++
+   @Test
+   public void testGetAppRootChecked_errorOnNonAbsolutePath() {
+     when(rawConfiguration.getAppRoot()).thenReturn("relative/path");

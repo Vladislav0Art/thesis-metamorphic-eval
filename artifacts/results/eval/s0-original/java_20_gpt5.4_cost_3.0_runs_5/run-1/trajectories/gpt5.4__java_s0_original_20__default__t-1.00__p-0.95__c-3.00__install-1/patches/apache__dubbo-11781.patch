@@ -1,0 +1,107 @@
+
+diff --git a/.gitignore b/.gitignore
+index 0eb7f3d19e..ffba84c210 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -54,3 +54,6 @@ dubbo-demo/dubbo-demo-native/dubbo-demo-native-consumer/src/main/generated
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/resources/META-INF/native-image
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/generated
+ 
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+index 61b37db84b..92ff79e4bf 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+@@ -85,6 +85,7 @@ public final class URLStrParser {
+                 case '&':
+                     addParam(str, false, nameStart, valueStart, i, params, tempBuf);
+                     nameStart = i + 1;
++                    valueStart = -1;
+                     break;
+                 default:
+                     // continue
+@@ -255,6 +256,7 @@ public final class URLStrParser {
+                 case '&':
+                     addParam(str, true, nameStart, valueStart, i - 2, params, tempBuf);
+                     nameStart = i + 1;
++                    valueStart = -1;
+                     break;
+                 default:
+                     // continue
+@@ -270,28 +272,30 @@ public final class URLStrParser {
+             return false;
+         }
+ 
+-        if (valueStart <= nameStart) {
+-            valueStart = valueEnd + 1;
+-        }
+-
+         if (isEncoded) {
+-            String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
++            int nameEnd = valueStart > nameStart ? valueStart - 3 : valueEnd;
++            String name = decodeComponent(str, nameStart, nameEnd, false, tempBuf);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (valueStart <= nameStart) {
+                 value = name;
++            } else if (valueStart >= valueEnd) {
++                value = EMPTY_STRING;
+             } else {
+                 value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+             }
+-            URLItemCache.putParams(params,name, value);
++            URLItemCache.putParams(params, name, value);
+             // compatible with lower versions registering "default." keys
+             if (name.startsWith(DEFAULT_KEY_PREFIX)) {
+                 params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
+             }
+         } else {
+-            String name = str.substring(nameStart, valueStart - 1);
++            int nameEnd = valueStart > nameStart ? valueStart - 1 : valueEnd;
++            String name = str.substring(nameStart, nameEnd);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (valueStart <= nameStart) {
+                 value = name;
++            } else if (valueStart >= valueEnd) {
++                value = EMPTY_STRING;
+             } else {
+                 value = str.substring(valueStart, valueEnd);
+             }
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
+index a4400eebef..542bcf7bff 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
+@@ -295,7 +295,6 @@ class URLTest {
+         assertEquals(2, url.getParameters().size());
+         assertEquals("1.0.0", url.getVersion());
+         assertEquals("morgan", url.getParameter("application"));
+-
+         url = URL.valueOf("dubbo://admin:hello1234@10.20.130.230:20880/context/path?version=1.0.0&application=morgan&noValue=");
+         assertURLStrDecoder(url);
+         assertEquals("dubbo", url.getProtocol());
+@@ -308,7 +307,7 @@ class URLTest {
+         assertEquals(3, url.getParameters().size());
+         assertEquals("1.0.0", url.getVersion());
+         assertEquals("morgan", url.getParameter("application"));
+-        assertEquals("noValue", url.getParameter("noValue"));
++        assertEquals("", url.getParameter("noValue"));
+     }
+ 
+     // TODO Do not want to use spaces? See: DUBBO-502, URL class handles special conventions for special characters.
+@@ -326,9 +325,11 @@ class URLTest {
+ 
+         assertURLStrDecoder(url);
+         assertTrue(url.hasParameter("k0"));
++        assertEquals("", url.getParameter("k0"));
+ 
+-        // If a Key has no corresponding Value, then the Key also used as the Value.
+-        assertEquals("k0", url.getParameter("k0"));
++        URL noValueUrl = URL.valueOf("http://1.2.3.4:8080/path?noValue");
++        assertTrue(noValueUrl.hasParameter("noValue"));
++        assertEquals("noValue", noValueUrl.getParameter("noValue"));
+     }
+ 
+     @Test

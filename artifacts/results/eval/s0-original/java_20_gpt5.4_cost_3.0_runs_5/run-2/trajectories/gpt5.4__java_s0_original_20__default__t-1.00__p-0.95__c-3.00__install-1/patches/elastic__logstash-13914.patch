@@ -1,0 +1,54 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..4a3b14cab 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -69,10 +69,19 @@ done
+ 
+ setup_bundled_jdk_part() {
+   OS_NAME="$(uname -s)"
+-  if [ $OS_NAME = "Darwin" ]; then
++  if [ "$OS_NAME" = "Darwin" ]; then
+     BUNDLED_JDK_PART="jdk.app/Contents/Home"
++    BUNDLED_JDK_VERSION_FILE_PART="jdk.app/VERSION"
+   else
+     BUNDLED_JDK_PART="jdk"
++    BUNDLED_JDK_VERSION_FILE_PART="jdk/VERSION"
++  fi
++}
++
++setup_bundled_jdk_version() {
++  BUNDLED_JDK_VERSION=""
++  if [ -r "${LOGSTASH_HOME}/${BUNDLED_JDK_VERSION_FILE_PART}" ]; then
++    read -r BUNDLED_JDK_VERSION < "${LOGSTASH_HOME}/${BUNDLED_JDK_VERSION_FILE_PART}"
+   fi
+ }
+ 
+@@ -100,7 +109,13 @@ setup_java() {
+       if [ -x "$LS_JAVA_HOME/bin/java" ]; then
+         JAVACMD="$LS_JAVA_HOME/bin/java"
+         if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+-          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          setup_bundled_jdk_version
++          echo -n "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK"
++          if [ -n "${BUNDLED_JDK_VERSION}" ]; then
++            echo " (${BUNDLED_JDK_VERSION})."
++          else
++            echo "."
++          fi
+         fi
+       else
+         echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."

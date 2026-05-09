@@ -1,0 +1,159 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSON.java b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+index b6a0ff2ce..fbbcad6ef 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSON.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSON.java
+@@ -590,7 +590,7 @@ public interface JSON {
+     }
+ 
+     /**
+-     * Verify the {@link String} is JSON Object
++     * Verify the {@link String} is valid JSON
+      *
+      * @param text the {@link String} to validate
+      * @return T/F
+@@ -608,6 +608,28 @@ public interface JSON {
+         return true;
+     }
+ 
++    /**
++     * Verify the {@link String} is JSON Object
++     *
++     * @param text the {@link String} to validate
++     * @return T/F
++     */
++    static boolean isValidObject(String text) {
++        if (text == null || text.length() == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(text);
++        try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
++            jsonReader.skipValue();
++        } catch (JSONException error) {
++            return false;
++        }
++        return true;
++    }
++
+     /**
+      * Verify the {@link String} is JSON Array
+      *
+@@ -631,7 +653,7 @@ public interface JSON {
+     }
+ 
+     /**
+-     * Verify the byte array is JSON Object
++     * Verify the byte array is valid JSON
+      *
+      * @param bytes the byte array to validate
+      * @return T/F
+@@ -649,6 +671,28 @@ public interface JSON {
+         return true;
+     }
+ 
++    /**
++     * Verify the byte array is JSON Object
++     *
++     * @param bytes the byte array to validate
++     * @return T/F
++     */
++    static boolean isValidObject(byte[] bytes) {
++        if (bytes == null || bytes.length == 0) {
++            return false;
++        }
++        JSONReader jsonReader = JSONReader.of(bytes);
++        try {
++            if (!jsonReader.isObject()) {
++                return false;
++            }
++            jsonReader.skipValue();
++        } catch (JSONException error) {
++            return false;
++        }
++        return true;
++    }
++
+     /**
+      * Verify the byte array is JSON Array
+      *
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 32ab096bf..f9084ca8e 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -33,6 +33,14 @@ public class JSONTest {
+         assertFalse(JSON.isValidArray("{}"));
+     }
+ 
++    @Test
++    public void test_isValidObject_0() {
++        assertTrue(JSON.isValidObject("{}"));
++        assertFalse(JSON.isValidObject("[]"));
++        assertTrue(JSON.isValid("{}"));
++        assertTrue(JSON.isValid("[]"));
++    }
++
+     @Test
+     public void test_parseArray_0() {
+         String str = "[1,2,3]";
+@@ -581,11 +589,14 @@ public class JSONTest {
+         assertNotNull(error);
+     }
+ 
+-    public static class MyList<T> extends ArrayList<T> {
+-
++    public static class MyList
++            extends ArrayList {
+     }
+ 
+-    private static class MyList0<T> extends ArrayList<T> {
+-
++    public static class MyList0
++            extends ArrayList {
++        public MyList0(int size) {
++            super(size);
++        }
+     }
+ }
+diff --git a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+index 7a28d61a8..121060e2a 100644
+--- a/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
++++ b/fastjson1-compatible/src/main/java/com/alibaba/fastjson/JSON.java
+@@ -446,6 +446,10 @@ public class JSON {
+         return com.alibaba.fastjson2.JSON.isValid(str);
+     }
+ 
++    public static boolean isValidObject(String str) {
++        return com.alibaba.fastjson2.JSON.isValidObject(str);
++    }
++
+     public static boolean isValidArray(String str) {
+         return com.alibaba.fastjson2.JSON.isValidArray(str);
+     }
+diff --git a/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
+index 5f165ed35..ef62d3740 100644
+--- a/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
++++ b/fastjson1-compatible/src/test/java/com/alibaba/fastjson/issue_2900/Issue2982.java
+@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
+ import com.alibaba.fastjson.JSONObject;
+ import org.junit.jupiter.api.Test;
+ 
++import static org.junit.jupiter.api.Assertions.assertFalse;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ public class Issue2982 {
+@@ -14,6 +15,9 @@ public class Issue2982 {
+         assertTrue(JSONArray.isValidArray(jsonStr));
+         assertTrue(JSON.isValidArray(jsonStr));
+         assertTrue(JSONObject.isValidArray(jsonStr));
++
++        assertTrue(JSON.isValidObject("{}"));
++        assertFalse(JSON.isValidObject("[]"));
+     }
+ 
+ 

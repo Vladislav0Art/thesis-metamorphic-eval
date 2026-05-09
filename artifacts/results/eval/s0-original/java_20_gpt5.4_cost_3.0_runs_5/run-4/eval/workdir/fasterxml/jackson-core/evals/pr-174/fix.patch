@@ -1,0 +1,184 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+index ff251034..9cc3bc77 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+@@ -3,81 +3,72 @@ package com.fasterxml.jackson.core;
+ import com.fasterxml.jackson.core.io.NumberInput;
+ 
+ /**
+- * Implementation of
+- * <a href="http://tools.ietf.org/html/draft-ietf-appsawg-json-pointer-03">JSON Pointer</a>
+- * specification.
++ * Implementation of JSON Pointer specification.
+  * Pointer instances can be used to locate logical JSON nodes for things like
+- * tree traversal (see {@link TreeNode#at}).
+- * It may be used in future for filtering of streaming JSON content
+- * as well (not implemented yet for 2.3).
+- *<p>
+- * Instances are fully immutable and can be shared, cached.
+- * 
+- * @author Tatu Saloranta
+- * 
+- * @since 2.3
++ * tree traversal and patch operations.
+  */
+ public class JsonPointer
+ {
+-    protected final static int NO_SLASH = -1;
+-
+     /**
+-     * Marker instance used to represent segment that matches current
+-     * node or position.
++     * Marker instance used to represent the "empty" pointer.
+      */
+-    protected final static JsonPointer EMPTY = new JsonPointer();
+-    
++    public final static JsonPointer EMPTY = new JsonPointer();
++
+     /**
+-     * Reference to rest of the pointer beyond currently matching
+-     * segment (if any); null if this pointer refers to a matching
+-     * segment.
++     * Marker used to indicate that no slash was found.
+      */
+-    protected final JsonPointer _nextSegment;
++    protected final static int NO_SLASH = -1;
+ 
+     /**
+-     * Reference form currently matching segment (if any) to node
+-     * before leaf.
++     * Character sequence of this pointer instance.
+      */
+-    protected final JsonPointer _headSegment;
++    protected final String _asString;
+ 
+     /**
+-     * We will retain representation of the pointer, as a String,
+-     * so that {@link #toString} should be as efficient as possible.
++     * Matching property name, if this segment may match an Object property;
++     * {@code null} for the empty pointer.
+      */
+-    protected final String _asString;
+-    
+     protected final String _matchingPropertyName;
+ 
++    /**
++     * Matching element index, if this segment may match an Array index;
++     * {@code -1} if not an index.
++     */
+     protected final int _matchingElementIndex;
+ 
+-    /*
+-    /**********************************************************
+-    /* Cosntruction
+-    /**********************************************************
++    /**
++     * Tail of this pointer, if any; {@code null} for the empty pointer and
++     * {@link #EMPTY} for a leaf segment.
+      */
+-    
++    protected final JsonPointer _nextSegment;
++
+     /**
+-     * Constructor used for creating "empty" instance, used to represent
+-     * state that matches current node.
++     * Head of this pointer, if any.
+      */
++    protected volatile JsonPointer _headSegment;
++
+     protected JsonPointer() {
++        _asString = "";
+         _nextSegment = null;
+-        _headSegment = null;
+         _matchingPropertyName = "";
+         _matchingElementIndex = -1;
+-        _asString = "";
+     }
+ 
+-    /**
+-     * Constructor used for creating non-empty Segments
+-     */
+-    protected JsonPointer(String fullString, String segment, JsonPointer next, JsonPointer head) {
++    protected JsonPointer(String fullString, String segment, JsonPointer next) {
++        _asString = fullString;
++        _nextSegment = next;
++        _matchingPropertyName = segment;
++        _matchingElementIndex = _parseIndex(segment);
++    }
++
++    protected JsonPointer(String fullString, String segment, JsonPointer next,
++            JsonPointer head)
++    {
+         _asString = fullString;
+         _nextSegment = next;
+-        _headSegment = head;
+-        // Ok; may always be a property
+         _matchingPropertyName = segment;
+         _matchingElementIndex = _parseIndex(segment);
++        _headSegment = head;
+     }
+     
+     /*
+@@ -113,6 +104,8 @@ public class JsonPointer
+      * deserializable by Jackson databind.
+      */
+     public static JsonPointer valueOf(String input) { return compile(input); }
++    
++
+ 
+     /* Factory method that composes a pointer instance, given a set
+      * of 'raw' segments: raw meaning that no processing will be done,
+@@ -184,6 +177,21 @@ public class JsonPointer
+         return _nextSegment;
+     }
+ 
++    /**
++     * Accessor for getting the leaf segment of this pointer. For the empty
++     * pointer, will return null.
++     */
++    public JsonPointer last() {
++        if (_nextSegment == null) {
++            return null;
++        }
++        JsonPointer current = this;
++        while (current._nextSegment != EMPTY) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
+     /**
+      * Accessor for getting a "pointer", instance from current segment to
+      * segment before segment leaf. For root pointer, will return null.
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index 9ef13aa7..a8c34852 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -77,6 +77,14 @@ public class TestJsonPointer extends BaseTest
+         assertNull(ptr.tail());
+     }
+ 
++    public void testLast() throws Exception
++    {
++        assertEquals("/-", JsonPointer.compile("/score/-").last().toString());
++        assertEquals("/score", JsonPointer.compile("/score").last().toString());
++        assertEquals("/a~1b", JsonPointer.compile("/w~1out/til~0de/a~1b").last().toString());
++        assertNull(JsonPointer.compile("").last());
++    }
++
+     // [Issue#133]
+     public void testLongNumbers() throws Exception
+     {

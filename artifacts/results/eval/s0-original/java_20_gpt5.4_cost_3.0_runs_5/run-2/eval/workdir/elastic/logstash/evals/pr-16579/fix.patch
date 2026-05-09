@@ -1,0 +1,155 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index cccb9c476..49cbaf5b2 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -17,7 +17,7 @@
+ 
+ require "spec_helper"
+ 
+-describe  FileWatch::BufferedTokenizer  do
++describe FileWatch::BufferedTokenizer do
+   subject { FileWatch::BufferedTokenizer.new }
+ 
+   it "should tokenize a single token" do
+@@ -43,7 +43,25 @@ describe  FileWatch::BufferedTokenizer  do
+     expect(subject.extract("\n\n\n")).to eq(["", "", ""])
+   end
+ 
+-  context 'with delimiter' do
++  context "with size limit" do
++    subject { FileWatch::BufferedTokenizer.new("\n", size_limit) }
++
++    let(:size_limit) { 10 }
++    let(:overflowing_chunk) { "78901\nok\n" }
++
++    it "discards the oversized payload when restarting after a buffer full error" do
++      expect(subject.extract("123456")).to eq([])
++
++      expect { subject.extract(overflowing_chunk) }.to raise_error(
++        IllegalStateException,
++        "input buffer full"
++      )
++
++      expect(subject.extract(overflowing_chunk)).to eq(["ok"])
++    end
++  end
++
++  context "with delimiter" do
+     subject { FileWatch::BufferedTokenizer.new(delimiter) }
+ 
+     let(:delimiter) { "||" }
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+index 2d7b90bba..09ae3fc56 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+@@ -43,70 +43,36 @@ public class BufferedTokenizerExt extends RubyObject {
+     private RubyString delimiter = NEW_LINE;
+     private int sizeLimit;
+     private boolean hasSizeLimit;
+-    private int inputSize;
++  context "with size limit" do
++    subject { FileWatch::BufferedTokenizer.new("\n", size_limit) }
+ 
+-    public BufferedTokenizerExt(final Ruby runtime, final RubyClass metaClass) {
+-        super(runtime, metaClass);
+-    }
++    let(:size_limit) { 10 }
++    let(:overflowing_chunk) { "78901\nok\n" }
+ 
+-    @JRubyMethod(name = "initialize", optional = 2)
+-    public IRubyObject init(final ThreadContext context, IRubyObject[] args) {
+-        if (args.length >= 1) {
+-            this.delimiter = args[0].convertToString();
+-        }
+-        if (args.length == 2) {
+-            this.sizeLimit = args[1].convertToInteger().getIntValue();
+-            this.hasSizeLimit = true;
+-        }
+-        this.inputSize = 0;
+-        return this;
+-    }
++    it "discards the oversized payload when restarting after a buffer full error" do
++      expect(subject.extract("123456")).to eq([])
+ 
+-    /**
+-     * Extract takes an arbitrary string of input data and returns an array of
+-     * tokenized entities, provided there were any available to extract.  This
+-     * makes for easy processing of datagrams using a pattern like:
+-     *
+-     * {@code tokenizer.extract(data).map { |entity| Decode(entity) }.each do}
+-     *
+-     * @param context ThreadContext
+-     * @param data    IRubyObject
+-     * @return Extracted tokens
+-     */
+-    @JRubyMethod
+-    @SuppressWarnings("rawtypes")
+-    public RubyArray extract(final ThreadContext context, IRubyObject data) {
+-        final RubyArray entities = data.convertToString().split(delimiter, -1);
+-        if (hasSizeLimit) {
+-            final int entitiesSize = ((RubyString) entities.first()).size();
+-            if (inputSize + entitiesSize > sizeLimit) {
+-                throw new IllegalStateException("input buffer full");
+-            }
+-            this.inputSize = inputSize + entitiesSize;
+-        }
+-        input.append(entities.shift(context));
+-        if (entities.isEmpty()) {
+-            return RubyUtil.RUBY.newArray();
+-        }
+-        entities.unshift(input.join(context));
+-        input.clear();
+-        input.append(entities.pop(context));
+-        inputSize = ((RubyString) input.first()).size();
+-        return entities;
+-    }
++      expect { subject.extract(overflowing_chunk) }.to raise_error(IllegalStateException, "input buffer full")
++
++      expect(subject.extract(overflowing_chunk)).to eq(["ok"])
++    end
++  end
++
++  context 'with delimiter' do
++    subject { FileWatch::BufferedTokenizer.new(delimiter) }
++
++    let(:delimiter) { "||" }
++
++    it "should tokenize multiple token" do
++      expect(subject.extract("foo||b|r||")).to eq(["foo", "b|r"])
++    end
+ 
+-    /**
+-     * Flush the contents of the input buffer, i.e. return the input buffer even though
+-     * a token has not yet been encountered
+-     *
+-     * @param context ThreadContext
+-     * @return Buffer contents
+-     */
+-    @JRubyMethod
+-    public IRubyObject flush(final ThreadContext context) {
+-        final IRubyObject buffer = input.join(context);
+-        input.clear();
+-        return buffer;
++    it "should ignore empty payload" do
++      expect(subject.extract("")).to eq([])
++      expect(subject.extract("foo||bar")).to eq(["foo"])
++    end
++  end
++end
+     }
+ 
+     @JRubyMethod(name = "empty?")

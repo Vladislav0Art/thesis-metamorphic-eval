@@ -1,0 +1,79 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index cccb9c476..d7a6148ae 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -57,4 +57,14 @@ describe  FileWatch::BufferedTokenizer  do
+       expect(subject.extract("foo||bar")).to eq(["foo"])
+     end
+   end
++
++  context 'with size limit' do
++    subject { FileWatch::BufferedTokenizer.new("\n", 10) }
++
++    it "drops oversized payload contents until the next delimiter and resumes correctly" do
++      expect(subject.extract("12345")).to eq([])
++      expect { subject.extract("67890AB") }.to raise_error(IllegalStateException, "input buffer full")
++      expect(subject.extract("C\nok\n")).to eq(["ok"])
++    end
++  end
+ end
+diff --git a/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+new file mode 100644
+index 000000000..b34ba4e93
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+@@ -0,0 +1,40 @@
++package org.logstash.common;
++
++import org.jruby.RubyArray;
++import org.jruby.RubyString;
++import org.jruby.runtime.ThreadContext;
++import org.junit.Test;
++import org.logstash.RubyTestBase;
++import org.logstash.RubyUtil;
++
++import static org.hamcrest.MatcherAssert.assertThat;
++import static org.hamcrest.Matchers.equalTo;
++import static org.junit.Assert.assertThrows;
++
++public class BufferedTokenizerExtTest extends RubyTestBase {
++
++    @Test
++    public void testDropsOversizedPayloadUntilNextDelimiterAndResumesCorrectly() {
++        final ThreadContext context = RubyUtil.RUBY.getCurrentContext();
++        final BufferedTokenizerExt tokenizer =
++            new BufferedTokenizerExt(RubyUtil.RUBY, RubyUtil.BUFFERED_TOKENIZER);
++
++        tokenizer.init(context, new org.jruby.runtime.builtin.IRubyObject[] {
++            RubyString.newString(RubyUtil.RUBY, "\n"),
++            RubyUtil.RUBY.newFixnum(10)
++        });
++
++        assertThat(tokenizer.extract(context, RubyString.newString(RubyUtil.RUBY, "12345")).size(), equalTo(0));
++
++        assertThrows(
++            IllegalStateException.class,
++            () -> tokenizer.extract(context, RubyString.newString(RubyUtil.RUBY, "67890AB"))
++        );
++
++        final RubyArray<?> result =
++            tokenizer.extract(context, RubyString.newString(RubyUtil.RUBY, "C\nok\n"));
++
++        assertThat(result.size(), equalTo(1));
++        assertThat(result.entry(0).asJavaString(), equalTo("ok"));
++    }
++}

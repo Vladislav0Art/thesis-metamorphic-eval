@@ -1,0 +1,150 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+index 5e39714cf..3f8d815fe 100644
+--- a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
++++ b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+@@ -71,6 +71,18 @@ public class DeepStubbingTest extends TestBase {
+ 
+     static final class FinalClass {}
+ 
++    enum Status {
++        OK;
++
++        int getCode() {
++            return 200;
++        }
++    }
++
++    interface HasStatus {
++        Status getStatus();
++    }
++
+     interface First {
+         Second getSecond();
+ 
+@@ -79,7 +91,7 @@ public class DeepStubbingTest extends TestBase {
+ 
+     interface Second extends List<String> {}
+ 
+-    class BaseClassGenerics<A, B> {}
++    static class BaseClassGenerics<A, B> {}
+ 
+     class ReversedGenerics<A, B> extends BaseClassGenerics<A, B> {
+         ReversedGenerics<B, A> reverse() {
+@@ -361,6 +373,13 @@ public class DeepStubbingTest extends TestBase {
+         assertEquals(value, person.getFinalClass());
+     }
+ 
++    @Test
++    public void deep_stub_does_not_try_to_mock_enum_return_type() {
++        HasStatus hasStatus = mock(HasStatus.class, RETURNS_DEEP_STUBS);
++
++        assertNull(hasStatus.getStatus());
++    }
++
+     @Test
+     public void deep_stub_does_not_try_to_mock_generic_final_classes() {
+         First first = mock(First.class, RETURNS_DEEP_STUBS);
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubEnumMockTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubEnumMockTest.java
+new file mode 100644
+index 000000000..c257d32b8
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/DeepStubEnumMockTest.java
+@@ -0,0 +1,40 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Answers;
++import org.mockito.Mock;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.mockito.Mockito.when;
++
++@ExtendWith(MockitoExtension.class)
++class DeepStubEnumMockTest {
++
++    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
++    private Piece piece;
++
++    @Test
++    void deep_stubs_are_compatible_with_mocking_enum() {
++        when(piece.getPiece().getCostPerPieceSpace()).thenReturn(2.5d);
++
++        assertEquals(2.5d, piece.getPiece().getCostPerPieceSpace());
++    }
++
++    interface Piece {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE;
++
++        double getCostPerPieceSpace() {
++            return 1.0d;
++        }
++    }
++}
+diff --git a/subprojects/programmatic-test/src/test/java/org/mockito/ProgrammaticMockMakerTest.java b/subprojects/programmatic-test/src/test/java/org/mockito/ProgrammaticMockMakerTest.java
+index f03555d0e..1ef47b787 100644
+--- a/subprojects/programmatic-test/src/test/java/org/mockito/ProgrammaticMockMakerTest.java
++++ b/subprojects/programmatic-test/src/test/java/org/mockito/ProgrammaticMockMakerTest.java
+@@ -73,6 +73,19 @@ public final class ProgrammaticMockMakerTest {
+         assertEquals("ORIGINAL", subclassMock.classWithFinalMethod().finalMethod());
+         assertEquals("ORIGINAL", subclassMock.subContainer().classWithFinalMethod().finalMethod());
+     }
++    @Test
++    public void test_deep_stubs_can_mock_enums_with_inline_mock_maker() {
++        EnumContainer inlineMock =
++                Mockito.mock(
++                        EnumContainer.class,
++                        withSettings()
++                                .mockMaker(MockMakers.INLINE)
++                                .defaultAnswer(Answers.RETURNS_DEEP_STUBS));
++
++        Mockito.when(inlineMock.piece().getCost()).thenReturn(2.5d);
++
++        assertEquals(2.5d, inlineMock.piece().getCost(), 0.0d);
++    }
+ 
+     @Test
+     public void test_returned_mocks_inherit_mock_maker() {
+@@ -177,6 +190,19 @@ public final class ProgrammaticMockMakerTest {
+             return "ORIGINAL";
+         }
+     }
++    private enum Piece {
++        SQUARE;
++
++        double getCost() {
++            return 1.0d;
++        }
++    }
++
++    private static class EnumContainer {
++        Piece piece() {
++            return Piece.SQUARE;
++        }
++    }
+ 
+     private static class Container {
+         FinalClass finalClass() {

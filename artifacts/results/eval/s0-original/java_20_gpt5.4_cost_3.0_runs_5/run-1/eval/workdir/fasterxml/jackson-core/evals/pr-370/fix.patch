@@ -1,0 +1,206 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/ReaderBasedJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/ReaderBasedJsonParser.java
+index a0014052..5b827a73 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/ReaderBasedJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/ReaderBasedJsonParser.java
+@@ -781,12 +781,6 @@ public class ReaderBasedJsonParser // final in 2.3, earlier
+         }
+     }
+ 
+-    /*
+-    /**********************************************************
+-    /* Public API, nextXxx() overrides
+-    /**********************************************************
+-     */
+-
+     // Implemented since 2.7
+     @Override
+     public boolean nextFieldName(SerializableString sstr) throws IOException
+@@ -904,6 +898,14 @@ public class ReaderBasedJsonParser // final in 2.3, earlier
+         }
+         if (_parsingContext.expectComma()) {
+             i = _skipComma(i);
++
++            // Was that a trailing comma?
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if ((i == INT_RBRACKET) || (i == INT_RCURLY)) {
++                    _closeScope(i);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _updateLocation();
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/UTF8DataInputJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/UTF8DataInputJsonParser.java
+index 7881b48c..e4731890 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/UTF8DataInputJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/UTF8DataInputJsonParser.java
+@@ -785,6 +785,14 @@ public class UTF8DataInputJsonParser
+                 _reportUnexpectedChar(i, "was expecting comma to separate "+_parsingContext.typeDesc()+" entries");
+             }
+             i = _skipWS();
++
++            // Was that a trailing comma?
++            if (Feature.ALLOW_TRAILING_COMMA.enabledIn(_features)) {
++                if ((i == INT_RBRACKET) || (i == INT_RCURLY)) {
++                    _closeScope(i);
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _nextTokenNotInObject(i);
+diff --git a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+index 5ca9eb38..070007db 100644
+--- a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
++++ b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+@@ -67,7 +67,7 @@ public class TrailingCommasTest extends BaseTest {
+     assertEquals("b", p.getText());
+ 
+     assertEquals(JsonToken.END_ARRAY, p.nextToken());
+-    assertEnd(p);
++    assertNull(p.nextToken());
+   }
+ 
+   @SuppressWarnings("resource")
+@@ -93,7 +93,7 @@ public class TrailingCommasTest extends BaseTest {
+     assertEquals("b", p.getText());
+ 
+     assertEquals(JsonToken.END_ARRAY, p.nextToken());
+-    assertEnd(p);
++    assertNull(p.nextToken());
+   }
+ 
+   @SuppressWarnings("resource")
+@@ -119,7 +119,7 @@ public class TrailingCommasTest extends BaseTest {
+     assertEquals("b", p.getText());
+ 
+     assertEquals(JsonToken.END_ARRAY, p.nextToken());
+-    assertEnd(p);
++    assertNull(p.nextToken());
+     p.close();
+   }
+ 
+@@ -140,11 +140,11 @@ public class TrailingCommasTest extends BaseTest {
+     // ALLOW_TRAILING_COMMA takes priority over ALLOW_MISSING_VALUES
+     if (features.contains(Feature.ALLOW_TRAILING_COMMA)) {
+       assertToken(JsonToken.END_ARRAY, p.nextToken());
+-      assertEnd(p);
++      assertNull(p.nextToken());
+     } else if (features.contains(Feature.ALLOW_MISSING_VALUES)) {
+       assertToken(JsonToken.VALUE_NULL, p.nextToken());
+       assertToken(JsonToken.END_ARRAY, p.nextToken());
+-      assertEnd(p);
++      assertNull(p.nextToken());
+     } else {
+       assertUnexpected(p, ']');
+     }
+@@ -170,12 +170,12 @@ public class TrailingCommasTest extends BaseTest {
+         features.contains(Feature.ALLOW_TRAILING_COMMA)) {
+       assertToken(JsonToken.VALUE_NULL, p.nextToken());
+       assertToken(JsonToken.END_ARRAY, p.nextToken());
+-      assertEnd(p);
++      assertNull(p.nextToken());
+     } else if (features.contains(Feature.ALLOW_MISSING_VALUES)) {
+       assertToken(JsonToken.VALUE_NULL, p.nextToken());
+       assertToken(JsonToken.VALUE_NULL, p.nextToken());
+       assertToken(JsonToken.END_ARRAY, p.nextToken());
+-      assertEnd(p);
++      assertNull(p.nextToken());
+     } else {
+       assertUnexpected(p, ',');
+     }
+@@ -202,13 +202,13 @@ public class TrailingCommasTest extends BaseTest {
+       assertToken(JsonToken.VALUE_NULL, p.nextToken());
+       assertToken(JsonToken.VALUE_NULL, p.nextToken());
+       assertToken(JsonToken.END_ARRAY, p.nextToken());
+-      assertEnd(p);
++      assertNull(p.nextToken());
+     } else if (features.contains(Feature.ALLOW_MISSING_VALUES)) {
+       assertToken(JsonToken.VALUE_NULL, p.nextToken());
+       assertToken(JsonToken.VALUE_NULL, p.nextToken());
+       assertToken(JsonToken.VALUE_NULL, p.nextToken());
+       assertToken(JsonToken.END_ARRAY, p.nextToken());
+-      assertEnd(p);
++      assertNull(p.nextToken());
+     } else {
+       assertUnexpected(p, ',');
+     }
+@@ -232,7 +232,7 @@ public class TrailingCommasTest extends BaseTest {
+     assertToken(JsonToken.VALUE_FALSE, p.nextToken());
+ 
+     assertEquals(JsonToken.END_OBJECT, p.nextToken());
+-    assertEnd(p);
++    assertNull(p.nextToken());
+     p.close();
+   }
+ 
+@@ -282,7 +282,7 @@ public class TrailingCommasTest extends BaseTest {
+ 
+     if (features.contains(Feature.ALLOW_TRAILING_COMMA)) {
+       assertToken(JsonToken.END_OBJECT, p.nextToken());
+-      assertEnd(p);
++      assertNull(p.nextToken());
+     } else {
+       assertUnexpected(p, '}');
+     }
+@@ -290,31 +290,30 @@ public class TrailingCommasTest extends BaseTest {
+   }
+ 
+   @Test
+-  public void testObjectTrailingCommas() throws Exception {
+-    String json = "{\"a\": true, \"b\": false,,}";
++  public void testObjectTrailingCommaWithNextFieldName() throws Exception {
++    String json = "{\"a\": true,}";
+ 
+     JsonParser p = createParser(factory, mode, json);
+ 
+     assertEquals(JsonToken.START_OBJECT, p.nextToken());
+ 
+-    assertToken(JsonToken.FIELD_NAME, p.nextToken());
+-    assertEquals("a", p.getText());
++    assertEquals("a", p.nextFieldName());
++    assertToken(JsonToken.FIELD_NAME, p.currentToken());
+     assertToken(JsonToken.VALUE_TRUE, p.nextToken());
+ 
+-    assertToken(JsonToken.FIELD_NAME, p.nextToken());
+-    assertEquals("b", p.getText());
+-    assertToken(JsonToken.VALUE_FALSE, p.nextToken());
+-
+-    assertUnexpected(p, ',');
+-    p.close();
+-  }
+-
+-  private void assertEnd(JsonParser p) throws IOException {
+-    // Issue #325
+-    if (!(p instanceof UTF8DataInputJsonParser)) {
+-      JsonToken next = p.nextToken();
+-      assertNull("expected end of stream but found " + next, next);
++    if (features.contains(Feature.ALLOW_TRAILING_COMMA)) {
++      assertNull(p.nextFieldName());
++      assertToken(JsonToken.END_OBJECT, p.currentToken());
++      assertNull(p.nextToken());
++    } else {
++      try {
++        p.nextFieldName();
++        fail("No exception thrown");
++      } catch (Exception e) {
++        verifyException(e, "Unexpected character ('}' (code 125))");
++      }
+     }
++    p.close();
+   }
+ 
+   private void assertUnexpected(JsonParser p, char c) throws IOException {

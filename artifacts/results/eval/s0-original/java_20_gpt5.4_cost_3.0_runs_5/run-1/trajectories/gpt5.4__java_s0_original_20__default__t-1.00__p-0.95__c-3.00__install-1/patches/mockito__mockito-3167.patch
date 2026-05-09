@@ -1,0 +1,70 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/util/reflection/GenericMetadataSupport.java b/src/main/java/org/mockito/internal/util/reflection/GenericMetadataSupport.java
+index ef64c5bb6..fe11fe1d4 100644
+--- a/src/main/java/org/mockito/internal/util/reflection/GenericMetadataSupport.java
++++ b/src/main/java/org/mockito/internal/util/reflection/GenericMetadataSupport.java
+@@ -10,12 +10,10 @@ import java.lang.reflect.ParameterizedType;
+ import java.lang.reflect.Type;
+ import java.lang.reflect.TypeVariable;
+ import java.lang.reflect.WildcardType;
+-import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.Collections;
+ import java.util.HashMap;
+ import java.util.HashSet;
+-import java.util.LinkedHashMap;
+ import java.util.LinkedList;
+ import java.util.List;
+ import java.util.Map;
+@@ -25,31 +23,18 @@ import org.mockito.exceptions.base.MockitoException;
+ import org.mockito.internal.util.Checks;
+ 
+ /**
+- * This class can retrieve generic meta-data that the compiler stores on classes
+- * and accessible members.
++ * Captures generic type metadata for a type and resolves generic return types of methods in that
++ * context.
+  *
+- * <p>
+- * The main idea of this code is to create a Map that will help to resolve return types.
+- * In order to actually work with nested generics, this map will have to be passed along new instances
+- * as a type context.
+- * </p>
++ * <p>A new instance representing metadata is created using {@link #inferFrom(Type)} from a real
++ * {@code Class} or a {@code ParameterizedType}. From this metadata, one can extract metadata for a
++ * generic method return type using {@link #resolveGenericReturnType(Method)}.
+  *
+- * <p>
+- * Hence :
+- * <ul>
+- * <li>A new instance representing the metadata is created using the {@link #inferFrom(Type)} method from a real
+- * <code>Class</code> or from a <code>ParameterizedType</code>, other types are not yet supported.</li>
++ * <p>For example, this supports declarations such as:
+  *
+- * <li>Then from this metadata, we can extract meta-data for a generic return type of a method, using
+- * {@link #resolveGenericReturnType(Method)}.</li>
+- * </ul>
+- * </p>
+- *
+- * <p>
+- * For now this code support the following kind of generic declarations :
+  * <pre class="code"><code class="java">
+  * interface GenericsNest&lt;K extends Comparable&lt;K&gt; & Cloneable&gt; extends Map&lt;K, Set&lt;Number&gt;&gt; {
+- *     Set&lt;Number&gt; remove(Object key); // override with fixed ParameterizedType
++ *     Set&lt;Number&gt; remove(Object key);
+  *     List&lt;? super Integer&gt; returning_wildcard_with_class_lower_bound();
+  *     List&lt;? super K&gt; returning_wildcard_with_typeVar_lower_bound();
+  *     List&lt;? extends K&gt; returning_wildcard_with_typeVar_upper_bound();

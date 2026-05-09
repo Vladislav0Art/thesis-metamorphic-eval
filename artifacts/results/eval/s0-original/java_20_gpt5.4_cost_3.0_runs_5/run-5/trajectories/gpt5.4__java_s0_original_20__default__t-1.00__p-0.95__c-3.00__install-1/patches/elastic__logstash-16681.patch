@@ -1,0 +1,189 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV1.java b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV1.java
+index 06ae620bd..a11bb1000 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV1.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV1.java
+@@ -138,20 +138,17 @@ class PipelineBusV1 extends AbstractPipelineBus implements PipelineBus {
+             return result[0];
+         }
+     }
+-
+     @Override
+     public void unlisten(final PipelineInput input, final String address) throws InterruptedException {
+-        synchronized (input) {
+-            if (this.blockOnUnlisten) {
+-                unlistenBlock(input, address);
+-            } else {
+-                unlistenNonblock(input, address);
+-            }
++        if (blockOnUnlisten) {
++            unlistenBlock(input, address);
++        } else {
++            unlistenNonblock(input, address);
+         }
+     }
+ 
+     /**
+-     * Stop listening on the given address with the given listener. Blocks until upstream outputs have
++     * Unlisten during shutdown. This blocks until senders to this address are
+      * stopped.
+      *
+      * @param input   Input that should stop listening
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+index 6626641a1..fc6c0e766 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+@@ -134,6 +134,7 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+ 
+         public AddressState.ReadOnly mutate(final String address,
+                                             final Consumer<AddressState> consumer) {
++            final PipelineInput[] inputToNotify = new PipelineInput[1];
+             final AddressState result = mapping.compute(address, (a, addressState) -> {
+                 if (addressState == null) {
+                     addressState = new AddressState(address);
+@@ -141,18 +142,23 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+ 
+                 consumer.accept(addressState);
+ 
+-                // If this addressState has a listener, ensure that any waiting
+-                // threads get notified so that they can resume immediately
+-                final PipelineInput currentInput = addressState.getInput();
+-                if (currentInput != null) {
+-                    synchronized (currentInput) { currentInput.notifyAll(); }
+-                }
++                // Avoid synchronizing on the listener while holding the map's compute lock.
++                inputToNotify[0] = addressState.getInput();
+ 
+                 return addressState.isEmpty() ? null : addressState;
+             });
++
++            final PipelineInput currentInput = inputToNotify[0];
++            if (currentInput != null) {
++                synchronized (currentInput) {
++                    currentInput.notifyAll();
++                }
++            }
++
+             return result == null ? null : result.getReadOnlyView();
+         }
+ 
++
+         private AddressState.ReadOnly get(final String address) {
+             final AddressState result = mapping.get(address);
+             return result == null ? null : result.getReadOnlyView();
+diff --git a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusV2Test.java b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusV2Test.java
+new file mode 100644
+index 000000000..a4d73f885
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusV2Test.java
+@@ -0,0 +1,97 @@
++package org.logstash.plugins.pipeline;
++
++import org.junit.Test;
++
++import java.util.concurrent.CountDownLatch;
++import java.util.concurrent.TimeUnit;
++import java.util.concurrent.atomic.AtomicReference;
++import java.util.stream.Stream;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++public class PipelineBusV2Test {
++
++    @Test
++    public void addressStateMutationDoesNotDeadlockWithBlockingUnlisten() throws Exception {
++        final PipelineBusV2.AddressStateMapping mapping = new PipelineBusV2.AddressStateMapping();
++        final BlockingTestPipelineInput input = new BlockingTestPipelineInput();
++        final CountDownLatch computeEntered = new CountDownLatch(1);
++        final CountDownLatch allowComputeToFinish = new CountDownLatch(1);
++        final CountDownLatch listenerMonitorHeld = new CountDownLatch(1);
++        final AtomicReference<Throwable> mutationFailure = new AtomicReference<>();
++        final AtomicReference<Throwable> unlistenFailure = new AtomicReference<>();
++
++        mapping.mutate("addr", (state) -> {
++            state.assignInputIfMissing(input);
++            state.assignOutputIfMissing(new TestPipelineOutput());
++        });
++
++        Thread unregisterThread = new Thread(() -> {
++            try {
++                mapping.mutate("addr", (state) -> {
++                    computeEntered.countDown();
++                    try {
++                        allowComputeToFinish.await(5, TimeUnit.SECONDS);
++                    } catch (InterruptedException e) {
++                        Thread.currentThread().interrupt();
++                        throw new AssertionError(e);
++                    }
++                    state.unassignOutput(new TestPipelineOutput());
++                });
++            } catch (Throwable t) {
++                mutationFailure.set(t);
++            }
++        }, "unregister-thread");
++
++        Thread blockingUnlistenThread = new Thread(() -> {
++            try {
++                assertThat(computeEntered.await(5, TimeUnit.SECONDS)).isTrue();
++                synchronized (input) {
++                    listenerMonitorHeld.countDown();
++                    allowComputeToFinish.countDown();
++                    mapping.mutate("addr", (state) -> state.unassignInput(input));
++                }
++            } catch (Throwable t) {
++                unlistenFailure.set(t);
++            }
++        }, "blocking-unlisten-thread");
++
++        unregisterThread.start();
++        assertThat(computeEntered.await(5, TimeUnit.SECONDS)).isTrue();
++
++        blockingUnlistenThread.start();
++        assertThat(listenerMonitorHeld.await(5, TimeUnit.SECONDS)).isTrue();
++
++        unregisterThread.join(TimeUnit.SECONDS.toMillis(5));
++        blockingUnlistenThread.join(TimeUnit.SECONDS.toMillis(5));
++
++        assertThat(mutationFailure.get()).isNull();
++        assertThat(unlistenFailure.get()).isNull();
++        assertThat(unregisterThread.isAlive()).isFalse();
++        assertThat(blockingUnlistenThread.isAlive()).isFalse();
++    }
++
++    private static class BlockingTestPipelineInput implements PipelineInput {
++        @Override
++        public ReceiveResponse internalReceive(Stream<org.logstash.ext.JrubyEventExtLibrary.RubyEvent> events) {
++            return ReceiveResponse.completed();
++        }
++
++        @Override
++        public String getId() {
++            return "blocking-input";
++        }
++
++        @Override
++        public boolean isRunning() {
++            return true;
++        }
++    }
++
++    private static class TestPipelineOutput implements PipelineOutput {
++        @Override
++        public String getId() {
++            return "test-output";
++        }
++    }
++}

@@ -1,0 +1,152 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPlugins.java b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPlugins.java
+index 365c350e9..b0784a8b9 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPlugins.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPlugins.java
+@@ -8,8 +8,8 @@ import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.Map;
+ import java.util.Set;
+-
+ import org.mockito.MockMakers;
++import org.mockito.internal.util.MockUtil;
+ import org.mockito.plugins.AnnotationEngine;
+ import org.mockito.plugins.DoNotMockEnforcer;
+ import org.mockito.plugins.InstantiatorProvider2;
+@@ -78,6 +78,11 @@ public class DefaultMockitoPlugins implements MockitoPlugins {
+         return create(pluginType, className);
+     }
+ 
++    @Override
++    public MockMaker getMockMaker(String mockMaker) {
++        return MockUtil.getMockMaker(mockMaker);
++    }
++
+     public static String getDefaultPluginClass(String classOrAlias) {
+         return DEFAULT_PLUGINS.get(classOrAlias);
+     }
+@@ -98,12 +103,11 @@ public class DefaultMockitoPlugins implements MockitoPlugins {
+         try {
+             // Default implementation. Use our own ClassLoader instead of the context
+             // ClassLoader, as the default implementation is assumed to be part of
+-            // Mockito and may not be available via the context ClassLoader.
++            // Mockito core and may not be available via the context ClassLoader.
+             return pluginType.cast(Class.forName(className).getDeclaredConstructor().newInstance());
+         } catch (Exception e) {
+             throw new IllegalStateException(
+-                    "Internal problem occurred, please report it. "
+-                            + "Mockito is unable to load the default implementation of class that is a part of Mockito distribution. "
++                    "Mockito is unable to load the default implementation of class that is a part of Mockito distribution. "
+                             + "Failed to load "
+                             + pluginType,
+                     e);
+@@ -112,6 +116,6 @@ public class DefaultMockitoPlugins implements MockitoPlugins {
+ 
+     @Override
+     public MockMaker getInlineMockMaker() {
+-        return create(MockMaker.class, DEFAULT_PLUGINS.get(INLINE_ALIAS));
++        return getMockMaker(INLINE_ALIAS);
+     }
+ }
+diff --git a/src/main/java/org/mockito/internal/util/MockUtil.java b/src/main/java/org/mockito/internal/util/MockUtil.java
+index 0d80f6e19..97b9b49cc 100644
+--- a/src/main/java/org/mockito/internal/util/MockUtil.java
++++ b/src/main/java/org/mockito/internal/util/MockUtil.java
+@@ -36,7 +36,7 @@ public class MockUtil {
+ 
+     private MockUtil() {}
+ 
+-    private static MockMaker getMockMaker(String mockMaker) {
++    public static MockMaker getMockMaker(String mockMaker) {
+         if (mockMaker == null) {
+             return defaultMockMaker;
+         }
+diff --git a/src/main/java/org/mockito/plugins/MockitoPlugins.java b/src/main/java/org/mockito/plugins/MockitoPlugins.java
+index d911077fd..eb5e11cfa 100644
+--- a/src/main/java/org/mockito/plugins/MockitoPlugins.java
++++ b/src/main/java/org/mockito/plugins/MockitoPlugins.java
+@@ -4,6 +4,7 @@
+  */
+ package org.mockito.plugins;
+ 
++import org.mockito.MockMakers;
+ import org.mockito.Mockito;
+ import org.mockito.MockitoFramework;
+ 
+@@ -31,10 +32,27 @@ public interface MockitoPlugins {
+      */
+     <T> T getDefaultPlugin(Class<T> pluginType);
+ 
++    /**
++     * Returns the mock maker used by Mockito for the given built-in alias or fully qualified class name.
++     *
++     * <p>Unlike {@link #getDefaultPlugin(Class)}, this method may return a shared instance managed by
++     * Mockito. Passing {@code null} returns the default mock maker.
++     *
++     * @param mockMaker the built-in mock maker alias (see {@link MockMakers}) or fully qualified class
++     *     name; {@code null} returns the default mock maker
++     * @return the mock maker instance
++     */
++    default MockMaker getMockMaker(String mockMaker) {
++        if (mockMaker == null) {
++            return getDefaultPlugin(MockMaker.class);
++        }
++        throw new UnsupportedOperationException(
++                "This MockitoPlugins implementation does not support named mock makers");
++    }
++
+     /**
+      * Returns inline mock maker, an optional mock maker that is bundled with Mockito distribution.
+-     * This method is needed because {@link #getDefaultPlugin(Class)} does not provide an instance of inline mock maker.
+-     * Creates new instance each time is called so it is recommended to keep hold of the resulting object for future invocations.
++     * This is equivalent to {@code getMockMaker(MockMakers.INLINE)}.
+      * For more information about inline mock maker see the javadoc for main {@link Mockito} class.
+      *
+      * @return instance of inline mock maker
+diff --git a/src/test/java/org/mockitousage/plugins/MockitoPluginsTest.java b/src/test/java/org/mockitousage/plugins/MockitoPluginsTest.java
+index dd5f390a5..960f32a03 100644
+--- a/src/test/java/org/mockitousage/plugins/MockitoPluginsTest.java
++++ b/src/test/java/org/mockitousage/plugins/MockitoPluginsTest.java
+@@ -5,8 +5,10 @@
+ package org.mockitousage.plugins;
+ 
+ import static org.junit.Assert.assertNotNull;
++import static org.junit.Assert.assertSame;
+ 
+ import org.junit.Test;
++import org.mockito.MockMakers;
+ import org.mockito.Mockito;
+ import org.mockito.plugins.AnnotationEngine;
+ import org.mockito.plugins.InstantiatorProvider2;
+@@ -24,6 +26,7 @@ public class MockitoPluginsTest extends TestBase {
+     @Test
+     public void provides_built_in_plugins() {
+         assertNotNull(plugins.getInlineMockMaker());
++        assertNotNull(plugins.getMockMaker(MockMakers.INLINE));
+         assertNotNull(plugins.getDefaultPlugin(MockMaker.class));
+         assertNotNull(plugins.getDefaultPlugin(StackTraceCleanerProvider.class));
+         assertNotNull(plugins.getDefaultPlugin(PluginSwitch.class));
+@@ -31,4 +34,10 @@ public class MockitoPluginsTest extends TestBase {
+         assertNotNull(plugins.getDefaultPlugin(AnnotationEngine.class));
+         assertNotNull(plugins.getDefaultPlugin(MockitoLogger.class));
+     }
++
++    @Test
++    public void provides_same_inline_mock_maker_instance() {
++        assertSame(plugins.getInlineMockMaker(), plugins.getInlineMockMaker());
++        assertSame(plugins.getInlineMockMaker(), plugins.getMockMaker(MockMakers.INLINE));
++    }
+ }
