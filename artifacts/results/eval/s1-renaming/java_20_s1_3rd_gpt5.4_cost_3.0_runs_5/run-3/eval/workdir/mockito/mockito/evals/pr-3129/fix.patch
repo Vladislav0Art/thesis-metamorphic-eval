@@ -1,0 +1,202 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java
+index 9d50b7f5d..900a91f41 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java
+@@ -17,29 +17,25 @@ import org.mockito.plugins.MemberAccessor;
+ import org.mockito.plugins.MockMaker;
+ import org.mockito.plugins.MockitoLogger;
+ import org.mockito.plugins.MockitoPluginProvider;
+-import org.mockito.plugins.PluginSwitch;
+-import org.mockito.plugins.StackTraceCleanerProvider;
+ 
+ public class DefaultMockitoPluginFactory implements MockitoPluginProvider {
+ 
+-    private static final Map<String, String> CORE_PLUGINS = new HashMap<>();
+-    static final String IMMEDIATE_ALIAS = MockMakers.INLINE;
+-    static final String PROXY_IDENTIFIER = MockMakers.PROXY;
+-    static final String SUBCLASS_IDENTIFIER = MockMakers.SUBCLASS;
+-    public static final Set<String> MOCK_MAKER_ALIASES = new HashSet<>();
+-    static final String MODULE_IDENTIFIER = "member-accessor-module";
+-    static final String REFLECTION_IDENTIFIER = "member-accessor-reflection";
+-    public static final Set<String> MEMBER_ACCESSOR_ALIASES = new HashSet<>();
++    static final String INLINE_ALIAS = MockMakers.INLINE;
++    static final String IMMEDIATE_ALIAS = INLINE_ALIAS;
++    static final String PROXY_ALIAS = MockMakers.PROXY;
++    static final String PROXY_IDENTIFIER = PROXY_ALIAS;
++    static final String SUBCLASS_ALIAS = MockMakers.SUBCLASS;
++    static final String SUBCLASS_IDENTIFIER = SUBCLASS_ALIAS;
++    static final String MODULE_ALIAS = "member-accessor-module";
++    static final String MODULE_IDENTIFIER = MODULE_ALIAS;
++    static final String REFLECTION_ALIAS = "member-accessor-reflection";
++    static final String REFLECTION_IDENTIFIER = REFLECTION_ALIAS;
++
++    static final Map<String, String> CORE_PLUGINS = new HashMap<>();
++    static final Set<String> MOCK_MAKER_ALIASES = new HashSet<>();
++    static final Set<String> MEMBER_ACCESSOR_ALIASES = new HashSet<>();
+ 
+     static {
+-        // Keep the mapping: plugin interface name -> plugin implementation class name
+-        CORE_PLUGINS.put(PluginSwitch.class.getName(), DefaultPluginSwitch.class.getName());
+-        CORE_PLUGINS.put(
+-                MockMaker.class.getName(),
+-                "org.mockito.internal.creation.bytebuddy.InlineByteBuddyMockMaker");
+-        CORE_PLUGINS.put(
+-                StackTraceCleanerProvider.class.getName(),
+-                "org.mockito.internal.exceptions.stacktrace.DefaultStackTraceCleanerProvider");
+         CORE_PLUGINS.put(
+                 InstantiatorProvider2.class.getName(),
+                 "org.mockito.internal.creation.instance.DefaultInstantiatorProvider");
+@@ -47,29 +43,30 @@ public class DefaultMockitoPluginFactory implements MockitoPluginProvider {
+                 AnnotationEngine.class.getName(),
+                 "org.mockito.internal.configuration.InjectingAnnotationEngine");
+         CORE_PLUGINS.put(
+-            IMMEDIATE_ALIAS, "org.mockito.internal.creation.bytebuddy.InlineByteBuddyMockMaker");
+-        CORE_PLUGINS.put(PROXY_IDENTIFIER, "org.mockito.internal.creation.proxy.ProxyMockMaker");
++                INLINE_ALIAS, "org.mockito.internal.creation.bytebuddy.InlineByteBuddyMockMaker");
++        CORE_PLUGINS.put(PROXY_ALIAS, "org.mockito.internal.creation.proxy.ProxyMockMaker");
+         CORE_PLUGINS.put(
+-            SUBCLASS_IDENTIFIER, "org.mockito.internal.creation.bytebuddy.ByteBuddyMockMaker");
++                SUBCLASS_ALIAS, "org.mockito.internal.creation.bytebuddy.ByteBuddyMockMaker");
+         CORE_PLUGINS.put(
+                 MockitoLogger.class.getName(), "org.mockito.internal.util.ConsoleMockitoLogger");
+         CORE_PLUGINS.put(
+                 MemberAccessor.class.getName(),
+                 "org.mockito.internal.util.reflection.ModuleMemberAccessor");
+         CORE_PLUGINS.put(
+-            MODULE_IDENTIFIER, "org.mockito.internal.util.reflection.ModuleMemberAccessor");
++                MODULE_ALIAS, "org.mockito.internal.util.reflection.ModuleMemberAccessor");
+         CORE_PLUGINS.put(
+-            REFLECTION_IDENTIFIER, "org.mockito.internal.util.reflection.ReflectionMemberAccessor");
++                REFLECTION_ALIAS,
++                "org.mockito.internal.util.reflection.ReflectionMemberAccessor");
+         CORE_PLUGINS.put(
+                 DoNotMockEnforcer.class.getName(),
+                 "org.mockito.internal.configuration.DefaultDoNotMockEnforcer");
+ 
+-        MOCK_MAKER_ALIASES.add(IMMEDIATE_ALIAS);
+-        MOCK_MAKER_ALIASES.add(PROXY_IDENTIFIER);
+-        MOCK_MAKER_ALIASES.add(SUBCLASS_IDENTIFIER);
++        MOCK_MAKER_ALIASES.add(INLINE_ALIAS);
++        MOCK_MAKER_ALIASES.add(PROXY_ALIAS);
++        MOCK_MAKER_ALIASES.add(SUBCLASS_ALIAS);
+ 
+-        MEMBER_ACCESSOR_ALIASES.add(MODULE_IDENTIFIER);
+-        MEMBER_ACCESSOR_ALIASES.add(REFLECTION_IDENTIFIER);
++        MEMBER_ACCESSOR_ALIASES.add(MODULE_ALIAS);
++        MEMBER_ACCESSOR_ALIASES.add(REFLECTION_ALIAS);
+     }
+ 
+     @Override
+@@ -78,6 +75,16 @@ public class DefaultMockitoPluginFactory implements MockitoPluginProvider {
+         return createDefaultImplementation(pluginClass, targetClass);
+     }
+ 
++    @Override
++    public MockMaker getMockMaker() {
++        return Plugins.getMockMaker();
++    }
++
++    @Override
++    public MockMaker getInlineMockMaker() {
++        return createDefaultImplementation(MockMaker.class, CORE_PLUGINS.get(INLINE_ALIAS));
++    }
++
+     public static String getDefaultPluginClass(String typeOrAlias) {
+         return CORE_PLUGINS.get(typeOrAlias);
+     }
+@@ -106,12 +113,7 @@ public class DefaultMockitoPluginFactory implements MockitoPluginProvider {
+                             + "Mockito is unable to load the default implementation of class that is a part of Mockito distribution. "
+                             + "Failed to load "
+                             + pluginClass,
+-                ex);
++                    ex);
+         }
+     }
+-
+-    @Override
+-    public MockMaker getInlineMockMaker() {
+-        return createDefaultImplementation(MockMaker.class, CORE_PLUGINS.get(IMMEDIATE_ALIAS));
+-    }
+ }
+diff --git a/src/main/java/org/mockito/plugins/MockitoPluginProvider.java b/src/main/java/org/mockito/plugins/MockitoPluginProvider.java
+index f7409ee2a..bdaf9eafd 100644
+--- a/src/main/java/org/mockito/plugins/MockitoPluginProvider.java
++++ b/src/main/java/org/mockito/plugins/MockitoPluginProvider.java
+@@ -31,6 +31,17 @@ public interface MockitoPluginProvider {
+      */
+     <T> T getDefaultPlugin(Class<T> pluginClass);
+ 
++    /**
++     * Returns the mock maker used by the current Mockito runtime.
++     * Contrary to {@link #getDefaultPlugin(Class)}, this method returns the shared mock maker instance
++     * that is used by Mockito itself.
++     *
++     * @return shared mock maker instance used by Mockito
++     */
++    default MockMaker getMockMaker() {
++        return getDefaultPlugin(MockMaker.class);
++    }
++
+     /**
+      * Returns inline mock maker, an optional mock maker that is bundled with Mockito distribution.
+      * This method is needed because {@link #getDefaultPlugin(Class)} does not provide an instance of inline mock maker.
+diff --git a/src/test/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginsTest.java b/src/test/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginsTest.java
+index f0c9a5363..d4e910fb9 100644
+--- a/src/test/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginsTest.java
++++ b/src/test/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginsTest.java
+@@ -41,4 +41,9 @@ public class DefaultMockitoPluginsTest extends TestBase {
+                 ConsoleMockitoLogger.class,
+                 plugins.getDefaultPlugin(MockitoLogger.class).getClass());
+     }
+-}
++
++    @Test
++    public void provides_shared_runtime_mock_maker_but_fresh_inline_mock_makers() {
++        assertSame(plugins.getMockMaker(), plugins.getMockMaker());
++        assertNotSame(plugins.getInlineMockMaker(), plugins.getInlineMockMaker());
++    }
+diff --git a/src/test/java/org/mockitousage/plugins/MockitoPluginsTest.java b/src/test/java/org/mockitousage/plugins/MockitoPluginsTest.java
+index bee596cf3..5f5820d1e 100644
+--- a/src/test/java/org/mockitousage/plugins/MockitoPluginsTest.java
++++ b/src/test/java/org/mockitousage/plugins/MockitoPluginsTest.java
+@@ -5,6 +5,7 @@
+ package org.mockitousage.plugins;
+ 
+ import static org.junit.Assert.assertNotNull;
++import static org.junit.Assert.assertSame;
+ 
+ import org.junit.Test;
+ import org.mockito.Mockito;
+@@ -23,6 +24,7 @@ public class MockitoPluginsTest extends TestBase {
+ 
+     @Test
+     public void provides_built_in_plugins() {
++        assertNotNull(plugins.getMockMaker());
+         assertNotNull(plugins.getInlineMockMaker());
+         assertNotNull(plugins.getDefaultPlugin(MockMaker.class));
+         assertNotNull(plugins.getDefaultPlugin(StackTraceCleanerProvider.class));
+@@ -31,4 +33,10 @@ public class MockitoPluginsTest extends TestBase {
+         assertNotNull(plugins.getDefaultPlugin(AnnotationEngine.class));
+         assertNotNull(plugins.getDefaultPlugin(MockitoLogger.class));
+     }
++
++    @Test
++    public void provides_shared_runtime_mock_maker() {
++        assertSame(plugins.getMockMaker(), plugins.getMockMaker());
++        assertSame(plugins.getMockMaker(), Mockito.framework().getPlugins().getMockMaker());
++    }
+ }

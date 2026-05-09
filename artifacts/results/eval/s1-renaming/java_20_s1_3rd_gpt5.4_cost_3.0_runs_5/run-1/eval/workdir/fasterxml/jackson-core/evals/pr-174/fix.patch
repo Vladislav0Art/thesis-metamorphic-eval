@@ -1,0 +1,113 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+index 4aa3e3a2..fd9c4989 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+@@ -103,44 +103,17 @@ public class JsonPointerReference
+         }
+         // And then quick validity check:
+         if (sourceText.charAt(0) != '/') {
+-            throw new IllegalArgumentException("Invalid input: JSON Pointer expression must start with '/': "+"\""+ sourceText +"\"");
++            throw new IllegalArgumentException("Invalid input: JSON Pointer expression must start with '/': \""+sourceText+"\"");
+         }
+         return _parseHeadAndTail(sourceText);
+     }
+-
+-    /**
+-     * Alias for {@link #parse}; added to make instances automatically
+-     * deserializable by Jackson databind.
+-     */
+-    public static JsonPointerReference fromString(String sourceText) { return parse(sourceText); }
+-
+-    /* Factory method that composes a pointer instance, given a set
+-     * of 'raw' segments: raw meaning that no processing will be done,
+-     * no escaping may is present.
+-     * 
+-     * @param segments
+-     * 
+-     * @return Constructed path instance
+-     */
+-    /* TODO!
+-    public static JsonPointer fromSegment(String... segments)
+-    {
+-        if (segments.length == 0) {
+-            return EMPTY;
+-        }
+-        JsonPointer prev = null;
+-                
+-        for (String segment : segments) {
+-            JsonPointer next = new JsonPointer()
+-        }
+-    }
+-    */
+     
+     /*
+     /**********************************************************
+     /* Public API
+     /**********************************************************
+      */
++    
+ 
+     public boolean matchesFully() { return _nextSegment == null; }
+     public String getMatchingProperty() { return _matchingPropertyName; }
+@@ -184,6 +157,25 @@ public class JsonPointerReference
+         return _nextSegment;
+     }
+ 
++    /**
++     * Accessor for getting a "pointer", instance from current segment to
++     * the leaf segment. For matching state, will return the matching state.
++     */
++    public JsonPointerReference leafSegment() {
++        JsonPointerReference current = this;
++        while ((current._nextSegment != null) && !current._nextSegment.matchesFully()) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
++    /**
++     * Alias for {@link #leafSegment()}.
++     */
++    public JsonPointerReference getLast() {
++        return leafSegment();
++    }
++
+     /**
+      * Accessor for getting a "pointer", instance from current segment to
+      * segment before segment leaf. For root pointer, will return null.
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index e2c21487..d433a089 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,18 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesFully());
+         assertNull(ptr.nextSegment());
+     }
++    public void testLeafSegment() throws Exception
++    {
++        JsonPointerReference ptr = JsonPointerReference.parse("/score/-");
++        JsonPointerReference leaf = ptr.leafSegment();
++
++        assertEquals("/-", leaf.toString());
++        assertEquals("-", leaf.getMatchingProperty());
++        assertEquals(-1, leaf.getMatchingIndex());
++        assertSame(leaf, ptr.getLast());
++
++        JsonPointerReference single = JsonPointerReference.parse("/score");
++        assertSame(single, single.leafSegment());
++        assertSame(single, single.getLast());
++    }
+ }

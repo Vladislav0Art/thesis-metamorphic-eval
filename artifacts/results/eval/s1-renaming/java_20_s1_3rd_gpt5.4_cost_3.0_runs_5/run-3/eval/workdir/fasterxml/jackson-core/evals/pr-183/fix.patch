@@ -1,0 +1,56 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+index 7f417979..2b405854 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/SegmentedTextBuffer.java
+@@ -304,11 +304,12 @@ public final class SegmentedTextBuffer
+             return (resultChars = cachedString.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!segmentsPresent)  return activeSegment;
++        if (!segmentsPresent)  return (activeSegment == null) ? EMPTY_CHARS : activeSegment;
+         // Nope, need to have/create a non-segmented array and return it
+         return getContentsAsArray();
+     }
+ 
++
+     /*
+     /**********************************************************
+     /* Other accessors:
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 044060a5..baad6ad9 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -74,4 +74,20 @@ public class TestTextBuffer
+               }
+           }
+       }
++
++      public void testEmptyGetTextBufferConsistency()
++      {
++          SegmentedTextBuffer tb = new SegmentedTextBuffer(new BufferRecycler());
++          tb.resetToEmpty();
++
++          char[] first = tb.getTextBuffer();
++          assertNotNull(first);
++          assertEquals(0, first.length);
++
++          assertEquals("", tb.getContentsAsString());
++
++          char[] second = tb.getTextBuffer();
++          assertNotNull(second);
++          assertEquals(0, second.length);
++      }
+ }

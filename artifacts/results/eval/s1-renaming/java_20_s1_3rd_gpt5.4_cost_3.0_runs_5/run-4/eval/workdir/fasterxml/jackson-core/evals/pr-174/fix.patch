@@ -1,0 +1,81 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+index 4aa3e3a2..034439ea 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+@@ -194,6 +194,33 @@ public class JsonPointerReference
+         return _headSegment;
+     }
+ 
++    /**
++     * Accessor for getting the leaf segment of this pointer. For example,
++     * calling this method on "/a/b" returns a pointer instance for "/b".
++     * For root pointer, will return null.
++     *
++     * @since 2.5
++     */
++    public JsonPointerReference leafSegment() {
++        if (_nextSegment == null) {
++            return null;
++        }
++        JsonPointerReference current = this;
++        while (current._nextSegment._nextSegment != null) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
++    /**
++     * Alias for {@link #leafSegment()}.
++     *
++     * @since 2.5
++     */
++    public JsonPointerReference getLast() {
++        return leafSegment();
++    }
++
+     /*
+     /**********************************************************
+     /* Standard method overrides
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index e2c21487..d515e3a6 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -100,6 +100,24 @@ public class TestJsonPointer extends BaseTest
+         // done!
+         ptr = ptr.nextSegment();
+         assertTrue(ptr.matchesFully());
+-        assertNull(ptr.nextSegment());
++    }
++
++    public void testLeafSegment() throws Exception
++    {
++        JsonPointerReference ptr = JsonPointerReference.parse("/Image/15/name");
++        assertEquals("/name", ptr.leafSegment().toString());
++        assertEquals("/name", ptr.getLast().toString());
++        assertEquals("/name", ptr.nextSegment().nextSegment().leafSegment().toString());
++
++        ptr = JsonPointerReference.parse("/score/-");
++        assertEquals("/-", ptr.leafSegment().toString());
++        assertEquals("/-", ptr.getLast().toString());
++
++        ptr = JsonPointerReference.parse("/name");
++        assertEquals("/name", ptr.leafSegment().toString());
++        assertEquals("/name", ptr.getLast().toString());
++
++        assertNull(JsonPointerReference.parse("").leafSegment());
++        assertNull(JsonPointerReference.parse("").getLast());
+     }
+ }

@@ -1,0 +1,130 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..7d74b9bb8 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -20,21 +20,13 @@ unset CDPATH
+ # This unwieldy bit of scripting is to try to catch instances where Logstash
+ # was launched from a symlink, rather than a full path to the Logstash binary
+ if [ -L "$0" ]; then
+-  # Launched from a symlink
+-  # --Test for the readlink binary
+-  RL="$(command -v readlink)"
+-  if [ $? -eq 0 ]; then
+-    # readlink exists
+-    SOURCEPATH="$($RL $0)"
++  # Dereference the symlink to get the absolute path
++  SOURCEPATH="$(readlink $0)"
++  if expr "$SOURCEPATH" : '.*' > /dev/null; then
++    # The path is absolute
++    :
+   else
+-    # readlink not found, attempt to parse the output of stat
+-    SOURCEPATH="$(stat -c %N $0 | awk '{print $3}' | sed -e 's/\‘//' -e 's/\’//')"
+-    if [ $? -ne 0 ]; then
+-      # Failed to execute or parse stat
+-      echo "Failed to set LOGSTASH_HOME from $(cd `dirname $0`/..; pwd)/bin/logstash.lib.sh"
+-      echo "You may need to launch Logstash with a full path instead of a symlink."
+-      exit 1
+-    fi
++    SOURCEPATH="$(dirname $0)/$SOURCEPATH"
+   fi
+ else
+   # Not a symlink
+@@ -49,6 +41,7 @@ export SINCEDB_DIR
+ LOGSTASH_JARS=${LOGSTASH_HOME}/logstash-core/lib/jars
+ JRUBY_HOME="${LOGSTASH_HOME}/vendor/jruby"
+ 
++
+ # iterate over the command line args and look for the argument
+ # after --path.settings to see if the jvm.options file is in
+ # that path and set LS_JVM_OPTS accordingly
+@@ -95,12 +88,20 @@ setup_java() {
+   if [ -z "$JAVACMD" ]; then
+     setup_bundled_jdk_part
+     JAVACMD_TEST=`command -v java`
++    BUNDLED_JDK_VERSION=""
++    if [ -f "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION" ] ; then
++      BUNDLED_JDK_VERSION=$(cat "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION")
++    fi
+     if [ -n "$LS_JAVA_HOME" ]; then
+       echo "Using LS_JAVA_HOME defined java: ${LS_JAVA_HOME}."
+       if [ -x "$LS_JAVA_HOME/bin/java" ]; then
+         JAVACMD="$LS_JAVA_HOME/bin/java"
+         if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+-          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          if [ -n "$BUNDLED_JDK_VERSION" ] ; then
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK (${BUNDLED_JDK_VERSION})."
++          else
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          fi
+         fi
+       else
+         echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."
+diff --git a/bin/setup.bat b/bin/setup.bat
+index 5e8acb4d1..99b72c01b 100644
+--- a/bin/setup.bat
++++ b/bin/setup.bat
+@@ -24,7 +24,17 @@ if defined LS_JAVA_HOME (
+   set JAVACMD=%LS_JAVA_HOME%\bin\java.exe
+   echo Using LS_JAVA_HOME defined java: %LS_JAVA_HOME%
+   if exist "%LS_HOME%\jdk" (
+-    echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK.
++    set BUNDLED_JDK_VERSION=
++    if exist "%LS_HOME%\jdk\VERSION" (
++      for /F "usebackq delims=" %%A in ("%LS_HOME%\jdk\VERSION") do (
++        if not defined BUNDLED_JDK_VERSION set BUNDLED_JDK_VERSION=%%A
++      )
++    )
++    if defined BUNDLED_JDK_VERSION (
++      echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK ^(!BUNDLED_JDK_VERSION!^).
++    ) else (
++      echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK.
++    )
+   )
+ ) else (
+   if exist "%LS_HOME%\jdk" (
+@@ -62,4 +72,4 @@ if not exist %JRUBY_BIN% (
+   exit /b 1
+ )
+ 
+-set RUBYLIB=%LS_HOME%\lib
+\ No newline at end of file
++set RUBYLIB=%LS_HOME%\lib
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..161b7eaf7 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -861,6 +861,19 @@ tasks.register("copyJdk", Copy) {
+     // CLI project properties: -Pjdk_bundle_os=[windows|linux|darwin] -Pjdk_arch=[arm64|x86_64]
+     doLast {
+         System.out.println "Download location is ${project.ext.jdkDownloadLocation}, Decompressing ${project.ext.jdkDirectory} to \"${project.ext.jdkBundlingDirectory}\""
++        String jdkHome = selectOsType() == "darwin" ? "${project.ext.jdkBundlingDirectory}/Contents/Home" : project.ext.jdkBundlingDirectory
++        File releaseFile = file("${jdkHome}/release")
++        if (!releaseFile.exists()) {
++            throw new GradleException("Bundled JDK release file not found: ${releaseFile}")
++        }
++        String implementorVersion = releaseFile.readLines()
++            .find { it.startsWith("IMPLEMENTOR_VERSION=") }
++            ?.replaceFirst(/^IMPLEMENTOR_VERSION="/, "")
++            ?.replaceFirst(/"$/, "")
++        if (!implementorVersion) {
++            throw new GradleException("IMPLEMENTOR_VERSION not found in bundled JDK release file: ${releaseFile}")
++        }
++        file("${jdkHome}/VERSION").text = "${implementorVersion}\n"
+     }
+ }
+ 

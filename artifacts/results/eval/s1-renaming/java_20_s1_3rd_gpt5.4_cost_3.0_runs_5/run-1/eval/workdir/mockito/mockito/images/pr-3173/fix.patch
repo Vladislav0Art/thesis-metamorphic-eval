@@ -1,0 +1,47 @@
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockMaker.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockMaker.java
+index 7d8972cb0..58a0d20e9 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockMaker.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegatingByteBuddyMockMaker.java
+@@ -218,7 +218,7 @@ class InlineDelegatingByteBuddyMockMaker
+     private final DetachedThreadLocal<Map<Class<?>, BiConsumer<Object, MockedConstruction.Context>>>
+         constructionInterceptorLocal = new DetachedThreadLocal<>(DetachedThreadLocal.Cleaner.MANUAL);
+ 
+-    private final ThreadLocal<Boolean> inlineConstructionFlag = ThreadLocal.withInitial(() -> false);
++    private final ThreadLocal<Class<?>> currentMockClass = ThreadLocal.withInitial(() -> null);
+ 
+     private final ThreadLocal<Object> currentSpy = new ThreadLocal<>();
+ 
+@@ -272,7 +272,9 @@ class InlineDelegatingByteBuddyMockMaker
+             clazz -> {
+                     if (suspendedFlagLocal.get()) {
+                         return false;
+-                    } else if (inlineConstructionFlag.get() || constructionTypeLocal.get() != null) {
++                    } else if ((currentMockClass.get() != null
++                                    && clazz.isAssignableFrom(currentMockClass.get()))
++                            || constructionTypeLocal.get() != null) {
+                         return true;
+                     }
+                     Map<Class<?>, ?> interceptorMap = constructionInterceptorLocal.get();
+@@ -290,7 +292,7 @@ class InlineDelegatingByteBuddyMockMaker
+                 };
+         ConstructionCallback constructionCallback =
+                 (clazz, candidate, methodArgs, paramTypeNames) -> {
+-                    if (inlineConstructionFlag.get()) {
++                    if (currentMockClass.get() != null) {
+                         Object spyInstance = currentSpy.get();
+                         if (spyInstance == null) {
+                             return null;
+@@ -641,11 +643,11 @@ class InlineDelegatingByteBuddyMockMaker
+                     accessHelper.newInstance(
+                         chosenCtor,
+                         constructionDispatcher -> {
+-                                inlineConstructionFlag.set(true);
++                                currentMockClass.set(targetClass);
+                                 try {
+                                     return constructionDispatcher.newInstance();
+                                 } finally {
+-                                    inlineConstructionFlag.set(false);
++                                    currentMockClass.remove();
+                                 }
+                             },
+                         methodArgs);

@@ -1,0 +1,196 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+index 6626641a1..2f644738d 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+@@ -134,22 +134,24 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+ 
+         public AddressState.ReadOnly mutate(final String address,
+                                             final Consumer<AddressState> consumer) {
++            final PipelineInput[] currentInput = new PipelineInput[1];
+             final AddressState result = mapping.compute(address, (a, addressState) -> {
+                 if (addressState == null) {
+                     addressState = new AddressState(address);
+                 }
+ 
+                 consumer.accept(addressState);
+-
+-                // If this addressState has a listener, ensure that any waiting
+-                // threads get notified so that they can resume immediately
+-                final PipelineInput currentInput = addressState.getInput();
+-                if (currentInput != null) {
+-                    synchronized (currentInput) { currentInput.notifyAll(); }
+-                }
++                currentInput[0] = addressState.getInput();
+ 
+                 return addressState.isEmpty() ? null : addressState;
+             });
++
++            if (currentInput[0] != null) {
++                synchronized (currentInput[0]) {
++                    currentInput[0].notifyAll();
++                }
++            }
++
+             return result == null ? null : result.getReadOnlyView();
+         }
+ 
+diff --git a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+index 78f7c22ac..86d9c036c 100644
+--- a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
++++ b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+@@ -134,44 +134,30 @@ public class PipelineBusTest {
+         bus.sendEvents(output2, Collections.singletonList(rubyEvent()), false);
+         assertThat(input.eventCount.longValue()).isEqualTo(3L);
+ 
+-        // unlisten with first input, simulating a pipeline restart
+-        assertThat(bus.isBlockOnUnlisten()).isFalse();
+-        bus.unlisten(input, address);
+-        assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState -> {
+-            assertThat(addressState.getInput()).isNull();
+-            assertThat(addressState.getOutputs()).contains(output, output2);
+-        }));
+-
+-        // unregister one of the two senders, ensuring that the address state remains in-tact
++        // shut down one sender, ensuring address state remains intact
+         bus.unregisterSender(output, Collections.singleton(address));
+         assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState -> {
+-            assertThat(addressState.getInput()).isNull();
+-            assertThat(addressState.getOutputs()).contains(output2);
+-        }));
+-
+-        // listen with a new input, emulating the completion of a pipeline restart
+-        final TestPipelineInput input2 = new TestPipelineInput();
+-        assertThat(bus.listen(input2, address)).isTrue();
+-        assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState -> {
+-            assertThat(addressState.getInput()).isSameAs(input2);
++            assertThat(addressState.getInput()).isSameAs(input);
+             assertThat(addressState.getOutputs()).contains(output2);
+         }));
+         bus.sendEvents(output2, Collections.singletonList(rubyEvent()), false);
+-        assertThat(input2.eventCount.longValue()).isEqualTo(1L);
++        assertThat(input.eventCount.longValue()).isEqualTo(4L);
+ 
+-        // shut down our remaining sender, ensuring address state remains in-tact
++        // shut down our remaining sender, ensuring address state remains intact because listener is still active
+         bus.unregisterSender(output2, Collections.singleton(address));
+         assertThat(bus.getAddressState(address)).hasValueSatisfying((addressState -> {
+-            assertThat(addressState.getInput()).isSameAs(input2);
++            assertThat(addressState.getInput()).isSameAs(input);
+             assertThat(addressState.getOutputs()).isEmpty();
+         }));
+ 
+         // upon unlistening, ensure orphan address state has been cleaned up
+-        bus.unlisten(input2, address);
++        bus.unlisten(input, address);
+         assertThat(bus.getAddressState(address)).isNotPresent();
+     }
+ 
+ 
++
++
+     @Test
+     public void activeListenerPreventsPrune() throws InterruptedException {
+         bus.registerSender(output, addresses);
+@@ -403,4 +389,4 @@ public class PipelineBusTest {
+             return lastBatchSize;
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusV2Test.java b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusV2Test.java
+new file mode 100644
+index 000000000..8cc4ec98b
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusV2Test.java
+@@ -0,0 +1,76 @@
++package org.logstash.plugins.pipeline;
++
++import org.junit.Test;
++import org.logstash.ext.JrubyEventExtLibrary;
++
++import java.util.concurrent.CountDownLatch;
++import java.util.concurrent.TimeUnit;
++import java.util.stream.Stream;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++public class PipelineBusV2Test {
++
++    @Test
++    public void mutateDoesNotDeadlockWhenAnotherThreadHoldsListenerMonitor() throws Exception {
++        final PipelineBusV2 bus = new PipelineBusV2();
++        final TestPipelineInput input = new TestPipelineInput();
++        final String address = "deadlock-address";
++
++        assertThat(bus.listen(input, address)).isTrue();
++
++        final CountDownLatch firstMutationEntered = new CountDownLatch(1);
++        final CountDownLatch secondThreadHoldingInput = new CountDownLatch(1);
++        final CountDownLatch completeFirstMutation = new CountDownLatch(1);
++
++        final Thread first = new Thread(() -> bus.addressStates.mutate(address, (addressState) -> {
++            firstMutationEntered.countDown();
++            try {
++                if (!completeFirstMutation.await(5, TimeUnit.SECONDS)) {
++                    throw new AssertionError("timed out waiting to continue first mutation");
++                }
++            } catch (InterruptedException e) {
++                throw new AssertionError(e);
++            }
++        }), "first-mutation");
++        first.setDaemon(true);
++        first.start();
++
++        assertThat(firstMutationEntered.await(5, TimeUnit.SECONDS)).isTrue();
++
++        final Thread second = new Thread(() -> {
++            synchronized (input) {
++                secondThreadHoldingInput.countDown();
++                bus.addressStates.mutate(address, (addressState) -> { });
++            }
++        }, "second-mutation");
++        second.setDaemon(true);
++        second.start();
++
++        assertThat(secondThreadHoldingInput.await(5, TimeUnit.SECONDS)).isTrue();
++        completeFirstMutation.countDown();
++
++        first.join(TimeUnit.SECONDS.toMillis(5));
++        second.join(TimeUnit.SECONDS.toMillis(5));
++
++        assertThat(first.isAlive()).isFalse();
++        assertThat(second.isAlive()).isFalse();
++    }
++
++    private static final class TestPipelineInput implements PipelineInput {
++        @Override
++        public ReceiveResponse internalReceive(final Stream<JrubyEventExtLibrary.RubyEvent> events) {
++            return ReceiveResponse.completed();
++        }
++
++        @Override
++        public String getId() {
++            return "anonymous";
++        }
++
++        @Override
++        public boolean isRunning() {
++            return true;
++        }
++    }
++}

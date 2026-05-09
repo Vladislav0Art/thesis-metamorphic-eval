@@ -1,0 +1,135 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+index 4aa3e3a2..ca588314 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+@@ -77,31 +77,32 @@ public class JsonPointerReference
+         _headSegment = leadingRef;
+         // Ok; may always be a property
+         _matchingPropertyName = pathPart;
++        // but could be an index, if parsable
+         _matchingElementIndex = parseIndex(pathPart);
+     }
+-    
++
+     /*
+     /**********************************************************
+     /* Factory methods
+     /**********************************************************
+      */
+-    
++
+     /**
+-     * Factory method that parses given input and construct matching pointer
+-     * instance, if it represents a valid JSON Pointer: if not, a
+-     * {@link IllegalArgumentException} is thrown.
+-     * 
+-     * @throws IllegalArgumentException Thrown if the input does not present a valid JSON Pointer
+-     *   expression: currently the only such expression is one that does NOT start with
+-     *   a slash ('/').
++     * Factory method that parses given input and constructs pointer instance.
++     *
++     * @param sourceText String to parse
++     *
++     * @return Compiled {@link JsonPointerReference} instance, if input is valid
++     *
++     * @throws IllegalArgumentException Thrown if the input does not present a
++     *   valid JSON Pointer expression: currently the only such expression is
++     *   one that does NOT start with a slash ('/').
+      */
+     public static JsonPointerReference parse(String sourceText) throws IllegalArgumentException
+     {
+-        // First quick checks for well-known 'empty' pointer
+         if ((sourceText == null) || sourceText.length() == 0) {
+             return EMPTY;
+         }
+-        // And then quick validity check:
+         if (sourceText.charAt(0) != '/') {
+             throw new IllegalArgumentException("Invalid input: JSON Pointer expression must start with '/': "+"\""+ sourceText +"\"");
+         }
+@@ -114,6 +115,15 @@ public class JsonPointerReference
+      */
+     public static JsonPointerReference fromString(String sourceText) { return parse(sourceText); }
+ 
++    /* Factory method that composes a pointer instance, given a set
++     * of 'raw' segments: raw meaning that no processing will be done,
++     * no escaping may is present.
++     * 
++     * @param segments
++     * 
++     * @return Constructed path instance
++     */
++
+     /* Factory method that composes a pointer instance, given a set
+      * of 'raw' segments: raw meaning that no processing will be done,
+      * no escaping may is present.
+@@ -184,6 +194,22 @@ public class JsonPointerReference
+         return _nextSegment;
+     }
+ 
++    /**
++     * Accessor for getting the leaf segment of this pointer, if any.
++     * For leaf pointers this method returns the pointer itself; for the
++     * root pointer, it will return null.
++     */
++    public JsonPointerReference getLast() {
++        if (_nextSegment == null) {
++            return null;
++        }
++        JsonPointerReference current = this;
++        while (current._nextSegment._nextSegment != null) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
+     /**
+      * Accessor for getting a "pointer", instance from current segment to
+      * segment before segment leaf. For root pointer, will return null.
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index e2c21487..ad225315 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,30 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesFully());
+         assertNull(ptr.nextSegment());
+     }
++
++    public void testGetLast() throws Exception
++    {
++        JsonPointerReference ptr = JsonPointerReference.parse("/Image/15/name");
++        JsonPointerReference last = ptr.getLast();
++        assertNotNull(last);
++        assertEquals("/name", last.toString());
++        assertEquals("name", last.getMatchingProperty());
++        assertEquals(-1, last.getMatchingIndex());
++
++        ptr = JsonPointerReference.parse("/score/-");
++        last = ptr.getLast();
++        assertNotNull(last);
++        assertEquals("/-", last.toString());
++        assertEquals("-", last.getMatchingProperty());
++        assertEquals(-1, last.getMatchingIndex());
++
++        ptr = JsonPointerReference.parse("/score");
++        last = ptr.getLast();
++        assertNotNull(last);
++        assertSame(ptr, last);
++        assertEquals("/score", last.toString());
++
++        ptr = JsonPointerReference.parse("");
++        assertNull(ptr.getLast());
++    }
+ }

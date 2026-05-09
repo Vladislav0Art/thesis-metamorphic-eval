@@ -1,0 +1,157 @@
+
+diff --git a/.gitignore b/.gitignore
+index 97155eb32..76babf412 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -22,3 +22,7 @@ target
+ *.ipr
+ *.iws
+ /target
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+index 967fb8964..f23538300 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
++++ b/src/main/java/com/fasterxml/jackson/databind/MapperFeature.java
+@@ -286,6 +286,18 @@ public enum MapperFeature implements ConfigFeature
+      */
+     USE_STATIC_TYPING(false),
+ 
++    /**
++     * Feature that determines whether the declared base type of a polymorphic value
++     * is used as the default implementation if no explicit default implementation
++     * is configured and no type id is present in the input.
++     *<p>
++     * This is only applicable during deserialization, and only when the declared
++     * base type is concrete.
++     *<p>
++     * Feature is disabled by default.
++     */
++    USE_BASE_TYPE_AS_DEFAULT_IMPL(false),
++
+     /*
+     /******************************************************
+     /* View-related features
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
+index fbd834ece..feaf795d5 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
+@@ -123,7 +123,12 @@ public class StandardTypeResolverBuilder
+         JavaType defaultImplementation;
+ 
+         if (_defaultImpl == null) {
+-            defaultImplementation = null;
++            if (serializationConfig.isEnabled(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL)
++                    && baseJavaType.isConcrete()) {
++                defaultImplementation = baseJavaType;
++            } else {
++                defaultImplementation = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+diff --git a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+index 46acfa8cb..63ea37f72 100644
+--- a/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
++++ b/src/test/java/com/fasterxml/jackson/databind/jsontype/TestPolymorphicWithDefaultImpl.java
+@@ -122,38 +122,44 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         public Event() {}
+     }
+ 
+-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
+-            property = "clazz")
+-    abstract static class BaseClass { }    
+-
+-    static class BaseWrapper {
+-        public BaseClass value;
++    @JsonTypeInfo(use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
++    public interface BaseTypeAsDefault {
++        String getName();
++        void setName(String name);
+     }
+ 
+-    // [databind#1533]
+-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY,
+-            property = "type")
+-    static class AsProperty {
++    public static class BaseTypeAsDefaultImpl implements BaseTypeAsDefault {
++        protected String name;
++
++        @Override
++        public String getName() { return name; }
++
++        @Override
++        public void setName(String name) { this.name = name; }
+     }
+ 
+-    static class AsPropertyWrapper {
+-        public AsProperty value;
++    protected final ObjectMapper MAPPER = new ObjectMapper();
++
++    static class BaseValue {
++        public int x;
+     }
+ 
+-    /*
+-    /**********************************************************
+-    /* Unit tests, deserialization
+-    /**********************************************************
+-     */
++    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "clazz")
++    static class BaseValueWrapper {
++        public BaseValueWrapper() { }
++    }
+ 
+-    private final ObjectMapper MAPPER = new ObjectMapper();
++    static class BaseWrapper {
++        public BaseValue value;
++    }
+ 
+-    public void testDeserializationWithObject() throws Exception
+-    {
+-        Inter inter = MAPPER.readerFor(Inter.class).readValue("{\"type\": \"mine\", \"blah\": [\"a\", \"b\", \"c\"]}");
+-        assertTrue(inter instanceof MyInter);
+-        assertFalse(inter instanceof LegacyInter);
+-        assertEquals(Arrays.asList("a", "b", "c"), ((MyInter) inter).blah);
++    static class AsPropertyWrapper {
++        @JsonTypeInfo(use = JsonTypeInfo.Id.NAME,
++                include = JsonTypeInfo.As.PROPERTY,
++                property = "type",
++                defaultImpl = LegacyInter.class)
++        @JsonSubTypes(value = { @JsonSubTypes.Type(name = "mine", value = MyInter.class) })
++        public Object value;
+     }
+ 
+     public void testDeserializationWithString() throws Exception
+@@ -258,6 +264,29 @@ public class TestPolymorphicWithDefaultImpl extends BaseMapTest
+         assertNull(w.value);
+     }
+ 
++    public void testMissingTypeIdForConcreteTargetTypeWithoutFeature() throws Exception
++    {
++        try {
++            MAPPER.readValue(aposToQuotes("{'name':'name'}"), BaseTypeAsDefaultImpl.class);
++            fail("Expected " + InvalidTypeIdException.class);
++        } catch (InvalidTypeIdException e) {
++            verifyException(e, "missing type id property 'type'");
++        }
++    }
++
++    public void testMissingTypeIdForConcreteTargetTypeWithFeature() throws Exception
++    {
++        ObjectMapper mapper = new ObjectMapper();
++        mapper.enable(MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL);
++
++        BaseTypeAsDefaultImpl result = mapper.readValue(
++                aposToQuotes("{'name':'name'}"),
++                BaseTypeAsDefaultImpl.class);
++
++        assertNotNull(result);
++        assertEquals("name", result.getName());
++    }
++
+     public void testWithoutEmptyStringAsNullObject1533() throws Exception
+     {
+         ObjectReader r = MAPPER.readerFor(AsPropertyWrapper.class)

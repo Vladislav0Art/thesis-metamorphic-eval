@@ -1,0 +1,34 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..80824b2e0 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -71,14 +71,11 @@ allprojects {
+       }
+   }
+ 
+-  tasks.withType(Copy).configureEach {
+-      duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+-  }
+-
+   clean {
+       delete "${projectDir}/out/"
+   }
+ 
++
+   //https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
+   tasks.withType(Test) {
+     testLogging {

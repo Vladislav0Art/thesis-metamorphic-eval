@@ -1,0 +1,19 @@
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 044060a5..3d108602 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -74,4 +74,14 @@ public class TestTextBuffer
+               }
+           }
+       }
++
++    // [Core#182]
++    public void testEmpty() {
++        SegmentedTextBuffer tb = new SegmentedTextBuffer(new BufferRecycler());
++        tb.resetToEmpty();
++
++        assertTrue(tb.getTextBuffer().length == 0);
++        tb.getContentsAsString();
++        assertTrue(tb.getTextBuffer().length == 0);
++    }
+ }

@@ -1,0 +1,154 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/dependencies-report b/bin/dependencies-report
+index 35261cb0b..dfc21735c 100755
+--- a/bin/dependencies-report
++++ b/bin/dependencies-report
+@@ -1,5 +1,15 @@
+ #!/bin/sh
+-# Generate a dependency report.
++
++# Shared setup for bin/logstash and friends
++#
++# These functions are provided for the calling script:
++#   setup
++#   ruby_exec
++#
++# Expected environment variables:
++#   LS_HOME - the Logstash home directory
++#   LS_SETTINGS_DIR - the Logstash settings directory
++#   LS_JVM_OPTS - the Logstash jvm.options file
+ 
+ unset CDPATH
+ # This unwieldy bit of scripting is to try to catch instances where Logstash
+@@ -7,7 +17,7 @@ unset CDPATH
+ if [ -L "$0" ]; then
+   # Launched from a symlink
+   # --Test for the readlink binary
+-  RL="$(which readlink)"
++  RL="$(command -v readlink)"
+   if [ $? -eq 0 ]; then
+     # readlink exists
+     SOURCEPATH="$(${RL} $0)"
+@@ -16,7 +26,7 @@ if [ -L "$0" ]; then
+     SOURCEPATH="$(stat -c %N $0 | awk '{print $3}' | sed -e 's/\‘//' -e 's/\’//')"
+     if [ $? -ne 0 ]; then
+       # Failed to execute or parse stat
+-      echo "Failed to find source library at path $(cd `dirname $0`/..; pwd)/bin/logstash.lib.sh"
++      echo "Failed to set LOGSTASH_HOME from $(cd `dirname $0`/..; pwd)/bin/logstash.lib.sh"
+       echo "You may need to launch Logstash with a full path instead of a symlink."
+       exit 1
+     fi
+@@ -26,8 +36,39 @@ else
+   SOURCEPATH="$0"
+ fi
+ 
+-. "$(cd `dirname ${SOURCEPATH}`/..; pwd)/bin/logstash.lib.sh"
+-setup
++LOGSTASH_HOME="$(cd `dirname ${SOURCEPATH}`/..; pwd)"
++if [ ! -d "$LOGSTASH_HOME" ]; then
++  echo "Could not find logstash home path."
++  exit 1
++fi
++
++if [ -z "$LS_HOME" ]; then
++  export LS_HOME="$LOGSTASH_HOME"
++fi
+ 
+-mkdir -p build
+-ruby_exec "logstash-core/lib/logstash/dependency_report_runner.rb" "$@"
++if [ -z "$LS_SETTINGS_DIR" ]; then
++  export LS_SETTINGS_DIR="${LS_HOME}/config"
++fi
++
++if [ -z "$LS_JVM_OPTS" ]; then
++  LS_JVM_OPTS="${LS_SETTINGS_DIR}/jvm.options"
++fi
++
++LOGSTASH_JARS="${LOGSTASH_HOME}/logstash-core/lib/jars"
++JRUBY_HOME="${LOGSTASH_HOME}/vendor/jruby"
++
++setup_bundled_jdk_part() {
++  OS_NAME="$(uname -s)"
++  if [ "$OS_NAME" = "Darwin" ]; then
++    BUNDLED_JDK_PART="jdk.app/Contents/Home"
++  else
++    BUNDLED_JDK_PART="jdk"
++  fi
++}
++
++setup_bundled_jdk_version() {
++  BUNDLED_JDK_VERSION=""
++  if [ -r "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION" ]; then
++    BUNDLED_JDK_VERSION="$(cat "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION")"
++  fi
++}
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..f69e5b4e1 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -8,13 +8,8 @@
+ #   DEBUG
+ #
+ # These functions are provided for the calling script:
+-#   setup() to setup the environment
+-#   ruby_exec() to execute a ruby script with using the setup runtime environment
+-#
+-# The following env var will be used by this script if set:
+-#   LS_GEM_HOME and LS_GEM_PATH to overwrite the path assigned to GEM_HOME and GEM_PATH
+-#   LS_JAVA_OPTS to append extra options to the JVM options provided by logstash
+-#   LS_JAVA_HOME to point to the java home
++#   setup
++#   ruby_exec
+ 
+ unset CDPATH
+ # This unwieldy bit of scripting is to try to catch instances where Logstash
+@@ -22,7 +17,7 @@ unset CDPATH
+ if [ -L "$0" ]; then
+   # Launched from a symlink
+   # --Test for the readlink binary
+-  RL="$(command -v readlink)"
++  RL="$(which readlink)"
+   if [ $? -eq 0 ]; then
+     # readlink exists
+     SOURCEPATH="$($RL $0)"
+@@ -76,6 +71,13 @@ setup_bundled_jdk_part() {
+   fi
+ }
+ 
++setup_bundled_jdk_version() {
++  BUNDLED_JDK_VERSION=""
++  if [ -r "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION" ]; then
++    BUNDLED_JDK_VERSION="$(cat "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION")"
++  fi
++}
++
+ # Accepts 1 parameter which is the path the directory where logstash jar are contained.
+ setup_classpath() {
+   local classpath="${1?classpath (and jar_directory) required}"
+@@ -100,7 +102,12 @@ setup_java() {
+       if [ -x "$LS_JAVA_HOME/bin/java" ]; then
+         JAVACMD="$LS_JAVA_HOME/bin/java"
+         if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+-          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          setup_bundled_jdk_version
++          if [ -n "$BUNDLED_JDK_VERSION" ]; then
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK of version ${BUNDLED_JDK_VERSION}."
++          else
++            echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          fi
+         fi
+       else
+         echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."

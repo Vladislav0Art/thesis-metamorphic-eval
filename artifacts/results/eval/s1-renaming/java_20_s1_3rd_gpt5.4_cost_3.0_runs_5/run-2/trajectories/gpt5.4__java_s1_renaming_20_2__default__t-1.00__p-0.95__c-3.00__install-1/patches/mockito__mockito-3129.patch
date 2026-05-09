@@ -1,0 +1,47 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java
+index 9d50b7f5d..2806ecf6e 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/DefaultMockitoPluginFactory.java
+@@ -106,7 +106,7 @@ public class DefaultMockitoPluginFactory implements MockitoPluginProvider {
+                             + "Mockito is unable to load the default implementation of class that is a part of Mockito distribution. "
+                             + "Failed to load "
+                             + pluginClass,
+-                ex);
++                    ex);
+         }
+     }
+ 
+diff --git a/src/main/java/org/mockito/internal/configuration/plugins/Plugins.java b/src/main/java/org/mockito/internal/configuration/plugins/Plugins.java
+index da920c240..d1b6561c0 100644
+--- a/src/main/java/org/mockito/internal/configuration/plugins/Plugins.java
++++ b/src/main/java/org/mockito/internal/configuration/plugins/Plugins.java
+@@ -98,12 +98,11 @@ public final class Plugins {
+     /**
+      * Returns the {@link DoNotMock} enforcer available for the current runtime.
+      *
+-     * <p> Returns {@link org.mockito.internal.configuration.DefaultDoNotMockEnforcer} if no
+-     * {@link DoNotMockEnforcer} extension exists or is visible in the current classpath.</p>
++     * <p>Returns {@link org.mockito.internal.configuration.DefaultDoNotMockEnforcer} if no
++     * {@link org.mockito.plugins.DoNotMockEnforcer} extension exists or is visible in the
++     * current classpath.</p>
+      */
+     public static DoNotMockEnforcer getDoNotMockEnforcer() {
+         return registry.getDoNotMockEnforcer();
+     }
+-
+-    private Plugins() {}
+ }

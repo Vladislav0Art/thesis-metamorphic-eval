@@ -1,0 +1,132 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java
+index a4c6f0cbd..318b95c07 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java
+@@ -347,6 +347,11 @@ class InlineDelegateByteBuddyMockFactory
+                         true);
+     }
+ 
++    @Override
++    public <T> T createMock(MockCreationSettings<T> creationSettings, MockHandler invocationHandler) {
++        return createMockInstance(creationSettings, invocationHandler);
++    }
++
+     public <T> T createMockInstance(MockCreationSettings<T> creationSettings, MockHandler invocationHandler) {
+         return createMockInstance(creationSettings, invocationHandler, false);
+     }
+@@ -489,6 +494,11 @@ class InlineDelegateByteBuddyMockFactory
+         }
+     }
+ 
++    @Override
++    public void resetMock(Object target, MockHandler newHandler, MockCreationSettings settings) {
++        resetMockInterceptor(target, newHandler, settings);
++    }
++
+     public void resetMockInterceptor(Object target, MockHandler replacementHandler, MockCreationSettings creationSettings) {
+         MockMethodInterceptor methodInterceptor =
+                 new MockMethodInterceptor(replacementHandler, creationSettings);
+diff --git a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+index 5e39714cf..a98c899e6 100644
+--- a/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
++++ b/src/test/java/org/mockitousage/stubbing/DeepStubbingTest.java
+@@ -69,6 +69,16 @@ public class DeepStubbingTest extends TestBase {
+         }
+     }
+ 
++    enum FinalEnum {
++        A;
++
++        double getValue() {
++            return 2.5d;
++        }
++    }
++    interface HasEnum {
++        FinalEnum getFinalEnum();
++    }
+     static final class FinalClass {}
+ 
+     interface First {
+@@ -361,6 +371,15 @@ public class DeepStubbingTest extends TestBase {
+         assertEquals(value, person.getFinalClass());
+     }
+ 
++    @Test
++    public void deep_stub_can_mock_enum_return_type() {
++        HasEnum hasEnum = mock(HasEnum.class, RETURNS_DEEP_STUBS);
++
++        when(hasEnum.getFinalEnum().getValue()).thenReturn(2.5d);
++
++        assertThat(hasEnum.getFinalEnum().getValue()).isEqualTo(2.5d);
++    }
++
+     @Test
+     public void deep_stub_does_not_try_to_mock_generic_final_classes() {
+         First first = mock(First.class, RETURNS_DEEP_STUBS);
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+index a418aab7a..6be29c622 100644
+--- a/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/EnumMockingTest.java
+@@ -5,13 +5,19 @@
+ package org.mockitoinline;
+ 
+ import org.junit.Test;
++import org.mockito.Answers;
++import org.mockito.Mock;
+ import org.mockito.Mockito;
++import org.mockito.MockitoAnnotations;
+ 
+ import static org.hamcrest.CoreMatchers.*;
+ import static org.hamcrest.MatcherAssert.assertThat;
+ 
+ public class EnumMockingTest {
+ 
++    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
++    Holder annotatedHolder;
++
+     @Test
+     public void testMockEnum() {
+         Animal a = Mockito.mock(Animal.class);
+@@ -20,6 +26,28 @@ public class EnumMockingTest {
+         assertThat(a.name(), nullValue(String.class));
+     }
+ 
++    @Test
++    public void testDeepStubEnum() {
++        Holder holder = Mockito.mock(Holder.class, Mockito.RETURNS_DEEP_STUBS);
++
++        Mockito.when(holder.getAnimal().sound()).thenReturn("woof");
++
++        assertThat(holder.getAnimal().sound(), equalTo("woof"));
++    }
++
++    @Test
++    public void testAnnotatedDeepStubEnum() {
++        MockitoAnnotations.openMocks(this);
++
++        Mockito.when(annotatedHolder.getAnimal().sound()).thenReturn("woof");
++
++        assertThat(annotatedHolder.getAnimal().sound(), equalTo("woof"));
++    }
++
++    interface Holder {
++        Animal getAnimal();
++    }
++
+     enum Animal {
+         CAT {
+             @Override

@@ -1,0 +1,101 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java
+index a4c6f0cbd..bc6de0631 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineDelegateByteBuddyMockFactory.java
+@@ -347,6 +347,11 @@ class InlineDelegateByteBuddyMockFactory
+                         true);
+     }
+ 
++    @Override
++    public <T> T createMock(MockCreationSettings<T> creationSettings, MockHandler handler) {
++        return createMockInstance(creationSettings, handler);
++    }
++
+     public <T> T createMockInstance(MockCreationSettings<T> creationSettings, MockHandler invocationHandler) {
+         return createMockInstance(creationSettings, invocationHandler, false);
+     }
+@@ -489,6 +494,14 @@ class InlineDelegateByteBuddyMockFactory
+         }
+     }
+ 
++    @Override
++    public void resetMock(
++            Object target,
++            MockHandler newHandler,
++            MockCreationSettings settings) {
++        resetMockInterceptor(target, newHandler, settings);
++    }
++
+     public void resetMockInterceptor(Object target, MockHandler replacementHandler, MockCreationSettings creationSettings) {
+         MockMethodInterceptor methodInterceptor =
+                 new MockMethodInterceptor(replacementHandler, creationSettings);
+diff --git a/src/test/java/org/mockitousage/bugs/deepstubs/DeepStubsWithEnumReturnTypeTest.java b/src/test/java/org/mockitousage/bugs/deepstubs/DeepStubsWithEnumReturnTypeTest.java
+new file mode 100644
+index 000000000..c36a8b351
+--- /dev/null
++++ b/src/test/java/org/mockitousage/bugs/deepstubs/DeepStubsWithEnumReturnTypeTest.java
+@@ -0,0 +1,50 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage.bugs.deepstubs;
++
++import static org.junit.Assert.assertEquals;
++import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.when;
++
++import org.junit.Test;
++import org.mockito.MockMakers;
++import org.mockito.Mockito;
++
++public class DeepStubsWithEnumReturnTypeTest {
++
++    interface Piece {
++        PieceType getPieceType();
++    }
++
++    enum PieceType {
++        SQUARE(2.0d),
++        CIRCLE(2.5d);
++
++        private final double costPerPieceSpace;
++
++        PieceType(double costPerPieceSpace) {
++            this.costPerPieceSpace = costPerPieceSpace;
++        }
++
++        double getCostPerPieceSpace() {
++            return costPerPieceSpace;
++        }
++    }
++
++    @Test
++    public void deep_stubs_can_stub_enum_return_type_with_inline_mock_maker() {
++        Piece piece =
++                mock(
++                        Piece.class,
++                        Mockito.withSettings()
++                                .mockMaker(MockMakers.INLINE)
++                                .defaultAnswer(RETURNS_DEEP_STUBS));
++
++        when(piece.getPieceType().getCostPerPieceSpace()).thenReturn(2.5d);
++
++        assertEquals(2.5d, piece.getPieceType().getCostPerPieceSpace(), 0.0d);
++    }
++}

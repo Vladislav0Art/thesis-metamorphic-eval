@@ -1,0 +1,84 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+index c0faa714..dabe5b9b 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/ReaderBackedJsonParser.java
+@@ -781,12 +781,6 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+         }
+     }
+ 
+-    /*
+-    /**********************************************************
+-    /* Public API, nextXxx() overrides
+-    /**********************************************************
+-     */
+-
+     // Implemented since 2.7
+     @Override
+     public boolean nextPropertyName(SerializableString serializableStringValue) throws IOException
+@@ -904,6 +898,14 @@ public class ReaderBackedJsonParser // final in 2.3, earlier
+         }
+         if (_parsingContext.expectComma()) {
+             index = _skipCommaAndWhitespace(index);
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if (index == INT_RCURLY) {
++                    updateLocation();
++                    _parsingContext = _parsingContext.clearAndGetParent();
++                    _currToken = JsonToken.END_OBJECT;
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             updateLocation();
+diff --git a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+index 16597299..893f31a3 100644
+--- a/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
++++ b/src/test/java/com/fasterxml/jackson/core/read/TrailingCommasTest.java
+@@ -289,6 +289,34 @@ public class TrailingCommasTest extends BaseTest {
+     p.close();
+   }
+ 
++  @SuppressWarnings("resource")
++  @Test
++  public void testObjectTrailingCommaWithNextFieldName() throws Exception {
++    String json = "{\"a\": true, \"b\": false,}";
++
++    JsonParser p = createParser(factory, mode, json);
++
++    assertEquals(JsonToken.START_OBJECT, p.nextToken());
++
++    assertEquals("a", p.nextFieldName());
++    assertEquals(JsonToken.FIELD_NAME, p.getCurrentToken());
++    assertToken(JsonToken.VALUE_TRUE, p.nextToken());
++
++    assertEquals("b", p.nextFieldName());
++    assertEquals(JsonToken.FIELD_NAME, p.getCurrentToken());
++    assertToken(JsonToken.VALUE_FALSE, p.nextToken());
++
++    if (features.contains(Feature.ALLOW_TRAILING_COMMA)) {
++      assertNull(p.nextFieldName());
++      assertToken(JsonToken.END_OBJECT, p.getCurrentToken());
++      assertEnd(p);
++    } else {
++      assertUnexpected(p, '}');
++    }
++    p.close();
++  }
++
++
+   @Test
+   public void testObjectTrailingCommas() throws Exception {
+     String json = "{\"a\": true, \"b\": false,,}";

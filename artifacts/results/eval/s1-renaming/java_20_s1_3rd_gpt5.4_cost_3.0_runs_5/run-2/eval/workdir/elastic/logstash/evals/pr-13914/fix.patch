@@ -1,0 +1,87 @@
+
+diff --git a/.gitignore b/.gitignore
+index 4c0c15eb7..682d481bf 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -61,4 +61,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/bin/logstash.lib.sh b/bin/logstash.lib.sh
+index 29680db94..ca01b9712 100755
+--- a/bin/logstash.lib.sh
++++ b/bin/logstash.lib.sh
+@@ -93,14 +93,20 @@ CLASSPATH="$(setup_classpath $CLASSPATH $LOGSTASH_JARS)"
+ setup_java() {
+   # set the path to java into JAVACMD which will be picked up by JRuby to launch itself
+   if [ -z "$JAVACMD" ]; then
++    local bundled_jdk_version=""
++    local bundled_jdk_version_file=""
+     setup_bundled_jdk_part
++    bundled_jdk_version_file="${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/VERSION"
++    if [ -f "$bundled_jdk_version_file" ]; then
++      bundled_jdk_version=" ($(cat "$bundled_jdk_version_file"))"
++    fi
+     JAVACMD_TEST=`command -v java`
+     if [ -n "$LS_JAVA_HOME" ]; then
+       echo "Using LS_JAVA_HOME defined java: ${LS_JAVA_HOME}."
+       if [ -x "$LS_JAVA_HOME/bin/java" ]; then
+         JAVACMD="$LS_JAVA_HOME/bin/java"
+         if [ -d "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}" -a -x "${LOGSTASH_HOME}/${BUNDLED_JDK_PART}/bin/java" ]; then
+-          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK."
++          echo "WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK${bundled_jdk_version}."
+         fi
+       else
+         echo "Invalid LS_JAVA_HOME, doesn't contain bin/java executable."
+diff --git a/bin/setup.bat b/bin/setup.bat
+index 5e8acb4d1..89da57ce5 100644
+--- a/bin/setup.bat
++++ b/bin/setup.bat
+@@ -20,11 +20,16 @@ for %%I in ("%LS_HOME%..") do set LS_HOME=%%~dpfI
+ 
+ rem ### 2: set java
+ 
++set BUNDLED_JDK_VERSION=
++if exist "%LS_HOME%\jdk\VERSION" (
++  for /F "usebackq delims=" %%I in ("%LS_HOME%\jdk\VERSION") do set BUNDLED_JDK_VERSION= (%%I)
++)
++
+ if defined LS_JAVA_HOME (
+   set JAVACMD=%LS_JAVA_HOME%\bin\java.exe
+   echo Using LS_JAVA_HOME defined java: %LS_JAVA_HOME%
+   if exist "%LS_HOME%\jdk" (
+-    echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK.
++    echo WARNING: Using LS_JAVA_HOME while Logstash distribution comes with a bundled JDK%BUNDLED_JDK_VERSION%.
+   )
+ ) else (
+   if exist "%LS_HOME%\jdk" (
+@@ -62,4 +67,4 @@ if not exist %JRUBY_BIN% (
+   exit /b 1
+ )
+ 
+-set RUBYLIB=%LS_HOME%\lib
+\ No newline at end of file
++set RUBYLIB=%LS_HOME%\lib
+diff --git a/build.gradle b/build.gradle
+index 7e4c7a868..f5f6cd78d 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -860,6 +860,13 @@ tasks.register("copyJdk", Copy) {
+     description = "Download, unpack and copy the JDK"
+     // CLI project properties: -Pjdk_bundle_os=[windows|linux|darwin] -Pjdk_arch=[arm64|x86_64]
+     doLast {
++        def releaseFile = file("${project.ext.jdkBundlingDirectory}/release")
++        def versionFile = file("${project.ext.jdkBundlingDirectory}/VERSION")
++        def releaseMatcher = releaseFile.text =~ /(?m)^IMPLEMENTOR_VERSION="([^"]+)"$/
++        if (!releaseMatcher.find()) {
++            throw new GradleException("Could not determine bundled JDK version from ${releaseFile}")
++        }
++        versionFile.text = "${releaseMatcher.group(1)}\n"
+         System.out.println "Download location is ${project.ext.jdkDownloadLocation}, Decompressing ${project.ext.jdkDirectory} to \"${project.ext.jdkBundlingDirectory}\""
+     }
+ }

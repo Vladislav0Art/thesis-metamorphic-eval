@@ -1,0 +1,81 @@
+
+diff --git a/.gitignore b/.gitignore
+index 1b0d8f000..c50d18240 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -62,4 +62,6 @@ lib/pluginmanager/plugin_aliases.yml
+ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+-qa/integration/fixtures/logs_rollover/log4j2.properties
+\ No newline at end of file
++qa/integration/fixtures/logs_rollover/log4j2.propertiestarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+index c60648423..a08f9088c 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/DeadLetterQueueWriter.java
+@@ -395,7 +395,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+         }
+         // extract the newest timestamp from the oldest segment
+         Optional<Timestamp> foundTimestamp = readTimestampOfLastEventInSegment(oldestSegmentPath.get());
+-        if (!foundTimestamp.isPresent()) {
++        if (!foundTimestamp.isPresent() && Files.size(oldestSegmentPath.get()) > VERSION_SIZE) {
+             // clean also the last segment, because doesn't contain a timestamp (corrupted maybe)
+             // or is not present anymore
+             oldestSegmentPath = Optional.empty();
+@@ -408,6 +408,9 @@ public final class DeadLetterQueueWriter implements Closeable {
+      * Start from the end of the latest block, and going backward try to read the next event from its start.
+      * */
+     private static Optional<Timestamp> readTimestampOfLastEventInSegment(Path segmentPath) throws IOException {
++        if (Files.size(segmentPath) <= VERSION_SIZE) {
++            return Optional.empty();
++        }
+         final int lastBlockId = (int) Math.ceil(((Files.size(segmentPath) - VERSION_SIZE) / (double) BLOCK_SIZE)) - 1;
+         byte[] eventBytes;
+         try (RecordIOReader recordReader = new RecordIOReader(segmentPath)) {
+@@ -428,6 +431,7 @@ public final class DeadLetterQueueWriter implements Closeable {
+         return Optional.of(DLQEntry.deserialize(eventBytes).getEntryTime());
+     }
+ 
++
+     // package-private for testing
+     void dropTailSegment() throws IOException {
+         // remove oldest segment
+diff --git a/logstash-core/src/main/java/org/logstash/common/io/RecordIOWriter.java b/logstash-core/src/main/java/org/logstash/common/io/RecordIOWriter.java
+index 34d3b5024..845e3809a 100644
+--- a/logstash-core/src/main/java/org/logstash/common/io/RecordIOWriter.java
++++ b/logstash-core/src/main/java/org/logstash/common/io/RecordIOWriter.java
+@@ -116,7 +116,8 @@ public final class RecordIOWriter implements Closeable {
+ 
+     int writeRecordHeader(RecordHeader header) throws IOException {
+         ByteBuffer buffer = ByteBuffer.allocate(RECORD_HEADER_SIZE);
+-        buffer.put(header.getType().toByte());
++
++
+         buffer.putInt(header.getSize());
+         buffer.putInt(header.getTotalEventSize().orElse(-1));
+         buffer.putInt(header.getChecksum());
+diff --git a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+index 5702d169a..3969980e2 100644
+--- a/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
++++ b/logstash-core/src/test/java/org/logstash/common/io/DeadLetterQueueWriterTest.java
+@@ -116,6 +116,17 @@ public class DeadLetterQueueWriterTest {
+             writer.close();
+         }
+     }
++    @Test
++    public void testInitializesWithVersionOnlySegment() throws Exception {
++        Files.write(dir.resolve(String.format(DeadLetterQueueWriter.SEGMENT_FILE_PATTERN, 1)),
++                new byte[]{(byte) RecordIOWriter.VERSION});
++        DeadLetterQueueWriter writer = DeadLetterQueueWriter
++                .newBuilder(dir, 1_000, 100_000, Duration.ofSeconds(1))
++                .build();
++        writer.close();
++        assertTrue(Files.exists(dir.resolve(String.format(DeadLetterQueueWriter.SEGMENT_FILE_PATTERN, 2))));
++    }
++
+ 
+     @Test
+     public void testWrite() throws Exception {

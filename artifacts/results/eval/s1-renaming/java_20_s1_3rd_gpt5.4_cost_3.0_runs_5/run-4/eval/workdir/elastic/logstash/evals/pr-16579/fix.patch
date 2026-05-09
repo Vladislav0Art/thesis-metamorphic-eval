@@ -1,0 +1,60 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index cccb9c476..7850fcd97 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -56,5 +56,15 @@ describe  FileWatch::BufferedTokenizer  do
+       expect(subject.extract("")).to eq([])
+       expect(subject.extract("foo||bar")).to eq(["foo"])
+     end
++
++    it "drops oversized buffered data and resumes after the next delimiter" do
++      tokenizer = FileWatch::BufferedTokenizer.new(delimiter, 10)
++
++      expect(tokenizer.extract("12345")).to eq([])
++      expect { tokenizer.extract("678901||ok||") }.to raise_error(Java::JavaLang::IllegalStateException, "input buffer full")
++
++      expect(tokenizer.extract("next||")).to eq(["next"])
++      expect(tokenizer.extract("fresh||")).to eq(["fresh"])
++    end
+   end
+ end
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+index 2d7b90bba..fb2cd8b30 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+@@ -76,10 +76,20 @@ public class BufferedTokenizerExt extends RubyObject {
+     @JRubyMethod
+     @SuppressWarnings("rawtypes")
+     public RubyArray extract(final ThreadContext context, IRubyObject data) {
+-        final RubyArray entities = data.convertToString().split(delimiter, -1);
++        final RubyString dataString = data.convertToString();
++        final RubyArray entities = dataString.split(delimiter, -1);
+         if (hasSizeLimit) {
+             final int entitiesSize = ((RubyString) entities.first()).size();
+             if (inputSize + entitiesSize > sizeLimit) {
++                input.clear();
++                inputSize = 0;
++
++                if (!entities.isEmpty() && entities.getLength() > 1) {
++                    final IRubyObject trailing = entities.pop(context);
++                    input.append(trailing);
++                    inputSize = ((RubyString) trailing).size();
++                }
++
+                 throw new IllegalStateException("input buffer full");
+             }
+             this.inputSize = inputSize + entitiesSize;

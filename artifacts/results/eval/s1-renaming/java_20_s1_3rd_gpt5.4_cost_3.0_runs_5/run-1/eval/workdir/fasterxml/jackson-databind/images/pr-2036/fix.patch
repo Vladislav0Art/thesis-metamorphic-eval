@@ -1,0 +1,116 @@
+diff --git a/src/main/java/com/fasterxml/jackson/databind/DeserializationFeatureSet.java b/src/main/java/com/fasterxml/jackson/databind/DeserializationFeatureSet.java
+index 7aef49eb7..89d1bcdb8 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/DeserializationFeatureSet.java
++++ b/src/main/java/com/fasterxml/jackson/databind/DeserializationFeatureSet.java
+@@ -459,6 +459,14 @@ public enum DeserializationFeatureSet implements ConfigFeature
+      */
+     ADJUST_DATES_TO_CONTEXT_TIME_ZONE(true),
+ 
++    /**
++     * Feature that specifies whether the given concrete class is used
++     * if type property is missing.
++     *
++     * @since 2.9
++     */
++    USE_BASE_TYPE_AS_DEFAULT(false),
++
+     /*
+     /******************************************************
+     /* Other
+diff --git a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
+index fbd834ece..367fb6224 100644
+--- a/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/databind/jsontype/impl/StandardTypeResolverBuilder.java
+@@ -120,10 +120,36 @@ public class StandardTypeResolverBuilder
+ 
+         TypeIdResolver identifierResolver = buildIdResolver(serializationConfig, baseJavaType, childTypes, false, true);
+ 
+-        JavaType defaultImplementation;
++        JavaType defaultImplementation = resolveDefaultImpl(serializationConfig, baseJavaType);
+ 
++        // First, method for converting type info to type id:
++        switch (_includeAs) {
++        case WRAPPER_ARRAY:
++            return new AsArrayTypeDeserializer(baseJavaType, identifierResolver,
++                    _typeProperty, _typeIdVisible, defaultImplementation);
++        case PROPERTY:
++        case EXISTING_PROPERTY: // as per [#528] same class as PROPERTY
++            return new AsPropertyTypeDeserializer(baseJavaType, identifierResolver,
++                    _typeProperty, _typeIdVisible, defaultImplementation, _includeAs);
++        case WRAPPER_OBJECT:
++            return new AsWrapperTypeDeserializer(baseJavaType, identifierResolver,
++                    _typeProperty, _typeIdVisible, defaultImplementation);
++        case EXTERNAL_PROPERTY:
++            return new AsExternalTypeDeserializer(baseJavaType, identifierResolver,
++                    _typeProperty, _typeIdVisible, defaultImplementation);
++        }
++        throw new IllegalStateException("Do not know how to construct standard type serializer for inclusion type: "+_includeAs);
++    }
++
++    protected JavaType resolveDefaultImpl(DeserializationConfig deserializationSettings, JavaType primaryType) {
++        JavaType fallbackType;
+         if (_defaultImpl == null) {
+-            defaultImplementation = null;
++            //Fis of issue #955
++            if (deserializationSettings.isEnabled(DeserializationFeatureSet.USE_BASE_TYPE_AS_DEFAULT) && !primaryType.isAbstract()) {
++                fallbackType = primaryType;
++            } else {
++                fallbackType = null;
++            }
+         } else {
+             // 20-Mar-2016, tatu: It is important to do specialization go through
+             //   TypeFactory to ensure proper resolution; with 2.7 and before, direct
+@@ -132,15 +158,15 @@ public class StandardTypeResolverBuilder
+             //   if so, need to add explicit checks for marker types. Not ideal, but
+             //   seems like a reasonable compromise.
+             if ((_defaultImpl == Void.class)
+-                     || (_defaultImpl == NoClass.class)) {
+-                defaultImplementation = serializationConfig.getTypeFactory().constructType(_defaultImpl);
++                    || (_defaultImpl == NoClass.class)) {
++                fallbackType = deserializationSettings.getTypeFactory().constructType(_defaultImpl);
+             } else {
+-                if (baseJavaType.hasRawClass(_defaultImpl)) { // common enough to check
+-                    defaultImplementation = baseJavaType;
+-                } else if (baseJavaType.isTypeOrSuperTypeOf(_defaultImpl)) {
++                if (primaryType.hasRawClass(_defaultImpl)) { // common enough to check
++                    fallbackType = primaryType;
++                } else if (primaryType.isTypeOrSuperTypeOf(_defaultImpl)) {
+                     // most common case with proper base type...
+-                    defaultImplementation = serializationConfig.getTypeFactory()
+-                            .constructSpecializedType(baseJavaType, _defaultImpl);
++                    fallbackType = deserializationSettings.getTypeFactory()
++                            .constructSpecializedType(primaryType, _defaultImpl);
+                 } else {
+                     // 05-Apr-2018, tatu: As [databind#1565] and [databind#1861] need to allow
+                     //    some cases of seemingly incompatible `defaultImpl`. Easiest to just clear
+@@ -152,28 +178,11 @@ public class StandardTypeResolverBuilder
+                                     ClassUtil.nameOf(_defaultImpl), ClassUtil.nameOf(baseType.getRawClass()))
+                             );
+                             */
+-                    defaultImplementation = null;
++                    fallbackType = null;
+                 }
+             }
+         }
+-
+-        // First, method for converting type info to type id:
+-        switch (_includeAs) {
+-        case WRAPPER_ARRAY:
+-            return new AsArrayTypeDeserializer(baseJavaType, identifierResolver,
+-                    _typeProperty, _typeIdVisible, defaultImplementation);
+-        case PROPERTY:
+-        case EXISTING_PROPERTY: // as per [#528] same class as PROPERTY
+-            return new AsPropertyTypeDeserializer(baseJavaType, identifierResolver,
+-                    _typeProperty, _typeIdVisible, defaultImplementation, _includeAs);
+-        case WRAPPER_OBJECT:
+-            return new AsWrapperTypeDeserializer(baseJavaType, identifierResolver,
+-                    _typeProperty, _typeIdVisible, defaultImplementation);
+-        case EXTERNAL_PROPERTY:
+-            return new AsExternalTypeDeserializer(baseJavaType, identifierResolver,
+-                    _typeProperty, _typeIdVisible, defaultImplementation);
+-        }
+-        throw new IllegalStateException("Do not know how to construct standard type serializer for inclusion type: "+_includeAs);
++        return fallbackType;
+     }
+ 
+     /*

@@ -1,0 +1,98 @@
+
+diff --git a/.gitignore b/.gitignore
+index 0eb7f3d19e..ffba84c210 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -54,3 +54,6 @@ dubbo-demo/dubbo-demo-native/dubbo-demo-native-consumer/src/main/generated
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/resources/META-INF/native-image
+ dubbo-demo/dubbo-demo-native/dubbo-demo-native-provider/src/main/generated
+ 
++out/
++*.class
++.gradle/
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+index 61b37db84b..a730e0b16a 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java
+@@ -270,19 +270,20 @@ public final class URLStrParser {
+             return false;
+         }
+ 
+-        if (valueStart <= nameStart) {
++        boolean hasValueSeparator = valueStart > nameStart;
++        if (!hasValueSeparator) {
+             valueStart = valueEnd + 1;
+         }
+ 
+         if (isEncoded) {
+             String name = decodeComponent(str, nameStart, valueStart - 3, false, tempBuf);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (!hasValueSeparator) {
+                 value = name;
+             } else {
+                 value = decodeComponent(str, valueStart, valueEnd, false, tempBuf);
+             }
+-            URLItemCache.putParams(params,name, value);
++            URLItemCache.putParams(params, name, value);
+             // compatible with lower versions registering "default." keys
+             if (name.startsWith(DEFAULT_KEY_PREFIX)) {
+                 params.putIfAbsent(name.substring(DEFAULT_KEY_PREFIX.length()), value);
+@@ -290,7 +291,7 @@ public final class URLStrParser {
+         } else {
+             String name = str.substring(nameStart, valueStart - 1);
+             String value;
+-            if (valueStart >= valueEnd) {
++            if (!hasValueSeparator) {
+                 value = name;
+             } else {
+                 value = str.substring(valueStart, valueEnd);
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+index aea2001306..df7d711c4d 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLStrParserTest.java
+@@ -80,4 +80,12 @@ class URLStrParserTest {
+         });
+     }
+ 
+-}
+\ No newline at end of file
++    @Test
++    void testEmptyQueryParameterValue() {
++        URL url = URLStrParser.parseDecodedStr("nacos://10.20.0.100:8848?username=&password=&namespace=");
++
++        Assertions.assertEquals("", url.getParameter("username"));
++        Assertions.assertEquals("", url.getParameter("password"));
++        Assertions.assertEquals("", url.getParameter("namespace"));
++    }
++}
+diff --git a/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java b/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
+index a4400eebef..41e2645865 100644
+--- a/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
++++ b/dubbo-common/src/test/java/org/apache/dubbo/common/URLTest.java
+@@ -308,7 +308,7 @@ class URLTest {
+         assertEquals(3, url.getParameters().size());
+         assertEquals("1.0.0", url.getVersion());
+         assertEquals("morgan", url.getParameter("application"));
+-        assertEquals("noValue", url.getParameter("noValue"));
++        assertEquals("", url.getParameter("noValue"));
+     }
+ 
+     // TODO Do not want to use spaces? See: DUBBO-502, URL class handles special conventions for special characters.
+@@ -321,13 +321,13 @@ class URLTest {
+     }
+ 
+     @Test
+-    void test_noValueKey() throws Exception {
+-        URL url = URL.valueOf("http://1.2.3.4:8080/path?k0=&k1=v1");
++    void test_keyWithoutEqualsUsesKeyAsValue() throws Exception {
++        URL url = URL.valueOf("http://1.2.3.4:8080/path?k0&k1=v1");
+ 
+         assertURLStrDecoder(url);
+         assertTrue(url.hasParameter("k0"));
+ 
+-        // If a Key has no corresponding Value, then the Key also used as the Value.
++        // If a key has no corresponding "=" separator, then the key is also used as the value.
+         assertEquals("k0", url.getParameter("k0"));
+     }
+ 

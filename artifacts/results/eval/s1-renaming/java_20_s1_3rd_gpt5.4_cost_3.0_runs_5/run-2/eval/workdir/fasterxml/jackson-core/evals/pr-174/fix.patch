@@ -1,0 +1,82 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+index 4aa3e3a2..ae3fafcb 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+@@ -98,7 +98,7 @@ public class JsonPointerReference
+     public static JsonPointerReference parse(String sourceText) throws IllegalArgumentException
+     {
+         // First quick checks for well-known 'empty' pointer
+-        if ((sourceText == null) || sourceText.length() == 0) {
++        if (sourceText == null || sourceText.length() == 0) {
+             return EMPTY;
+         }
+         // And then quick validity check:
+@@ -184,6 +184,18 @@ public class JsonPointerReference
+         return _nextSegment;
+     }
+ 
++    /**
++     * Accessor for getting the leaf segment of this pointer.
++     * For the root pointer, this method returns the root pointer itself.
++     */
++    public JsonPointerReference getLast() {
++        JsonPointerReference current = this;
++        while ((current._nextSegment != null) && !current._nextSegment.matchesFully()) {
++            current = current._nextSegment;
++        }
++        return current;
++    }
++
+     /**
+      * Accessor for getting a "pointer", instance from current segment to
+      * segment before segment leaf. For root pointer, will return null.
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index e2c21487..ce2f2d10 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,32 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesFully());
+         assertNull(ptr.nextSegment());
+     }
++
++    public void testGetLast() throws Exception
++    {
++        JsonPointerReference ptr = JsonPointerReference.parse("/Image/15/name");
++        JsonPointerReference leaf = ptr.getLast();
++
++        assertNotNull(leaf);
++        assertEquals("/name", leaf.toString());
++        assertFalse(leaf.matchesFully());
++        assertEquals("name", leaf.getMatchingProperty());
++        assertEquals(-1, leaf.getMatchingIndex());
++
++        ptr = JsonPointerReference.parse("/score/-");
++        leaf = ptr.getLast();
++
++        assertNotNull(leaf);
++        assertEquals("/-", leaf.toString());
++        assertFalse(leaf.matchesFully());
++        assertEquals("-", leaf.getMatchingProperty());
++        assertEquals(-1, leaf.getMatchingIndex());
++
++        ptr = JsonPointerReference.parse("");
++        leaf = ptr.getLast();
++
++        assertSame(ptr, leaf);
++        assertTrue(leaf.matchesFully());
++        assertEquals("", leaf.toString());
++    }
+ }

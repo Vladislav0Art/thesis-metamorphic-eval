@@ -1,0 +1,57 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+index 4aa3e3a2..28dcc5c4 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointerReference.java
+@@ -193,6 +193,13 @@ public class JsonPointerReference
+     public JsonPointerReference headSegment() {
+         return _headSegment;
+     }
++    /**
++     * Accessor for getting leaf segment of this pointer. For empty/root
++     * pointer, returns the empty pointer itself.
++     */
++    public JsonPointerReference getLast() {
++        return (_nextSegment == null || _nextSegment.matchesFully()) ? this : _nextSegment.getLast();
++    }
+ 
+     /*
+     /**********************************************************
+diff --git a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+index e2c21487..1c3b1c43 100644
+--- a/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
++++ b/src/test/java/com/fasterxml/jackson/core/TestJsonPointer.java
+@@ -102,4 +102,21 @@ public class TestJsonPointer extends BaseTest
+         assertTrue(ptr.matchesFully());
+         assertNull(ptr.nextSegment());
+     }
++    public void testGetLast() throws Exception
++    {
++        JsonPointerReference ptr = JsonPointerReference.parse("");
++        assertEquals("", ptr.getLast().toString());
++
++        ptr = JsonPointerReference.parse("/score");
++        assertEquals("/score", ptr.getLast().toString());
++
++        ptr = JsonPointerReference.parse("/Image/15/name");
++        assertEquals("/name", ptr.getLast().toString());
++
++        ptr = JsonPointerReference.parse("/score/-");
++        assertEquals("/-", ptr.getLast().toString());
++
++        ptr = JsonPointerReference.parse("/w~1out/til~0de/a~1b");
++        assertEquals("/a~1b", ptr.getLast().toString());
++    }
+ }

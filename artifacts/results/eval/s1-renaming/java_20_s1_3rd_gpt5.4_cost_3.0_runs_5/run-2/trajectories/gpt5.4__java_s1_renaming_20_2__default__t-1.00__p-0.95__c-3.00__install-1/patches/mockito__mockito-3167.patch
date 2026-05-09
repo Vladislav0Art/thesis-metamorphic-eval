@@ -1,0 +1,37 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/test/java/org/mockito/internal/stubbing/defaultanswers/ReturnsGenericDeepStubsTest.java b/src/test/java/org/mockito/internal/stubbing/defaultanswers/ReturnsGenericDeepStubsTest.java
+index 21f2e3e7c..68a902dcf 100644
+--- a/src/test/java/org/mockito/internal/stubbing/defaultanswers/ReturnsGenericDeepStubsTest.java
++++ b/src/test/java/org/mockito/internal/stubbing/defaultanswers/ReturnsGenericDeepStubsTest.java
+@@ -26,6 +26,18 @@ public class ReturnsGenericDeepStubsTest {
+ 
+     interface AnotherListOfInteger extends ListOfInteger {}
+ 
++    interface Piece {
++        PieceType getPiece();
++    }
++
++    enum PieceType {
++        SQUARE;
++
++        double getCostPerPieceSpace() {
++            return 1.0d;
++        }
++    }
++
+     interface GenericsNest<K extends Comparable<K> & Cloneable> extends Map<K, Set<Number>> {
+         Set<Number> remove(Object key); // override with fixed ParameterizedType
+ 
