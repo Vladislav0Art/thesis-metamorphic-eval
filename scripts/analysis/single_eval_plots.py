@@ -2,12 +2,17 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from analysis.styling import ALPHA_BAND, COLOR_A
 from analysis.data_loading import (
     get_per_run_agent_field,
+    get_per_run_pass_rates,
     get_per_run_tokens_total,
     get_run_numbers,
+    load_instance_pass_rates_by_id,
+    load_instance_observations_by_id,
+    load_resolved_runs_by_id,
 )
 
 # ─── Single-eval plots ────────────────────────────────────────────────────────
@@ -180,6 +185,26 @@ def _draw_single_boxplot(ax, data, color, ylabel, title, value_fmt=".3f"):
     ax.set_title(title, pad=20)
 
 
+def plot_pass_rate_boxplot_single(
+    metrics: dict,
+    label: str,
+    color: str = COLOR_A,
+    ax=None,
+) -> None:
+    """
+    Single boxplot of per-run pass rates.
+    Box spans Q1–Q3; red line = median; blue dashed = mean.
+    Reuses _draw_single_boxplot with value_fmt=".1f".
+    """
+    rates = get_per_run_pass_rates(metrics)
+    if not rates:
+        return
+    if ax is None:
+        _, ax = plt.subplots(figsize=(4, 4.5))
+    _draw_single_boxplot(ax, rates, color, "Pass rate (%)", f"{label} — pass rate", value_fmt=".1f")
+    ax.set_ylim(-5, 110)
+
+
 def plot_pooled_cost_api_single(
     obs: dict,
     label: str,
@@ -344,3 +369,64 @@ def plot_reasoning_tokens_single(
     ax.set_xticks(xs)
     ax.set_xticklabels([f"R{n}" for n in run_nums])
     plt.tight_layout()
+
+
+def get_resolved_instances_df(dirpath, instance_ids=None) -> pd.DataFrame:
+    """
+    DataFrame of all instances with their resolved-run counts and run labels.
+
+    Columns: instance_id, n_resolved, resolved_runs
+    Sorted by n_resolved descending, then instance_id ascending.
+    Unresolved instances appear at the bottom with n_resolved=0 and "—".
+    """
+    outcomes = load_instance_pass_rates_by_id(dirpath, instance_ids=instance_ids)
+    resolved = load_resolved_runs_by_id(dirpath, instance_ids=instance_ids)
+    rows = [
+        {
+            "instance_id":   iid,
+            "n_resolved":    len(resolved.get(iid, [])),
+            "resolved_runs": ", ".join(f"R{r}" for r in resolved[iid]) if iid in resolved else "—",
+        }
+        for iid in sorted(outcomes)
+    ]
+    df = pd.DataFrame(rows, columns=["instance_id", "n_resolved", "resolved_runs"])
+    return df.sort_values(["n_resolved", "instance_id"], ascending=[False, True]).reset_index(drop=True)
+
+
+def get_per_instance_df_single(dirpath, instance_ids=None) -> pd.DataFrame:
+    """
+    Per-instance breakdown DataFrame for a single eval: pass rate, resolved
+    runs, and average agent metrics.
+
+    Columns: instance_id, pass_%, n_resolved, resolved_runs,
+             avg_cost_usd, avg_api_calls, avg_tokens_sent, avg_tokens_received
+    Sorted by pass_% descending, then instance_id ascending.
+    """
+    outcomes  = load_instance_pass_rates_by_id(dirpath, instance_ids=instance_ids)
+    resolved  = load_resolved_runs_by_id(dirpath, instance_ids=instance_ids)
+    obs_by_id = load_instance_observations_by_id(dirpath, instance_ids=instance_ids)
+    all_ids   = sorted(set(outcomes) | set(obs_by_id))
+
+    def _avg(obs_dict, field):
+        vals = obs_dict.get(field, [])
+        return float(np.mean(vals)) if vals else float("nan")
+
+    rows = []
+    for iid in all_ids:
+        oc   = outcomes.get(iid, [])
+        pr   = sum(oc) / len(oc) * 100 if oc else float("nan")
+        runs = resolved.get(iid, [])
+        obs  = obs_by_id.get(iid, {})
+        rows.append({
+            "instance_id":         iid,
+            "pass_%":              round(pr, 1),
+            "n_resolved":          len(runs),
+            "resolved_runs":       ", ".join(f"R{r}" for r in runs) if runs else "—",
+            "avg_cost_usd":        round(_avg(obs, "instance_cost"), 4),
+            "avg_api_calls":       round(_avg(obs, "api_calls"), 1),
+            "avg_tokens_sent":     round(_avg(obs, "tokens_sent")),
+            "avg_tokens_received": round(_avg(obs, "tokens_received")),
+        })
+
+    df = pd.DataFrame(rows)
+    return df.sort_values(["pass_%", "instance_id"], ascending=[False, True]).reset_index(drop=True)

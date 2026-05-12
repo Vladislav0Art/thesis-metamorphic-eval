@@ -10,6 +10,11 @@ from scipy import stats
 import pandas as pd
 from typing import List
 
+try:
+    from IPython.display import display
+except ImportError:
+    display = print
+
 
 from analysis.data_loading import (
     load_metrics,
@@ -20,6 +25,7 @@ from analysis.data_loading import (
 )
 from analysis.single_eval_plots import (
     plot_pass_rate_distribution,
+    plot_pass_rate_boxplot_single,
     plot_agent_cost_api_per_run,
     plot_agent_tokens_per_run,
     plot_reasoning_tokens_single,
@@ -28,6 +34,8 @@ from analysis.single_eval_plots import (
     plot_pooled_reasoning_tokens_single,
     plot_cost_vs_tokens_scatter,
     print_summary_table,
+    get_resolved_instances_df,
+    get_per_instance_df_single,
 )
 from analysis.comparison_plots import (
     plot_pass_rate_comparison,
@@ -58,9 +66,9 @@ def build_single_report(dirpath_a, label_a: str, instance_ids=None) -> None:
     for w in validate_metrics(metrics, label_a):
         warnings.warn(w, stacklevel=2)
 
-    fig1, ax1 = plt.subplots(figsize=(11, 3.5))
-    # was: metrics
-    plot_pass_rate_distribution(eff_metrics, label_a, ax=ax1)
+    fig1, (ax1a, ax1b) = plt.subplots(1, 2, figsize=(14, 3.5), gridspec_kw={"width_ratios": [3, 1]})
+    plot_pass_rate_distribution(eff_metrics, label_a, ax=ax1a)
+    plot_pass_rate_boxplot_single(eff_metrics, label_a, ax=ax1b)
     plt.tight_layout()
     plt.show()
 
@@ -94,6 +102,10 @@ def build_single_report(dirpath_a, label_a: str, instance_ids=None) -> None:
     # keep original (reads pooled/run_variability)
     print()
     print_summary_table(metrics, label_a)
+    df_inst = get_per_instance_df_single(dirpath_a, instance_ids=instance_ids)
+    n_resolved = int((df_inst["n_resolved"] > 0).sum())
+    print(f"\n  Resolved: {n_resolved} / {len(df_inst)} instances")
+    display(df_inst)
 
 
 def build_comparison_report(
@@ -150,6 +162,12 @@ def build_comparison_report(
     print_summary_table(metrics_a, label_a)
     print()
     print_summary_table(metrics_b, label_b)
+    print()
+    for _dir, _label in [(dirpath_a, label_a), (dirpath_b, label_b)]:
+        df_res = get_resolved_instances_df(_dir, instance_ids=instance_ids)
+        n_res  = int((df_res["n_resolved"] > 0).sum())
+        print(f"\n  Resolved instances — {_label}: {n_res} / {len(df_res)}")
+        display(df_res)
     print()
 
     # Statistical significance

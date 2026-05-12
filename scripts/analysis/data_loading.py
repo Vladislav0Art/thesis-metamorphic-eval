@@ -204,6 +204,43 @@ def load_instance_pass_rates_by_id(dirpath, instance_ids=None) -> dict:
     return outcomes
 
 
+def load_resolved_runs_by_id(dirpath, instance_ids=None) -> dict:
+    """
+    Walk eval_dir/run-*/result.json and collect, per instance_id, the
+    run_numbers in which the instance was resolved.
+
+    instance_ids: if not None, only include entries whose instance_id is in this list.
+    Returns: dict[agent_instance_id → sorted list[run_number]]
+    """
+    _iids = set(instance_ids) if instance_ids is not None else None
+    resolved_runs: dict[str, list[int]] = {}
+    for path in sorted(Path(dirpath).glob("run-*/result.json")):
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        run_number = data.get("run_number")
+        if run_number is None:
+            try:
+                run_number = int(path.parent.name.split("-")[1])
+            except (IndexError, ValueError):
+                run_number = 0
+        resolved_eval_ids = set(
+            data.get("evaluation", {})
+                .get("metrics", {})
+                .get("summary", {})
+                .get("resolved_ids", [])
+        )
+        for inst in data.get("agent", {}).get("metrics", {}).get("execution", []):
+            agent_iid = inst.get("instance_id")
+            if agent_iid is None:
+                continue
+            if _iids is not None and agent_iid not in _iids:
+                continue
+            eval_iid = _agent_id_to_eval_id(agent_iid)
+            if eval_iid in resolved_eval_ids:
+                resolved_runs.setdefault(agent_iid, []).append(run_number)
+    return {iid: sorted(runs) for iid, runs in resolved_runs.items()}
+
+
 
 def load_filtered_metrics(dirpath, instance_ids) -> dict:
     """
