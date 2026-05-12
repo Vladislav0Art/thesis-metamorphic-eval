@@ -1,3 +1,5 @@
+import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -221,6 +223,32 @@ def plot_pooled_tokens_single(
     plt.tight_layout()
 
 
+def plot_pooled_reasoning_tokens_single(
+    obs: dict,
+    label: str,
+    color: str = COLOR_A,
+) -> None:
+    """
+    Standalone boxplot for pooled per-instance reasoning_tokens_total.
+
+    Emits a warning and returns without a plot if the field is absent from obs.
+    """
+    data = obs.get("reasoning_tokens_total", [])
+    if not data:
+        warnings.warn(
+            f"[{label}] reasoning_tokens_total not found in observations "
+            "— skipping pooled reasoning tokens plot"
+        )
+        return
+
+    n = len(data)
+    fig, ax = plt.subplots(figsize=(5, 4.5))
+    fig.suptitle(f"{label} — pooled reasoning tokens ({n} observations)", fontsize=11)
+    _draw_single_boxplot(ax, data, color,
+                         "Reasoning tokens", "Reasoning tokens", value_fmt=",.0f")
+    plt.tight_layout()
+
+
 def plot_cost_vs_tokens_scatter(metrics: dict, label: str, color: str = COLOR_A, ax=None) -> None:
     """
     Scatter: avg tokens_sent vs avg instance_cost per run, annotated with run numbers.
@@ -282,3 +310,37 @@ def print_summary_table(metrics: dict, label: str) -> None:
         print(f"\n  Note: M={n_i} instances/run → pass rate takes only discrete values")
         print(f"  (multiples of {100/n_i:.1f}%). The ±std reflects discrete distribution")
         print(f"  spread, not measurement noise.")
+
+
+def plot_reasoning_tokens_single(
+    metrics: dict,
+    label: str,
+    color: str = COLOR_A,
+) -> None:
+    """
+    Per-run line chart for reasoning_tokens_total.
+
+    reasoning_tokens_total is an optional field (present only for models that
+    expose reasoning token counts).  If the field is absent from the metrics,
+    a warning is emitted and the function returns without producing a plot.
+    """
+    values = get_per_run_agent_field(metrics, "reasoning_tokens_total")
+    if not values:
+        warnings.warn(
+            f"[{label}] reasoning_tokens_total not found in metrics — skipping reasoning tokens plot"
+        )
+        return
+
+    run_nums = get_run_numbers(metrics)
+    var      = metrics.get("run_variability", {})
+    fv       = var.get("reasoning_tokens_total", {})
+    xs       = np.arange(len(run_nums))
+
+    fig, ax = plt.subplots(figsize=(5, 3.5))
+    fig.suptitle(f"{label} — reasoning tokens per run", fontsize=11, y=1.02)
+    _plot_field_line(ax, xs, values,
+                     fv.get("avg_of_run_avgs"), fv.get("std_of_run_avgs"),
+                     color, "Reasoning tokens")
+    ax.set_xticks(xs)
+    ax.set_xticklabels([f"R{n}" for n in run_nums])
+    plt.tight_layout()

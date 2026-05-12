@@ -35,7 +35,8 @@ def load_instance_observations(dirpath, instance_ids=None) -> dict:
     """
     _iids = set(instance_ids) if instance_ids is not None else None
     obs = {f: [] for f in ("instance_cost", "api_calls",
-                            "tokens_sent", "tokens_received", "tokens_total")}
+                            "tokens_sent", "tokens_received", "tokens_total",
+                            "reasoning_tokens_total")}
     for path in sorted(Path(dirpath).glob("run-*/result.json")):
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -47,6 +48,7 @@ def load_instance_observations(dirpath, instance_ids=None) -> dict:
                 "api_calls",
                 "tokens_sent",
                 "tokens_received",
+                "reasoning_tokens_total",
             ):
                 if field in inst:
                     obs[field].append(inst[field])
@@ -145,8 +147,10 @@ def load_instance_observations_by_id(dirpath, instance_ids=None) -> dict:
                 continue
             if iid not in obs:
                 obs[iid] = {f: [] for f in ("instance_cost", "api_calls",
-                                             "tokens_sent", "tokens_received", "tokens_total")}
-            for field in ("instance_cost", "api_calls", "tokens_sent", "tokens_received"):
+                                             "tokens_sent", "tokens_received", "tokens_total",
+                                             "reasoning_tokens_total")}
+            for field in ("instance_cost", "api_calls", "tokens_sent", "tokens_received",
+                          "reasoning_tokens_total"):
                 if field in inst:
                     obs[iid][field].append(inst[field])
             sent = inst.get("tokens_sent")

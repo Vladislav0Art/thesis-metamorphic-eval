@@ -1,3 +1,5 @@
+import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -218,4 +220,73 @@ def plot_pooled_tokens_comparison(
                   label_a, label_b, "Tokens received", "Tokens received", value_fmt=",.0f")
     _draw_boxplot(axes[2], obs_a["tokens_total"],    obs_b["tokens_total"],
                   label_a, label_b, "Tokens total",    "Tokens total",    value_fmt=",.0f")
+    plt.tight_layout()
+
+
+def plot_pooled_reasoning_tokens_comparison(
+    obs_a: dict, obs_b: dict,
+    label_a: str, label_b: str,
+) -> None:
+    """
+    Standalone box plot comparing pooled per-instance reasoning_tokens_total for A vs B.
+
+    Emits a warning naming which eval(s) are missing the field and returns
+    without a plot if either side has no data.
+    """
+    reasoning_a = obs_a.get("reasoning_tokens_total", [])
+    reasoning_b = obs_b.get("reasoning_tokens_total", [])
+
+    missing = []
+    if not reasoning_a:
+        missing.append(label_a)
+    if not reasoning_b:
+        missing.append(label_b)
+    if missing:
+        warnings.warn(
+            f"reasoning_tokens_total not found in: {', '.join(missing)} "
+            "— skipping pooled reasoning tokens comparison plot"
+        )
+        return
+
+    n_a, n_b = len(reasoning_a), len(reasoning_b)
+    fig, ax = plt.subplots(figsize=(5, 4.5))
+    fig.suptitle(
+        f"Pooled reasoning tokens comparison  ({label_a}: {n_a} obs, {label_b}: {n_b} obs)",
+        fontsize=11,
+    )
+    _draw_boxplot(ax, reasoning_a, reasoning_b,
+                  label_a, label_b, "Reasoning tokens", "Reasoning tokens", value_fmt=",.0f")
+    plt.tight_layout()
+
+
+def plot_reasoning_tokens_comparison(
+    metrics_a: dict, metrics_b: dict,
+    label_a: str, label_b: str,
+) -> None:
+    """
+    Single box plot comparing per-run reasoning_tokens_total averages for A vs B.
+
+    reasoning_tokens_total is optional — present only for models that expose
+    reasoning token counts.  If the field is absent from either metrics dict,
+    a warning naming the missing eval(s) is emitted and no plot is produced.
+    """
+    values_a = get_per_run_agent_field(metrics_a, "reasoning_tokens_total")
+    values_b = get_per_run_agent_field(metrics_b, "reasoning_tokens_total")
+
+    missing = []
+    if not values_a:
+        missing.append(label_a)
+    if not values_b:
+        missing.append(label_b)
+    if missing:
+        warnings.warn(
+            f"reasoning_tokens_total not found in: {', '.join(missing)} "
+            "— skipping reasoning tokens comparison plot"
+        )
+        return
+
+    fig, ax = plt.subplots(figsize=(5, 4.5))
+    fig.suptitle("Reasoning tokens comparison (per-run averages)", fontsize=11)
+    _draw_boxplot(ax, values_a, values_b, label_a, label_b,
+                  "Reasoning tokens", "Reasoning tokens", value_fmt=",.0f")
     plt.tight_layout()

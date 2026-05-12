@@ -22,8 +22,10 @@ from analysis.single_eval_plots import (
     plot_pass_rate_distribution,
     plot_agent_cost_api_per_run,
     plot_agent_tokens_per_run,
+    plot_reasoning_tokens_single,
     plot_pooled_cost_api_single,
     plot_pooled_tokens_single,
+    plot_pooled_reasoning_tokens_single,
     plot_cost_vs_tokens_scatter,
     print_summary_table,
 )
@@ -32,8 +34,10 @@ from analysis.comparison_plots import (
     plot_pass_rate_per_run_overlay,
     plot_agent_cost_api_comparison,
     plot_tokens_comparison,
+    plot_reasoning_tokens_comparison,
     plot_pooled_cost_api_comparison,
     plot_pooled_tokens_comparison,
+    plot_pooled_reasoning_tokens_comparison,
 )
 from analysis.stat_significance import (
     print_stat_significance_overall,
@@ -68,11 +72,17 @@ def build_single_report(dirpath_a, label_a: str, instance_ids=None) -> None:
     plot_agent_tokens_per_run(eff_metrics, label_a)
     plt.show()
 
+    plot_reasoning_tokens_single(metrics, label_a)
+    plt.show()
+
     obs = load_instance_observations(dirpath_a, instance_ids=instance_ids)
     plot_pooled_cost_api_single(obs, label_a)
     plt.show()
 
     plot_pooled_tokens_single(obs, label_a)
+    plt.show()
+
+    plot_pooled_reasoning_tokens_single(obs, label_a)
     plt.show()
 
     fig6, ax6 = plt.subplots(figsize=(5, 4))
@@ -119,6 +129,10 @@ def build_comparison_report(
     plot_tokens_comparison(eff_metrics_a, eff_metrics_b, label_a, label_b)
     plt.show()
 
+    # Figure 3b: reasoning tokens (optional — skipped with warning if absent)
+    plot_reasoning_tokens_comparison(metrics_a, metrics_b, label_a, label_b)
+    plt.show()
+
     # Figures 4–5: pooled observations (already filtered via instance_ids)
     obs_a = load_instance_observations(dirpath_a, instance_ids=instance_ids)
     obs_b = load_instance_observations(dirpath_b, instance_ids=instance_ids)
@@ -126,6 +140,9 @@ def build_comparison_report(
     plt.show()
 
     plot_pooled_tokens_comparison(obs_a, obs_b, label_a, label_b)
+    plt.show()
+
+    plot_pooled_reasoning_tokens_comparison(obs_a, obs_b, label_a, label_b)
     plt.show()
 
     # Summary tables — always use pre-aggregated values (pooled/run_variability not filterable)
