@@ -1,0 +1,126 @@
+|Причина 									     | кол-во бенчмарков |
+|Исключение 1: Maven — Non-resolvable parent POM | 59
+|Исключение 2: Gradle — zip END header not found | 7
+|Проблема 1: некорректный fix patch              | 12
+|Проблема 2: некорректный test patch             | 3
+
+
+unresolved:
+
+"alibaba/fastjson2:pr-2775",
+"elastic/logstash:pr-15008",
+"elastic/logstash:pr-14571",
+"elastic/logstash:pr-13880",
+"elastic/logstash:pr-15241",
+"googlecontainertools/jib:pr-2536",
+"googlecontainertools/jib:pr-2688":
+	exception (runtime): "Picked up JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8 -Duser.timezone=Asia/Shanghai
+		Could not unzip /root/.gradle/wrapper/dists/gradle-5.2.1-bin/9lc4nzslqh3ep7ml2tp68fk8s/gradle-5.2.1-bin.zip to /root/.gradle/wrapper/dists/gradle-5.2.1-bin/9lc4nzslqh3ep7ml2tp68fk8s.
+		Reason: zip END header not found
+		Exception in thread "main" java.util.zip.ZipException: zip END header not found
+			at java.base/java.util.zip.ZipFile$Source.zerror(ZipFile.java:1792)
+			at java.base/java.util.zip.ZipFile$Source.findEND(ZipFile.java:1673)
+			at java.base/java.util.zip.ZipFile$Source.initCEN(ZipFile.java:1680)
+			at java.base/java.util.zip.ZipFile$Source.<init>(ZipFile.java:1484)
+			at java.base/java.util.zip.ZipFile$Source.get(ZipFile.java:1447)
+			at java.base/java.util.zip.ZipFile$CleanableResource.<init>(ZipFile.java:757)
+			at java.base/java.util.zip.ZipFile$CleanableResource.get(ZipFile.java:874)
+			at java.base/java.util.zip.ZipFile.<init>(ZipFile.java:272)
+			at java.base/java.util.zip.ZipFile.<init>(ZipFile.java:201)
+			at java.base/java.util.zip.ZipFile.<init>(ZipFile.java:215)
+			at org.gradle.wrapper.Install.unzip(Install.java:219)
+			at org.gradle.wrapper.Install.access$600(Install.java:27)
+			at org.gradle.wrapper.Install$1.call(Install.java:75)
+			at org.gradle.wrapper.Install$1.call(Install.java:48)
+			at org.gradle.wrapper.ExclusiveFileAccessManager.access(ExclusiveFileAccessManager.java:69)
+			at org.gradle.wrapper.Install.createDist(Install.java:48)
+			at org.gradle.wrapper.WrapperExecutor.execute(WrapperExecutor.java:107)
+			at org.gradle.wrapper.GradleWrapperMain.main(GradleWrapperMain.java:62)"
+
+
+
+"fasterxml/jackson-dataformat-xml:pr-644",
+"fasterxml/jackson-dataformat-xml:pr-638",
+"fasterxml/jackson-dataformat-xml:pr-590",
+"fasterxml/jackson-databind:pr-4615",
+"fasterxml/jackson-dataformat-xml:pr-531",
+"fasterxml/jackson-dataformat-xml:pr-544",
+"fasterxml/jackson-databind:pr-4641",
+"fasterxml/jackson-databind:pr-4487",
+"fasterxml/jackson-databind:pr-4486",
+"fasterxml/jackson-databind:pr-4469",
+"fasterxml/jackson-databind:pr-4468",
+"fasterxml/jackson-databind:pr-4365",
+"fasterxml/jackson-databind:pr-4426",
+"fasterxml/jackson-databind:pr-4311",
+"fasterxml/jackson-databind:pr-4360",
+"fasterxml/jackson-databind:pr-4325",
+"fasterxml/jackson-databind:pr-4320",
+"fasterxml/jackson-databind:pr-4338",
+"fasterxml/jackson-databind:pr-4304",
+"fasterxml/jackson-databind:pr-4230",
+"fasterxml/jackson-databind:pr-4228",
+"fasterxml/jackson-databind:pr-4219",
+"fasterxml/jackson-databind:pr-4159",
+"fasterxml/jackson-databind:pr-4189",
+"fasterxml/jackson-databind:pr-4257",
+"fasterxml/jackson-databind:pr-4186",
+"fasterxml/jackson-databind:pr-4132",
+"fasterxml/jackson-databind:pr-4131",
+"fasterxml/jackson-databind:pr-4087",
+"fasterxml/jackson-databind:pr-4072",
+"fasterxml/jackson-databind:pr-4050",
+"fasterxml/jackson-databind:pr-4048",
+"fasterxml/jackson-databind:pr-3860",
+"fasterxml/jackson-databind:pr-4013",
+"fasterxml/jackson-databind:pr-4015",
+"fasterxml/jackson-databind:pr-3851",
+"fasterxml/jackson-databind:pr-3666",
+"fasterxml/jackson-databind:pr-3716",
+"fasterxml/jackson-databind:pr-3701",
+"fasterxml/jackson-databind:pr-3626",
+"fasterxml/jackson-databind:pr-3625",
+"fasterxml/jackson-databind:pr-3560",
+"fasterxml/jackson-databind:pr-3621",
+"fasterxml/jackson-databind:pr-3371",
+"fasterxml/jackson-databind:pr-3509",
+"fasterxml/jackson-core:pr-1309":
+"fasterxml/jackson-core:pr-1208",
+"fasterxml/jackson-core:pr-1263",
+"fasterxml/jackson-core:pr-1204",
+"fasterxml/jackson-core:pr-1172",
+"fasterxml/jackson-core:pr-1182",
+"fasterxml/jackson-core:pr-1016",
+"fasterxml/jackson-core:pr-1053",
+"fasterxml/jackson-core:pr-980",
+"fasterxml/jackson-core:pr-922",
+"fasterxml/jackson-core:pr-891",
+"fasterxml/jackson-core:pr-964",
+"fasterxml/jackson-core:pr-729",
+"fasterxml/jackson-core:pr-566":
+	exception (build): "[FATAL] Non-resolvable parent POM for com.fasterxml.jackson.core:jackson-core:3.0.0-SNAPSHOT (<- different versions): Failure to find com.fasterxml.jackson:jackson-base:pom:3.0.0-SNAPSHOT in https://oss.sonatype.org/content/repositories/snapshots was cached in the local repository, resolution will not be reattempted until the update interval of sonatype-nexus-snapshots has elapsed or updates are forced and 'parent.relativePath' points at wrong local POM @ line 3, column 11"
+
+
+
+"apache/dubbo:pr-7041" (failed tests (7)),
+"elastic/logstash:pr-16569":
+"elastic/logstash:pr-16482":
+"elastic/logstash:pr-16968":
+"elastic/logstash:pr-17019",
+"elastic/logstash:pr-16195",
+"elastic/logstash:pr-16079",
+"elastic/logstash:pr-15964",
+"elastic/logstash:pr-15925",
+"elastic/logstash:pr-15969",
+"elastic/logstash:pr-15233",
+"elastic/logstash:pr-15680":
+	3 failed tests (fix patch):
+	    "org.logstash.RSpecTests > rspecTests[compliance]",
+	    "logstash-core:rubyTests",
+	    "org.logstash.RSpecTests > rspecTests[core tests]"
+
+
+"alibaba/fastjson2:pr-2559",
+"google/gson:pr-1787",
+"google/gson:pr-1703":
+	incorrect test patch
