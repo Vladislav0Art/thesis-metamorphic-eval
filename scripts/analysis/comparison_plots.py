@@ -114,7 +114,7 @@ def _draw_boxplot(ax, data_a, data_b, label_a, label_b, ylabel, title, value_fmt
     ax.set_xticks(positions)
     ax.set_xticklabels([label_a, label_b])
     ax.set_ylabel(ylabel)
-    ax.set_title(title)
+    ax.set_title(title, pad=20)
 
 
 def plot_agent_cost_api_comparison(

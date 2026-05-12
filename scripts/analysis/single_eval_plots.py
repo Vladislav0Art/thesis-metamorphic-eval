@@ -177,7 +177,7 @@ def _draw_single_boxplot(ax, data, color, ylabel, title, value_fmt=".3f"):
 
     ax.set_xticks([])
     ax.set_ylabel(ylabel)
-    ax.set_title(title)
+    ax.set_title(title, pad=20)
 
 
 def plot_pooled_cost_api_single(
