@@ -1,0 +1,701 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/exceptions/base/DisabledMockException.java b/src/main/java/org/mockito/exceptions/base/DisabledMockException.java
+new file mode 100644
+index 000000000..6789b8551
+--- /dev/null
++++ b/src/main/java/org/mockito/exceptions/base/DisabledMockException.java
+@@ -0,0 +1,15 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockito.exceptions.base;
++
++/**
++ * Indicates that a Mockito inline mock was cleared and later invoked again.
++ */
++public class DisabledMockException extends MockitoException {
++
++    public DisabledMockException(String message) {
++        super(message);
++    }
++}
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java
+index 009daa4cc..b1da783a7 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/InlineBytecodeGenerator.java
+@@ -207,302 +207,364 @@ public class InlineBytecodeGenerator implements BytecodeGenerator, ClassFileTran
+                         || features.serializableMode != SerializableMode.NONE
+                         || features.stripAnnotations
+                         || Modifier.isAbstract(features.mockedType.getModifiers());
+-
+-        checkSupportedCombination(subclassingRequired, features);
+-
+-        Set<Class<?>> types = new HashSet<>();
+-        types.add(features.mockedType);
+-        types.addAll(features.interfaces);
+-
+-        synchronized (this) {
+-            triggerRetransformation(types, false);
++    private final BytecodeGenerator bytecodeGenerator;
++
++    private final WeakConcurrentMap<Object, MockMethodInterceptor> mocks =
++            new WeakConcurrentMap<>(false);
++
++    private final WeakConcurrentMap<Object, String> disabledMocks =
++            new WeakConcurrentMap<>(false);
++
++    private final DetachedThreadLocal<Map<Class<?>, MockMethodInterceptor>> mockedStatics =
++            new DetachedThreadLocal<>(DetachedThreadLocal.Cleaner.MANUAL);
++
++    private final DetachedThreadLocal<Map<Class<?>, BiConsumer<Object, MockedConstruction.Context>>>
++            mockedConstruction = new DetachedThreadLocal<>(DetachedThreadLocal.Cleaner.MANUAL);
++
++    private final ThreadLocal<Class<?>> currentMocking = ThreadLocal.withInitial(() -> null);
++
++    private final ThreadLocal<Object> currentSpied = new ThreadLocal<>();
++
++    InlineDelegateByteBuddyMockMaker() {
++        if (INITIALIZATION_ERROR != null) {
++            String detail;
++            if (PlatformUtils.isAndroidPlatform() || PlatformUtils.isProbablyTermuxEnvironment()) {
++                detail =
++                        "It appears as if you are trying to run this mock maker on Android which does not support the instrumentation API.";
++            } else {
++                try {
++                    if (INITIALIZATION_ERROR instanceof NoClassDefFoundError
++                            && INITIALIZATION_ERROR.getMessage() != null
++                            && INITIALIZATION_ERROR
++                                    .getMessage()
++                                    .startsWith("net/bytebuddy/agent/")) {
++                        detail =
++                                join(
++                                        "It seems like you are running Mockito with an incomplete or inconsistent class path. Byte Buddy Agent could not be loaded.",
++                                        "",
++                                        "Byte Buddy Agent is available on Maven Central as 'net.bytebuddy:byte-buddy-agent' with the module name 'net.bytebuddy.agent'.",
++                                        "Normally, your IDE or build tool (such as Maven or Gradle) should take care of your class path completion but ");
++                    } else if (Class.forName("javax.tools.ToolProvider")
++                                    .getMethod("getSystemJavaCompiler")
++                                    .invoke(null)
++                            == null) {
++                        detail =
++                                "It appears as if you are running on a JRE. Either install a JDK or add JNA to the class path.";
++                    } else {
++                        detail =
++                                "It appears as if your JDK does not supply a working agent attachment mechanism.";
++                    }
++                } catch (Throwable ignored) {
++                    detail =
++                            "It appears as if you are running an incomplete JVM installation that might not support all tooling APIs";
++                }
++            }
++            throw new MockitoInitializationException(
++                    join(
++                            "Could not initialize inline Byte Buddy mock maker.",
++                            "",
++                            detail,
++                            Platform.describe()),
++                    INITIALIZATION_ERROR);
+         }
+ 
+-        return subclassingRequired ? subclassEngine.mockClass(features) : features.mockedType;
+-    }
++        ThreadLocal<Class<?>> currentConstruction = new ThreadLocal<>();
++        ThreadLocal<Boolean> isSuspended = ThreadLocal.withInitial(() -> false);
++        Predicate<Class<?>> isCallFromSubclassConstructor = StackWalkerChecker.orFallback();
++        Predicate<Class<?>> isMockConstruction =
++                type -> {
++                    if (isSuspended.get()) {
++                        return false;
++                    } else if ((currentMocking.get() != null
++                                    && type.isAssignableFrom(currentMocking.get()))
++                            || currentConstruction.get() != null) {
++                        return true;
++                    }
++                    Map<Class<?>, ?> interceptors = mockedConstruction.get();
++                    if (interceptors != null && interceptors.containsKey(type)) {
++                        // We only initiate a construction mock, if the call originates from an
++                        // un-mocked (as suppression is not enabled) subclass constructor.
++                        if (isCallFromSubclassConstructor.test(type)) {
++                            return false;
++                        }
++                        currentConstruction.set(type);
++                        return true;
++                    } else {
++                        return false;
++                    }
++                };
++        ConstructionCallback onConstruction =
++                (type, object, arguments, parameterTypeNames) -> {
++                    if (currentMocking.get() != null) {
++                        Object spy = currentSpied.get();
++                        if (spy == null) {
++                            return null;
++                        } else if (type.isInstance(spy)) {
++                            return spy;
++                        } else {
++                            isSuspended.set(true);
++                            try {
++                                // Unexpected construction of non-spied object
++                                throw new MockitoException(
++                                        "Unexpected spy for "
++                                                + type.getName()
++                                                + " on instance of "
++                                                + object.getClass().getName(),
++                                        object instanceof Throwable ? (Throwable) object : null);
++                            } finally {
++                                isSuspended.set(false);
++                            }
++                        }
++                    } else if (currentConstruction.get() != type) {
++                        return null;
++                    }
++                    currentConstruction.remove();
++                    isSuspended.set(true);
++                    try {
++                        Map<Class<?>, BiConsumer<Object, MockedConstruction.Context>> interceptors =
++                                mockedConstruction.get();
++                        if (interceptors != null) {
++                            BiConsumer<Object, MockedConstruction.Context> interceptor =
++                                    interceptors.get(type);
++                            if (interceptor != null) {
++                                interceptor.accept(
++                                        object,
++                                        new InlineConstructionMockContext(
++                                                arguments, object.getClass(), parameterTypeNames));
++                            }
++                        }
++                    } finally {
++                        isSuspended.set(false);
++                    }
++                    return null;
++                };
+ 
+-    @Override
+-    public synchronized void mockClassStatic(Class<?> type) {
+-        triggerRetransformation(Collections.singleton(type), true);
++        bytecodeGenerator =
++                new TypeCachingBytecodeGenerator(
++                        new InlineBytecodeGenerator(
++                                INSTRUMENTATION,
++                                mocks,
++                                disabledMocks,
++                                mockedStatics,
++                                isMockConstruction,
++                                onConstruction),
++                        true);
+     }
+ 
+     @Override
+-    public synchronized void mockClassConstruction(Class<?> type) {
+-        triggerRetransformation(Collections.singleton(type), false);
++    public <T> T createMock(MockCreationSettings<T> settings, MockHandler handler) {
++        return doCreateMock(settings, handler, false);
+     }
+ 
+-    private static void assureInitialization(Class<?> type) {
++    @Override
++    public <T> Optional<T> createSpy(
++            MockCreationSettings<T> settings, MockHandler handler, T object) {
++        if (object == null) {
++            throw new MockitoConfigurationException("Spy instance must not be null");
++        }
++        currentSpied.set(object);
+         try {
+-            Class.forName(type.getName(), true, type.getClassLoader());
+-        } catch (ExceptionInInitializerError e) {
+-            throw new MockitoException(
+-                    "Cannot instrument "
+-                            + type
+-                            + " because it or one of its supertypes could not be initialized",
+-                    e.getException());
+-        } catch (Throwable ignored) {
++            return Optional.ofNullable(doCreateMock(settings, handler, true));
++        } finally {
++            currentSpied.remove();
+         }
+     }
+ 
+-    private <T> void triggerRetransformation(Set<Class<?>> types, boolean flat) {
+-        Set<Class<?>> targets = new HashSet<Class<?>>();
++    private <T> T doCreateMock(
++            MockCreationSettings<T> settings,
++            MockHandler handler,
++            boolean nullOnNonInlineConstruction) {
++        Class<? extends T> type = createMockType(settings);
+ 
+         try {
+-            for (Class<?> type : types) {
+-                if (flat) {
+-                    if (!mocked.contains(type) && flatMocked.add(type)) {
+-                        assureInitialization(type);
+-                        targets.add(type);
++            T instance;
++            if (settings.isUsingConstructor()) {
++                instance =
++                        new ConstructorInstantiator(
++                                        settings.getOuterClassInstance() != null,
++                                        settings.getConstructorArgs())
++                                .newInstance(type);
++            } else {
++                try {
++                    // We attempt to use the "native" mock maker first that avoids
++                    // Objenesis and Unsafe
++                    instance = newInstance(type);
++                } catch (InstantiationException ignored) {
++                    if (nullOnNonInlineConstruction) {
++                        return null;
+                     }
+-                } else {
+-                    do {
+-                        if (mocked.add(type)) {
+-                            if (!flatMocked.remove(type)) {
+-                                assureInitialization(type);
+-                                targets.add(type);
+-                            }
+-                            addInterfaces(targets, type.getInterfaces());
+-                        }
+-                        type = type.getSuperclass();
+-                    } while (type != null);
++                    Instantiator instantiator =
++                            Plugins.getInstantiatorProvider().getInstantiator(settings);
++                    instance = instantiator.newInstance(type);
+                 }
+             }
+-        } catch (Throwable t) {
+-            for (Class<?> target : targets) {
+-                mocked.remove(target);
+-                flatMocked.remove(target);
++            MockMethodInterceptor mockMethodInterceptor =
++                    new MockMethodInterceptor(handler, settings);
++            mocks.put(instance, mockMethodInterceptor);
++            disabledMocks.remove(instance);
++            if (instance instanceof MockAccess) {
++                ((MockAccess) instance).setMockitoInterceptor(mockMethodInterceptor);
+             }
+-            throw t;
++            mocks.expungeStaleEntries();
++            return instance;
++        } catch (InstantiationException e) {
++            throw new MockitoException(
++                    "Unable to create mock instance of type '" + type.getSimpleName() + "'", e);
+         }
++    }
+ 
+-        if (!targets.isEmpty()) {
+-            try {
+-                assureCanReadMockito(targets);
+-                instrumentation.retransformClasses(targets.toArray(new Class<?>[targets.size()]));
+-                Throwable throwable = lastException;
+-                if (throwable != null) {
+-                    throw new IllegalStateException(
+-                            join(
+-                                    "Byte Buddy could not instrument all classes within the mock's type hierarchy",
+-                                    "",
+-                                    "This problem should never occur for javac-compiled classes. This problem has been observed for classes that are:",
+-                                    " - Compiled by older versions of scalac",
+-                                    " - Classes that are part of the Android distribution"),
+-                            throwable);
+-                }
+-            } catch (Exception exception) {
+-                for (Class<?> failed : targets) {
+-                    mocked.remove(failed);
+-                    flatMocked.remove(failed);
+-                }
+-                throw new MockitoException("Could not modify all classes " + targets, exception);
+-            } finally {
+-                lastException = null;
+-            }
++    @Override
++    public MockHandler<?> getHandler(Object mock) {
++        MockMethodInterceptor interceptor;
++        if (mock instanceof Class<?>) {
++            Map<Class<?>, MockMethodInterceptor> interceptors = mockedStatics.get();
++            interceptor = interceptors != null ? interceptors.get(mock) : null;
++        } else {
++            interceptor = mocks.get(mock);
+         }
+-
+-        mocked.expungeStaleEntries();
+-        flatMocked.expungeStaleEntries();
++        return interceptor == null ? null : interceptor.getMockHandler();
+     }
+ 
+-    private void assureCanReadMockito(Set<Class<?>> types) {
+-        if (redefineModule == null) {
+-            return;
+-        }
+-        Set<Object> modules = new HashSet<Object>();
+-        try {
+-            Object target =
+-                    getModule.invoke(
+-                            Class.forName(
+-                                    "org.mockito.internal.creation.bytebuddy.inject.MockMethodDispatcher",
+-                                    false,
+-                                    null));
+-            for (Class<?> type : types) {
+-                Object module = getModule.invoke(type);
+-                if (!modules.contains(module) && !(Boolean) canRead.invoke(module, target)) {
+-                    modules.add(module);
+-                }
++    @Override
++    public void resetMock(Object mock, MockHandler newHandler, MockCreationSettings settings) {
++        MockMethodInterceptor mockMethodInterceptor = new MockMethodInterceptor(newHandler, settings);
++
++        if (mock instanceof Class<?>) {
++            Map<Class<?>, MockMethodInterceptor> interceptors = mockedStatics.get();
++            if (interceptors == null || !interceptors.containsKey(mock)) {
++                throw new MockitoException(
++                        "Cannot reset "
++                                + mock
++                                + " which is not currently registered as a static mock");
+             }
+-            for (Object module : modules) {
+-                redefineModule.invoke(
+-                        instrumentation,
+-                        module,
+-                        Collections.singleton(target),
+-                        Collections.emptyMap(),
+-                        Collections.emptyMap(),
+-                        Collections.emptySet(),
+-                        Collections.emptyMap());
++            interceptors.put((Class<?>) mock, mockMethodInterceptor);
++        } else {
++            if (!mocks.containsKey(mock)) {
++                throw new MockitoException(
++                        "Cannot reset "
++                                + mock
++                                + " which is not currently registered as a mock");
++            }
++            mocks.put(mock, mockMethodInterceptor);
++            disabledMocks.remove(mock);
++            if (mock instanceof MockAccess) {
++                ((MockAccess) mock).setMockitoInterceptor(mockMethodInterceptor);
+             }
+-        } catch (Exception e) {
+-            throw new IllegalStateException(
+-                    join(
+-                            "Could not adjust module graph to make the mock instance dispatcher visible to some classes",
+-                            "",
+-                            "At least one of those modules: "
+-                                    + modules
+-                                    + " is not reading the unnamed module of the bootstrap loader",
+-                            "Without such a read edge, the classes that are redefined to become mocks cannot access the mock dispatcher.",
+-                            "To circumvent this, Mockito attempted to add a read edge to this module what failed for an unexpected reason"),
+-                    e);
+         }
+     }
+ 
+-    private <T> void checkSupportedCombination(
+-            boolean subclassingRequired, MockFeatures<T> features) {
+-        if (subclassingRequired
+-                && !features.mockedType.isArray()
+-                && !features.mockedType.isPrimitive()
+-                && (Modifier.isFinal(features.mockedType.getModifiers())
+-                        || TypeSupport.INSTANCE.isSealed(features.mockedType)
+-                        || features.interfaces.stream().anyMatch(TypeSupport.INSTANCE::isSealed))) {
+-            throw new MockitoException(
+-                    "Unsupported settings with this type '" + features.mockedType.getName() + "'");
+-        }
+-    }
++    @Override
++    public TypeMockability isTypeMockable(final Class<?> type) {
++        return new TypeMockability() {
++            @Override
++            public boolean mockable() {
++                return INSTRUMENTATION.isModifiableClass(type) && !EXCLUDES.contains(type);
++            }
+ 
+-    private void addInterfaces(Set<Class<?>> types, Class<?>[] interfaces) {
+-        for (Class<?> type : interfaces) {
+-            if (mocked.add(type)) {
+-                if (!flatMocked.remove(type)) {
+-                    assureInitialization(type);
+-                    types.add(type);
++            @Override
++            public String nonMockableReason() {
++                if (mockable()) {
++                    return "";
++                }
++                if (type.isPrimitive()) {
++                    return "primitive type";
+                 }
+-                addInterfaces(types, type.getInterfaces());
++                if (EXCLUDES.contains(type)) {
++                    return "Cannot mock wrapper types, String.class or Class.class";
++                }
++                return "VM does not support modification of given type";
+             }
+-        }
++        };
+     }
+ 
+     @Override
+-    public byte[] transform(
+-            ClassLoader loader,
+-            String className,
+-            Class<?> classBeingRedefined,
+-            ProtectionDomain protectionDomain,
+-            byte[] classfileBuffer) {
+-        if (classBeingRedefined == null
+-                || !mocked.contains(classBeingRedefined)
+-                        && !flatMocked.contains(classBeingRedefined)
+-                || EXCLUDES.contains(classBeingRedefined)) {
+-            return null;
+-        } else {
+-            try {
+-                return byteBuddy
+-                        .redefine(
+-                                classBeingRedefined,
+-                                //        new ClassFileLocator.Compound(
+-                                ClassFileLocator.Simple.of(
+-                                        classBeingRedefined.getName(), classfileBuffer)
+-                                //            ,ClassFileLocator.ForClassLoader.ofSystemLoader()
+-                                //        )
+-                                )
+-                        // Note: The VM erases parameter meta data from the provided class file
+-                        // (bug). We just add this information manually.
+-                        .visit(new ParameterWritingVisitorWrapper(classBeingRedefined))
+-                        .visit(mockTransformer)
+-                        .make()
+-                        .getBytes();
+-            } catch (Throwable throwable) {
+-                lastException = throwable;
+-                return null;
+-            }
++    public <T> StaticMockControl<T> createStaticMock(
++            Class<T> type, MockCreationSettings<T> settings, MockHandler handler) {
++        if (type == ConcurrentHashMap.class) {
++            throw new MockitoException(
++                    "It is not possible to mock static methods of ConcurrentHashMap "
++                            + "to avoid infinitive loops within Mockito's implementation of static mock handling");
++        } else if (type == Thread.class
++                || type == System.class
++                || type == Arrays.class
++                || ClassLoader.class.isAssignableFrom(type)) {
++            throw new MockitoException(
++                    "It is not possible to mock static methods of "
++                            + type.getName()
++                            + " to avoid interfering with class loading what leads to infinite loops");
++        }
++
++        bytecodeGenerator.mockClassStatic(type);
++
++        Map<Class<?>, MockMethodInterceptor> interceptors = mockedStatics.get();
++        if (interceptors == null) {
++            interceptors = new WeakHashMap<>();
++            mockedStatics.set(interceptors);
+         }
++        mockedStatics.getBackingMap().expungeStaleEntries();
++
++        return new InlineStaticMockControl<>(type, interceptors, settings, handler);
+     }
+ 
+     @Override
+-    public synchronized void clearAllCaches() {
+-        Set<Class<?>> types = new HashSet<>();
+-        mocked.forEach(types::add);
+-        if (types.isEmpty()) {
+-            return;
+-        }
+-        mocked.clear();
+-        flatMocked.clear();
+-        subclassEngine.clearAllCaches();
+-        try {
+-            instrumentation.retransformClasses(types.toArray(new Class<?>[0]));
+-        } catch (UnmodifiableClassException e) {
++    public <T> ConstructionMockControl<T> createConstructionMock(
++            Class<T> type,
++            Function<MockedConstruction.Context, MockCreationSettings<T>> settingsFactory,
++            Function<MockedConstruction.Context, MockHandler<T>> handlerFactory,
++            MockedConstruction.MockInitializer<T> mockInitializer) {
++        if (type == Object.class) {
+             throw new MockitoException(
+-                    join(
+-                            "Failed to reset mocks.",
+-                            "",
+-                            "This should not influence the working of Mockito.",
+-                            "But if the reset intends to remove mocking code to improve performance, it is still impacted."),
+-                    e);
++                    "It is not possible to mock construction of the Object class "
++                            + "to avoid inference with default object constructor chains");
++        } else if (type.isPrimitive() || Modifier.isAbstract(type.getModifiers())) {
++            throw new MockitoException(
++                    "It is not possible to construct primitive types or abstract types: "
++                            + type.getName());
+         }
+-    }
+-
+-    private static class ParameterWritingVisitorWrapper extends AsmVisitorWrapper.AbstractBase {
+-
+-        private final Class<?> type;
+ 
+-        private ParameterWritingVisitorWrapper(Class<?> type) {
+-            this.type = type;
+-        }
++        bytecodeGenerator.mockClassConstruction(type);
+ 
+-        @Override
+-        public ClassVisitor wrap(
+-                TypeDescription instrumentedType,
+-                ClassVisitor classVisitor,
+-                Implementation.Context implementationContext,
+-                TypePool typePool,
+-                FieldList<FieldDescription.InDefinedShape> fields,
+-                MethodList<?> methods,
+-                int writerFlags,
+-                int readerFlags) {
+-            return implementationContext.getClassFileVersion().isAtLeast(ClassFileVersion.JAVA_V8)
+-                    ? new ParameterAddingClassVisitor(
+-                            classVisitor, new TypeDescription.ForLoadedType(type))
+-                    : classVisitor;
++        Map<Class<?>, BiConsumer<Object, MockedConstruction.Context>> interceptors =
++                mockedConstruction.get();
++        if (interceptors == null) {
++            interceptors = new WeakHashMap<>();
++            mockedConstruction.set(interceptors);
+         }
++        mockedConstruction.getBackingMap().expungeStaleEntries();
+ 
+-        private static class ParameterAddingClassVisitor extends ClassVisitor {
+-
+-            private final TypeDescription typeDescription;
++        return new InlineConstructionMockControl<>(
++                type, settingsFactory, handlerFactory, mockInitializer, interceptors);
++    }
+ 
+-            private ParameterAddingClassVisitor(ClassVisitor cv, TypeDescription typeDescription) {
+-                super(OpenedClassReader.ASM_API, cv);
+-                this.typeDescription = typeDescription;
++    @Override
++    public void clearMock(Object mock) {
++        if (mock instanceof Class<?>) {
++            for (Map<Class<?>, ?> entry : mockedStatics.getBackingMap().target.values()) {
++                entry.remove(mock);
+             }
+-
+-            @Override
+-            public MethodVisitor visitMethod(
+-                    int access, String name, String desc, String signature, String[] exceptions) {
+-                MethodVisitor methodVisitor =
+-                        super.visitMethod(access, name, desc, signature, exceptions);
+-                MethodList<?> methodList =
+-                        typeDescription
+-                                .getDeclaredMethods()
+-                                .filter(
+-                                        (name.equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
+-                                                        ? isConstructor()
+-                                                        : ElementMatchers.<MethodDescription>named(
+-                                                                name))
+-                                                .and(hasDescriptor(desc)));
+-                if (methodList.size() == 1
+-                        && methodList.getOnly().getParameters().hasExplicitMetaData()) {
+-                    for (ParameterDescription parameterDescription :
+-                            methodList.getOnly().getParameters()) {
+-                        methodVisitor.visitParameter(
+-                                parameterDescription.getName(),
+-                                parameterDescription.getModifiers());
+-                    }
+-                    return new MethodParameterStrippingMethodVisitor(methodVisitor);
+-                } else {
+-                    return methodVisitor;
+-                }
++        } else {
++            mocks.remove(mock);
++            disabledMocks.put(mock, disabledMockMessage());
++            if (mock instanceof MockAccess) {
++                ((MockAccess) mock).setMockitoInterceptor(null);
+             }
+         }
++    }
+ 
+-        private static class MethodParameterStrippingMethodVisitor extends MethodVisitor {
+-
+-            public MethodParameterStrippingMethodVisitor(MethodVisitor mv) {
+-                super(OpenedClassReader.ASM_API, mv);
+-            }
++    @Override
++    public void clearAllMocks() {
++        mockedStatics.getBackingMap().clear();
+ 
+-            @Override
+-            public void visitParameter(String name, int access) {
+-                // suppress to avoid additional writing of the parameter if retained.
+-            }
++        for (Entry<Object, MockMethodInterceptor> entry : mocks) {
++            clearMock(entry.getKey());
+         }
+     }
+-}
++
++    String getDisabledMockReason(Object mock) {
++        return disabledMocks.get(mock);
++    }
++
++    private String disabledMockMessage() {
++        return "This inline mock was cleared by Mockito.framework().clearInlineMocks() and can no longer be used."
++                + " This usually means a previous test leaked a mock reference after cleanup.";
++    }
+diff --git a/subprojects/inlineTest/src/test/java/org/mockitoinline/ClearInlineMocksExceptionTest.java b/subprojects/inlineTest/src/test/java/org/mockitoinline/ClearInlineMocksExceptionTest.java
+new file mode 100644
+index 000000000..5e25a3de1
+--- /dev/null
++++ b/subprojects/inlineTest/src/test/java/org/mockitoinline/ClearInlineMocksExceptionTest.java
+@@ -0,0 +1,44 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitoinline;
++
++import static org.junit.Assert.assertTrue;
++import static org.junit.Assert.fail;
++import static org.mockito.Mockito.mock;
++import static org.mockito.Mockito.when;
++
++import org.junit.Test;
++import org.mockito.Mockito;
++import org.mockito.exceptions.base.MockitoException;
++
++public class ClearInlineMocksExceptionTest {
++
++    @Test
++    public void should_throw_informative_exception_when_invoking_mock_after_clear_inline_mocks() {
++        PersonWithName mock = mock(PersonWithName.class);
++        when(mock.getMyName()).thenReturn("Bob");
++
++        Mockito.framework().clearInlineMocks();
++
++        try {
++            mock.getMyName();
++            fail("Expected MockitoException to be thrown");
++        } catch (MockitoException e) {
++            assertTrue(e.getMessage().contains("clearInlineMocks"));
++        }
++    }
++
++    static class PersonWithName {
++        private final String myName;
++
++        PersonWithName(String name) {
++            myName = name;
++        }
++
++        String getMyName() {
++            return myName.toUpperCase();
++        }
++    }
++}

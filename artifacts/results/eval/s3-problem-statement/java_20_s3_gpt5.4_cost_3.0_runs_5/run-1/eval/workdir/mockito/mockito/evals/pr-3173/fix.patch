@@ -1,0 +1,86 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/Repro.java b/Repro.java
+new file mode 100644
+index 000000000..8b1378917
+--- /dev/null
++++ b/Repro.java
+@@ -0,0 +1 @@
++
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/NoExtendsTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/NoExtendsTest.java
+index 06c14d2bb..4ffa8453c 100644
+--- a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/NoExtendsTest.java
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/NoExtendsTest.java
+@@ -4,12 +4,15 @@
+  */
+ package org.mockitousage;
+ 
++import java.util.List;
++
+ import org.junit.jupiter.api.Test;
+ import org.mockito.Mock;
+ import org.mockito.MockedConstruction;
+ import org.mockito.MockedStatic;
++import org.mockito.Spy;
+ 
+-import static org.assertj.core.api.Assertions.*;
++import static org.assertj.core.api.Assertions.assertThat;
+ 
+ class NoExtendsTest {
+ 
+@@ -19,6 +22,12 @@ class NoExtendsTest {
+     @Mock
+     private MockedConstruction<Dummy> construction;
+ 
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private FinalType example = new FinalType("some value");
++
+     @Test
+     void runsStaticMethods() {
+         assertThat(Dummy.foo()).isNull();
+@@ -29,6 +38,12 @@ class NoExtendsTest {
+         assertThat(new Dummy().bar()).isNull();
+     }
+ 
++    @Test
++    void keepsFinalTypeStateWhenAnotherSpyUsesGenericType() {
++        assertThat(genericSpy).containsExactly("item A", "item B");
++        assertThat(example.someParameter()).isEqualTo("some value");
++    }
++
+     static class Dummy {
+ 
+         static String foo() {
+@@ -39,4 +54,17 @@ class NoExtendsTest {
+             return "foo";
+         }
+     }
++
++    static final class FinalType {
++
++        private final String someParameter;
++
++        FinalType(String someParameter) {
++            this.someParameter = someParameter;
++        }
++
++        String someParameter() {
++            return someParameter;
++        }
++    }
+ }

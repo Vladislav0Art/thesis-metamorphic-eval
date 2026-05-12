@@ -1,0 +1,47 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/plugins/MockitoPlugins.java b/src/main/java/org/mockito/plugins/MockitoPlugins.java
+index d911077fd..2df5fab7c 100644
+--- a/src/main/java/org/mockito/plugins/MockitoPlugins.java
++++ b/src/main/java/org/mockito/plugins/MockitoPlugins.java
+@@ -31,6 +31,23 @@ public interface MockitoPlugins {
+      */
+     <T> T getDefaultPlugin(Class<T> pluginType);
+ 
++    /**
++     * Returns the mock maker used by Mockito or a mock maker identified by the provided built-in
++     * alias or fully qualified class name.
++     *
++     * <p>This method is intended for framework integrations that need to cooperate with Mockito's
++     * configured {@link MockMaker} instances.
++     *
++     * @param mockMaker the built-in mock maker alias, fully qualified class name, or {@code null}
++     *     to obtain the mock maker used by Mockito
++     * @return the mock maker instance
++     * @since 5.14.0
++     */
++    default MockMaker getMockMaker(String mockMaker) {
++        throw new UnsupportedOperationException(
++                "This MockitoPlugins implementation does not support mock maker lookup");
++    }
++
+     /**
+      * Returns inline mock maker, an optional mock maker that is bundled with Mockito distribution.
+      * This method is needed because {@link #getDefaultPlugin(Class)} does not provide an instance of inline mock maker.
+@@ -41,4 +58,3 @@ public interface MockitoPlugins {
+      * @since 2.10.0
+      */
+     MockMaker getInlineMockMaker();
+-}

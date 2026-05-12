@@ -1,0 +1,71 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/spec/logstash/util/buftok_spec.rb b/logstash-core/spec/logstash/util/buftok_spec.rb
+index cccb9c476..4e0fa8fbd 100644
+--- a/logstash-core/spec/logstash/util/buftok_spec.rb
++++ b/logstash-core/spec/logstash/util/buftok_spec.rb
+@@ -57,4 +57,18 @@ describe  FileWatch::BufferedTokenizer  do
+       expect(subject.extract("foo||bar")).to eq(["foo"])
+     end
+   end
++
++  context "with size limit" do
++    subject { FileWatch::BufferedTokenizer.new("\n", size_limit) }
++
++    let(:size_limit) { 10 }
++
++    it "resumes after the next delimiter when the buffer is full" do
++      expect(subject.extract("12345")).to eq([])
++
++      expect { subject.extract("67890\nabc\n") }.to raise_error(IllegalStateException, "input buffer full")
++
++      expect(subject.extract("xyz\n")).to eq(["xyz"])
++    end
++  end
+ end
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+index 2d7b90bba..200044e37 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+@@ -17,7 +17,6 @@
+  * under the License.
+  */
+ 
+-
+ package org.logstash.common;
+ 
+ import org.jruby.Ruby;
+diff --git a/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+new file mode 100644
+index 000000000..8b1378917
+--- /dev/null
++++ b/logstash-core/src/test/java/org/logstash/common/BufferedTokenizerExtTest.java
+@@ -0,0 +1 @@
++
+diff --git a/logstash-core/src/test/java/org/logstash/execution/ShutdownWatcherExtTest.java b/logstash-core/src/test/java/org/logstash/execution/ShutdownWatcherExtTest.java
+index 79ca8ac0a..733c8ee9e 100644
+--- a/logstash-core/src/test/java/org/logstash/execution/ShutdownWatcherExtTest.java
++++ b/logstash-core/src/test/java/org/logstash/execution/ShutdownWatcherExtTest.java
+@@ -17,9 +17,9 @@
+  * under the License.
+  */
+ 
+-
+ package org.logstash.execution;
+ 
++
+ import java.io.IOException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;

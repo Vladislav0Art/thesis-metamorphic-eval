@@ -1,0 +1,78 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+index 2d7b90bba..776cd84be 100644
+--- a/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
++++ b/logstash-core/src/main/java/org/logstash/common/BufferedTokenizerExt.java
+@@ -44,6 +44,7 @@ public class BufferedTokenizerExt extends RubyObject {
+     private int sizeLimit;
+     private boolean hasSizeLimit;
+     private int inputSize;
++    private boolean discarding;
+ 
+     public BufferedTokenizerExt(final Ruby runtime, final RubyClass metaClass) {
+         super(runtime, metaClass);
+@@ -58,7 +59,9 @@ public class BufferedTokenizerExt extends RubyObject {
+             this.sizeLimit = args[1].convertToInteger().getIntValue();
+             this.hasSizeLimit = true;
+         }
++
+         this.inputSize = 0;
++        this.discarding = false;
+         return this;
+     }
+ 
+@@ -76,10 +79,25 @@ public class BufferedTokenizerExt extends RubyObject {
+     @JRubyMethod
+     @SuppressWarnings("rawtypes")
+     public RubyArray extract(final ThreadContext context, IRubyObject data) {
+-        final RubyArray entities = data.convertToString().split(delimiter, -1);
++        RubyString chunk = data.convertToString();
++
++        if (discarding) {
++            final RubyArray discarded = chunk.split(delimiter, 2);
++            if (discarded.size() == 1) {
++                return RubyUtil.RUBY.newArray();
++            }
++            discarded.shift(context);
++            chunk = (RubyString) discarded.first();
++            discarding = false;
++        }
++
++        final RubyArray entities = chunk.split(delimiter, -1);
+         if (hasSizeLimit) {
+             final int entitiesSize = ((RubyString) entities.first()).size();
+             if (inputSize + entitiesSize > sizeLimit) {
++                input.clear();
++                inputSize = 0;
++                discarding = entities.size() == 1;
+                 throw new IllegalStateException("input buffer full");
+             }
+             this.inputSize = inputSize + entitiesSize;
+@@ -106,12 +124,7 @@ public class BufferedTokenizerExt extends RubyObject {
+     public IRubyObject flush(final ThreadContext context) {
+         final IRubyObject buffer = input.join(context);
+         input.clear();
++        inputSize = 0;
++        discarding = false;
+         return buffer;
+     }
+-
+-    @JRubyMethod(name = "empty?")
+-    public IRubyObject isEmpty(final ThreadContext context) {
+-        return input.empty_p();
+-    }
+-
+-}

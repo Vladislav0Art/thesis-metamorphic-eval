@@ -1,0 +1,26 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+index 32ab096bf..5d3e1ba9f 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONTest.java
+@@ -30,7 +30,17 @@ public class JSONTest {
+     @Test
+     public void test_isValidArray_0() {
+         assertTrue(JSON.isValidArray("[]"));
++        assertTrue(JSON.isValidArray(" \n\t[]"));
+         assertFalse(JSON.isValidArray("{}"));
++        assertFalse(JSON.isValidArray(" \n\t{}"));
++    }
++    @Test
++    public void test_reader_isObject_isArray_withLeadingWhitespace() {
++        assertTrue(JSONReader.of(" \n\t[]").isArray());
++        assertFalse(JSONReader.of(" \n\t[]").isObject());
++
++        assertTrue(JSONReader.of(" \n\t{}").isObject());
++        assertFalse(JSONReader.of(" \n\t{}").isArray());
+     }
+ 
+     @Test

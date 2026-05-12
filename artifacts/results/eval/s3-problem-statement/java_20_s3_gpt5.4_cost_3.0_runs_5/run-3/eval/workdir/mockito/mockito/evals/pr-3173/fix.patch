@@ -1,0 +1,106 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java b/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
+index daa71bed3..ad2b4fd96 100644
+--- a/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
++++ b/src/test/java/org/mockitousage/annotation/SpyAnnotationTest.java
+@@ -203,6 +203,23 @@ public class SpyAnnotationTest extends TestBase {
+         when(inner.spy_field.lenght()).thenReturn(10);
+         assertEquals(10, inner.spy_field.lenght());
+     }
++    @Test
++    public void should_not_reset_preexisting_final_spy_when_generic_spy_is_present()
++            throws Exception {
++        Assume.assumeThat(Plugins.getMockMaker(), instanceOf(InlineMockMaker.class));
++
++        class WithGenericAndFinalSpies {
++            @Spy final List<String> genericSpy = Arrays.asList("item A", "item B");
++
++            @Spy FinalType finalType = new FinalType("some value");
++        }
++
++        WithGenericAndFinalSpies withSpies = new WithGenericAndFinalSpies();
++        MockitoAnnotations.openMocks(withSpies);
++
++        assertNotNull(withSpies.finalType.value());
++        assertEquals("some value", withSpies.finalType.value());
++    }
+ 
+     @Test
+     public void should_report_private_inner_not_supported() throws Exception {
+@@ -313,6 +330,17 @@ public class SpyAnnotationTest extends TestBase {
+ 
+         private class InnerPrivateSub extends InnerPrivate {}
+     }
++    static final class FinalType {
++        private final String value;
++
++        FinalType(String value) {
++            this.value = value;
++        }
++
++        String value() {
++            return value;
++        }
++    }
+ 
+     static class InnerStaticClassWithoutDefinedConstructor {}
+ 
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyTest.java
+new file mode 100644
+index 000000000..de3808c3c
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyTest.java
+@@ -0,0 +1,40 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Spy;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertNotNull;
++
++@ExtendWith(MockitoExtension.class)
++class GenericSpyTest {
++
++    @Spy private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy private FinalType finalType = new FinalType("some value");
++
++    @Test
++    void should_not_reset_preexisting_final_spy_when_generic_spy_is_present() {
++        assertNotNull(finalType.value());
++        assertEquals("some value", finalType.value());
++    }
++
++    static final class FinalType {
++        private final String value;
++
++        FinalType(String value) {
++            this.value = value;
++        }
++
++        String value() {
++            return value;
++        }
++    }
++}

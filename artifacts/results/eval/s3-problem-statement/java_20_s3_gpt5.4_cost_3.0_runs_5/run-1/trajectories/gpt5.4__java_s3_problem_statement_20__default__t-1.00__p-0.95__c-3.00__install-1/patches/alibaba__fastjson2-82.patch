@@ -1,0 +1,82 @@
+
+diff --git a/.gitignore b/.gitignore
+index f8de26f04..8f81cfc95 100644
+Binary files a/.gitignore and b/.gitignore differ
+diff --git a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+index af3a042cd..c17ccb978 100644
+--- a/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
++++ b/core/src/main/java/com/alibaba/fastjson2/JSONReader.java
+@@ -1,26 +1,18 @@
+ package com.alibaba.fastjson2;
+ 
+-import com.alibaba.fastjson2.reader.ObjectReaderProvider;
+-import com.alibaba.fastjson2.reader.ValueConsumer;
+-import com.alibaba.fastjson2.util.IOUtils;
+-import com.alibaba.fastjson2.util.JDKUtils;
+-import com.alibaba.fastjson2.util.ReferenceKey;
+-import com.alibaba.fastjson2.reader.FieldReader;
+-import com.alibaba.fastjson2.reader.ObjectReader;
+-
+-import java.io.Closeable;
+-import java.io.IOException;
+-import java.io.InputStream;
++import com.alibaba.fastjson2.reader.*;
++import com.alibaba.fastjson2.util.*;
++
++import java.io.*;
+ import java.lang.reflect.Type;
+-import java.math.BigDecimal;
+-import java.math.BigInteger;
+-import java.nio.charset.Charset;
+-import java.nio.charset.StandardCharsets;
+-import java.text.ParseException;
+-import java.text.SimpleDateFormat;
++import java.math.*;
++import java.net.*;
++import java.nio.charset.*;
++import java.text.*;
+ import java.time.*;
+-import java.time.format.DateTimeFormatter;
++import java.time.format.*;
+ import java.util.*;
++import java.util.function.*;
+ 
+ import static com.alibaba.fastjson2.JSONFactory.*;
+ import static com.alibaba.fastjson2.JSONFactory.Utils.*;
+diff --git a/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java b/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
+index 69d05702f..360b34be8 100644
+--- a/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
++++ b/core/src/test/java/com/alibaba/fastjson2/JSONValidatorTest.java
+@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
+ import java.nio.charset.StandardCharsets;
+ 
+ import static org.junit.Assert.assertFalse;
++import static org.junit.Assert.assertTrue;
+ 
+ public class JSONValidatorTest {
+     @Test
+@@ -15,4 +16,24 @@ public class JSONValidatorTest {
+         assertFalse(JSON.isValid(utf8, 0, utf8.length, StandardCharsets.UTF_8));
+         assertFalse(JSON.isValid(utf8, 0, utf8.length, StandardCharsets.US_ASCII));
+     }
++
++    @Test
++    public void validate_array_with_leading_whitespace() {
++        assertTrue(JSON.isValidArray(" [1,2,3]"));
++    }
++
++    @Test
++    public void validate_object_is_not_array_even_with_leading_whitespace() {
++        assertFalse(JSON.isValidArray(" {\"id\":123}"));
++    }
++
++    @Test
++    public void validate_object_with_trailing_content() {
++        assertFalse(JSON.isValid("{}[]"));
++    }
++
++    @Test
++    public void validate_array_with_trailing_content() {
++        assertFalse(JSON.isValidArray("[1,2,3]{}"));
++    }
+ }

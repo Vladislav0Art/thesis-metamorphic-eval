@@ -1,0 +1,165 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+index cd5194258..6909498cd 100644
+--- a/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
++++ b/src/main/java/org/mockito/internal/configuration/SpyAnnotationEngine.java
+@@ -1,32 +1,46 @@
+-/*
+- * Copyright (c) 2007 Mockito contributors
+- * This program is made available under the terms of the MIT License.
+- */
+ package org.mockito.internal.configuration;
+ 
+-import static org.mockito.Mockito.CALLS_REAL_METHODS;
+-import static org.mockito.Mockito.withSettings;
+-import static org.mockito.internal.exceptions.Reporter.unsupportedCombinationOfAnnotations;
+-import static org.mockito.internal.util.StringUtil.join;
+-
+ import java.lang.annotation.Annotation;
+ import java.lang.reflect.Constructor;
+ import java.lang.reflect.Field;
+ import java.lang.reflect.InvocationTargetException;
+ import java.lang.reflect.Modifier;
+-
+ import org.mockito.Captor;
+ import org.mockito.InjectMocks;
+ import org.mockito.Mock;
+ import org.mockito.MockSettings;
+ import org.mockito.Mockito;
++import org.mockito.MockitoException;
+ import org.mockito.Spy;
+-import org.mockito.exceptions.base.MockitoException;
+ import org.mockito.internal.configuration.plugins.Plugins;
+ import org.mockito.internal.util.MockUtil;
+ import org.mockito.plugins.AnnotationEngine;
+ import org.mockito.plugins.MemberAccessor;
+ 
++import static org.mockito.Answers.CALLS_REAL_METHODS;
++import static org.mockito.Mockito.withSettings;
++import static org.mockito.internal.exceptions.Reporter.unsupportedCombinationOfAnnotations;
++import static org.mockito.internal.util.StringUtil.join;
++
++/**
++ * Process fields annotated with &#64;Spy.
++ * <p/>
++ * <p>
++ * Will try transform the field in a spy as with <code>Mockito.spy()</code>.
++ * </p>
++ * <p/>
++ * <p>
++ * If the field is not initialized, will try to initialize it, with a no-arg constructor.
++ * </p>
++ * <p/>
++ * <p>
++ * If the field is also annotated with the <strong>compatible</strong> &#64;InjectMocks then the field will be ignored,
++ * The injection engine will handle this specific case.
++ * </p>
++ * <p/>
++ * <p>This engine will fail, if the field is also annotated with incompatible Mockito annotations.
++ */
++
+ /**
+  * Process fields annotated with &#64;Spy.
+  * <p/>
+diff --git a/subprojects/java21/java21.gradle b/subprojects/java21/java21.gradle
+index 9a2415d51..d800c4964 100644
+--- a/subprojects/java21/java21.gradle
++++ b/subprojects/java21/java21.gradle
+@@ -5,7 +5,11 @@ description = "Test suite for Java 21 Mockito"
+ 
+ dependencies {
+     implementation project.rootProject
++    testImplementation project(":junit-jupiter")
+     testImplementation libraries.junit4
++    testImplementation libraries.junitJupiterApi
++    testImplementation libraries.junitJupiterParams
++    testRuntimeOnly libraries.junitJupiterEngine
+     testImplementation libraries.assertj
+ }
+ 
+@@ -18,6 +22,7 @@ java {
+ }
+ 
+ tasks.named('test') {
++    useJUnitPlatform()
+     if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
+         enabled = false
+     }
+diff --git a/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyAnnotationTest.java b/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyAnnotationTest.java
+new file mode 100644
+index 000000000..45386c3d9
+--- /dev/null
++++ b/subprojects/java21/src/test/java/org/mockito/java21/GenericSpyAnnotationTest.java
+@@ -0,0 +1,26 @@
++package org.mockito.java21;
++
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.extension.ExtendWith;
++import org.mockito.Spy;
++import org.mockito.junit.jupiter.MockitoExtension;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++@ExtendWith(MockitoExtension.class)
++class GenericSpyAnnotationTest {
++
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private ExampleRecord exampleRecord = new ExampleRecord("some value");
++
++    @Test
++    void genericSpyDoesNotClearRecordSpyState() {
++        assertThat(exampleRecord.someParameter()).isEqualTo("some value");
++    }
++
++    record ExampleRecord(String someParameter) {}
++}
+diff --git a/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakRecordSpyTest.java b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakRecordSpyTest.java
+new file mode 100644
+index 000000000..efef26f26
+--- /dev/null
++++ b/subprojects/junitJupiterInlineMockMakerExtensionTest/src/test/java/org/mockitousage/GenericSpyDoesNotBreakRecordSpyTest.java
+@@ -0,0 +1,27 @@
++/*
++ * Copyright (c) 2024 Mockito contributors
++ * This program is made available under the terms of the MIT License.
++ */
++package org.mockitousage;
++
++import java.util.List;
++import org.junit.jupiter.api.Test;
++import org.mockito.Spy;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++class GenericSpyDoesNotBreakRecordSpyTest {
++
++    @Spy
++    private final List<String> genericSpy = List.of("item A", "item B");
++
++    @Spy
++    private ExampleRecord exampleRecord = new ExampleRecord("some value");
++
++    @Test
++    void generic_spy_does_not_clear_preexisting_inline_spy_state() {
++        assertThat(exampleRecord.someParameter()).isEqualTo("some value");
++    }
++
++    record ExampleRecord(String someParameter) {}
++}

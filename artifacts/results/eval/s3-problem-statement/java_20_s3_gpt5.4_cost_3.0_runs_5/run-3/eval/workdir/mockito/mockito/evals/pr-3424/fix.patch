@@ -1,0 +1,164 @@
+
+diff --git a/.gitignore b/.gitignore
+index 17410c4d4..15464c150 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,3 +30,8 @@ classes
+ 
+ # Used to check reproducibility of Mockito jars
+ checksums/
++target/
++out/
++*.class
++*.jar
++.gradle/
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodAdvice.java b/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodAdvice.java
+index 245917671..e6667bfd1 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodAdvice.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodAdvice.java
+@@ -532,21 +532,29 @@ public class MockMethodAdvice extends MockMethodDispatcher {
+                                     super.visitMethodInsn(
+                                             Opcodes.INVOKESTATIC,
+                                             wrapper.getInternalName(),
+-                                            "valueOf",
+-                                            Type.getMethodDescriptor(wrapper, type),
+-                                            false);
+-                                }
+-                                super.visitInsn(Opcodes.AASTORE);
+-                            }
+-                            index = 0;
+-                            super.visitLdcInsn(instrumentedMethod.getParameters().size());
+-                            super.visitTypeInsn(
+-                                    Opcodes.ANEWARRAY, Type.getInternalName(String.class));
+-                            for (TypeDescription typeDescription :
+-                                    instrumentedMethod.getParameters().asTypeList().asErasures()) {
+-                                super.visitInsn(Opcodes.DUP);
+-                                super.visitLdcInsn(index++);
+-                                super.visitLdcInsn(typeDescription.getName());
++    public void clearMock(Object mock) {
++        if (mock instanceof Class<?>) {
++            for (Map<Class<?>, ?> entry : mockedStatics.getBackingMap().target.values()) {
++                entry.remove(mock);
++            }
++        } else {
++            MockMethodInterceptor interceptor = mocks.remove(mock);
++            if (interceptor != null && mock instanceof MockAccess) {
++                ((MockAccess) mock).setMockitoInterceptor(interceptor.asCleared());
++            }
++        }
++    }
++
++    @Override
++    public void clearAllMocks() {
++        mockedStatics.getBackingMap().clear();
++        for (Map.Entry<Object, MockMethodInterceptor> entry : mocks) {
++            if (entry.getKey() instanceof MockAccess) {
++                ((MockAccess) entry.getKey()).setMockitoInterceptor(entry.getValue().asCleared());
++            }
++        }
++        mocks.clear();
++    }
+                                 super.visitInsn(Opcodes.AASTORE);
+                             }
+                             super.visitMethodInsn(
+diff --git a/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java b/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java
+index 406dea39a..f900d2c8c 100644
+--- a/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java
++++ b/src/main/java/org/mockito/internal/creation/bytebuddy/MockMethodInterceptor.java
+@@ -32,6 +32,10 @@ public class MockMethodInterceptor implements Serializable {
+ 
+     private static final long serialVersionUID = 7152947254057253027L;
+ 
++    private static final String CLEARED_MOCK_MESSAGE =
++            "This inline mock has been cleared by Mockito.framework().clearInlineMocks() "
++                    + "and can no longer be used.";
++
+     final MockHandler handler;
+ 
+     private final MockCreationSettings mockCreationSettings;
+@@ -46,6 +50,14 @@ public class MockMethodInterceptor implements Serializable {
+         serializationSupport = new ByteBuddyCrossClassLoaderSerializationSupport();
+     }
+ 
++    public MockMethodInterceptor asCleared() {
++        return new ClearedMockMethodInterceptor(handler, mockCreationSettings);
++    }
++
++    boolean isCleared() {
++        return false;
++    }
++
+     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+         stream.defaultReadObject();
+         weakReferenceHatch = new ThreadLocal<>();
+@@ -162,4 +174,29 @@ public class MockMethodInterceptor implements Serializable {
+                     mock, invokedMethod, arguments, RealMethod.IsIllegal.INSTANCE);
+         }
+     }
++
++    private static final class ClearedMockMethodInterceptor extends MockMethodInterceptor {
++
++        private static final long serialVersionUID = 2121363837746524521L;
++
++        private ClearedMockMethodInterceptor(
++                MockHandler handler, MockCreationSettings mockCreationSettings) {
++            super(handler, mockCreationSettings);
++        }
++
++        @Override
++        boolean isCleared() {
++            return true;
++        }
++
++        @Override
++        Object doIntercept(
++                Object mock,
++                Method invokedMethod,
++                Object[] arguments,
++                RealMethod realMethod,
++                Location location) {
++            throw new org.mockito.exceptions.base.MockitoException(CLEARED_MOCK_MESSAGE);
++        }
++    }
+ }
+diff --git a/src/test/java/org/mockito/internal/framework/DefaultMockitoFrameworkTest.java b/src/test/java/org/mockito/internal/framework/DefaultMockitoFrameworkTest.java
+index 3b2884e52..73ce22275 100644
+--- a/src/test/java/org/mockito/internal/framework/DefaultMockitoFrameworkTest.java
++++ b/src/test/java/org/mockito/internal/framework/DefaultMockitoFrameworkTest.java
+@@ -148,6 +148,25 @@ public class DefaultMockitoFrameworkTest extends TestBase {
+         framework.clearInlineMocks();
+     }
+ 
++    @Test
++    public void cleared_inline_mocks_cannot_be_invoked() {
++        // clearing mocks only works with inline mocking
++        assumeTrue(Plugins.getMockMaker() instanceof InlineMockMaker);
++
++        // given
++        SampleClass sample = mock(SampleClass.class);
++        assertTrue(mockingDetails(sample).isMock());
++
++        // when
++        framework.clearInlineMocks();
++
++        // then
++        assertFalse(mockingDetails(sample).isMock());
++        assertThatThrownBy(sample::message)
++                .isInstanceOf(org.mockito.exceptions.base.MockitoException.class)
++                .hasMessageContaining("This inline mock has been cleared");
++    }
++
+     @Test
+     public void clears_all_mocks() {
+         // clearing mocks only works with inline mocking
+@@ -187,4 +206,10 @@ public class DefaultMockitoFrameworkTest extends TestBase {
+     }
+ 
+     private static class MyListener implements MockitoListener {}
++
++    private static class SampleClass {
++        String message() {
++            throw new NullPointerException("real method should not be called");
++        }
++    }
+ }

@@ -1,0 +1,136 @@
+
+diff --git a/.gitignore b/.gitignore
+index cc0ab0db4..7e5ef4afe 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -63,4 +63,6 @@ logstash-core/src/main/resources/org/logstash/plugins/plugin_aliases.yml
+ spec/unit/plugin_manager/plugin_aliases.yml
+ logstash-core/src/test/resources/org/logstash/plugins/plugin_aliases.yml
+ qa/integration/fixtures/logs_rollover/log4j2.properties
+-ci/serverless/config/*.log
+\ No newline at end of file
++ci/serverless/config/*.logtarget/
++out/
++.gradle/
+diff --git a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+index 6626641a1..b745169a9 100644
+--- a/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
++++ b/logstash-core/src/main/java/org/logstash/plugins/pipeline/PipelineBusV2.java
+@@ -134,22 +134,25 @@ class PipelineBusV2 extends AbstractPipelineBus implements PipelineBus {
+ 
+         public AddressState.ReadOnly mutate(final String address,
+                                             final Consumer<AddressState> consumer) {
++            final PipelineInput[] inputToNotify = new PipelineInput[1];
+             final AddressState result = mapping.compute(address, (a, addressState) -> {
+                 if (addressState == null) {
+                     addressState = new AddressState(address);
+                 }
+ 
+                 consumer.accept(addressState);
+-
+-                // If this addressState has a listener, ensure that any waiting
+-                // threads get notified so that they can resume immediately
+-                final PipelineInput currentInput = addressState.getInput();
+-                if (currentInput != null) {
+-                    synchronized (currentInput) { currentInput.notifyAll(); }
+-                }
++                inputToNotify[0] = addressState.getInput();
+ 
+                 return addressState.isEmpty() ? null : addressState;
+             });
++
++            final PipelineInput input = inputToNotify[0];
++            if (input != null) {
++                synchronized (input) {
++                    input.notifyAll();
++                }
++            }
++
+             return result == null ? null : result.getReadOnlyView();
+         }
+ 
+diff --git a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+index 78f7c22ac..49d629136 100644
+--- a/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
++++ b/logstash-core/src/test/java/org/logstash/plugins/pipeline/PipelineBusTest.java
+@@ -306,6 +306,73 @@ public class PipelineBusTest {
+ 
+         assertThat(bus.getAddressState(address)).isNotPresent();
+     }
++    @Test
++    public void v2AddressStateMutationDoesNotDeadlockOnListenerNotification() throws Exception {
++        org.junit.Assume.assumeTrue(busClass == PipelineBusV2.Testable.class);
++
++        final PipelineBusV2.AddressStateMapping addressStates = new PipelineBusV2.AddressStateMapping();
++        final TestPipelineInput listener = new TestPipelineInput();
++        final TestPipelineOutput sender = new TestPipelineOutput();
++
++        addressStates.mutate(address, (state) -> {
++            state.assignInputIfMissing(listener);
++            state.addOutput(sender);
++        });
++
++        final CountDownLatch listenerLocked = new CountDownLatch(1);
++        final CountDownLatch outputRemovalEntered = new CountDownLatch(1);
++        final CountDownLatch allowOutputRemovalToFinish = new CountDownLatch(1);
++        final List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
++
++        final Thread unregisterThread = new Thread(() -> {
++            try {
++                addressStates.mutate(address, (state) -> {
++                    state.removeOutput(sender);
++                    outputRemovalEntered.countDown();
++                    try {
++                        if (!allowOutputRemovalToFinish.await(5, TimeUnit.SECONDS)) {
++                            throw new AssertionError("timed out waiting to finish output removal");
++                        }
++                    } catch (InterruptedException e) {
++                        Thread.currentThread().interrupt();
++                        throw new RuntimeException(e);
++                    }
++                });
++                });
++            } catch (Throwable t) {
++                failures.add(t);
++            }
++        }, "unregister-thread");
++        unregisterThread.setDaemon(true);
++
++        final Thread unlistenThread = new Thread(() -> {
++            try {
++                synchronized (listener) {
++                    listenerLocked.countDown();
++                    if (!outputRemovalEntered.await(5, TimeUnit.SECONDS)) {
++                        throw new AssertionError("timed out waiting for output removal to start");
++                    }
++                    allowOutputRemovalToFinish.countDown();
++                    addressStates.mutate(address, (state) -> { });
++                }
++            } catch (Throwable t) {
++                failures.add(t);
++            }
++        }, "unlisten-thread");
++        unlistenThread.setDaemon(true);
++
++        unlistenThread.start();
++        assertThat(listenerLocked.await(5, TimeUnit.SECONDS)).isTrue();
++
++        unregisterThread.start();
++
++        unlistenThread.join(Duration.ofSeconds(5).toMillis());
++        unregisterThread.join(Duration.ofSeconds(5).toMillis());
++
++        assertThat(failures).isEmpty();
++        assertThat(unlistenThread.isAlive()).isFalse();
++        assertThat(unregisterThread.isAlive()).isFalse();
++    }
+ 
+     @Test
+     public void whenInputFailsOutputRetryOnlyNotYetDelivered() throws InterruptedException {
+@@ -403,4 +470,4 @@ public class PipelineBusTest {
+             return lastBatchSize;
+         }
+     }
+-}
+\ No newline at end of file
++}

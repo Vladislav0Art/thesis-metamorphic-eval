@@ -1,0 +1,131 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java b/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
+index e6f1cbc5..a28ce79f 100644
+--- a/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
++++ b/src/main/java/com/fasterxml/jackson/core/util/TextBuffer.java
+@@ -304,7 +304,7 @@ public final class TextBuffer
+             return (_resultArray = _resultString.toCharArray());
+         }
+         // Nope; but does it fit in just one segment?
+-        if (!_hasSegments)  return _currentSegment;
++        if (!_hasSegments)  return (_currentSegment == null) ? NO_CHARS : _currentSegment;
+         // Nope, need to have/create a non-segmented array and return it
+         return contentsAsArray();
+     }
+diff --git a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+index 878224ef..12cc3dd9 100644
+--- a/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
++++ b/src/test/java/com/fasterxml/jackson/core/util/TestTextBuffer.java
+@@ -35,46 +35,61 @@ public class TestTextBuffer
+         tb.resetWithShared(new char[] { 'a' }, 0, 1);
+         assertEquals(1, tb.toString().length());
+     }
++    public void testLongAppend()
++    {
++        final int len = TextBuffer.MAX_SEGMENT_LEN * 3 / 2;
++        StringBuilder sb = new StringBuilder(len);
++        for (int i = 0; i < len; ++i) {
++            sb.append('x');
++        }
++        final String STR = sb.toString();
++        final String EXP = "a" + STR + "c";
++
++        // ok: first test with String:
++        TextBuffer tb = new TextBuffer(new BufferRecycler());
++        tb.append('a');
++        tb.append(STR, 0, len);
++        tb.append('c');
++        assertEquals(len+2, tb.size());
++        assertEquals(EXP, tb.contentsAsString());
++
++        // then char[]
++        tb = new TextBuffer(new BufferRecycler());
++        tb.append('a');
++        tb.append(STR.toCharArray(), 0, len);
++        tb.append('c');
++        assertEquals(len+2, tb.size());
++        assertEquals(EXP, tb.contentsAsString());
++    }
++
++    public void testEmptyGetTextBufferConsistency()
++    {
++        TextBuffer tb = new TextBuffer(new BufferRecycler());
++        tb.resetWithEmpty();
+ 
+-      public void testLongAppend()
+-      {
+-          final int len = TextBuffer.MAX_SEGMENT_LEN * 3 / 2;
+-          StringBuilder sb = new StringBuilder(len);
+-          for (int i = 0; i < len; ++i) {
+-              sb.append('x');
+-          }
+-         final String STR = sb.toString();
+-         final String EXP = "a" + STR + "c";
+- 
+-         // ok: first test with String:
+-         TextBuffer tb = new TextBuffer(new BufferRecycler());
+-         tb.append('a');
+-         tb.append(STR, 0, len);
+-         tb.append('c');
+-         assertEquals(len+2, tb.size());
+-         assertEquals(EXP, tb.contentsAsString());
+- 
+-         // then char[]
+-         tb = new TextBuffer(new BufferRecycler());
+-         tb.append('a');
+-         tb.append(STR.toCharArray(), 0, len);
+-         tb.append('c');
+-         assertEquals(len+2, tb.size());
+-         assertEquals(EXP, tb.contentsAsString());
+-      }
++        char[] buffer = tb.getTextBuffer();
++        assertNotNull(buffer);
++        assertEquals(0, buffer.length);
+ 
+-      // [Core#152]
+-      public void testExpand()
+-      {
+-          TextBuffer tb = new TextBuffer(new BufferRecycler());
+-          char[] buf = tb.getCurrentSegment();
++        assertEquals("", tb.contentsAsString());
+ 
+-          while (buf.length < 500 * 1000) {
+-              char[] old = buf;
+-              buf = tb.expandCurrentSegment();
+-              if (old.length >= buf.length) {
+-                  fail("Expected buffer of "+old.length+" to expand, did not, length now "+buf.length);
+-              }
+-          }
+-      }
++        char[] bufferAfterString = tb.getTextBuffer();
++        assertNotNull(bufferAfterString);
++        assertEquals(0, bufferAfterString.length);
++    }
++
++    // [Core#152]
++    public void testExpand()
++    {
++        TextBuffer tb = new TextBuffer(new BufferRecycler());
++        char[] buf = tb.getCurrentSegment();
++
++        while (buf.length < 500 * 1000) {
++            char[] old = buf;
++            buf = tb.expandCurrentSegment();
++            if (old.length >= buf.length) {
++                fail("Expected buffer of "+old.length+" to expand, did not, length now "+buf.length);
++            }
++        }
++    }
+ }

@@ -1,0 +1,358 @@
+
+diff --git a/.gitignore b/.gitignore
+index 79b52d6b..ca3b9d9c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,3 +21,7 @@ syntax: glob
+ *.ipr
+ *.iws
+ /.idea/
++target/
++out/
++*.jar
++.gradle/
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/ReaderBasedJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/ReaderBasedJsonParser.java
+index a0014052..d596e331 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/ReaderBasedJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/ReaderBasedJsonParser.java
+@@ -904,6 +904,15 @@ public class ReaderBasedJsonParser // final in 2.3, earlier
+         }
+         if (_parsingContext.expectComma()) {
+             i = _skipComma(i);
++            // Was that a trailing comma?
++            if ((_features & FEAT_MASK_TRAILING_COMMA) != 0) {
++                if ((i | 0x20) == INT_RCURLY) {
++                    _updateLocation();
++                    _parsingContext = _parsingContext.clearAndGetParent();
++                    _currToken = JsonToken.END_OBJECT;
++                    return null;
++                }
++            }
+         }
+         if (!_parsingContext.inObject()) {
+             _updateLocation();
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/UTF8DataInputJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/UTF8DataInputJsonParser.java
+index 7881b48c..2efb2c9e 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/UTF8DataInputJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/UTF8DataInputJsonParser.java
+@@ -838,57 +838,48 @@ public class UTF8DataInputJsonParser
+             break;
+ 
+         default:
+-            t = _handleUnexpectedValue(i);
+-        }
+-        _nextToken = t;
+-        return nameStr;
+-    }
+-
+-    @Override
+-    public String nextTextValue() throws IOException
+-    {
+-        // two distinct cases; either got name and we know next type, or 'other'
+-        if (_currToken == JsonToken.FIELD_NAME) { // mostly copied from '_nextAfterName'
+-            _nameCopied = false;
+-            JsonToken t = _nextToken;
+-            _nextToken = null;
+-            _currToken = t;
+-            if (t == JsonToken.VALUE_STRING) {
+-                if (_tokenIncomplete) {
+-                    _tokenIncomplete = false;
+-                    return _finishAndReturnString();
+-                }
+-                return _textBuffer.contentsAsString();
+-            }
+-            if (t == JsonToken.START_ARRAY) {
+-                _parsingContext = _parsingContext.createChildArrayContext(_tokenInputRow, _tokenInputCol);
+-            } else if (t == JsonToken.START_OBJECT) {
+-                _parsingContext = _parsingContext.createChildObjectContext(_tokenInputRow, _tokenInputCol);
+-            }
+-            return null;
++        switch (i) {
++        case '[':
++            _parsingContext = _parsingContext.createChildArrayContext(_tokenInputRow, _tokenInputCol);
++            return (_currToken = JsonToken.START_ARRAY);
++        case '{':
++            _parsingContext = _parsingContext.createChildObjectContext(_tokenInputRow, _tokenInputCol);
++            return (_currToken = JsonToken.START_OBJECT);
++        case 't':
++            _matchToken("true", 1);
++            return (_currToken = JsonToken.VALUE_TRUE);
++        case 'f':
++            _matchToken("false", 1);
++            return (_currToken = JsonToken.VALUE_FALSE);
++        case 'n':
++            _matchToken("null", 1);
++            return (_currToken = JsonToken.VALUE_NULL);
++        case '-':
++            return (_currToken = _parseNegNumber());
++            /* Should we have separate handling for plus? Although
++             * it is not allowed per se, it may be erroneously used,
++             * and could be indicated by a more specific error message.
++             */
++        case '0':
++        case '1':
++        case '2':
++        case '3':
++        case '4':
++        case '5':
++        case '6':
++        case '7':
++        case '8':
++        case '9':
++            return (_currToken = _parsePosNumber(i));
+         }
+-        return (nextToken() == JsonToken.VALUE_STRING) ? getText() : null;
++        return (_currToken = _handleUnexpectedValue(i));
+     }
+ 
+-    @Override
+-    public int nextIntValue(int defaultValue) throws IOException
+-    {
+-        // two distinct cases; either got name and we know next type, or 'other'
+-        if (_currToken == JsonToken.FIELD_NAME) { // mostly copied from '_nextAfterName'
+-            _nameCopied = false;
+-            JsonToken t = _nextToken;
+-            _nextToken = null;
+-            _currToken = t;
+-            if (t == JsonToken.VALUE_NUMBER_INT) {
+-                return getIntValue();
+-            }
+-            if (t == JsonToken.START_ARRAY) {
+-                _parsingContext = _parsingContext.createChildArrayContext(_tokenInputRow, _tokenInputCol);
+-            } else if (t == JsonToken.START_OBJECT) {
+-                _parsingContext = _parsingContext.createChildObjectContext(_tokenInputRow, _tokenInputCol);
+-            }
+-            return defaultValue;
+-        }
++    /*
++    /**********************************************************
++    /* Public API, traversal, nextXxxValue/nextFieldName
++    /**********************************************************
++     */
+         return (nextToken() == JsonToken.VALUE_NUMBER_INT) ? getIntValue() : defaultValue;
+     }
+ 
+diff --git a/src/main/java/com/fasterxml/jackson/core/json/UTF8StreamJsonParser.java b/src/main/java/com/fasterxml/jackson/core/json/UTF8StreamJsonParser.java
+index 1471ce2a..eb963d4d 100644
+--- a/src/main/java/com/fasterxml/jackson/core/json/UTF8StreamJsonParser.java
++++ b/src/main/java/com/fasterxml/jackson/core/json/UTF8StreamJsonParser.java
+@@ -778,141 +778,98 @@ public class UTF8StreamJsonParser
+         _updateLocation();
+ 
+         // Ok: we must have a value... what is it? Strings are very common, check first:
+-        if (i == INT_QUOTE) {
+-            _tokenIncomplete = true;
+-            _nextToken = JsonToken.VALUE_STRING;
+-            return _currToken;
+-        }        
+         JsonToken t;
+ 
+-        switch (i) {
+-        case '-':
+-            t = _parseNegNumber();
+-            break;
+-
+-            /* Should we have separate handling for plus? Although
+-             * it is not allowed per se, it may be erroneously used,
+-             * and could be indicate by a more specific error message.
+-             */
+-        case '0':
+-        case '1':
+-        case '2':
+-        case '3':
+-        case '4':
+-        case '5':
+-        case '6':
+-        case '7':
+-        case '8':
+-        case '9':
+-            t = _parsePosNumber(i);
+-            break;
+-        case 'f':
+-            _matchToken("false", 1);
+-             t = JsonToken.VALUE_FALSE;
+-            break;
+-        case 'n':
+-            _matchToken("null", 1);
+-            t = JsonToken.VALUE_NULL;
+-            break;
+-        case 't':
+-            _matchToken("true", 1);
+-            t = JsonToken.VALUE_TRUE;
+-            break;
+-        case '[':
+-            t = JsonToken.START_ARRAY;
+-            break;
+-        case '{':
+-            t = JsonToken.START_OBJECT;
+-            break;
+-
+-        default:
+-            t = _handleUnexpectedValue(i);
++        if (i == INT_QUOTE) {
++            _tokenIncomplete = true;
++            t = JsonToken.VALUE_STRING;
++        } else {
++            switch (i) {
++            case '[':
++                t = JsonToken.START_ARRAY;
++                break;
++            case '{':
++                t = JsonToken.START_OBJECT;
++                break;
++            case 't':
++                _matchTrue();
++                t = JsonToken.VALUE_TRUE;
++                break;
++            case 'f':
++                _matchFalse();
++                t = JsonToken.VALUE_FALSE;
++                break;
++            case 'n':
++                _matchNull();
++                t = JsonToken.VALUE_NULL;
++                break;
++            case '-':
++                t = _parseNegNumber();
++                break;
++            case '0':
++            case '1':
++            case '2':
++            case '3':
++            case '4':
++            case '5':
++            case '6':
++            case '7':
++            case '8':
++            case '9':
++                t = _parsePosNumber(i);
++                break;
++            default:
++                t = _handleUnexpectedValue(i);
++                break;
++            }
+         }
+         _nextToken = t;
+         return _currToken;
+     }
+ 
+-    private final JsonToken _nextTokenNotInObject(int i) throws IOException
+-    {
+-        if (i == INT_QUOTE) {
+-            _tokenIncomplete = true;
+-            return (_currToken = JsonToken.VALUE_STRING);
+-        }
+-        switch (i) {
+-        case '[':
+-            _parsingContext = _parsingContext.createChildArrayContext(_tokenInputRow, _tokenInputCol);
+-            return (_currToken = JsonToken.START_ARRAY);
+-        case '{':
+-            _parsingContext = _parsingContext.createChildObjectContext(_tokenInputRow, _tokenInputCol);
+-            return (_currToken = JsonToken.START_OBJECT);
+-        case 't':
+-            _matchToken("true", 1);
+-            return (_currToken = JsonToken.VALUE_TRUE);
+-        case 'f':
+-            _matchToken("false", 1);
+-            return (_currToken = JsonToken.VALUE_FALSE);
+-        case 'n':
+-            _matchToken("null", 1);
+-            return (_currToken = JsonToken.VALUE_NULL);
+-        case '-':
+-            return (_currToken = _parseNegNumber());
+-            /* Should we have separate handling for plus? Although
+-             * it is not allowed per se, it may be erroneously used,
+-             * and could be indicated by a more specific error message.
+-             */
+-        case '0':
+-        case '1':
+-        case '2':
+-        case '3':
+-        case '4':
+-        case '5':
+-        case '6':
+-        case '7':
+-        case '8':
+-        case '9':
+-            return (_currToken = _parsePosNumber(i));
+-        }
+-        return (_currToken = _handleUnexpectedValue(i));
+-    }
+-    
+-    private final JsonToken _nextAfterName()
++    @Override
++    public int nextIntValue(int defaultValue) throws IOException
+     {
+-        _nameCopied = false; // need to invalidate if it was copied
+-        JsonToken t = _nextToken;
+-        _nextToken = null;
+-
+- // !!! 16-Nov-2015, tatu: TODO: fix [databind#37], copy next location to current here
+-        
+-        // Also: may need to start new context?
+-        if (t == JsonToken.START_ARRAY) {
+-            _parsingContext = _parsingContext.createChildArrayContext(_tokenInputRow, _tokenInputCol);
+-        } else if (t == JsonToken.START_OBJECT) {
+-            _parsingContext = _parsingContext.createChildObjectContext(_tokenInputRow, _tokenInputCol);
++        // two distinct cases; either got name and we know next type, or 'other'
++        if (_currToken == JsonToken.FIELD_NAME) { // mostly copied from '_nextAfterName'
++            _nameCopied = false;
++            JsonToken t = _nextToken;
++            _nextToken = null;
++            _currToken = t;
++            if (t == JsonToken.VALUE_NUMBER_INT) {
++                return getIntValue();
++            }
++            if (t == JsonToken.START_ARRAY) {
++                _parsingContext = _parsingContext.createChildArrayContext(_tokenInputRow, _tokenInputCol);
++            } else if (t == JsonToken.START_OBJECT) {
++                _parsingContext = _parsingContext.createChildObjectContext(_tokenInputRow, _tokenInputCol);
++            }
++            return defaultValue;
+         }
+-        return (_currToken = t);
++        return (nextToken() == JsonToken.VALUE_NUMBER_INT) ? getIntValue() : defaultValue;
+     }
+ 
+     @Override
+-    public void finishToken() throws IOException {
+-        if (_tokenIncomplete) {
+-            _tokenIncomplete = false;
+-            _finishString(); // only strings can be incomplete
++    public long nextLongValue(long defaultValue) throws IOException
++    {
++        // two distinct cases; either got name and we know next type, or 'other'
++        if (_currToken == JsonToken.FIELD_NAME) { // mostly copied from '_nextAfterName'
++            _nameCopied = false;
++            JsonToken t = _nextToken;
++            _nextToken = null;
++            _currToken = t;
++            if (t == JsonToken.VALUE_NUMBER_INT) {
++                return getLongValue();
++            }
++            if (t == JsonToken.START_ARRAY) {
++                _parsingContext = _parsingContext.createChildArrayContext(_tokenInputRow, _tokenInputCol);
++            } else if (t == JsonToken.START_OBJECT) {
++                _parsingContext = _parsingContext.createChildObjectContext(_tokenInputRow, _tokenInputCol);
++            }
++            return defaultValue;
+         }
++        return (nextToken() == JsonToken.VALUE_NUMBER_INT) ? getLongValue() : defaultValue;
+     }
+-
+-    /*
+-    /**********************************************************
+-    /* Public API, traversal, nextXxxValue/nextFieldName
+-    /**********************************************************
+-     */
+-
+-    @Override
+-    public boolean nextFieldName(SerializableString str) throws IOException
+-    {
+-        // // // Note: most of code below is copied from nextToken()
+-        _numTypesValid = NR_UNKNOWN;
+-        if (_currToken == JsonToken.FIELD_NAME) { // can't have name right after name
+-            _nextAfterName();
+             return false;
+         }
+         if (_tokenIncomplete) {
