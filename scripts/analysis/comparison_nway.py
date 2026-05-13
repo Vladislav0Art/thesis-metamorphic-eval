@@ -10,7 +10,6 @@ from analysis.data_loading import (
     _mannwhitneyu_pvalue,
     _vd_a12,
     get_per_run_pass_rates,
-    load_instance_observations_by_id,
     load_instance_pass_rates_by_id,
     load_resolved_runs_by_id,
 )
@@ -23,15 +22,6 @@ STRATEGY_STYLES = {
     "s2-structural":        {"color": "#C3B1E1", "hatch": "\\\\"},
     "s3-problem-statement": {"color": "#FFB347", "hatch": "xx"},
     "s4-combined":          {"color": "#FFB3BA", "hatch": ".."},
-}
-
-_METRIC_FMT = {
-    "pass_rate":      ("{:.1f}%",  "{:.1f}"),
-    "instance_cost":  ("${:.4f}",  ".4f"),
-    "api_calls":      ("{:.1f}",   ".1f"),
-    "tokens_sent":    ("{:,.0f}",  ",.0f"),
-    "tokens_received":("{:,.0f}",  ",.0f"),
-    "tokens_total":   ("{:,.0f}",  ",.0f"),
 }
 
 _POOLED_FIELDS = [
@@ -239,12 +229,14 @@ def plot_pooled_metrics_nway(strategies, all_obs: dict, model_label: str) -> Non
                     bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="lightgray", alpha=0.9),
                 )
 
-        ax3.text(
-            0.5, 0.01,
-            f"y clipped at {_CLIP:,} — values above are counted per box (↑N cut)",
-            transform=ax3.transAxes, ha="center", va="bottom", fontsize=7, color="gray",
-        )
         plt.tight_layout()
+
+        clip_notes = ", ".join(
+            f"{s.display_name}: ↑{sum(1 for v in d if v > _CLIP)}"
+            for s, d in zip(strategies, reasoning_data)
+            if d and sum(1 for v in d if v > _CLIP) > 0
+        )
+        print(f"Reasoning tokens: y-axis clipped at {_CLIP:,}. Outliers cut — {clip_notes}.")
 
 
 # ─── Resolution table ─────────────────────────────────────────────────────────
