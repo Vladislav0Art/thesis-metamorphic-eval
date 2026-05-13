@@ -546,53 +546,80 @@ def build_metrics_summary_df(strategies, all_metrics: dict, all_obs: dict) -> pd
     return pd.DataFrame(rows)
 
 
+def _fmt_abs_delta(metric: str, abs_delta: float) -> str:
+    """Format an absolute delta value with the correct unit and sign prefix."""
+    sign = "+" if abs_delta >= 0 else "-"
+    v    = abs(abs_delta)
+    if metric == "pass_rate":
+        return f"{abs_delta:+.1f}%"
+    if metric == "instance_cost":
+        return f"{sign}${v:.4f}"
+    if metric == "api_calls":
+        return f"{abs_delta:+.1f}"
+    # tokens
+    return f"{abs_delta:+,.0f}"
+
+
 def display_metrics_summary(df: pd.DataFrame, strategies) -> None:
     """
-    Styled summary table: median & avg per strategy with Δ% coloured green (increase)
-    or red (decrease) relative to s0-original.
+    Styled summary table: median & avg per strategy.
+
+    Δ columns show both the absolute change and the percentage change in parentheses,
+    e.g. "-5.8% (-36.7%)" for pass_rate or "+$0.31 (+12.5%)" for instance_cost.
+    Green = increased vs s0, red = decreased.
     """
-    s0 = next(s for s in strategies if s.name == "s0-original")
     sX_list = [s for s in strategies if s.name != "s0-original"]
 
     disp_rows = []
     for _, row in df.iterrows():
         metric = row["metric"]
-        fmt = _FIELD_FMT.get(metric, "{}")
-        disp = {
-            "metric":   metric,
-            "s0_med":   fmt.format(row["s0_med"]),
-            "s0_avg":   fmt.format(row["s0_avg"]),
+        fmt    = _FIELD_FMT.get(metric, "{}")
+        disp   = {
+            "metric":  metric,
+            "s0_med":  fmt.format(row["s0_med"]),
+            "s0_avg":  fmt.format(row["s0_avg"]),
         }
         for sX in sX_list:
-            med_val  = row[f"{sX.display_name}_med"]
-            avg_val  = row[f"{sX.display_name}_avg"]
-            d_med    = row[f"{sX.display_name}_Δmed"]
-            d_avg    = row[f"{sX.display_name}_Δavg"]
-            disp[f"{sX.display_name}_med"]  = fmt.format(med_val)
-            disp[f"{sX.display_name}_avg"]  = fmt.format(avg_val)
-            disp[f"{sX.display_name}_Δmed%"] = f"{d_med:+.1f}%" if not np.isnan(d_med) else "—"
-            disp[f"{sX.display_name}_Δavg%"] = f"{d_avg:+.1f}%" if not np.isnan(d_avg) else "—"
+            med_s0  = row["s0_med"]
+            avg_s0  = row["s0_avg"]
+            med_sX  = row[f"{sX.display_name}_med"]
+            avg_sX  = row[f"{sX.display_name}_avg"]
+            pct_med = row[f"{sX.display_name}_Δmed"]
+            pct_avg = row[f"{sX.display_name}_Δavg"]
+
+            disp[f"{sX.display_name}_med"] = fmt.format(med_sX)
+            disp[f"{sX.display_name}_avg"] = fmt.format(avg_sX)
+
+            if np.isnan(pct_med):
+                disp[f"{sX.display_name}_Δmed"] = "—"
+            else:
+                abs_str = _fmt_abs_delta(metric, med_sX - med_s0)
+                disp[f"{sX.display_name}_Δmed"] = f"{abs_str} ({pct_med:+.1f}%)"
+
+            if np.isnan(pct_avg):
+                disp[f"{sX.display_name}_Δavg"] = "—"
+            else:
+                abs_str = _fmt_abs_delta(metric, avg_sX - avg_s0)
+                disp[f"{sX.display_name}_Δavg"] = f"{abs_str} ({pct_avg:+.1f}%)"
+
         disp_rows.append(disp)
 
-    disp_df = pd.DataFrame(disp_rows).set_index("metric")
-    delta_cols = [c for c in disp_df.columns if c.endswith("%")]
+    disp_df    = pd.DataFrame(disp_rows).set_index("metric")
+    delta_cols = [c for c in disp_df.columns if "_Δ" in c]
 
     def _color_delta(val):
         if not isinstance(val, str) or val == "—":
             return ""
-        try:
-            num = float(val.replace("%", "").replace("+", ""))
-            if num > 0:
-                return "background-color: #C6EFCE; color: #276221"
-            if num < 0:
-                return "background-color: #FFC7CE; color: #9C0006"
-        except ValueError:
-            pass
+        if val.startswith("+"):
+            return "background-color: #C6EFCE; color: #276221"
+        if val.startswith("-"):
+            return "background-color: #FFC7CE; color: #9C0006"
         return ""
 
     styler = disp_df.style.set_caption(
-        "Metric summary: median & avg per strategy + Δ% vs s0-original  "
-        "(pass_rate = per-run values; agent metrics = pooled obs)"
+        "Metric summary: median & avg per strategy + Δ vs s0-original  "
+        "(format: absolute change (% change); "
+        "pass_rate = per-run values; agent metrics = pooled obs)"
     )
     _apply_fn = getattr(styler, "map", None) or getattr(styler, "applymap")
     from IPython.display import display as _display
