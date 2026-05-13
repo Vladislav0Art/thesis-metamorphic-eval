@@ -1,0 +1,384 @@
+"""N-way comparison plots and tables for comparing all strategies side-by-side."""
+
+from typing import List, Tuple
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+from analysis.data_loading import (
+    _mannwhitneyu_pvalue,
+    _vd_a12,
+    get_per_run_pass_rates,
+    load_instance_pass_rates_by_id,
+    load_resolved_runs_by_id,
+)
+
+_ALPHA = 0.05
+
+STRATEGY_STYLES = {
+    "s0-original":          {"color": "#C8C8C8", "hatch": ""},
+    "s1-renaming":          {"color": "#AEC6CF", "hatch": "//"},
+    "s2-structural":        {"color": "#C3B1E1", "hatch": "\\\\"},
+    "s3-problem-statement": {"color": "#FFB347", "hatch": "xx"},
+    "s4-combined":          {"color": "#FFB3BA", "hatch": ".."},
+}
+
+_METRIC_FMT = {
+    "pass_rate":      ("{:.1f}%",  "{:.1f}"),
+    "instance_cost":  ("${:.4f}",  ".4f"),
+    "api_calls":      ("{:.1f}",   ".1f"),
+    "tokens_sent":    ("{:,.0f}",  ",.0f"),
+    "tokens_received":("{:,.0f}",  ",.0f"),
+    "tokens_total":   ("{:,.0f}",  ",.0f"),
+}
+
+_POOLED_FIELDS = [
+    "instance_cost",
+    "api_calls",
+    "tokens_sent",
+    "tokens_received",
+    "tokens_total",
+]
+
+
+# ─── Core N-way boxplot helper ────────────────────────────────────────────────
+
+def _draw_nway_boxplot(
+    ax,
+    datasets: List[list],
+    labels: List[str],
+    colors: List[str],
+    hatches: List[str],
+    ylabel: str,
+    title: str,
+    value_fmt: str = ".3f",
+) -> None:
+    """
+    Draw N side-by-side box plots. Red solid = median, blue dashed = mean.
+    Colors and hatches are applied per group.
+    """
+    n = len(datasets)
+    positions = list(range(1, n + 1))
+
+    bp = ax.boxplot(
+        datasets,
+        positions=positions,
+        widths=0.55,
+        patch_artist=True,
+        showmeans=True,
+        meanline=True,
+        meanprops=dict(color="blue", linewidth=1.5, linestyle="--"),
+        medianprops=dict(color="red", linewidth=2),
+        whiskerprops=dict(linewidth=1.0),
+        capprops=dict(linewidth=1.2),
+        flierprops=dict(marker="D", markerfacecolor="gray",
+                        markeredgecolor="none", markersize=4, alpha=0.6),
+    )
+
+    for patch, color, hatch in zip(bp["boxes"], colors, hatches):
+        patch.set_facecolor(color)
+        patch.set_alpha(0.75)
+        patch.set_hatch(hatch)
+
+    all_vals = [v for d in datasets for v in d]
+    data_range = max(all_vals) - min(all_vals) if len(all_vals) > 1 else 1
+
+    for data, pos in zip(datasets, positions):
+        q3     = float(np.percentile(data, 75))
+        median = float(np.median(data))
+        mean   = float(np.mean(data))
+        yoff   = q3 + data_range * 0.06
+        ax.text(
+            pos, yoff,
+            f"med {median:{value_fmt}}\navg {mean:{value_fmt}}",
+            ha="center", fontsize=6.5, linespacing=1.4,
+            bbox=dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.75),
+        )
+
+    ax.set_xticks(positions)
+    ax.set_xticklabels(labels, rotation=15, ha="right", fontsize=8)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title, pad=20)
+
+
+# ─── Public plot functions ─────────────────────────────────────────────────────
+
+def plot_pass_rate_nway(strategies, all_metrics: dict) -> None:
+    """
+    1×2 figure: left = per-strategy boxplots, right = per-run line overlay.
+    strategies: List[Strategy]; all_metrics: {name → metrics_dict}
+    """
+    model_label = strategies[0].model
+    labels   = [s.display_name for s in strategies]
+    colors   = [STRATEGY_STYLES.get(s.name, {}).get("color", "#CCCCCC") for s in strategies]
+    hatches  = [STRATEGY_STYLES.get(s.name, {}).get("hatch", "")       for s in strategies]
+    datasets = [get_per_run_pass_rates(all_metrics[s.name]) for s in strategies]
+    n_runs   = all_metrics[strategies[0].name].get("n_runs", "?")
+
+    fig, (ax_box, ax_line) = plt.subplots(1, 2, figsize=(14, 4.5))
+    fig.suptitle(
+        f"Pass rate — {model_label}  ({n_runs} runs × 20 instances)",
+        fontsize=11,
+    )
+
+    # Left: boxplots
+    _draw_nway_boxplot(ax_box, datasets, labels, colors, hatches,
+                       "Pass rate (%)", "Distribution", value_fmt=".1f")
+    ax_box.set_ylim(-5, 110)
+
+    # Right: per-run line overlay
+    _MARKERS    = ["o", "s", "^", "D", "v"]
+    _LINESTYLES = ["-", "--", ":", "-.", (0, (3, 1, 1, 1))]
+    n_max = max(len(d) for d in datasets)
+    xs    = np.arange(1, n_max + 1)
+
+    for i, (s, rates, color) in enumerate(zip(strategies, datasets, colors)):
+        # Darken near-white grey so it's visible against a white background
+        line_color = "#555555" if color == "#C8C8C8" else color
+        ax_line.plot(
+            xs[: len(rates)], rates,
+            marker=_MARKERS[i % len(_MARKERS)],
+            linestyle=_LINESTYLES[i % len(_LINESTYLES)],
+            color=line_color,
+            linewidth=1.5, markersize=6,
+            label=s.display_name,
+        )
+
+    ax_line.set_xlabel("Run number")
+    ax_line.set_ylabel("Pass rate (%)")
+    ax_line.set_ylim(-5, 110)
+    ax_line.set_xticks(xs)
+    ax_line.set_xticklabels([f"R{n}" for n in xs])
+    ax_line.set_title("Per-run pass rates")
+    ax_line.legend(fontsize=8, loc="upper right")
+
+    plt.tight_layout()
+
+
+def plot_pooled_metrics_nway(strategies, all_obs: dict, model_label: str) -> None:
+    """
+    Two figures: (1) instance_cost + api_calls; (2) tokens_sent + tokens_received + tokens_total.
+    strategies: List[Strategy]; all_obs: {name → obs_dict}
+    """
+    labels  = [s.display_name for s in strategies]
+    colors  = [STRATEGY_STYLES.get(s.name, {}).get("color", "#CCCCCC") for s in strategies]
+    hatches = [STRATEGY_STYLES.get(s.name, {}).get("hatch", "")       for s in strategies]
+
+    n_obs = [len(all_obs[s.name].get("instance_cost", [])) for s in strategies]
+    n_obs_str = "  |  ".join(f"{s.display_name}: {n}" for s, n in zip(strategies, n_obs))
+
+    # Figure 1: cost + api_calls
+    fig1, axes1 = plt.subplots(1, 2, figsize=(12, 4.5))
+    fig1.suptitle(f"Pooled cost & API calls — {model_label}\n{n_obs_str}", fontsize=10)
+    _draw_nway_boxplot(
+        axes1[0],
+        [all_obs[s.name]["instance_cost"] for s in strategies],
+        labels, colors, hatches,
+        "Instance cost (USD)", "Instance cost (USD)", value_fmt=".4f",
+    )
+    _draw_nway_boxplot(
+        axes1[1],
+        [all_obs[s.name]["api_calls"] for s in strategies],
+        labels, colors, hatches,
+        "API calls", "API calls", value_fmt=".1f",
+    )
+    plt.tight_layout()
+
+    # Figure 2: tokens
+    fig2, axes2 = plt.subplots(1, 3, figsize=(16, 4.5))
+    fig2.suptitle(f"Pooled token usage — {model_label}\n{n_obs_str}", fontsize=10)
+    _draw_nway_boxplot(
+        axes2[0],
+        [all_obs[s.name]["tokens_sent"] for s in strategies],
+        labels, colors, hatches,
+        "Tokens sent", "Tokens sent", value_fmt=",.0f",
+    )
+    _draw_nway_boxplot(
+        axes2[1],
+        [all_obs[s.name]["tokens_received"] for s in strategies],
+        labels, colors, hatches,
+        "Tokens received", "Tokens received", value_fmt=",.0f",
+    )
+    _draw_nway_boxplot(
+        axes2[2],
+        [all_obs[s.name]["tokens_total"] for s in strategies],
+        labels, colors, hatches,
+        "Tokens total", "Tokens total", value_fmt=",.0f",
+    )
+    plt.tight_layout()
+
+    # Figure 3: reasoning tokens (skipped when no strategy has data)
+    reasoning_data = [all_obs[s.name].get("reasoning_tokens_total", []) for s in strategies]
+    if any(d for d in reasoning_data):
+        fig3, ax3 = plt.subplots(figsize=(9, 4.5))
+        fig3.suptitle(f"Pooled reasoning tokens — {model_label}\n{n_obs_str}", fontsize=10)
+        _draw_nway_boxplot(
+            ax3,
+            [d if d else [0] for d in reasoning_data],
+            labels, colors, hatches,
+            "Reasoning tokens", "Reasoning tokens", value_fmt=",.0f",
+        )
+        plt.tight_layout()
+
+
+# ─── Resolution table ─────────────────────────────────────────────────────────
+
+def build_resolution_table(strategies, sort_by_name: str = "s0-original") -> pd.DataFrame:
+    """
+    Per-instance resolution table sorted by the sort_by_name strategy's resolved count.
+
+    Columns: instance_id, one column per strategy (showing resolved run labels or "—").
+    Last row: total resolved count per strategy.
+    """
+    resolved_by   = {}
+    all_ids: set  = set()
+
+    for s in strategies:
+        resolved = load_resolved_runs_by_id(s.filepath)
+        outcomes = load_instance_pass_rates_by_id(s.filepath)
+        resolved_by[s.name] = resolved
+        all_ids |= set(outcomes.keys())
+
+    sort_resolved = resolved_by.get(sort_by_name, {})
+    sorted_ids = sorted(all_ids, key=lambda iid: (-len(sort_resolved.get(iid, [])), iid))
+
+    rows = []
+    for iid in sorted_ids:
+        row = {"instance_id": iid}
+        for s in strategies:
+            runs = resolved_by[s.name].get(iid, [])
+            row[s.display_name] = ", ".join(f"R{r}" for r in runs) if runs else "—"
+        rows.append(row)
+
+    # Summary row
+    summary = {"instance_id": "TOTAL resolved"}
+    for s in strategies:
+        summary[s.display_name] = str(len(resolved_by[s.name]))
+    rows.append(summary)
+
+    cols = ["instance_id"] + [s.display_name for s in strategies]
+    return pd.DataFrame(rows, columns=cols)
+
+
+# ─── Compact statistical significance ─────────────────────────────────────────
+
+def build_compact_stat_sig_df(
+    s0_metrics: dict,
+    s0_obs: dict,
+    comparisons: List[Tuple[str, dict, dict]],
+) -> pd.DataFrame:
+    """
+    Wide DataFrame with one row per metric and columns for each comparison.
+
+    comparisons: list of (label, metrics_sX, obs_sX) for s1..s4.
+
+    Columns: metric, med_s0, then for each label:
+        {label}_med, {label}_p, {label}_A12, {label}_mag, {label}_sig
+    """
+    _data_s0 = {
+        "pass_rate":       get_per_run_pass_rates(s0_metrics),
+        "instance_cost":   s0_obs["instance_cost"],
+        "api_calls":       s0_obs["api_calls"],
+        "tokens_sent":     s0_obs["tokens_sent"],
+        "tokens_received": s0_obs["tokens_received"],
+        "tokens_total":    s0_obs["tokens_total"],
+    }
+
+    rows = []
+    for metric in ["pass_rate"] + _POOLED_FIELDS:
+        data_s0 = _data_s0[metric]
+        med_s0  = float(np.median(data_s0))
+
+        row: dict = {"metric": metric, "med_s0": med_s0}
+
+        for label, metrics_sX, obs_sX in comparisons:
+            data_sX = get_per_run_pass_rates(metrics_sX) if metric == "pass_rate" else obs_sX[metric]
+            med_sX  = float(np.median(data_sX))
+            p       = _mannwhitneyu_pvalue(data_s0, data_sX)
+            sig     = p < _ALPHA
+            if sig:
+                a12, mag = _vd_a12(data_s0, data_sX)
+            else:
+                a12, mag = float("nan"), "—"
+
+            row[f"{label}_med"] = med_sX
+            row[f"{label}_p"]   = p
+            row[f"{label}_A12"] = a12
+            row[f"{label}_mag"] = mag
+            row[f"{label}_sig"] = sig
+
+        rows.append(row)
+
+    return pd.DataFrame(rows)
+
+
+def display_compact_stat_sig(
+    df: pd.DataFrame,
+    label_s0: str,
+    labels_sX: List[str],
+) -> None:
+    """
+    Display a styled compact statistical significance table.
+
+    Highlights significant p-values in light yellow. Shows A12 + magnitude
+    only for significant results.
+    """
+    fmt_for = {
+        "pass_rate":      ("{:.1f}%",  "{:.1f}"),
+        "instance_cost":  ("${:.4f}",  "${:.4f}"),
+        "api_calls":      ("{:.1f}",   "{:.1f}"),
+        "tokens_sent":    ("{:,.0f}",  "{:,.0f}"),
+        "tokens_received":("{:,.0f}",  "{:,.0f}"),
+        "tokens_total":   ("{:,.0f}",  "{:,.0f}"),
+    }
+
+    disp_rows = []
+    for _, row in df.iterrows():
+        metric = row["metric"]
+        fmt_s0, fmt_sX = fmt_for.get(metric, ("{}", "{}"))
+        disp: dict = {
+            "metric": metric,
+            f"med({label_s0})": fmt_s0.format(row["med_s0"]),
+        }
+        for label in labels_sX:
+            med_str = fmt_sX.format(row[f"{label}_med"])
+            p       = row[f"{label}_p"]
+            a12     = row[f"{label}_A12"]
+            mag     = row[f"{label}_mag"]
+            sig     = row[f"{label}_sig"]
+            p_str   = f"{p:.3f}{'*' if sig else ''}"
+            a12_str = f"{a12:.2f} ({mag})" if sig else "—"
+            disp[f"med({label})"] = med_str
+            disp[f"p({label})"]   = p_str
+            disp[f"A12({label})"] = a12_str
+        disp_rows.append(disp)
+
+    disp_df = pd.DataFrame(disp_rows).set_index("metric")
+
+    # Build a boolean mask of significant p-value cells
+    p_cols = [f"p({lbl})" for lbl in labels_sX]
+
+    def _highlight_sig(val):
+        if isinstance(val, str) and val.endswith("*"):
+            return "background-color: #FFFACD; font-weight: bold"
+        return ""
+
+    styler = (
+        disp_df.style
+        .set_caption(
+            f"Statistical significance: {label_s0} vs others  "
+            f"(Wilcoxon rank-sum, α={_ALPHA}). "
+            "* = significant. A12 > 0.5 → s0 tends to produce larger values."
+        )
+        .set_table_styles([
+            {"selector": "th", "props": [("text-align", "center"), ("font-size", "11px")]},
+            {"selector": "td", "props": [("text-align", "center"), ("font-size", "11px")]},
+            {"selector": "th.row_heading", "props": [("text-align", "left")]},
+        ])
+    )
+    # pandas ≥2.1 renamed applymap → map
+    _apply_fn = getattr(styler, "map", None) or getattr(styler, "applymap")
+    styled = _apply_fn(_highlight_sig, subset=p_cols)
+    from IPython.display import display as _display
+    _display(styled)
