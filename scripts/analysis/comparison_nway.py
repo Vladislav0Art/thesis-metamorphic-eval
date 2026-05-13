@@ -10,6 +10,7 @@ from analysis.data_loading import (
     _mannwhitneyu_pvalue,
     _vd_a12,
     get_per_run_pass_rates,
+    load_instance_observations_by_id,
     load_instance_pass_rates_by_id,
     load_resolved_runs_by_id,
 )
@@ -382,3 +383,217 @@ def display_compact_stat_sig(
     styled = _apply_fn(_highlight_sig, subset=p_cols)
     from IPython.display import display as _display
     _display(styled)
+
+
+# ─── Per-instance helpers ──────────────────────────────────────────────────────
+
+_FIELD_FMT = {
+    "pass_rate":       "{:.1f}%",
+    "instance_cost":   "${:.4f}",
+    "api_calls":       "{:.1f}",
+    "tokens_sent":     "{:,.0f}",
+    "tokens_received": "{:,.0f}",
+    "tokens_total":    "{:,.0f}",
+}
+
+
+def build_per_instance_pass_rate_nway(
+    strategies,
+    all_pass_rates_by_id: dict,
+    sort_by_name: str = "s0-original",
+) -> pd.DataFrame:
+    """
+    Per-instance pass rate fractions: each cell shows "resolved/total" (e.g. "3/5").
+
+    Rows sorted by sort_by_name strategy's resolved count descending.
+    No statistical test — with N=5 binary outcomes the test is severely underpowered;
+    raw fractions are more informative.
+    """
+    s0_rates = all_pass_rates_by_id.get(sort_by_name, {})
+    all_ids: set = set()
+    for rates in all_pass_rates_by_id.values():
+        all_ids |= set(rates.keys())
+
+    sorted_ids = sorted(all_ids, key=lambda iid: (-sum(s0_rates.get(iid, [])), iid))
+
+    rows = []
+    for iid in sorted_ids:
+        row = {"instance_id": iid}
+        for s in strategies:
+            outcomes = all_pass_rates_by_id[s.name].get(iid, [])
+            n = len(outcomes)
+            row[s.display_name] = f"{sum(outcomes)}/{n}" if n > 0 else "—"
+        rows.append(row)
+
+    cols = ["instance_id"] + [s.display_name for s in strategies]
+    return pd.DataFrame(rows, columns=cols)
+
+
+def display_per_instance_metric_sig_nway(
+    strategies,
+    all_obs_by_id: dict,
+    fields: List[str] = None,
+) -> None:
+    """
+    For each metric field, display one table: per-instance median + p-value for
+    every s0-vs-sX pair (pooled per-run observations, not per-run averages).
+
+    fields defaults to ["instance_cost", "api_calls"].
+    Significant p-values (< α) are highlighted in yellow and marked with *.
+    Rows sorted by descending number of significant comparisons (most interesting first).
+    """
+    if fields is None:
+        fields = ["instance_cost", "api_calls"]
+
+    s0 = next(s for s in strategies if s.name == "s0-original")
+    sX_list = [s for s in strategies if s.name != "s0-original"]
+
+    from IPython.display import display as _display
+
+    def _highlight_sig(val):
+        if isinstance(val, str) and val.endswith("*"):
+            return "background-color: #FFFACD; font-weight: bold"
+        return ""
+
+    for field in fields:
+        fmt = _FIELD_FMT.get(field, "{}")
+        all_ids: set = set()
+        for s in strategies:
+            all_ids |= set(all_obs_by_id[s.name].keys())
+
+        rows = []
+        for iid in sorted(all_ids):
+            data_s0 = all_obs_by_id[s0.name].get(iid, {}).get(field, [])
+            if not data_s0:
+                continue
+            med_s0 = float(np.median(data_s0))
+            row = {"instance_id": iid, f"med({s0.display_name})": fmt.format(med_s0)}
+            n_sig = 0
+            for sX in sX_list:
+                data_sX = all_obs_by_id[sX.name].get(iid, {}).get(field, [])
+                if not data_sX:
+                    row[f"med({sX.display_name})"] = "—"
+                    row[f"p({sX.display_name})"]   = "—"
+                    row[f"A12({sX.display_name})"]  = "—"
+                    continue
+                med_sX = float(np.median(data_sX))
+                p      = _mannwhitneyu_pvalue(data_s0, data_sX)
+                sig    = p < _ALPHA
+                n_sig += int(sig)
+                if sig:
+                    a12, mag = _vd_a12(data_s0, data_sX)
+                    a12_str  = f"{a12:.2f} ({mag})"
+                else:
+                    a12_str = "—"
+                row[f"med({sX.display_name})"] = fmt.format(med_sX)
+                row[f"p({sX.display_name})"]   = f"{p:.3f}{'*' if sig else ''}"
+                row[f"A12({sX.display_name})"] = a12_str
+            row["_n_sig"] = n_sig
+            rows.append(row)
+
+        if not rows:
+            continue
+
+        df = pd.DataFrame(rows).sort_values(
+            ["_n_sig", f"med({s0.display_name})"], ascending=[False, False]
+        ).drop(columns=["_n_sig"]).set_index("instance_id")
+
+        p_cols = [f"p({sX.display_name})" for sX in sX_list if f"p({sX.display_name})" in df.columns]
+        styler = df.style.set_caption(
+            f"Per-instance stat sig: {field}  "
+            f"(pooled obs, Wilcoxon rank-sum, α={_ALPHA}; * = significant)"
+        )
+        _apply_fn = getattr(styler, "map", None) or getattr(styler, "applymap")
+        _display(_apply_fn(_highlight_sig, subset=p_cols))
+
+
+# ─── Metrics summary with Δ% ──────────────────────────────────────────────────
+
+def build_metrics_summary_df(strategies, all_metrics: dict, all_obs: dict) -> pd.DataFrame:
+    """
+    Wide DataFrame: for each metric, s0 baseline median+avg and per-sX med, avg, Δmed%, Δavg%.
+
+    pass_rate source:  per-run values (5 obs per strategy).
+    Agent metrics:     pooled per-instance observations (runs × instances obs per strategy).
+    Δ% = (sX - s0) / |s0| × 100; NaN when s0 == 0.
+    """
+    s0 = next(s for s in strategies if s.name == "s0-original")
+    sX_list = [s for s in strategies if s.name != "s0-original"]
+
+    def _data(metric, s):
+        if metric == "pass_rate":
+            return get_per_run_pass_rates(all_metrics[s.name])
+        return all_obs[s.name][metric]
+
+    rows = []
+    for metric in ["pass_rate"] + _POOLED_FIELDS:
+        d_s0   = _data(metric, s0)
+        med_s0 = float(np.median(d_s0))
+        avg_s0 = float(np.mean(d_s0))
+        row    = {"metric": metric, "s0_med": med_s0, "s0_avg": avg_s0}
+
+        for sX in sX_list:
+            d_sX   = _data(metric, sX)
+            med_sX = float(np.median(d_sX))
+            avg_sX = float(np.mean(d_sX))
+            row[f"{sX.display_name}_med"]  = med_sX
+            row[f"{sX.display_name}_avg"]  = avg_sX
+            row[f"{sX.display_name}_Δmed"] = (med_sX - med_s0) / abs(med_s0) * 100 if med_s0 else float("nan")
+            row[f"{sX.display_name}_Δavg"] = (avg_sX - avg_s0) / abs(avg_s0) * 100 if avg_s0 else float("nan")
+
+        rows.append(row)
+
+    return pd.DataFrame(rows)
+
+
+def display_metrics_summary(df: pd.DataFrame, strategies) -> None:
+    """
+    Styled summary table: median & avg per strategy with Δ% coloured green (increase)
+    or red (decrease) relative to s0-original.
+    """
+    s0 = next(s for s in strategies if s.name == "s0-original")
+    sX_list = [s for s in strategies if s.name != "s0-original"]
+
+    disp_rows = []
+    for _, row in df.iterrows():
+        metric = row["metric"]
+        fmt = _FIELD_FMT.get(metric, "{}")
+        disp = {
+            "metric":   metric,
+            "s0_med":   fmt.format(row["s0_med"]),
+            "s0_avg":   fmt.format(row["s0_avg"]),
+        }
+        for sX in sX_list:
+            med_val  = row[f"{sX.display_name}_med"]
+            avg_val  = row[f"{sX.display_name}_avg"]
+            d_med    = row[f"{sX.display_name}_Δmed"]
+            d_avg    = row[f"{sX.display_name}_Δavg"]
+            disp[f"{sX.display_name}_med"]  = fmt.format(med_val)
+            disp[f"{sX.display_name}_avg"]  = fmt.format(avg_val)
+            disp[f"{sX.display_name}_Δmed%"] = f"{d_med:+.1f}%" if not np.isnan(d_med) else "—"
+            disp[f"{sX.display_name}_Δavg%"] = f"{d_avg:+.1f}%" if not np.isnan(d_avg) else "—"
+        disp_rows.append(disp)
+
+    disp_df = pd.DataFrame(disp_rows).set_index("metric")
+    delta_cols = [c for c in disp_df.columns if c.endswith("%")]
+
+    def _color_delta(val):
+        if not isinstance(val, str) or val == "—":
+            return ""
+        try:
+            num = float(val.replace("%", "").replace("+", ""))
+            if num > 0:
+                return "background-color: #C6EFCE; color: #276221"
+            if num < 0:
+                return "background-color: #FFC7CE; color: #9C0006"
+        except ValueError:
+            pass
+        return ""
+
+    styler = disp_df.style.set_caption(
+        "Metric summary: median & avg per strategy + Δ% vs s0-original  "
+        "(pass_rate = per-run values; agent metrics = pooled obs)"
+    )
+    _apply_fn = getattr(styler, "map", None) or getattr(styler, "applymap")
+    from IPython.display import display as _display
+    _display(_apply_fn(_color_delta, subset=delta_cols))
