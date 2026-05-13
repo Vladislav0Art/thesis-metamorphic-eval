@@ -212,6 +212,7 @@ def plot_pooled_metrics_nway(strategies, all_obs: dict, model_label: str) -> Non
     # Figure 3: reasoning tokens (skipped when no strategy has data)
     reasoning_data = [all_obs[s.name].get("reasoning_tokens_total", []) for s in strategies]
     if any(d for d in reasoning_data):
+        _CLIP = 30_000
         fig3, ax3 = plt.subplots(figsize=(9, 4.5))
         fig3.suptitle(f"Pooled reasoning tokens — {model_label}\n{n_obs_str}", fontsize=10)
         _draw_nway_boxplot(
@@ -219,6 +220,29 @@ def plot_pooled_metrics_nway(strategies, all_obs: dict, model_label: str) -> Non
             [d if d else [0] for d in reasoning_data],
             labels, colors, hatches,
             "Reasoning tokens", "Reasoning tokens", value_fmt=",.0f",
+        )
+        ax3.set_ylim(bottom=0, top=_CLIP)
+
+        # Dotted clip boundary
+        ax3.axhline(_CLIP, color="gray", linewidth=0.8, linestyle=":", zorder=0)
+
+        # Per-boxplot: annotate how many observations were cut
+        for pos, data in enumerate(reasoning_data, start=1):
+            if not data:
+                continue
+            n_cut = sum(1 for v in data if v > _CLIP)
+            if n_cut:
+                ax3.text(
+                    pos, _CLIP * 0.985,
+                    f"↑{n_cut} cut",
+                    ha="center", va="top", fontsize=7.5, color="dimgray",
+                    bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="lightgray", alpha=0.9),
+                )
+
+        ax3.text(
+            0.5, 0.01,
+            f"y clipped at {_CLIP:,} — values above are counted per box (↑N cut)",
+            transform=ax3.transAxes, ha="center", va="bottom", fontsize=7, color="gray",
         )
         plt.tight_layout()
 
