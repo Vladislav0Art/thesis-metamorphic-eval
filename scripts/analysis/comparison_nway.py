@@ -334,6 +334,7 @@ def display_compact_stat_sig(
     df: pd.DataFrame,
     label_s0: str,
     labels_sX: List[str],
+    save_csv=None,
 ) -> None:
     """
     Display a styled compact statistical significance table.
@@ -372,6 +373,11 @@ def display_compact_stat_sig(
         disp_rows.append(disp)
 
     disp_df = pd.DataFrame(disp_rows).set_index("metric")
+
+    if save_csv is not None:
+        from pathlib import Path as _Path
+        _Path(save_csv).parent.mkdir(parents=True, exist_ok=True)
+        disp_df.to_csv(save_csv)
 
     # Build a boolean mask of significant p-value cells
     p_cols = [f"p({lbl})" for lbl in labels_sX]
@@ -449,17 +455,24 @@ def display_per_instance_metric_sig_nway(
     strategies,
     all_obs_by_id: dict,
     fields: List[str] = None,
+    save_csv_dir=None,
 ) -> None:
     """
     For each metric field, display one table: per-instance median + p-value for
     every s0-vs-sX pair (pooled per-run observations, not per-run averages).
 
-    fields defaults to ["instance_cost", "api_calls"].
+    fields defaults to all available agent metrics.
     Significant p-values (< α) are highlighted in yellow and marked with *.
     Rows sorted by descending number of significant comparisons (most interesting first).
+    If save_csv_dir is given, each field's table is saved to
+    {save_csv_dir}/per_instance_{field}.csv.
     """
     if fields is None:
-        fields = ["instance_cost", "api_calls"]
+        fields = [
+            "instance_cost", "api_calls",
+            "tokens_sent", "tokens_received", "tokens_total",
+            "reasoning_tokens_total",
+        ]
 
     s0 = next(s for s in strategies if s.name == "s0-original")
     sX_list = [s for s in strategies if s.name != "s0-original"]
@@ -513,6 +526,12 @@ def display_per_instance_metric_sig_nway(
         df = pd.DataFrame(rows).sort_values(
             ["_n_sig", f"med({s0.display_name})"], ascending=[False, False]
         ).drop(columns=["_n_sig"]).set_index("instance_id")
+
+        if save_csv_dir is not None:
+            from pathlib import Path as _Path
+            out = _Path(save_csv_dir) / f"per_instance_{field}.csv"
+            out.parent.mkdir(parents=True, exist_ok=True)
+            df.to_csv(out)
 
         p_cols = [f"p({sX.display_name})" for sX in sX_list if f"p({sX.display_name})" in df.columns]
         styler = df.style.set_caption(
@@ -580,6 +599,7 @@ def display_metrics_summary(
     df: pd.DataFrame,
     strategies,
     show: List[str] = None,
+    save_csv=None,
 ) -> None:
     """
     Styled summary table: median & avg per strategy.
@@ -630,6 +650,12 @@ def display_metrics_summary(
         disp_rows.append(disp)
 
     disp_df    = pd.DataFrame(disp_rows).set_index("metric")
+
+    if save_csv is not None:
+        from pathlib import Path as _Path
+        _Path(save_csv).parent.mkdir(parents=True, exist_ok=True)
+        disp_df.to_csv(save_csv)
+
     delta_cols = [c for c in disp_df.columns if "_Δ" in c]
 
     def _color_delta(val):
