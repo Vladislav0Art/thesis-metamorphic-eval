@@ -422,12 +422,13 @@ def display_compact_stat_sig(
 # ─── Per-instance helpers ──────────────────────────────────────────────────────
 
 _FIELD_FMT = {
-    "pass_rate":       "{:.1f}%",
-    "instance_cost":   "${:.4f}",
-    "api_calls":       "{:.1f}",
-    "tokens_sent":     "{:,.0f}",
-    "tokens_received": "{:,.0f}",
-    "tokens_total":    "{:,.0f}",
+    "pass_rate":              "{:.1f}%",
+    "instance_cost":          "${:.4f}",
+    "api_calls":              "{:.1f}",
+    "tokens_sent":            "{:,.0f}",
+    "tokens_received":        "{:,.0f}",
+    "tokens_total":           "{:,.0f}",
+    "reasoning_tokens_total": "{:,.0f}",
 }
 
 
@@ -574,14 +575,22 @@ def build_metrics_summary_df(strategies, all_metrics: dict, all_obs: dict) -> pd
         return all_obs[s.name][metric]
 
     rows = []
-    for metric in ["pass_rate"] + _POOLED_FIELDS:
-        d_s0   = _data(metric, s0)
+    for metric in ["pass_rate"] + _POOLED_FIELDS + ["reasoning_tokens_total"]:
+        d_s0 = _data(metric, s0)
+        if not d_s0:
+            continue
         med_s0 = float(np.median(d_s0))
         avg_s0 = float(np.mean(d_s0))
         row    = {"metric": metric, "s0_med": med_s0, "s0_avg": avg_s0}
 
         for sX in sX_list:
-            d_sX   = _data(metric, sX)
+            d_sX = _data(metric, sX)
+            if not d_sX:
+                row[f"{sX.display_name}_med"]  = float("nan")
+                row[f"{sX.display_name}_avg"]  = float("nan")
+                row[f"{sX.display_name}_Δmed"] = float("nan")
+                row[f"{sX.display_name}_Δavg"] = float("nan")
+                continue
             med_sX = float(np.median(d_sX))
             avg_sX = float(np.mean(d_sX))
             row[f"{sX.display_name}_med"]  = med_sX
