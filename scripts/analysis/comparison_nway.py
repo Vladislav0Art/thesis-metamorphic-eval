@@ -576,25 +576,33 @@ def _fmt_abs_delta(metric: str, abs_delta: float) -> str:
     return f"{abs_delta:+,.0f}"
 
 
-def display_metrics_summary(df: pd.DataFrame, strategies) -> None:
+def display_metrics_summary(
+    df: pd.DataFrame,
+    strategies,
+    show: List[str] = None,
+) -> None:
     """
     Styled summary table: median & avg per strategy.
 
+    show: subset of ['med', 'avg'] controlling which stat columns are rendered.
+          Defaults to both.
     Δ columns show both the absolute change and the percentage change in parentheses,
     e.g. "-5.8% (-36.7%)" for pass_rate or "+$0.31 (+12.5%)" for instance_cost.
     Green = increased vs s0, red = decreased.
     """
+    if show is None:
+        show = ["med", "avg"]
     sX_list = [s for s in strategies if s.name != "s0-original"]
 
     disp_rows = []
     for _, row in df.iterrows():
         metric = row["metric"]
         fmt    = _FIELD_FMT.get(metric, "{}")
-        disp   = {
-            "metric":  metric,
-            "s0_med":  fmt.format(row["s0_med"]),
-            "s0_avg":  fmt.format(row["s0_avg"]),
-        }
+        disp   = {"metric": metric}
+        if "med" in show:
+            disp["s0_med"] = fmt.format(row["s0_med"])
+        if "avg" in show:
+            disp["s0_avg"] = fmt.format(row["s0_avg"])
         for sX in sX_list:
             med_s0  = row["s0_med"]
             avg_s0  = row["s0_avg"]
@@ -603,20 +611,21 @@ def display_metrics_summary(df: pd.DataFrame, strategies) -> None:
             pct_med = row[f"{sX.display_name}_Δmed"]
             pct_avg = row[f"{sX.display_name}_Δavg"]
 
-            disp[f"{sX.display_name}_med"] = fmt.format(med_sX)
-            disp[f"{sX.display_name}_avg"] = fmt.format(avg_sX)
+            if "med" in show:
+                disp[f"{sX.display_name}_med"] = fmt.format(med_sX)
+                if np.isnan(pct_med):
+                    disp[f"{sX.display_name}_Δmed"] = "—"
+                else:
+                    abs_str = _fmt_abs_delta(metric, med_sX - med_s0)
+                    disp[f"{sX.display_name}_Δmed"] = f"{abs_str} ({pct_med:+.1f}%)"
 
-            if np.isnan(pct_med):
-                disp[f"{sX.display_name}_Δmed"] = "—"
-            else:
-                abs_str = _fmt_abs_delta(metric, med_sX - med_s0)
-                disp[f"{sX.display_name}_Δmed"] = f"{abs_str} ({pct_med:+.1f}%)"
-
-            if np.isnan(pct_avg):
-                disp[f"{sX.display_name}_Δavg"] = "—"
-            else:
-                abs_str = _fmt_abs_delta(metric, avg_sX - avg_s0)
-                disp[f"{sX.display_name}_Δavg"] = f"{abs_str} ({pct_avg:+.1f}%)"
+            if "avg" in show:
+                disp[f"{sX.display_name}_avg"] = fmt.format(avg_sX)
+                if np.isnan(pct_avg):
+                    disp[f"{sX.display_name}_Δavg"] = "—"
+                else:
+                    abs_str = _fmt_abs_delta(metric, avg_sX - avg_s0)
+                    disp[f"{sX.display_name}_Δavg"] = f"{abs_str} ({pct_avg:+.1f}%)"
 
         disp_rows.append(disp)
 
