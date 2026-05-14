@@ -300,17 +300,27 @@ def build_compact_stat_sig_df(
         "tokens_sent":     s0_obs["tokens_sent"],
         "tokens_received": s0_obs["tokens_received"],
         "tokens_total":    s0_obs["tokens_total"],
+        "reasoning_tokens_total": s0_obs["reasoning_tokens_total"],
     }
 
     rows = []
-    for metric in ["pass_rate"] + _POOLED_FIELDS:
+    for metric in ["pass_rate"] + _POOLED_FIELDS + ["reasoning_tokens_total"]:
         data_s0 = _data_s0[metric]
+        if not data_s0:
+            continue
         med_s0  = float(np.median(data_s0))
 
         row: dict = {"metric": metric, "med_s0": med_s0}
 
         for label, metrics_sX, obs_sX in comparisons:
             data_sX = get_per_run_pass_rates(metrics_sX) if metric == "pass_rate" else obs_sX[metric]
+            if not data_sX:
+                row[f"{label}_med"] = float("nan")
+                row[f"{label}_p"]   = float("nan")
+                row[f"{label}_A12"] = float("nan")
+                row[f"{label}_mag"] = "—"
+                row[f"{label}_sig"] = False
+                continue
             med_sX  = float(np.median(data_sX))
             p       = _mannwhitneyu_pvalue(data_s0, data_sX)
             sig     = p < _ALPHA
@@ -335,6 +345,7 @@ def display_compact_stat_sig(
     label_s0: str,
     labels_sX: List[str],
     save_csv=None,
+    sep: str = ",",
 ) -> None:
     """
     Display a styled compact statistical significance table.
@@ -349,6 +360,7 @@ def display_compact_stat_sig(
         "tokens_sent":    ("{:,.0f}",  "{:,.0f}"),
         "tokens_received":("{:,.0f}",  "{:,.0f}"),
         "tokens_total":   ("{:,.0f}",  "{:,.0f}"),
+        "reasoning_tokens_total":   ("{:,.0f}",  "{:,.0f}"),
     }
 
     disp_rows = []
@@ -377,7 +389,7 @@ def display_compact_stat_sig(
     if save_csv is not None:
         from pathlib import Path as _Path
         _Path(save_csv).parent.mkdir(parents=True, exist_ok=True)
-        disp_df.to_csv(save_csv)
+        disp_df.to_csv(save_csv, sep=sep)
 
     # Build a boolean mask of significant p-value cells
     p_cols = [f"p({lbl})" for lbl in labels_sX]
@@ -456,6 +468,7 @@ def display_per_instance_metric_sig_nway(
     all_obs_by_id: dict,
     fields: List[str] = None,
     save_csv_dir=None,
+    sep: str = ",",
 ) -> None:
     """
     For each metric field, display one table: per-instance median + p-value for
@@ -531,7 +544,7 @@ def display_per_instance_metric_sig_nway(
             from pathlib import Path as _Path
             out = _Path(save_csv_dir) / f"per_instance_{field}.csv"
             out.parent.mkdir(parents=True, exist_ok=True)
-            df.to_csv(out)
+            df.to_csv(out, sep=sep)
 
         p_cols = [f"p({sX.display_name})" for sX in sX_list if f"p({sX.display_name})" in df.columns]
         styler = df.style.set_caption(
@@ -600,6 +613,7 @@ def display_metrics_summary(
     strategies,
     show: List[str] = None,
     save_csv=None,
+    sep: str = ",",
 ) -> None:
     """
     Styled summary table: median & avg per strategy.
@@ -654,7 +668,7 @@ def display_metrics_summary(
     if save_csv is not None:
         from pathlib import Path as _Path
         _Path(save_csv).parent.mkdir(parents=True, exist_ok=True)
-        disp_df.to_csv(save_csv)
+        disp_df.to_csv(save_csv, sep=sep)
 
     delta_cols = [c for c in disp_df.columns if "_Δ" in c]
 
